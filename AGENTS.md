@@ -111,3 +111,22 @@ The application must execute reliably across diverse host environments:
 - **No Type Escapes:** Never silence TypeScript compiler errors with `as any`, `@ts-ignore`, or `@ts-expect-error`. Resolve root types cleanly.
 - **Automated Invariant Verification:** Every file modification must preserve existing invariants verified by `npm run verify:improvements` and layer checks (`npm run verify:layers`, `npm run verify:engine`, `npm run verify:extraction`).
 - **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, `verify:improvements`, `verify:layers`, `verify:engine`, and `verify:extraction`) plus `npm run build` before declaring tasks complete.
+
+---
+
+## Full sweep
+
+Package manager: **npm** (declared in `.npmrc` and `package.json`; the repo ships **no lockfile**, so use `npm install` — `npm ci` will fail).
+
+| Step | Command |
+| --- | --- |
+| Install | `npm install` |
+| Typecheck | `npm run lint` (`tsc --noEmit`) |
+| Typecheck (engine layer) | `npm run verify:engine` (`tsc -p tsconfig.engine.json --noEmit`) |
+| Tests | `npm test` (`vitest run`) |
+| Build | `npm run build` (`vite build`) |
+| Dev server | `npm run dev` (Vite bound to `0.0.0.0:3000`) |
+| Aggregate verification | `npm run verify` (lint + test + all `verify:*` invariants) |
+| Invariant checks | `npm run verify:improvements`, `npm run verify:prompts`, `npm run verify:modules`, `npm run verify:layers`, `npm run verify:extraction` |
+
+Trigger: full sweep
