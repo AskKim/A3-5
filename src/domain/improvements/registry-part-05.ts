@@ -1010,4 +1010,33 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Only regenerate scripts/chunk-cycle-allowlist.json with `tsx scripts/verify-chunk-graph.ts --write-allowlist` for cycles that already predate the gate.',
     ],
   },
+  {
+    id: 'IMP-088',
+    title: 'Diagnostics Chunks Kept Out of the Install Precach',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Stop making every PWA install pay for a developer diagnostics panel that most users never open.',
+    summary:
+      'The improvement registry and its rationale prose were precached by the service worker even though both load only when the diagnostics panel asks for them. Workbox `globIgnores` now excludes `improvement-registry-*.js` and `rationales-*.js`, cutting the precache from 113 files / 4.64 MB to 111 files / 4.35 MB (−308 KB raw, ~85 KB gzip) on every install; a `StaleWhileRevalidate` runtime cache (`diagnostics-chunks`) still stores both after the first online use, so the panel keeps working offline once seen. The trade, accepted deliberately: on a device that has never opened that panel online, the diagnostics panel reports a load error while the rest of the app is unaffected — livestock data never depends on these chunks.',
+    files: ['vite.config.ts'],
+    invariants: [
+      {
+        filePath: 'vite.config.ts',
+        requiredSubstrings: [
+          'globIgnores: [',
+          '**/improvement-registry-*.js',
+          '**/rationales-*.js',
+          'diagnostics-chunks',
+        ],
+        rationale:
+          'Both diagnostics chunks must stay out of the precache manifest while remaining reachable through the runtime cache; deleting either half reintroduces either install bloat or an unrecoverable panel.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the two globIgnores patterns and the diagnostics-chunks runtime rule together: one halves install weight, the other keeps the panel usable after first use.',
+      'If offline export of IMPROVEMENTS.md from a never-visited device becomes a requirement, remove the patterns from globIgnores and drop the runtimeCaching entry — do not precache one chunk and exclude the other.',
+    ],
+  },
 ];

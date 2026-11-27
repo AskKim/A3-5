@@ -1,7 +1,8 @@
 goal: Finish remaining architectural modularity and reusability across storage adapters, monolithic store/SQLite hubs, UI component seams, shim retirement, and standalone @engine extraction
 status:
   - [DONE] src/storage/* | Aligned browser/worker storage probes, OPFS streaming, passphrase crypto, cross-tab sync, background freeze, photo cache, LAN WebRTC, PKCE sessionStorage, and weather localStorage onto @engine/storage/* and @engine/primitives/* contracts (with verified @engine unit tests)
-  - [WIP] src/storage/webSqliteAdapter.ts | Split schema DDL (sqliteSchema.ts) and IndexedDB persistence/quota recovery (sqliteIdbPersistence.ts); next extract row mappers, snapshot readers/writers, and generic batch/delete mutation helpers
+  - [DONE] src/storage/webSqliteAdapter.ts | Split schema DDL (sqliteSchema.ts), IndexedDB persistence/quota recovery (sqliteIdbPersistence.ts), row mappers (sqliteRowMappers.ts) and row writers (sqliteRowWriters.ts) out of the adapter
+  - [WIP] src/storage/webSqliteAdapter.ts | Adapter still ~2.6k lines: extract snapshot row readers plus generic batch/delete mutation helpers next
   - [TODO] src/hooks/useBarnStore.ts | Decompose the 344 KB state store into domain slice controllers, injected storage/sync ports, and headless action dispatchers
   - [TODO] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
   - [TODO] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Codemod remaining callers directly onto @engine/*, retire compatibility shims, and extract generic non-domain logic left in src/domain/*

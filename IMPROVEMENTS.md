@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (23 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (24 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (87)
+## Logged Improvements (88)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1934,3 +1934,19 @@ npm run lint && npm run build
 1. Keep `npm run verify:chunks` in CI after `npm run build`; the check needs the emitted bundles, not the source.
 2. When it reports a new cycle, group the members in one `codeSplitting` chunk (see the improvement-registry group) instead of adding an allowlist entry.
 3. Only regenerate scripts/chunk-cycle-allowlist.json with `tsx scripts/verify-chunk-graph.ts --write-allowlist` for cycles that already predate the gate.
+
+### IMP-088: Diagnostics Chunks Kept Out of the Install Precach
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Stability & Mobile PWA (`stability-pwa`)
+- **Origin:** Session Improvement
+- **User Goal:** Stop making every PWA install pay for a developer diagnostics panel that most users never open.
+- **Summary:** The improvement registry and its rationale prose were precached by the service worker even though both load only when the diagnostics panel asks for them. Workbox `globIgnores` now excludes `improvement-registry-*.js` and `rationales-*.js`, cutting the precache from 113 files / 4.64 MB to 111 files / 4.35 MB (−308 KB raw, ~85 KB gzip) on every install; a `StaleWhileRevalidate` runtime cache (`diagnostics-chunks`) still stores both after the first online use, so the panel keeps working offline once seen. The trade, accepted deliberately: on a device that has never opened that panel online, the diagnostics panel reports a load error while the rest of the app is unaffected — livestock data never depends on these chunks.
+- **Tracked Files:** `vite.config.ts`
+
+**Automated Invariants Checked:**
+- `vite.config.ts` must contain `globIgnores: [`, `**/improvement-registry-*.js`, `**/rationales-*.js`, `diagnostics-chunks` — *Both diagnostics chunks must stay out of the precache manifest while remaining reachable through the runtime cache; deleting either half reintroduces either install bloat or an unrecoverable panel.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the two globIgnores patterns and the diagnostics-chunks runtime rule together: one halves install weight, the other keeps the panel usable after first use.
+2. If offline export of IMPROVEMENTS.md from a never-visited device becomes a requirement, remove the patterns from globIgnores and drop the runtimeCaching entry — do not precache one chunk and exclude the other.
