@@ -127,12 +127,13 @@ run reports the whole picture.
 
 ### Phase 1 — The repo's own gates
 
-Package manager: **npm** (`.npmrc` + `package.json`; the repo ships **no lockfile**,
-so `npm install` — `npm ci` fails).
+Package manager: **npm** (`.npmrc` + `package.json`). `package-lock.json` is committed:
+prefer `npm ci` for a deterministic tree, and fall back to `npm install` only when the
+lockfile is stale or a dependency change is intentional.
 
 | # | Step | Command |
 | --- | --- | --- |
-| 1 | Install | `npm install` (note blocked install scripts) |
+| 1 | Install | `npm ci` (falls back to `npm install` if the lock is stale); note blocked install scripts |
 | 2 | Typecheck (app) | `npm run lint` (`tsc --noEmit`) |
 | 3 | Typecheck (engine/features/utils) | `npm run verify:engine` |
 | 4 | Tests | `npm test` (`vitest run`, full suite) |
