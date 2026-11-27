@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (26 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (27 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (90)
+## Logged Improvements (91)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1990,3 +1990,23 @@ npm run lint && npm run build
 1. Every later slice follows this shape: pure policy to `src/hooks/barnStore/*`, state and wiring stay in the hook, tests land with the move.
 2. Never change behaviour inside a move. Pin the old quirk in a test first (as with non-finite tiers) or leave it in place.
 3. Run `npm test`, `npm run verify` and `npx tsx scripts/list-modules.ts --write` for each slice; the contract snapshot must stay untouched unless a key truly changes.
+
+### IMP-091: Backup-Reminder Policy Extracted From the Barn Store
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Backups & Safety (`backup-safety`)
+- **Origin:** Session Improvement
+- **User Goal:** Keep the reminder logic testable and out of the monolith, without changing when or how the app nags about backups.
+- **Summary:** Second barn-store slice: the reminder persistence and snooze policy moved to `src/hooks/barnStore/backupReminder.ts`. Four inline `localStorage` blocks in the hook (state initialisers, reset, export recording, snooze) became named helpers with an injected `ReminderStorage` seam, so they are now unit-tested with fakes and a throwing storage. Behaviour is unchanged: unparsable values still read as "not snoozed", snapshot settings still win over the local mirror via `??` (an explicit stored `0` is respected, not treated as absent), snooze deadlines still use the skew-adjusted clock, and blocked storage still degrades to a no-op. The 200-key contract snapshot did not change.
+- **Tracked Files:** `src/hooks/barnStore/backupReminder.ts`, `src/hooks/__tests__/backupReminder.test.ts`, `src/hooks/useBarnStore.ts`, `MODULES.md`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/backupReminder.ts` must contain `pedigree.backupReminderSnoozedUntil.v1`, `pedigree.lastBackupMeta.v1`, `resolveEffectiveSnoozedUntilMs`, `computeSnoozedUntilMs` — *The storage keys and both policy functions live only here now; losing either key would silently reset reminders for existing installs.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/backupReminder'` — *The hook must consume the slice rather than re-inline storage keys, which is how the four duplicated blocks appeared in the first place.*
+  - Forbidden regression: `pedigree.lastBackupMeta.v1`, `pedigree.backupReminderSnoozedUntil.v1`
+- `src/hooks/__tests__/backupReminder.test.ts` must contain `never throws when storage is blocked`, `explicit zero`, `treats missing, empty or unparsable snooze values as "not snoozed"` — *These three cases encode the behaviour a future refactor is most likely to break: blocked storage, explicit zero versus absent, and corrupt values.*
+
+**Restoration Playbook if Overwritten:**
+1. Reminder storage belongs to `barnStore/backupReminder.ts`; pass a `ReminderStorage` fake in tests instead of touching global `localStorage`.
+2. Keep `resolveEffectiveSnoozedUntilMs` on `??`: a stored `0` means "not snoozed" and must not fall back to the local mirror.
+3. Do not change the two storage key strings — they are the only link to reminders already snoozed on users' devices.

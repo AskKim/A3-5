@@ -1119,4 +1119,52 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Run `npm test`, `npm run verify` and `npx tsx scripts/list-modules.ts --write` for each slice; the contract snapshot must stay untouched unless a key truly changes.',
     ],
   },
+  {
+    id: 'IMP-091',
+    title: 'Backup-Reminder Policy Extracted From the Barn Store',
+    category: 'backup-safety',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Keep the reminder logic testable and out of the monolith, without changing when or how the app nags about backups.',
+    summary:
+      'Second barn-store slice: the reminder persistence and snooze policy moved to `src/hooks/barnStore/backupReminder.ts`. Four inline `localStorage` blocks in the hook (state initialisers, reset, export recording, snooze) became named helpers with an injected `ReminderStorage` seam, so they are now unit-tested with fakes and a throwing storage. Behaviour is unchanged: unparsable values still read as "not snoozed", snapshot settings still win over the local mirror via `??` (an explicit stored `0` is respected, not treated as absent), snooze deadlines still use the skew-adjusted clock, and blocked storage still degrades to a no-op. The 200-key contract snapshot did not change.',
+    files: [
+      'src/hooks/barnStore/backupReminder.ts',
+      'src/hooks/__tests__/backupReminder.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/backupReminder.ts',
+        requiredSubstrings: [
+          'pedigree.backupReminderSnoozedUntil.v1',
+          'pedigree.lastBackupMeta.v1',
+          'resolveEffectiveSnoozedUntilMs',
+          'computeSnoozedUntilMs',
+        ],
+        rationale:
+          'The storage keys and both policy functions live only here now; losing either key would silently reset reminders for existing installs.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/backupReminder'"],
+        forbiddenSubstrings: ['pedigree.lastBackupMeta.v1', 'pedigree.backupReminderSnoozedUntil.v1'],
+        rationale:
+          'The hook must consume the slice rather than re-inline storage keys, which is how the four duplicated blocks appeared in the first place.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/backupReminder.test.ts',
+        requiredSubstrings: ['never throws when storage is blocked', 'explicit zero', "treats missing, empty or unparsable snooze values as \"not snoozed\""],
+        rationale:
+          'These three cases encode the behaviour a future refactor is most likely to break: blocked storage, explicit zero versus absent, and corrupt values.',
+      },
+    ],
+    restorePlaybook: [
+      'Reminder storage belongs to `barnStore/backupReminder.ts`; pass a `ReminderStorage` fake in tests instead of touching global `localStorage`.',
+      'Keep `resolveEffectiveSnoozedUntilMs` on `??`: a stored `0` means "not snoozed" and must not fall back to the local mirror.',
+      'Do not change the two storage key strings — they are the only link to reminders already snoozed on users\' devices.',
+    ],
+  },
 ];

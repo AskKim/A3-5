@@ -281,6 +281,16 @@ import {
 import type { IPlatformBridge } from '@engine/bridge';
 import type { PendingGoogleCalendarSync } from '../domain/calendarExport';
 import { getPhotoCacheBudgetForTier } from './barnStore/photoCacheBudget';
+import {
+  clearStoredBackupReminderState,
+  clearStoredSnoozedUntilMs,
+  computeSnoozedUntilMs,
+  readStoredLastBackupMeta,
+  readStoredSnoozedUntilMs,
+  resolveEffectiveSnoozedUntilMs,
+  writeStoredLastBackupMeta,
+  writeStoredSnoozedUntilMs,
+} from './barnStore/backupReminder';
 
 export type WorkspaceRoute =
   | 'home'
@@ -461,22 +471,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   const syncConflictsRef = useRef<SyncConflictEntry[]>([]);
   syncConflictsRef.current = syncConflicts;
   const [openAddSpeciesInSettings, setOpenAddSpeciesInSettings] = useState<boolean>(false);
-  const [localLastBackupMeta, setLocalLastBackupMeta] = useState<LastBackupMeta | null>(() => {
-    try {
-      const raw = localStorage.getItem('pedigree.lastBackupMeta.v1');
-      return raw ? (JSON.parse(raw) as LastBackupMeta) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [localSnoozedUntilMs, setLocalSnoozedUntilMs] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem('pedigree.backupReminderSnoozedUntil.v1');
-      return raw ? Number(raw) || 0 : 0;
-    } catch {
-      return 0;
-    }
-  });
+  const [localLastBackupMeta, setLocalLastBackupMeta] = useState<LastBackupMeta | null>(
+    readStoredLastBackupMeta
+  );
+  const [localSnoozedUntilMs, setLocalSnoozedUntilMs] = useState<number>(readStoredSnoozedUntilMs);
   const [opfsSupported] = useState<boolean>(() => isOpfsSupported());
   const [opfsVaultBackups, setOpfsVaultBackups] = useState<VaultBackupMetadata[]>([]);
   const [rollingBackups, setRollingBackups] = useState<RollingBackupMeta[]>([]);
@@ -671,14 +669,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     setSyncConflicts([]);
     setLocalLastBackupMeta(null);
     setLocalSnoozedUntilMs(0);
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('pedigree.lastBackupMeta.v1');
-        localStorage.removeItem('pedigree.backupReminderSnoozedUntil.v1');
-      }
-    } catch {
-      // Ignore private browsing or restricted iframe storage errors
-    }
+    clearStoredBackupReminderState();
     const { clearWeatherForecastCache } = await import('../storage/weatherForecast');
     clearWeatherForecastCache();
   }, []);
@@ -1505,8 +1496,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   const effectiveLastBackupMeta: LastBackupMeta | null =
     snapshot?.settings.lastBackupMeta ?? localLastBackupMeta;
 
-  const effectiveBackupSnoozedUntilMs: number =
-    snapshot?.settings.backupReminderSnoozedUntilMs ?? localSnoozedUntilMs;
+  const effectiveBackupSnoozedUntilMs: number = resolveEffectiveSnoozedUntilMs(
+    snapshot?.settings.backupReminderSnoozedUntilMs,
+    localSnoozedUntilMs
+  );
 
   const backupStatus: BackupStatusEvaluation | null = useMemo(() => {
     if (!snapshot) return null;
@@ -2208,12 +2201,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       };
       setLocalLastBackupMeta(meta);
       setLocalSnoozedUntilMs(0);
-      try {
-        localStorage.setItem('pedigree.lastBackupMeta.v1', JSON.stringify(meta));
-        localStorage.removeItem('pedigree.backupReminderSnoozedUntil.v1');
-      } catch {
-        // Ignore private browsing storage quota warnings
-      }
+      writeStoredLastBackupMeta(meta);
+      clearStoredSnoozedUntilMs();
       if (snapshotRef.current) {
         await enqueueStoreMutation(() =>
           updateSettingsInternal(
@@ -2228,13 +2217,9 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
 
   const snoozeBackupReminder = useCallback(
     async (hours: number = 24) => {
-      const untilMs = getAdjustedNowMs() + hours * 60 * 60 * 1000;
+      const untilMs = computeSnoozedUntilMs(getAdjustedNowMs(), hours);
       setLocalSnoozedUntilMs(untilMs);
-      try {
-        localStorage.setItem('pedigree.backupReminderSnoozedUntil.v1', String(untilMs));
-      } catch {
-        // Ignore storage warnings
-      }
+      writeStoredSnoozedUntilMs(untilMs);
       if (snapshotRef.current) {
         await enqueueStoreMutation(() =>
           updateSettingsInternal({ backupReminderSnoozedUntilMs: untilMs }, { silent: true })
