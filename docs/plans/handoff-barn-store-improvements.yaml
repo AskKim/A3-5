@@ -1,0 +1,20 @@
+goal: Harden and finish modularising the barn store - typed facades, domain CRUD extraction, one destructive-restore orchestrator, restore verification, sync-log retention, performance isolation, and the gates/tests that keep all of it honest.
+status:
+  - [TODO] src/hooks/useBarnStore.ts | Group the 200-key return object into typed facades (animals/photos/backup/sync) without changing runtime keys (1); extract entity CRUD into barnStore/useAnimalsCrud, useBreeding, usePhotoMutations backed by plain repository functions (2); build the ~40 port objects once via createStorePorts() instead of per-render inline arrows (3)
+  - [TODO] src/hooks/barnStore/ | Single runDestructiveRestore orchestrator shared by OPFS restore, rolling restore and JSON import so no future path can skip the safety snapshot (4); ADR in docs/decisions/ recording the mutation-queue + safety-snapshot-before-replace contract (5)
+  - [TODO] src/hooks/barnStore/useOpfsVaultActions.ts, src/hooks/barnStore/useRollingBackupActions.ts | Post-restore verification: compare animal/photo counts and checksum with the loaded file and auto-restore the safety snapshot on mismatch (6); cap/compact the sync op log with a documented retention window (7); conflict ergonomics - bulk resolve, expiry, badge count (8)
+  - [TODO] src/hooks/__tests__/ | QuotaExceededError branches around save/offload (9); property-based tests for mergeDeltaOperations - idempotence, order independence, no lost fields (10)
+  - [TODO] src/hooks/useBarnStore.ts, src/components/TechyStuffScreen.tsx | Split cloudSyncState/syncConflicts/opfsVaultBackups into separate contexts or useSyncExternalStore slices (11); memoised selectors for derived lists keyed on rev counters (12); dev-only timing for save/restore/offload surfaced in diagnostics (13)
+  - [TODO] scripts/, src/domain/improvements/ | Contract-change gate that fails CI when the 200-key set changes without a changelog line (14); coverage provider plus a floor for src/hooks/barnStore/* (15); aria-label on the hidden import file input (16); replace vite allowedHosts:true with __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS or an explicit list (17)
+  - [TODO] src/hooks/__tests__/ | Render-level integration harness (fake in-memory adapter + React) covering save -> offload -> restore -> sync-conflict loops, which per-slice unit tests structurally cannot see (18)
+  - [TODO] src/domain/improvements/registry-part-05.ts | Register each landed item (IMP-101 onward) with drift invariants, regenerate IMPROVEMENTS.md/MODULES.md, and run npm run verify + build + verify:chunks
+constraints:
+  - The 200-key return surface is a public contract - grouping it into facades must not add, rename or remove keys (src/hooks/__tests__/barnStoreContract.keys.json stays byte-identical).
+  - Restores and offloads stay inside enqueueStoreMutation; never call the *Unqueued variants from UI handlers.
+  - Never add a new restore path that skips the pre-replace safety snapshot, and never let a restore replace the barn without a verified rollback copy.
+  - No type escapes (as any / @ts-ignore / @ts-expect-error), no unrequested dependency upgrades, keep backupVault on its dynamic import so verify:chunks stays green.
+  - src/App.tsx, src/main.tsx and index.html are boot-locked (BOOT_ENTRY_LOCK_CHECKSUMS) - no edits without explicit confirmation.
+  - Registry invariants append at the end of an entry's list; mid-list insertion shifts rationale ordinals and fails verify:improvements.
+decisions: Scope is the 18 suggestions from the 2026-11-27 sweep, grouped into seven work milestones (1-3, 4-5, 6-8, 9-10, 11-13, 14-17, 18) plus registry/docs; the number in each clause is the suggestion id from that list.
+verified: tsc=pass | test=pass (663) | build=pass
+next_action: Start with milestone 1 - add typed facades over the existing return object (no key changes), then extract useAnimalsCrud; run npm run verify + contract test after each step before touching the orchestrator in milestone 2.
