@@ -288,11 +288,10 @@ import {
 import { useAlertDismissals } from './barnStore/useAlertDismissals';
 import { useCloudSyncActions } from './barnStore/useCloudSyncActions';
 import { useOpfsVaultActions } from './barnStore/useOpfsVaultActions';
-import {
-  buildResolvedSyncConflict,
-  markSyncConflictResolved,
-  useSyncConflictDismissal,
-} from './barnStore/useSyncConflictDismissal';
+import { useSyncConflictDismissal } from './barnStore/useSyncConflictDismissal';
+import { useSyncConflictResolution } from './barnStore/useSyncConflictResolution';
+import { useRollingBackupActions } from './barnStore/useRollingBackupActions';
+import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -7856,66 +7855,27 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
-  const resolveSyncConflict = useCallback(
-    async (conflictId: string, useSide: 'winning' | 'losing') => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const conflict = syncConflicts.find((c) => c.conflict_id === conflictId);
-        if (!conflict) return;
-
-        try {
-          const chosenValue = useSide === 'winning' ? conflict.winning_value : conflict.losing_value;
-          const op = createOutboxOperation({
-            entityType: conflict.entity_type,
-            entityUuid: conflict.entity_uuid,
-            deviceId,
-            logicalCounter: allocateNextLogicalCounter(),
-            fieldName: conflict.field_name,
-            newValue: chosenValue,
-            timestamp: getAdjustedNowIsoUtc(),
-            recordRev: nextEntityRev(conflict.entity_uuid),
-          });
-
-          const baseOps = syncOperationsHydratedRef.current
-            ? syncOperationsRef.current
-            : await loadSyncOperationsFromIdbAndIndex();
-          const applied = mergeDeltaOperations(
-            currentSnapshot,
-            baseOps,
-            [op],
-            deviceId
-          );
-          await adapterRef.current!.replaceSnapshot(applied.nextSnapshot);
-          await replaceSyncOperationsInIdb(applied.mergedOperations);
-          rebuildMaxRevIndex(applied.mergedOperations);
-          if (syncOperationsHydratedRef.current) {
-            syncOperationsRef.current = applied.mergedOperations;
-            setSyncOperations(applied.mergedOperations);
-          }
-
-          const resolvedConflict = buildResolvedSyncConflict(conflict);
-          await saveSyncConflictInIdb(resolvedConflict);
-          setSyncConflicts((prev) => markSyncConflictResolved(prev, resolvedConflict));
-          await reloadFromAdapter();
-          notify(`Applied chosen value for ${conflict.entity_label} (${conflict.field_name}).`);
-        } catch (err) {
-          reportPersistenceFailure('resolve sync conflict', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      syncConflicts,
-      deviceId,
-      nextEntityRev,
-      loadSyncOperationsFromIdbAndIndex,
-      rebuildMaxRevIndex,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
+  const { resolveSyncConflict } = useSyncConflictResolution({
+    enqueueStoreMutation,
+    snapshotRef,
+    syncConflicts,
+    setSyncConflicts,
+    syncOperationsRef,
+    syncOperationsHydratedRef,
+    setSyncOperations,
+    deviceId,
+    allocateNextLogicalCounter,
+    nextEntityRev: (entityUuid) => nextEntityRev(entityUuid),
+    nowIsoUtc: getAdjustedNowIsoUtc,
+    loadSyncOperations: loadSyncOperationsFromIdbAndIndex,
+    replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
+    replaceSyncOperations: replaceSyncOperationsInIdb,
+    rebuildMaxRevIndex,
+    saveConflict: saveSyncConflictInIdb,
+    reloadFromAdapter,
+    notify,
+    reportPersistenceFailure,
+  });
 
   const { dismissSyncConflict } = useSyncConflictDismissal({
     syncConflicts,
@@ -8051,49 +8011,20 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     setCloudSyncState(next);
   }, []);
 
-  const restoreRollingBackupByKey = useCallback(
-    async (key: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        try {
-          const snap = await loadRollingSnapshotBackup(key);
-          if (!snap) {
-            notify('Could not load that rolling backup snapshot.');
-            return;
-          }
-          if (currentSnapshot && !wipedRecoveryContext?.detected && currentSnapshot.animals.length > 0) {
-            await saveSafetyRollingBackup(currentSnapshot, 'Pre-rolling-restore safety snapshot');
-          }
-          clearPhotoCache(photoCacheRef);
-          const cleanedRollingSnap: BarnDatabaseSnapshot = {
-            ...snap,
-            settings: {
-              ...snap.settings,
-              lastBackupMeta: undefined,
-              backupReminderSnoozedUntilMs: undefined,
-            },
-          };
-          await adapterRef.current!.replaceSnapshot(cleanedRollingSnap);
-          await clearLocalSyncAndBackupReminderState();
-          setWipedRecoveryContext(null);
-          await reloadFromAdapter();
-          notify(`Restored rolling snapshot (${snap.animals.length} animals).`);
-        } catch (err) {
-          reportPersistenceFailure('restore rolling snapshot', err);
-          throw err;
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      wipedRecoveryContext,
-      saveSafetyRollingBackup,
-      clearLocalSyncAndBackupReminderState,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
+  const { restoreRollingBackupByKey, deleteRollingIdbBackupByKey } = useRollingBackupActions({
+    notify,
+    reportPersistenceFailure,
+    snapshotRef,
+    wipedRecoveryDetected: Boolean(wipedRecoveryContext?.detected),
+    saveSafetyRollingBackup,
+    clearPhotoCache: () => clearPhotoCache(photoCacheRef),
+    replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
+    clearLocalSyncAndBackupReminderState,
+    clearWipedRecoveryContext: () => setWipedRecoveryContext(null),
+    reloadFromAdapter,
+    refreshVaultAndArchives,
+    enqueueStoreMutation,
+  });
 
   const {
     saveManualOpfsVaultBackup,
@@ -8180,80 +8111,29 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     reportPersistenceFailure,
   ]);
 
-  const deleteRollingIdbBackupByKey = useCallback(
-    async (key: string) => {
-      await deleteRollingSnapshotBackup(key);
-      await refreshVaultAndArchives();
-      notify('Removed local IndexedDB rolling snapshot.');
-    },
-    [refreshVaultAndArchives, notify]
-  );
-
-  const offloadAnimalsToOpfsArchiveInternal = useCallback(
-    async (
-      animalIds: string[]
-    ): Promise<{
-      archivedCount: number;
-      stubCount: number;
-      removedCount: number;
-      fileName: string;
-    } | null> => {
-      if (animalIds.length === 0) return null;
-      if (!isOpfsSupported()) {
-        notify(
-          'OPFS /archives storage is not available in this browser. Animals remain in the local Archived tab.'
-        );
-        return null;
-      }
-      try {
-        // Always load the authoritative fresh snapshot from the adapter so immediate
-        // post-save offloads (before React re-renders) never read stale state.
-        const freshBase = adapterRef.current
-          ? await adapterRef.current.loadSnapshot({ lightweightPhotos: true })
-          : snapshotRef.current;
-        if (!freshBase) return null;
-        const [hydrated, { buildArchivedAnimalsBundle }] = await Promise.all([
-          hydrateSnapshotForExport(freshBase),
-          import('../domain/backupVault'),
-        ]);
-        const built = buildArchivedAnimalsBundle(hydrated, animalIds);
-        if (built.indexEntry.animalCount === 0) {
-          notify('No eligible active/archived animals selected to offload.');
-          return null;
-        }
-        await saveOpfsHerdArchive(built.indexEntry, built.zipBytes);
-        await adapterRef.current!.replaceSnapshot(built.nextActiveSnapshot);
-        clearPhotoCache(photoCacheRef);
-
-        const removedSet = new Set(built.removedAnimalIds);
-        if (selectedAnimalId && removedSet.has(selectedAnimalId)) setSelectedAnimalId(null);
-        if (pedigreeAnimalId && removedSet.has(pedigreeAnimalId)) setPedigreeAnimalId(null);
-
-        await reloadFromAdapter();
-        notify(
-          `Offloaded ${built.indexEntry.animalCount} animal${built.indexEntry.animalCount === 1 ? '' : 's'} to OPFS /archives (${built.stubAnimalIds.length} retained as Pedigree Reference stub${built.stubAnimalIds.length === 1 ? '' : 's'}).`
-        );
-        return {
-          archivedCount: built.indexEntry.animalCount,
-          stubCount: built.stubAnimalIds.length,
-          removedCount: built.removedAnimalIds.length,
-          fileName: built.fileName,
-        };
-      } catch (err) {
-        reportPersistenceFailure('offload animals to OPFS /archives', err);
-        return null;
-      }
-    },
-    [hydrateSnapshotForExport, selectedAnimalId, pedigreeAnimalId, reloadFromAdapter, notify, reportPersistenceFailure]
-  );
+  const {
+    offloadAnimalsToOpfsArchive,
+    offloadAnimalsToOpfsArchiveInternal,
+  } = useOpfsArchiveOffload({
+    notify,
+    reportPersistenceFailure,
+    snapshotRef,
+    loadFreshSnapshot: () =>
+      adapterRef.current
+        ? adapterRef.current.loadSnapshot({ lightweightPhotos: true })
+        : Promise.resolve(snapshotRef.current),
+    hydrateSnapshotForExport,
+    replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
+    clearPhotoCache: () => clearPhotoCache(photoCacheRef),
+    selectedAnimalId,
+    pedigreeAnimalId,
+    clearSelectedAnimal: () => setSelectedAnimalId(null),
+    clearPedigreeAnimal: () => setPedigreeAnimalId(null),
+    reloadFromAdapter,
+    enqueueStoreMutation,
+  });
   offloadAnimalsRef.current = offloadAnimalsToOpfsArchiveInternal;
 
-  const offloadAnimalsToOpfsArchive = useCallback(
-    async (animalIds: string[]) => {
-      return enqueueStoreMutation(() => offloadAnimalsToOpfsArchiveInternal(animalIds));
-    },
-    [enqueueStoreMutation, offloadAnimalsToOpfsArchiveInternal]
-  );
 
   const connectBackupSyncFolder = useCallback(async () => {
     try {

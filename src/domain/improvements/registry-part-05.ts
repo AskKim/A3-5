@@ -1472,4 +1472,151 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Use `buildResolvedSyncConflict` + `markSyncConflictResolved` for any new cleared-conflict path instead of rebuilding the mapping.',
     ],
   },
+  {
+    id: 'IMP-098',
+    title: 'Sync-Conflict Resolution Moved Into a Sub-Hook',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Make “apply the winning/losing value” a single reviewed path, since it is the only conflict action that rewrites both the barn snapshot and the operation log.',
+    summary:
+      'Ninth barn-store slice: `src/hooks/barnStore/useSyncConflictResolution.ts` owns resolving a sync conflict — build the outbox operation for the chosen side, merge it into the snapshot and op log, reindex revisions, mark the conflict resolved, reload and toast. It runs inside `enqueueStoreMutation`, loads the op log only when it is not hydrated yet (and then deliberately leaves React state alone), and shares the resolved-marking helpers with dismissal. The pure sync engine is a port (`SYNC_RESOLUTION_ENGINE`), so tests assert the exact operation parameters without running a real merge. Behaviour is unchanged, including swallowing failures into `reportPersistenceFailure` and skipping unknown ids or an unloaded snapshot. The 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useSyncConflictResolution.ts',
+      'src/hooks/__tests__/syncConflictResolution.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useSyncConflictResolution.ts',
+        requiredSubstrings: [
+          'export function useSyncConflictResolution',
+          'SYNC_RESOLUTION_ENGINE',
+          'syncOperationsHydratedRef',
+        ],
+        rationale:
+          'The hydrated check is what stops resolution from replacing the in-memory op log with a stale reloaded one; removing it silently drops operations from the sync index.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useSyncConflictResolution'"],
+        forbiddenSubstrings: ['const resolveSyncConflict = useCallback('],
+        rationale:
+          'Resolution rewrites snapshot and op log together; re-inlining it invites a caller that does only one of the two.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/syncConflictResolution.test.ts',
+        requiredSubstrings: [
+          'loads the operation log when it is not hydrated yet',
+          'reports a failure without marking the conflict resolved',
+        ],
+        rationale:
+          'Those are the two ways this path can corrupt sync state: stale op-log replacement and a half-applied resolution marked clean.',
+      },
+    ],
+    restorePlaybook: [
+      'Conflict resolution lives in `barnStore/useSyncConflictResolution.ts`; the store supplies the sync refs, revision index and adapter.',
+      'Only resolve rewrites the barn; dismissal never applies a value.',
+      'When the op log is not hydrated, use the freshly loaded operations and do not mirror the merge into React state.',
+    ],
+  },
+  {
+    id: 'IMP-099',
+    title: 'Rolling IndexedDB Backup Actions Moved Into a Sub-Hook',
+    category: 'backup-safety',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Give the always-available rolling vault the same tested restore ordering as the OPFS vault, instead of a second hand-copied sequence.',
+    summary:
+      'Tenth barn-store slice: `src/hooks/barnStore/useRollingBackupActions.ts` owns restoring and deleting rolling IndexedDB snapshots. Restore keeps the safety order (safety snapshot → photo-cache clear → replace with bookkeeping stripped → sync/reminder clear → reload → toast) inside `enqueueStoreMutation`, and intentionally differs from the OPFS restore in one way: it does not switch the active species, because the rolling snapshot came from this same app instance and the current selection is still valid. Both restore paths now share `stripRestoredBackupBookkeeping`. Storage primitives are an injectable `ROLLING_BACKUP_STORAGE_PORT`. The 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useRollingBackupActions.ts',
+      'src/hooks/__tests__/rollingBackupActions.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useRollingBackupActions.ts',
+        requiredSubstrings: [
+          'export function useRollingBackupActions',
+          'ROLLING_BACKUP_STORAGE_PORT',
+          'stripRestoredBackupBookkeeping',
+        ],
+        rationale:
+          'Both restore paths must strip `lastBackupMeta` and the reminder snooze; a local copy of that cleaning step is how a restored backup immediately triggers “backup overdue” again.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useRollingBackupActions'"],
+        forbiddenSubstrings: ['const restoreRollingBackupByKey = useCallback('],
+        rationale:
+          'Re-inlining the rolling restore would let it drift from the OPFS ordering, which is the pair users rely on when one storage backend fails.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/rollingBackupActions.test.ts',
+        requiredSubstrings: [
+          'restores in safety order inside the mutation queue',
+          'keeps the selected species',
+        ],
+        rationale:
+          'Order is the safety contract, and the species difference from the OPFS path is deliberate — asserting it stops a future “unify these two” edit from changing behaviour.',
+      },
+    ],
+    restorePlaybook: [
+      'Rolling restore lives in `barnStore/useRollingBackupActions.ts`; the store supplies the refs, adapter replace and vault refresh.',
+      'Keep restore inside the mutation queue, and keep the safety snapshot before replacing anything.',
+      'Do not add a species switch here — the rolling snapshot belongs to the current session.',
+    ],
+  },
+  {
+    id: 'IMP-100',
+    title: 'OPFS /archives Offload Moved Into a Sub-Hook',
+    category: 'backup-safety',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Keep the archive offload — the operation that removes animals from the live barn — in a tested module that always reads the authoritative snapshot.',
+    summary:
+      'Eleventh and final planned barn-store slice: `src/hooks/barnStore/useOpfsArchiveOffload.ts` owns moving animals out of the active database into a zipped OPFS archive bundle: read the adapter snapshot (never React state, so a post-save offload cannot archive a stale barn), hydrate photos, build the bundle, save it, replace the snapshot with the stubs-only one, clear photo cache, drop selections pointing at animals that left, reload and toast. Empty selections, unsupported OPFS, nothing-eligible and build failures all keep their original silent-or-toast behaviour. `backupVault` stays a dynamic import so its chunk is unchanged; tests inject the builder instead of running the ZIP pipeline. The unqueued variant is exposed for callers that already hold `enqueueStoreMutation`. `useBarnStore.ts` dropped from 9,130 to 9,075 lines; the 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useOpfsArchiveOffload.ts',
+      'src/hooks/__tests__/opfsArchiveOffload.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useOpfsArchiveOffload.ts',
+        requiredSubstrings: [
+          'export function useOpfsArchiveOffload',
+          'OPFS_ARCHIVE_STORAGE_PORT',
+          'loadBundleBuilder',
+        ],
+        rationale:
+          'The lazy bundle builder keeps `backupVault` and its ZIP code out of the main chunk; a static import here would silently undo that split.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useOpfsArchiveOffload'"],
+        forbiddenSubstrings: ['const offloadAnimalsToOpfsArchiveInternal = useCallback('],
+        rationale:
+          'Offload deletes live animals; re-inlining it next to snapshot state invites reading React state instead of the adapter and archiving the wrong barn.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/opfsArchiveOffload.test.ts',
+        requiredSubstrings: [
+          'drops stale selections',
+          'stays disabled with a toast when OPFS archives are unavailable',
+        ],
+        rationale:
+          'Selections must not survive an offload that removed their animal, and a browser without OPFS must keep the animals in the Archived tab rather than pretending to offload.',
+      },
+    ],
+    restorePlaybook: [
+      'Offload lives in `barnStore/useOpfsArchiveOffload.ts`; the store supplies the adapter read/replace and selection setters.',
+      'Always build from `loadFreshSnapshot`, never from React state.',
+      'Keep the `backupVault` dynamic import; `verify:chunks` guards the split.',
+    ],
+  },
 ];
