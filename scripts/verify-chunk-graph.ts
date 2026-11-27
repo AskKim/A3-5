@@ -29,6 +29,19 @@ const files = fs
   .filter((f) => f.endsWith('.js'))
   .sort();
 
+/** Warn (never fail) when the bundles predate the source they came from: a stale dist proves nothing. */
+const newestMtime = (dir: string) => {
+  let newest = 0;
+  for (const entry of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    newest = Math.max(newest, fs.statSync(path.join(entry.parentPath, entry.name)).mtimeMs);
+  }
+  return newest;
+};
+if (newestMtime(ASSETS) < newestMtime(path.join(ROOT, 'src'))) {
+  console.warn('[verify:chunks] WARNING — dist/assets is older than src/; rebuild before trusting this result.');
+}
+
 /** Static `import ... from './x.js'` and side-effect `import './x.js'`. Dynamic `import()` is lazy by design. */
 const STATIC_IMPORT_RE = /\bimport\s*(?:[\w*{}\s,$]+?\s*from\s*)?["'](\.\/[^"']+\.js)["']/g;
 

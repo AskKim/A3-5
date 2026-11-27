@@ -1928,6 +1928,7 @@ npm run lint && npm run build
 - `scripts/verify-chunk-graph.ts` must contain `chunk-cycle-allowlist`, `no new circular chunk imports`, `STATIC_IMPORT_RE` — *The gate must exist, keep its ratchet file, and keep ignoring dynamic imports while inspecting static ones.*
 - `package.json` must contain `"verify:chunks"` — *The gate needs a stable npm entry point for CI and the sweep.*
 - `.github/workflows/ci.yml` must contain `npm run verify:chunks` — *CI must run the chunk gate on the real build output; running it locally without a fresh dist proves nothing.*
+- `.github/workflows/deploy-pages.yml` must contain `verify:chunks` — *The Pages workflow can deploy without CI, so it must run the chunk gate on the bundle it is about to publish.*
 
 **Restoration Playbook if Overwritten:**
 1. Keep `npm run verify:chunks` in CI after `npm run build`; the check needs the emitted bundles, not the source.

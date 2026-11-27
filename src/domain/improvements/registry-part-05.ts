@@ -997,6 +997,12 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         rationale:
           'CI must run the chunk gate on the real build output; running it locally without a fresh dist proves nothing.',
       },
+      {
+        filePath: '.github/workflows/deploy-pages.yml',
+        requiredSubstrings: ['verify:chunks'],
+        rationale:
+          'The Pages workflow can deploy without CI, so it must run the chunk gate on the bundle it is about to publish.',
+      },
     ],
     restorePlaybook: [
       'Keep `npm run verify:chunks` in CI after `npm run build`; the check needs the emitted bundles, not the source.',

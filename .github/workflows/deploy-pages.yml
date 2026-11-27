@@ -119,6 +119,7 @@ jobs:
             *) BASE_PATH="${BASE_PATH}/" ;;
           esac
           bun run build --base="$BASE_PATH"
+          bun run verify:chunks
           test -f dist/robots.txt || { echo "Missing dist/robots.txt" >&2; exit 1; }
           test -f dist/sitemap.xml || { echo "Missing dist/sitemap.xml" >&2; exit 1; }
           test -f dist/404.html || cp dist/index.html dist/404.html
