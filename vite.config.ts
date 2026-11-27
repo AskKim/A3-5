@@ -529,8 +529,11 @@ export default defineConfig(() => {
                 priority: 11,
               },
               {
+                // The facade and its entry parts MUST share one chunk: splitting them produced a
+                // circular chunk pair (parts <- facade <- parts) that threw "not iterable" at init.
+                // Rationale prose stays in its own lazily-imported chunk on purpose.
                 name: 'improvement-registry',
-                test: /[\\/]src[\\/]domain[\\/]improvementRegistry\.ts$/,
+                test: /[\\/]src[\\/]domain[\\/](improvementRegistry\.ts$|improvements[\\/](types|registry-part-\d+)\.ts$)/,
                 includeDependenciesRecursively: false,
                 priority: 10,
               },

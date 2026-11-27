@@ -1906,9 +1906,11 @@ npm run lint && npm run build
 
 **Automated Invariants Checked:**
 - `src/domain/improvementRegistry.ts` must contain `export const IMPROVEMENTS_REGISTRY`, `resolveEntryRationales`, `formatImprovementsMarkdown`, `buildImprovementsRecoveryJson` — *The registry must keep one public surface even though its entries are split across part modules and its prose lives elsewhere.*
+- `vite.config.ts` must contain `improvement-registry`, `registry-part-` — *The facade and its entry parts must stay in one chunk; splitting them produced a circular chunk pair that threw "not iterable" when the improvements panel opened.*
 - `src/domain/improvements/types.ts` must contain `ImprovementRationaleMap`, `rationale?: string` — *Shared types must stay available so part modules can be typed without importing the registry, and rationale must stay optional for entries that carry it inline.*
 
 **Restoration Playbook if Overwritten:**
 1. Keep the five import and spread lines in improvementRegistry.ts; concatenating entries inline again reintroduces the 6,428-line file.
 2. When adding an entry, add its rationale to improvements/rationales.ts under entryId#filePath#ordinal — the resolution test fails if you forget.
 3. The part data files and rationales.ts are exempt from the DOM/Node text scans in scripts/audit-layers.ts because their content is prose, not code.
+4. Keep the `improvement-registry` codeSplitting group matching `improvements/registry-part-*.ts` as well as the facade — separating them reintroduces the circular chunk that broke the panel in production while dev looked fine.

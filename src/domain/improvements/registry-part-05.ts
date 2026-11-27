@@ -944,6 +944,12 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'The registry must keep one public surface even though its entries are split across part modules and its prose lives elsewhere.',
       },
       {
+        filePath: 'vite.config.ts',
+        requiredSubstrings: ['improvement-registry', 'registry-part-'],
+        rationale:
+          'The facade and its entry parts must stay in one chunk; splitting them produced a circular chunk pair that threw "not iterable" when the improvements panel opened.',
+      },
+      {
         filePath: 'src/domain/improvements/types.ts',
         requiredSubstrings: ['ImprovementRationaleMap', 'rationale?: string'],
         rationale:
@@ -954,6 +960,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the five import and spread lines in improvementRegistry.ts; concatenating entries inline again reintroduces the 6,428-line file.',
       'When adding an entry, add its rationale to improvements/rationales.ts under entryId#filePath#ordinal — the resolution test fails if you forget.',
       'The part data files and rationales.ts are exempt from the DOM/Node text scans in scripts/audit-layers.ts because their content is prose, not code.',
+      'Keep the `improvement-registry` codeSplitting group matching `improvements/registry-part-*.ts` as well as the facade — separating them reintroduces the circular chunk that broke the panel in production while dev looked fine.',
     ],
   },
 ];
