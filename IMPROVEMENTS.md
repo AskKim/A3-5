@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (18 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (19 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (82)
+## Logged Improvements (83)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1836,3 +1836,24 @@ npm run lint && npm run build
 1. Regenerate `MODULES.md` with `npx tsx scripts/list-modules.ts --write` and re-run `npm run verify:modules`.
 2. Keep `src/storage/sqliteRowMappers.ts` and `src/storage/sqliteRowWriters.ts` classified as `pedigree-domain` in `EXTRACTION_INVENTORY.md`.
 3. Keep the typed `PerformanceMemory` interface in `src/hooks/useBarnStore.ts` instead of `as any`, and keep `package-lock.json` committed for deterministic installs.
+
+### IMP-083: Complete Gradle Wrapper, Static Android Gate & Remote APK Dispatch
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Fix the Android wrapper issues that do not require a multi-gigabyte SDK install, document what the full build needs, and make the GitHub APK build callable from a local agent.
+- **Summary:** Completes the half-installed Gradle wrapper (adds `gradlew`, `gradlew.bat` and `gradle-wrapper.jar` pinned to 8.13, matching CI), recreates the tracked `assets/www/.gitkeep` asset root, adds `android-wrapper/scripts/stage-web-assets.sh` plus `syncWebAssets`/`verifyWebAssets` Gradle tasks so a bare assemble fails fast instead of packaging an empty shell, adds `scripts/verify-android.ts` (`npm run verify:android`, 16 static checks: wrapper completeness, Gradle/CI pin agreement, four-way release version alignment, manifest security flags, SDK levels, staging guards, dependency policy and native bridge-name agreement) wired into `npm run verify`, adds `scripts/android-build-remote.mjs` to dispatch `.github/workflows/build-android-apk.yml` through the GitHub API with a dry-run and explicit token error, and documents the JDK 17 + Android SDK (~3-4 GB) requirement in `android-wrapper/README.md`.
+- **Tracked Files:** `android-wrapper/gradlew`, `android-wrapper/gradlew.bat`, `android-wrapper/gradle/wrapper/gradle-wrapper.jar`, `android-wrapper/app/src/main/assets/www/.gitkeep`, `android-wrapper/scripts/stage-web-assets.sh`, `android-wrapper/app/build.gradle.kts`, `android-wrapper/README.md`, `scripts/verify-android.ts`, `scripts/android-build-remote.mjs`, `package.json`, `IMPROVEMENTS.md`
+
+**Automated Invariants Checked:**
+- `android-wrapper/gradle/wrapper/gradle-wrapper.properties` must contain `gradle-8.13-bin.zip` — *The Gradle wrapper must stay pinned to the same 8.13 distribution CI installs, so local and CI builds resolve identically.*
+- `android-wrapper/app/build.gradle.kts` must contain `tasks.register<Copy>("syncWebAssets")`, `verifyWebAssets`, `dependsOn("verifyWebAssets")` — *The wrapper must stage dist/ into assets/www and fail preBuild when the WebView asset root has no index.html, instead of packaging a shell that renders nothing.*
+- `scripts/verify-android.ts` must contain `[verify:android] PASS`, `Gradle wrapper is complete`, `Release version is aligned across manifests` — *The static Android gate must remain intact so wrapper and version drift fail on a machine without the Android SDK.*
+- `package.json` must contain `verify:android` — *package.json must expose the Android static gate and keep it chained into `npm run verify`.*
+- `android-wrapper/README.md` must contain `./gradlew`, `stage-web-assets.sh`, `JDK 17` — *The wrapper README must document the real build path and the JDK 17 + Android SDK prerequisite.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `gradlew`, `gradlew.bat` and `gradle/wrapper/gradle-wrapper.jar` committed and pinned to Gradle 8.13; regenerate with `gradle wrapper --gradle-version 8.13` if lost.
+2. Keep `npm run verify:android` chained into `npm run verify` and run it before touching `android-wrapper/`.
+3. Keep `assets/www/.gitkeep` tracked and stage assets with `android-wrapper/scripts/stage-web-assets.sh` or `./gradlew syncWebAssets`.

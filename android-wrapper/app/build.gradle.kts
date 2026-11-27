@@ -164,3 +164,34 @@ dependencies {
     implementation("androidx.webkit:webkit:1.15.0")
     implementation("androidx.browser:browser:1.10.0")
 }
+
+// --- Offline WebView asset staging ---------------------------------------------------
+// CI copies dist/ into assets/www before assembling. These tasks give local/agent builds
+// the same guarantee and fail fast instead of packaging a shell that renders nothing.
+val wrapperWwwDir = layout.projectDirectory.dir("src/main/assets/www")
+
+tasks.register<Copy>("syncWebAssets") {
+    group = "pedigree"
+    description = "Copies the built React PWA (repo-root dist/) into the WebView asset root."
+    from(layout.projectDirectory.dir("../../dist")) {
+        exclude(".gitkeep")
+    }
+    into(wrapperWwwDir)
+}
+
+tasks.register("verifyWebAssets") {
+    group = "pedigree"
+    description = "Fails when the WebView asset root has no index.html."
+    doLast {
+        if (!wrapperWwwDir.file("index.html").asFile.isFile) {
+            throw GradleException(
+                "WebView assets are empty. Run 'npm run build -- --base=/' in the repo root, then " +
+                    "'./gradlew syncWebAssets' here (or run android-wrapper/scripts/stage-web-assets.sh)."
+            )
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("verifyWebAssets")
+}

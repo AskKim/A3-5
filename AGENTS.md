@@ -164,7 +164,7 @@ lockfile is stale or a dependency change is intentional.
 | 2 | Typecheck (app) | `npm run lint` (`tsc --noEmit`) |
 | 3 | Typecheck (engine/features/utils) | `npm run verify:engine` |
 | 4 | Tests | `npm test` (`vitest run`, full suite) |
-| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction` |
+| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android` |
 | 6 | Aggregate shortcut | `npm run verify` — equals steps 2–5; use it **instead of** them, never in addition |
 | 7 | Preflight | `npm run preflight:lint`; `node prompts/preflight/scripts/preflight-run-context.mjs --branch "$(git rev-parse --abbrev-ref HEAD)" --version "$(node -p "require('./package.json').version")" --dry-run` |
 | 8 | Release metadata | `package.json` version = `public/version.json` `appVersion` = `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts` = `versionName` in `android-wrapper/app/build.gradle.kts` |
@@ -180,6 +180,11 @@ Mixpanel; every `.github/workflows/*.yml` declares `name`, `on`, `jobs` (CI uses
 if `python3 -c 'import yaml'` is unavailable, say strict YAML validation could not run).
 
 Do **not** run `gen-preflight.mjs` in a sweep: it rewrites tracked docs.
+
+The APK itself cannot be compiled without JDK 17 plus the Android SDK (~3–4 GB). `verify:android`
+is the static stand-in (wrapper completeness, version alignment, manifest flags, dependency policy);
+when a `GH_TOKEN` with `actions:write` is present, `node scripts/android-build-remote.mjs --ref <branch>`
+dispatches the real `.github/workflows/build-android-apk.yml` build and reports its conclusion.
 
 ### Phase 2 — Repo & Git environment
 

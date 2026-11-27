@@ -6044,6 +6044,67 @@ export const IMPROVEMENTS_REGISTRY: ImprovementEntry[] = [
       'Keep the typed `PerformanceMemory` interface in `src/hooks/useBarnStore.ts` instead of `as any`, and keep `package-lock.json` committed for deterministic installs.',
     ],
   },
+  {
+    id: 'IMP-083',
+    title: 'Complete Gradle Wrapper, Static Android Gate & Remote APK Dispatch',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Fix the Android wrapper issues that do not require a multi-gigabyte SDK install, document what the full build needs, and make the GitHub APK build callable from a local agent.',
+    summary:
+      'Completes the half-installed Gradle wrapper (adds `gradlew`, `gradlew.bat` and `gradle-wrapper.jar` pinned to 8.13, matching CI), recreates the tracked `assets/www/.gitkeep` asset root, adds `android-wrapper/scripts/stage-web-assets.sh` plus `syncWebAssets`/`verifyWebAssets` Gradle tasks so a bare assemble fails fast instead of packaging an empty shell, adds `scripts/verify-android.ts` (`npm run verify:android`, 16 static checks: wrapper completeness, Gradle/CI pin agreement, four-way release version alignment, manifest security flags, SDK levels, staging guards, dependency policy and native bridge-name agreement) wired into `npm run verify`, adds `scripts/android-build-remote.mjs` to dispatch `.github/workflows/build-android-apk.yml` through the GitHub API with a dry-run and explicit token error, and documents the JDK 17 + Android SDK (~3-4 GB) requirement in `android-wrapper/README.md`.',
+    files: [
+      'android-wrapper/gradlew',
+      'android-wrapper/gradlew.bat',
+      'android-wrapper/gradle/wrapper/gradle-wrapper.jar',
+      'android-wrapper/app/src/main/assets/www/.gitkeep',
+      'android-wrapper/scripts/stage-web-assets.sh',
+      'android-wrapper/app/build.gradle.kts',
+      'android-wrapper/README.md',
+      'scripts/verify-android.ts',
+      'scripts/android-build-remote.mjs',
+      'package.json',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'android-wrapper/gradle/wrapper/gradle-wrapper.properties',
+        requiredSubstrings: ['gradle-8.13-bin.zip'],
+        rationale:
+          'The Gradle wrapper must stay pinned to the same 8.13 distribution CI installs, so local and CI builds resolve identically.',
+      },
+      {
+        filePath: 'android-wrapper/app/build.gradle.kts',
+        requiredSubstrings: ['tasks.register<Copy>("syncWebAssets")', 'verifyWebAssets', 'dependsOn("verifyWebAssets")'],
+        rationale:
+          'The wrapper must stage dist/ into assets/www and fail preBuild when the WebView asset root has no index.html, instead of packaging a shell that renders nothing.',
+      },
+      {
+        filePath: 'scripts/verify-android.ts',
+        requiredSubstrings: ['[verify:android] PASS', 'Gradle wrapper is complete', 'Release version is aligned across manifests'],
+        rationale:
+          'The static Android gate must remain intact so wrapper and version drift fail on a machine without the Android SDK.',
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['verify:android'],
+        rationale:
+          'package.json must expose the Android static gate and keep it chained into `npm run verify`.',
+      },
+      {
+        filePath: 'android-wrapper/README.md',
+        requiredSubstrings: ['./gradlew', 'stage-web-assets.sh', 'JDK 17'],
+        rationale:
+          'The wrapper README must document the real build path and the JDK 17 + Android SDK prerequisite.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep `gradlew`, `gradlew.bat` and `gradle/wrapper/gradle-wrapper.jar` committed and pinned to Gradle 8.13; regenerate with `gradle wrapper --gradle-version 8.13` if lost.',
+      'Keep `npm run verify:android` chained into `npm run verify` and run it before touching `android-wrapper/`.',
+      'Keep `assets/www/.gitkeep` tracked and stage assets with `android-wrapper/scripts/stage-web-assets.sh` or `./gradlew syncWebAssets`.',
+    ],
+  },
 ];
 
 /**

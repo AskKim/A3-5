@@ -27,6 +27,24 @@ rm -rf android-wrapper/app/src/main/assets/www
 mkdir -p android-wrapper/app/src/main/assets/www
 cp -R dist/. android-wrapper/app/src/main/assets/www/
 
-# Step 3: Package the thin Android APK shell
-cd android-wrapper && gradle assembleDebug --no-daemon
+# Step 3: Stage dist/ into the WebView asset root (keeps .gitkeep; fails if dist/ is missing)
+./android-wrapper/scripts/stage-web-assets.sh
+
+# Step 4: Package the thin Android APK shell (the wrapper pins Gradle 8.13)
+cd android-wrapper && ./gradlew assembleDebug --no-daemon
 ```
+
+`npm run verify:android` statically checks the wrapper files, Gradle/CI version agreement, release version
+alignment, manifest security flags, asset staging guards and dependency policy without needing the SDK.
+
+## Build toolchain
+
+A real APK build needs **JDK 17 plus the Android SDK** (platform 36, build-tools, platform-tools), roughly
+3–4 GB installed. CI does exactly that on every push to `main` via `actions/setup-java` and the runner's
+preinstalled SDK (`gradle assembleDebug` / `assembleRelease`).
+
+Without that toolchain you can still:
+
+- run `npm run verify:android` for the static gate, and
+- trigger the real APK build remotely: `node scripts/android-build-remote.mjs --ref main` (needs a
+  `GH_TOKEN` with `actions:write`), or `gh workflow run build-android-apk.yml`.
