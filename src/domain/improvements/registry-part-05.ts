@@ -1369,4 +1369,56 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Persist the provider and client id before starting the PKCE redirect, or the callback cannot resolve which provider it belongs to.',
     ],
   },
+  {
+    id: 'IMP-096',
+    title: 'OPFS Vault Save/Describe/Delete/Restore Moved Into a Sub-Hook',
+    category: 'backup-safety',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Keep the vault restore path — the one operation that overwrites a live barn — in a small, tested module instead of a 9k-line hook.',
+    summary:
+      'Seventh barn-store slice: `src/hooks/barnStore/useOpfsVaultActions.ts` owns the four vault operations — save a manual snapshot, describe a backup by key or file name, download it, delete it, and restore it by key. The restore keeps the exact order that makes it safe to interrupt (safety snapshot → photo-cache clear → snapshot replace → sync-state clear → species reset → reload) and still runs inside `enqueueStoreMutation`; the wiped-recovery path calls the unqueued variant so it never waits on a lock it already holds. Save still mirrors to the native vault and still falls back to the rolling IndexedDB vault when OPFS is missing, with the same toasts. Storage primitives are an injectable `OPFS_VAULT_STORAGE_PORT`, so tests drive every branch without OPFS or IndexedDB. `useBarnStore.ts` dropped from 9,302 to 9,199 lines; the 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useOpfsVaultActions.ts',
+      'src/hooks/__tests__/opfsVaultActions.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useOpfsVaultActions.ts',
+        requiredSubstrings: [
+          'export function useOpfsVaultActions',
+          'OPFS_VAULT_STORAGE_PORT',
+          'describeOpfsVaultBackup',
+          'restoreOpfsVaultBackupUnqueued',
+        ],
+        rationale:
+          'The injected storage port is what lets the restore path be tested without a real OPFS; the unqueued restore is what keeps the wiped-recovery path from deadlocking on the mutation lock.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useOpfsVaultActions'"],
+        forbiddenSubstrings: ['const restoreOpfsVaultBackupInternal = useCallback('],
+        rationale:
+          'Re-inlining restore would separate the safety snapshot from the replace, which is the one ordering that prevents a failed restore from destroying the only copy of a barn.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/opfsVaultActions.test.ts',
+        requiredSubstrings: [
+          'runs inside the mutation queue in safety order',
+          'skips the safety snapshot after a wiped-storage recovery',
+        ],
+        rationale:
+          'Those two tests are the guard rails for the restore: the order of side effects, and the deliberate exception after storage was wiped (there is nothing left to back up).',
+      },
+    ],
+    restorePlaybook: [
+      'Vault operations live in `barnStore/useOpfsVaultActions.ts`; the store supplies the snapshot refs, adapter replace and listing.',
+      'Restore order is the safety contract: safety snapshot, clear photo cache, replace snapshot, clear sync/reminder state, reset species, reload — then toast.',
+      'Call `restoreOpfsVaultBackupUnqueued` only from code that already runs inside `enqueueStoreMutation`, never from UI handlers.',
+    ],
+  },
 ];

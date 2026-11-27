@@ -287,6 +287,7 @@ import {
 } from './barnStore/backupReminder';
 import { useAlertDismissals } from './barnStore/useAlertDismissals';
 import { useCloudSyncActions } from './barnStore/useCloudSyncActions';
+import { useOpfsVaultActions } from './barnStore/useOpfsVaultActions';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -8098,57 +8099,33 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
-  const saveManualOpfsVaultBackup = useCallback(
-    async (note?: string): Promise<VaultBackupMetadata | null> => {
-      if (!snapshot) return null;
-      try {
-        const hydrated = await hydrateSnapshotForExport(snapshot);
-        const [, opfsRes, nativeRes] = await Promise.allSettled([
-          saveRollingSnapshotBackup(hydrated),
-          isOpfsSupported()
-            ? saveOpfsVaultBackup(hydrated, {
-                kind: 'manual',
-                note: note?.trim() || 'Manual snapshot saved to Vault',
-              })
-            : Promise.resolve(null),
-          mirrorSnapshotToNativeVaultIfWrapped(hydrated, 'manual'),
-        ]);
-        const meta = opfsRes.status === 'fulfilled' ? opfsRes.value : null;
-        const mirroredNative = nativeRes.status === 'fulfilled' && nativeRes.value;
-        await refreshVaultAndArchives();
-        if (mirroredNative) {
-          void refreshStorageStatus();
-        }
-        if (meta) {
-          await recordBackupExport('json', meta.fileName);
-          notify(
-            `Saved snapshot to OPFS Backup Vault (${meta.animalCount} animals, ${meta.photoCount} photos · ${formatByteSizePure(meta.byteSize)}).`
-          );
-          return meta;
-        }
-        await recordBackupExport('json', 'rolling-local-snapshot');
-        notify(
-          mirroredNative
-            ? 'Saved snapshot to IndexedDB Rolling Vault and Native Android Backup Vault.'
-            : 'Saved snapshot to IndexedDB Rolling Vault (OPFS directory access is unavailable in this browser).'
-        );
-        return null;
-      } catch (err) {
-        reportPersistenceFailure('save snapshot to backup vault', err);
-        throw err;
-      }
-    },
-    [
-      snapshot,
-      hydrateSnapshotForExport,
-      mirrorSnapshotToNativeVaultIfWrapped,
-      refreshVaultAndArchives,
-      refreshStorageStatus,
-      recordBackupExport,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
+  const {
+    saveManualOpfsVaultBackup,
+    downloadOpfsVaultBackupByKey,
+    deleteOpfsVaultBackupByKey,
+    restoreOpfsVaultBackup,
+    restoreOpfsVaultBackupUnqueued,
+  } = useOpfsVaultActions({
+    notify,
+    reportPersistenceFailure,
+    snapshot,
+    snapshotRef,
+    wipedRecoveryDetected: Boolean(wipedRecoveryContext?.detected),
+    opfsVaultBackups,
+    hydrateSnapshotForExport,
+    saveSafetyRollingBackup,
+    mirrorToNativeVault: (snap) => mirrorSnapshotToNativeVaultIfWrapped(snap, 'manual'),
+    replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
+    clearPhotoCache: () => clearPhotoCache(photoCacheRef),
+    clearLocalSyncAndBackupReminderState,
+    clearWipedRecoveryContext: () => setWipedRecoveryContext(null),
+    setActiveSpeciesName,
+    reloadFromAdapter,
+    refreshVaultAndArchives,
+    refreshStorageStatus,
+    recordBackupExport,
+    enqueueStoreMutation,
+  });
 
   const createAndVerifyPreUpgradeBackup = useCallback(async (): Promise<{
     verified: boolean;
@@ -8206,86 +8183,6 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     notify,
     reportPersistenceFailure,
   ]);
-
-  const restoreOpfsVaultBackupInternal = useCallback(
-    async (key: string) => {
-      const currentSnapshot = snapshotRef.current;
-      try {
-        const loaded = await loadOpfsVaultBackup(key, currentSnapshot?.settings);
-        if (!loaded) {
-          notify('Could not read or verify that OPFS backup file.');
-          return;
-        }
-        const migrated = loaded.migrated;
-        if (currentSnapshot && !wipedRecoveryContext?.detected && currentSnapshot.animals.length > 0) {
-          await saveSafetyRollingBackup(currentSnapshot, 'Pre-vault-restore safety snapshot');
-        }
-        clearPhotoCache(photoCacheRef);
-        const cleanedVaultSnap: BarnDatabaseSnapshot = {
-          ...migrated.snapshot,
-          settings: {
-            ...migrated.snapshot.settings,
-            lastBackupMeta: undefined,
-            backupReminderSnoozedUntilMs: undefined,
-          },
-        };
-        await adapterRef.current!.replaceSnapshot(cleanedVaultSnap);
-        await clearLocalSyncAndBackupReminderState();
-        setWipedRecoveryContext(null);
-        setActiveSpeciesName(migrated.snapshot.settings.defaultSpecies || 'Rabbit');
-        await reloadFromAdapter();
-        const migNote =
-          migrated.migratedFromVersion < migrated.schemaVersion
-            ? ` (migrated v${migrated.migratedFromVersion} → v${migrated.schemaVersion})`
-            : '';
-        notify(
-          `Restored ${migrated.snapshot.animals.length} animals & ${(migrated.snapshot.animalPhotos ?? []).length} photos from OPFS Vault${migNote}.`
-        );
-      } catch (err) {
-        reportPersistenceFailure('restore OPFS vault backup', err);
-        throw err;
-      }
-    },
-    [
-      wipedRecoveryContext,
-      saveSafetyRollingBackup,
-      clearLocalSyncAndBackupReminderState,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
-
-  const restoreOpfsVaultBackup = useCallback(
-    async (key: string) => {
-      return enqueueStoreMutation(() => restoreOpfsVaultBackupInternal(key));
-    },
-    [enqueueStoreMutation, restoreOpfsVaultBackupInternal]
-  );
-
-  const downloadOpfsVaultBackupByKey = useCallback(
-    async (key: string) => {
-      const res = await readOpfsVaultBackupBlob(key);
-      if (!res) {
-        notify('Could not read OPFS vault backup file for download.');
-        return;
-      }
-      const matched = opfsVaultBackups.find((b) => b.key === key || b.fileName === key);
-      const fileName = matched?.fileName || res.fileName;
-      await downloadBlobDirect(fileName, res.blob);
-      notify(`Downloaded ${fileName}.`);
-    },
-    [opfsVaultBackups, notify]
-  );
-
-  const deleteOpfsVaultBackupByKey = useCallback(
-    async (key: string) => {
-      await deleteOpfsVaultBackup(key);
-      await refreshVaultAndArchives();
-      notify('Removed backup from OPFS Vault.');
-    },
-    [refreshVaultAndArchives, notify]
-  );
 
   const deleteRollingIdbBackupByKey = useCallback(
     async (key: string) => {
@@ -8532,9 +8429,9 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         notify('No OPFS vault backup found to restore.');
         return;
       }
-      await restoreOpfsVaultBackupInternal(targetKey);
+      await restoreOpfsVaultBackupUnqueued(targetKey);
     });
-  }, [enqueueStoreMutation, wipedRecoveryContext, restoreOpfsVaultBackupInternal, notify]);
+  }, [enqueueStoreMutation, wipedRecoveryContext, restoreOpfsVaultBackupUnqueued, notify]);
 
   const startFreshAfterWipedRecovery = useCallback(async () => {
     return enqueueStoreMutation(async () => {
