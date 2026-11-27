@@ -1101,10 +1101,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'The extracted slice must keep its public surface so the hook and any future slice share one policy.',
       },
       {
-        filePath: 'src/hooks/useBarnStore.ts',
-        requiredSubstrings: ["from './barnStore/photoCacheBudget'"],
+        filePath: 'src/hooks/barnStore/usePhotoCache.ts',
+        requiredSubstrings: ["from './photoCacheBudget'"],
         rationale:
-          'The hook must consume the extracted policy rather than reintroducing a private copy, which would let the two drift.',
+          'The photo-cache slice must consume the extracted budget policy rather than re-deriving cache sizes, which would let the two drift.',
       },
       {
         filePath: 'src/hooks/__tests__/photoCacheBudget.test.ts',
@@ -1213,6 +1213,55 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Reminder actions live in `useBackupReminderActions`; extend the deps object rather than reaching back into the store for new wiring.',
       'Keep the plain `*Action` bodies exported and tested — they are the only place reminder behaviour can be verified without a DOM harness.',
       'Preserve `{ silent: true }` on these settings writes; they must not fire the "Barn preferences saved" toast after an export or snooze.',
+    ],
+  },
+  {
+    id: 'IMP-093',
+    title: 'Photo Cache Cluster Moved Into a Sub-Hook',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Get the photo cache and its four loaders out of the monolith while keeping the memory behaviour and lookup order identical.',
+    summary:
+      'Fourth barn-store slice: `src/hooks/barnStore/usePhotoCache.ts` now creates the bounded LRU (sized from the device capability tier) and owns the four loaders for animal photos, animal photo batches, feed-batch tags and ledger receipts. The sub-hook takes only `adapterRef`, `snapshotRef` and the live `snapshot`, and returns the cache ref plus the loaders, so the thirty-odd imperative `photoCacheRef` touch points elsewhere in the store keep working unchanged. Lookup order is unchanged and now testable: cache, snapshot data URL, storage adapter, snapshot thumbnail, with the batch loader deduping, capping at 60 ids and falling back to thumbnails when the adapter throws. `useBarnStore.ts` dropped from 9,498 to 9,386 lines; the memory-pressure effect moved two statements down but still clears the same cache every five seconds above 80% heap. The 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/usePhotoCache.ts',
+      'src/hooks/__tests__/photoCache.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/usePhotoCache.ts',
+        requiredSubstrings: [
+          'export function usePhotoCache',
+          'createBudgetedPhotoCache',
+          'loadAnimalPhotoDataUrlWith',
+          'loadFeedBatchTagPhotoDataUrlWith',
+          'loadLedgerEntryReceiptPhotoDataUrlWith',
+        ],
+        rationale:
+          'The loaders and the budgeted cache construction must stay in this slice; the plain `*With` bodies are the only testable record of the lookup order.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/usePhotoCache'"],
+        forbiddenSubstrings: ['const loadAnimalPhotoDataUrl = useCallback('],
+        rationale:
+          'Re-inlining a loader would fork the cache lookup order and reopen the drift this extraction closed.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/photoCache.test.ts',
+        requiredSubstrings: ['survives a failing adapter batch', 'namespaced cache key'],
+        rationale:
+          'The two behaviours most likely to regress: adapter failures must not break print preview, and feed/ledger keys must not collide with animal photo ids.',
+      },
+    ],
+    restorePlaybook: [
+      'Photo cache policy lives in `barnStore/usePhotoCache.ts`; the store keeps the ref only for imperative clear/set/delete calls.',
+      'Keep the key prefixes (`feed-tag:`, `ledger-receipt:`) — dropping them lets a batch or entry id overwrite an animal photo.',
+      'The cache is transient and rebuildable: never persist it, and keep the memory-pressure clear wired to the same ref the loaders use.',
     ],
   },
 ];

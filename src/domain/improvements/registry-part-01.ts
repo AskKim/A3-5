@@ -730,7 +730,6 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: [
-          'BoundedPhotoDataCache',
           'loadAnimalPhotoDataUrl',
           'hydrateSnapshotForExport',
           'buildCompleteBackupZipToOpfsTmpOffThread',
@@ -743,6 +742,12 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
         requiredSubstrings: ['parseExternalImportOffThread', 'isParsingArchive'],
+      },
+      {
+        filePath: 'src/hooks/barnStore/usePhotoCache.ts',
+        requiredSubstrings: ['BoundedPhotoDataCache', 'loadAnimalPhotoDataUrlWith'],
+        rationale:
+          'The bounded photo cache and its loaders now live in the barn-store photo slice; losing them there would silently disable on-demand full-resolution hydration.',
       },
     ],
     restorePlaybook: [

@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (28 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (29 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (92)
+## Logged Improvements (93)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -360,9 +360,10 @@ npm run lint && npm run build
 - `src/storage/webSqliteAdapter.ts` must contain `lightweightPhotos`, `loadAnimalPhotoDataUrl`, `loadAnimalPhotoDataUrlsBatch` — *SQLite adapter supports thumbnail-only snapshot loads, on-demand photo reads, and non-destructive dehydrated writes.*
 - `src/storage/archiveAndImport.worker.ts` must contain `buildCompleteBackupZipArchive`, `buildPhotosOnlyZipArchive`, `parseBackupArchiveInput` — *Dedicated module worker runs heavy ZIP builds/extractions and importer parsing off the UI thread.*
 - `src/storage/offThreadWorkerClient.ts` must contain `buildCompleteBackupZipOffThread`, `parseExternalImportOffThread`, `buildImporterWorkerSnapshot` — *Worker client strips base64 images before cloning snapshots and falls back gracefully when `Worker` is unavailable.*
-- `src/hooks/useBarnStore.ts` must contain `BoundedPhotoDataCache`, `loadAnimalPhotoDataUrl`, `hydrateSnapshotForExport`, `buildCompleteBackupZipToOpfsTmpOffThread` — *Store loads lightweight snapshots, caches hydrated photos, hydrates rolling/export snapshots, and streams off-thread ZIP archives via OPFS /tmp.*
+- `src/hooks/useBarnStore.ts` must contain `loadAnimalPhotoDataUrl`, `hydrateSnapshotForExport`, `buildCompleteBackupZipToOpfsTmpOffThread` — *Store loads lightweight snapshots, caches hydrated photos, hydrates rolling/export snapshots, and streams off-thread ZIP archives via OPFS /tmp.*
 - `src/components/AnimalPhotoGallery.tsx` must contain `onLoadFullPhoto`, `activePhotoSrc` — *Photo gallery and lightbox fetch full-resolution images lazily while displaying thumbnails immediately.*
 - `src/components/ExternalImporterPanel.tsx` must contain `parseExternalImportOffThread`, `isParsingArchive` — *External importer unpacks and parses staged archives asynchronously off-thread with request sequencing.*
+- `src/hooks/barnStore/usePhotoCache.ts` must contain `BoundedPhotoDataCache`, `loadAnimalPhotoDataUrlWith` — *The bounded photo cache and its loaders now live in the barn-store photo slice; losing them there would silently disable on-demand full-resolution hydration.*
 
 **Restoration Playbook if Overwritten:**
 1. Keep `BoundedPhotoDataCache` and `hydrateSnapshotWithPhotoDataUrls` in `src/storage/photoHydration.ts` plus `lightweightPhotos` guards in `src/storage/webSqliteAdapter.ts`.
@@ -1983,7 +1984,7 @@ npm run lint && npm run build
 
 **Automated Invariants Checked:**
 - `src/hooks/barnStore/photoCacheBudget.ts` must contain `export function getPhotoCacheBudgetForTier`, `export interface PhotoCacheBudget` — *The extracted slice must keep its public surface so the hook and any future slice share one policy.*
-- `src/hooks/useBarnStore.ts` must contain `from './barnStore/photoCacheBudget'` — *The hook must consume the extracted policy rather than reintroducing a private copy, which would let the two drift.*
+- `src/hooks/barnStore/usePhotoCache.ts` must contain `from './photoCacheBudget'` — *The photo-cache slice must consume the extracted budget policy rather than re-deriving cache sizes, which would let the two drift.*
 - `src/hooks/__tests__/photoCacheBudget.test.ts` must contain `never shrinks as the tier rises`, `non-finite tiers` — *The slice keeps the guard rails that made it safe to move: monotonic sizing and the preserved non-finite behaviour.*
 
 **Restoration Playbook if Overwritten:**
@@ -2030,3 +2031,23 @@ npm run lint && npm run build
 1. Reminder actions live in `useBackupReminderActions`; extend the deps object rather than reaching back into the store for new wiring.
 2. Keep the plain `*Action` bodies exported and tested — they are the only place reminder behaviour can be verified without a DOM harness.
 3. Preserve `{ silent: true }` on these settings writes; they must not fire the "Barn preferences saved" toast after an export or snooze.
+
+### IMP-093: Photo Cache Cluster Moved Into a Sub-Hook
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Stability & Mobile PWA (`stability-pwa`)
+- **Origin:** Session Improvement
+- **User Goal:** Get the photo cache and its four loaders out of the monolith while keeping the memory behaviour and lookup order identical.
+- **Summary:** Fourth barn-store slice: `src/hooks/barnStore/usePhotoCache.ts` now creates the bounded LRU (sized from the device capability tier) and owns the four loaders for animal photos, animal photo batches, feed-batch tags and ledger receipts. The sub-hook takes only `adapterRef`, `snapshotRef` and the live `snapshot`, and returns the cache ref plus the loaders, so the thirty-odd imperative `photoCacheRef` touch points elsewhere in the store keep working unchanged. Lookup order is unchanged and now testable: cache, snapshot data URL, storage adapter, snapshot thumbnail, with the batch loader deduping, capping at 60 ids and falling back to thumbnails when the adapter throws. `useBarnStore.ts` dropped from 9,498 to 9,386 lines; the memory-pressure effect moved two statements down but still clears the same cache every five seconds above 80% heap. The 200-key contract snapshot is untouched.
+- **Tracked Files:** `src/hooks/barnStore/usePhotoCache.ts`, `src/hooks/__tests__/photoCache.test.ts`, `src/hooks/useBarnStore.ts`, `MODULES.md`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/usePhotoCache.ts` must contain `export function usePhotoCache`, `createBudgetedPhotoCache`, `loadAnimalPhotoDataUrlWith`, `loadFeedBatchTagPhotoDataUrlWith`, `loadLedgerEntryReceiptPhotoDataUrlWith` — *The loaders and the budgeted cache construction must stay in this slice; the plain `*With` bodies are the only testable record of the lookup order.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/usePhotoCache'` — *Re-inlining a loader would fork the cache lookup order and reopen the drift this extraction closed.*
+  - Forbidden regression: `const loadAnimalPhotoDataUrl = useCallback(`
+- `src/hooks/__tests__/photoCache.test.ts` must contain `survives a failing adapter batch`, `namespaced cache key` — *The two behaviours most likely to regress: adapter failures must not break print preview, and feed/ledger keys must not collide with animal photo ids.*
+
+**Restoration Playbook if Overwritten:**
+1. Photo cache policy lives in `barnStore/usePhotoCache.ts`; the store keeps the ref only for imperative clear/set/delete calls.
+2. Keep the key prefixes (`feed-tag:`, `ledger-receipt:`) — dropping them lets a batch or entry id overwrite an animal photo.
+3. The cache is transient and rebuildable: never persist it, and keep the memory-pressure clear wired to the same ref the loaders use.

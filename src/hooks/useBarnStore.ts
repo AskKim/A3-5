@@ -212,7 +212,6 @@ import {
   setCurrentDiagnosticRoute,
 } from '../storage/crashLogger';
 import {
-  BoundedPhotoDataCache,
   hydrateSnapshotWithPhotoDataUrls,
   stripPhotoDataUrlsFromSnapshot,
 } from '../storage/photoHydration';
@@ -238,7 +237,6 @@ import {
   StorageProtectionStatus,
   useConnectivityStatus,
 } from '../storage/storageProtection';
-import { detectCurrentDeviceCapability } from '../storage/deviceCapabilityDetector';
 import { markPreUpgradeBackupVerified } from '../storage/pwaUpdateManager';
 import {
   clearOpfsPruneSyncWarning,
@@ -280,7 +278,7 @@ import {
 } from '../app/pedigreeAppWiring';
 import type { IPlatformBridge } from '@engine/bridge';
 import type { PendingGoogleCalendarSync } from '../domain/calendarExport';
-import { getPhotoCacheBudgetForTier } from './barnStore/photoCacheBudget';
+import { usePhotoCache } from './barnStore/usePhotoCache';
 import {
   clearStoredBackupReminderState,
   readStoredLastBackupMeta,
@@ -389,32 +387,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   if (!adapterRef.current) {
     adapterRef.current = createPedigreeDomainStorageAdapter({ bridge: activeBridge });
   }
-  const [initialPhotoCache] = useState<BoundedPhotoDataCache>(() => {
-    const cap = detectCurrentDeviceCapability();
-    const budget = getPhotoCacheBudgetForTier(cap.tier);
-    return new BoundedPhotoDataCache(budget.maxEntries, budget.maxBytes);
-  });
-  const photoCacheRef = useRef<BoundedPhotoDataCache>(initialPhotoCache);
   // Ancestor cache for pedigree lookup (originally removed)
   const pedigreeAncestorCacheRef = useRef<Map<string, Animal>>(new Map());
-  // Monitor memory pressure and clear cache if needed
-  useEffect(() => {
-    // Only run in browsers exposing the non-standard Chromium `performance.memory` API
-    if (typeof performance === 'undefined') return;
-    const memoryPerformance = performance as Performance & { memory?: PerformanceMemory };
-    if (memoryPerformance.memory) {
-      const interval = setInterval(() => {
-        const used = memoryPerformance.memory?.usedJSHeapSize ?? 0;
-        const limit = memoryPerformance.memory?.jsHeapSizeLimit ?? Number.MAX_SAFE_INTEGER;
-        // If usage exceeds 80% of limit, clear photo cache to free memory
-        if (limit > 0 && used / limit > 0.8) {
-          console.warn('High memory usage detected, clearing photo cache');
-          photoCacheRef.current.clear();
-        }
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, []);
 
   const loadedPedigreeArchiveKeysRef = useRef<Set<string>>(new Set());
   const snapshotRef = useRef<BarnDatabaseSnapshot | null>(null);
@@ -434,6 +408,31 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [snapshot, setSnapshot] = useState<BarnDatabaseSnapshot | null>(null);
   snapshotRef.current = snapshot;
+  const {
+    photoCacheRef,
+    loadAnimalPhotoDataUrl,
+    loadAnimalPhotoDataUrlsBatch,
+    loadFeedBatchTagPhotoDataUrl,
+    loadLedgerEntryReceiptPhotoDataUrl,
+  } = usePhotoCache({ adapterRef, snapshotRef, snapshot });
+  // Monitor memory pressure and clear cache if needed
+  useEffect(() => {
+    // Only run in browsers exposing the non-standard Chromium `performance.memory` API
+    if (typeof performance === 'undefined') return;
+    const memoryPerformance = performance as Performance & { memory?: PerformanceMemory };
+    if (memoryPerformance.memory) {
+      const interval = setInterval(() => {
+        const used = memoryPerformance.memory?.usedJSHeapSize ?? 0;
+        const limit = memoryPerformance.memory?.jsHeapSizeLimit ?? Number.MAX_SAFE_INTEGER;
+        // If usage exceeds 80% of limit, clear photo cache to free memory
+        if (limit > 0 && used / limit > 0.8) {
+          console.warn('High memory usage detected, clearing photo cache');
+          photoCacheRef.current.clear();
+        }
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, []);
   const [route, setRoute] = useState<WorkspaceRoute>('home');
   const routeHistoryRef = useRef<WorkspaceRoute[]>([]);
   const isApplyingHistoryStepRef = useRef<boolean>(false);
@@ -1508,117 +1507,6 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       effectiveBackupSnoozedUntilMs
     );
   }, [snapshot, effectiveLastBackupMeta, effectiveBackupSnoozedUntilMs, clockSkewMs]);
-
-  const loadAnimalPhotoDataUrl = useCallback(
-    async (photoId: string): Promise<string | null> => {
-      if (!photoId) return null;
-      const cache = photoCacheRef.current!;
-      const cached = cache.get(photoId);
-      if (cached) return cached;
-      const inState = (snapshot?.animalPhotos ?? []).find((p) => p.id === photoId);
-      if (inState?.dataUrl) {
-        cache.set(photoId, inState.dataUrl);
-        return inState.dataUrl;
-      }
-      const fetched = await adapterRef.current?.loadAnimalPhotoDataUrl?.(photoId);
-      if (fetched) {
-        cache.set(photoId, fetched);
-        return fetched;
-      }
-      return inState?.thumbnailDataUrl || null;
-    },
-    [snapshot]
-  );
-
-  const loadAnimalPhotoDataUrlsBatch = useCallback(
-    async (photoIds: string[]): Promise<Record<string, string>> => {
-      const uniqueIds = Array.from(new Set(photoIds.filter((id) => Boolean(id)))).slice(0, 60);
-      if (uniqueIds.length === 0) return {};
-
-      const result: Record<string, string> = {};
-      const missing: string[] = [];
-      const cache = photoCacheRef.current;
-      const photoById = new Map((snapshotRef.current?.animalPhotos ?? []).map((p) => [p.id, p]));
-
-      for (const id of uniqueIds) {
-        const cached = cache?.get(id);
-        if (cached) {
-          result[id] = cached;
-          continue;
-        }
-        const inState = photoById.get(id);
-        if (inState?.dataUrl) {
-          cache?.set(id, inState.dataUrl);
-          result[id] = inState.dataUrl;
-          continue;
-        }
-        missing.push(id);
-      }
-
-      if (missing.length > 0 && adapterRef.current?.loadAnimalPhotoDataUrlsBatch) {
-        try {
-          const fetched = await adapterRef.current.loadAnimalPhotoDataUrlsBatch(missing);
-          for (const id of missing) {
-            const url = fetched[id];
-            if (url) {
-              cache?.set(id, url);
-              result[id] = url;
-            }
-          }
-        } catch {
-          // Fall back to thumbnails below without disrupting print preview
-        }
-      }
-
-      for (const id of uniqueIds) {
-        if (!result[id]) {
-          const thumb = photoById.get(id)?.thumbnailDataUrl;
-          if (thumb) result[id] = thumb;
-        }
-      }
-
-      return result;
-    },
-    []
-  );
-
-  const loadFeedBatchTagPhotoDataUrl = useCallback(async (batchId: string): Promise<string | null> => {
-    if (!batchId) return null;
-    const cache = photoCacheRef.current;
-    const cacheKey = `feed-tag:${batchId}`;
-    const cached = cache?.get(cacheKey);
-    if (cached) return cached;
-    const inState = (snapshotRef.current?.feedBatches ?? []).find((b) => b.id === batchId);
-    if (inState?.tagPhotoDataUrl) {
-      cache?.set(cacheKey, inState.tagPhotoDataUrl);
-      return inState.tagPhotoDataUrl;
-    }
-    const fetched = await adapterRef.current?.loadFeedBatchTagPhotoDataUrl?.(batchId);
-    if (fetched) {
-      cache?.set(cacheKey, fetched);
-      return fetched;
-    }
-    return inState?.tagPhotoThumbnailDataUrl || null;
-  }, []);
-
-  const loadLedgerEntryReceiptPhotoDataUrl = useCallback(async (entryId: string): Promise<string | null> => {
-    if (!entryId) return null;
-    const cache = photoCacheRef.current;
-    const cacheKey = `ledger-receipt:${entryId}`;
-    const cached = cache?.get(cacheKey);
-    if (cached) return cached;
-    const inState = (snapshotRef.current?.ledgerEntries ?? []).find((le) => le.id === entryId);
-    if (inState?.receiptPhotoDataUrl) {
-      cache?.set(cacheKey, inState.receiptPhotoDataUrl);
-      return inState.receiptPhotoDataUrl;
-    }
-    const fetched = await adapterRef.current?.loadLedgerEntryReceiptPhotoDataUrl?.(entryId);
-    if (fetched) {
-      cache?.set(cacheKey, fetched);
-      return fetched;
-    }
-    return inState?.receiptPhotoThumbnailDataUrl || null;
-  }, []);
 
   const hydrateSnapshotForExport = useCallback(
     async (
