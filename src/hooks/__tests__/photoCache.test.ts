@@ -3,6 +3,9 @@ import type { BarnDatabaseSnapshot } from '../../domain/models';
 import { BoundedPhotoDataCache } from '../../storage/photoHydration';
 import type { StorageAdapter } from '../../storage/storageAdapter';
 import {
+  clearPhotoCache,
+  forgetPhoto,
+  rememberPhoto,
   loadAnimalPhotoDataUrlWith,
   loadAnimalPhotoDataUrlsBatchWith,
   loadFeedBatchTagPhotoDataUrlWith,
@@ -171,5 +174,34 @@ describe('loadLedgerEntryReceiptPhotoDataUrlWith', () => {
     expect(
       await loadLedgerEntryReceiptPhotoDataUrlWith(cache, { current: null }, { current: snapshotWithPhotos }, 'l2')
     ).toBe('data:receipt-thumb-2');
+  });
+});
+
+describe('imperative cache helpers', () => {
+  it('remembers, forgets and clears through the ref', () => {
+    const ref = { current: mapCache() };
+
+    rememberPhoto(ref, 'p1', 'data:remembered');
+    expect(ref.current.get('p1')).toBe('data:remembered');
+
+    forgetPhoto(ref, 'p1');
+    expect(ref.current.get('p1')).toBeUndefined();
+
+    rememberPhoto(ref, 'p2', 'data:two');
+    rememberPhoto(ref, 'p3', 'data:three');
+    clearPhotoCache(ref);
+    expect(ref.current.get('p2')).toBeUndefined();
+    expect(ref.current.get('p3')).toBeUndefined();
+  });
+
+  it('keeps feed and ledger keys independent of animal photos', () => {
+    const ref = { current: mapCache() };
+
+    rememberPhoto(ref, 'feed-tag:b1', 'data:tag');
+    rememberPhoto(ref, 'shared-id', 'data:animal');
+    forgetPhoto(ref, 'shared-id');
+
+    expect(ref.current.get('feed-tag:b1')).toBe('data:tag');
+    expect(ref.current.get('shared-id')).toBeUndefined();
   });
 });

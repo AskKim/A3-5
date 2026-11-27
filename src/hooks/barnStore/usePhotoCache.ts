@@ -23,6 +23,29 @@ export function createBudgetedPhotoCache(): BoundedPhotoDataCache {
   return new BoundedPhotoDataCache(budget.maxEntries, budget.maxBytes);
 }
 
+/**
+ * Imperative cache mutations for store actions outside this slice (uploads, deletions, resets).
+ * They take the ref rather than the instance so callers never touch `.current` directly.
+ */
+export function rememberPhoto(
+  photoCacheRef: MutableRefObject<BoundedPhotoDataCache>,
+  id: string,
+  dataUrl: string
+): void {
+  photoCacheRef.current.set(id, dataUrl);
+}
+
+export function forgetPhoto(
+  photoCacheRef: MutableRefObject<BoundedPhotoDataCache>,
+  id: string
+): void {
+  photoCacheRef.current.delete(id);
+}
+
+export function clearPhotoCache(photoCacheRef: MutableRefObject<BoundedPhotoDataCache>): void {
+  photoCacheRef.current.clear();
+}
+
 export interface PhotoCacheDeps {
   adapterRef: MutableRefObject<StorageAdapter | null>;
   snapshotRef: MutableRefObject<BarnDatabaseSnapshot | null>;

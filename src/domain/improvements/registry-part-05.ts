@@ -1224,7 +1224,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'Get the photo cache and its four loaders out of the monolith while keeping the memory behaviour and lookup order identical.',
     summary:
-      'Fourth barn-store slice: `src/hooks/barnStore/usePhotoCache.ts` now creates the bounded LRU (sized from the device capability tier) and owns the four loaders for animal photos, animal photo batches, feed-batch tags and ledger receipts. The sub-hook takes only `adapterRef`, `snapshotRef` and the live `snapshot`, and returns the cache ref plus the loaders, so the thirty-odd imperative `photoCacheRef` touch points elsewhere in the store keep working unchanged. Lookup order is unchanged and now testable: cache, snapshot data URL, storage adapter, snapshot thumbnail, with the batch loader deduping, capping at 60 ids and falling back to thumbnails when the adapter throws. `useBarnStore.ts` dropped from 9,498 to 9,386 lines; the memory-pressure effect moved two statements down but still clears the same cache every five seconds above 80% heap. The 200-key contract snapshot is untouched.',
+      'Fourth barn-store slice: `src/hooks/barnStore/usePhotoCache.ts` now creates the bounded LRU (sized from the device capability tier) and owns the four loaders for animal photos, animal photo batches, feed-batch tags and ledger receipts. The sub-hook takes only `adapterRef`, `snapshotRef` and the live `snapshot`, and returns the cache ref plus the loaders, so the thirty-odd imperative `photoCacheRef` touch points elsewhere in the store keep working unchanged. Lookup order is unchanged and now testable: cache, snapshot data URL, storage adapter, snapshot thumbnail, with the batch loader deduping, capping at 60 ids and falling back to thumbnails when the adapter throws. Every remaining set/delete/clear in the store now goes through `rememberPhoto`, `forgetPhoto` and `clearPhotoCache` — 25 call sites, with only the read passed to `hydrateSnapshotWithPhotoDataUrls` still touching the ref directly. `useBarnStore.ts` dropped from 9,498 to 9,386 lines; the memory-pressure effect moved two statements down but still clears the same cache every five seconds above 80% heap. The 200-key contract snapshot is untouched.',
     files: [
       'src/hooks/barnStore/usePhotoCache.ts',
       'src/hooks/__tests__/photoCache.test.ts',
@@ -1240,6 +1240,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'loadAnimalPhotoDataUrlWith',
           'loadFeedBatchTagPhotoDataUrlWith',
           'loadLedgerEntryReceiptPhotoDataUrlWith',
+          'rememberPhoto',
+          'forgetPhoto',
+          'clearPhotoCache',
         ],
         rationale:
           'The loaders and the budgeted cache construction must stay in this slice; the plain `*With` bodies are the only testable record of the lookup order.',

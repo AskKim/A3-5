@@ -278,7 +278,12 @@ import {
 } from '../app/pedigreeAppWiring';
 import type { IPlatformBridge } from '@engine/bridge';
 import type { PendingGoogleCalendarSync } from '../domain/calendarExport';
-import { usePhotoCache } from './barnStore/usePhotoCache';
+import {
+  clearPhotoCache,
+  forgetPhoto,
+  rememberPhoto,
+  usePhotoCache,
+} from './barnStore/usePhotoCache';
 import {
   clearStoredBackupReminderState,
   readStoredLastBackupMeta,
@@ -427,7 +432,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         // If usage exceeds 80% of limit, clear photo cache to free memory
         if (limit > 0 && used / limit > 0.8) {
           console.warn('High memory usage detected, clearing photo cache');
-          photoCacheRef.current.clear();
+          clearPhotoCache(photoCacheRef);
         }
       }, 5000);
       return () => clearInterval(interval);
@@ -1786,7 +1791,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       loadAllSyncOperationsFromIdb().catch(() => syncOperationsRef.current),
       loadAllSyncConflictsFromIdb().catch(() => syncConflictsRef.current),
     ]);
-    photoCacheRef.current?.clear();
+    clearPhotoCache(photoCacheRef);
     pedigreeAncestorCacheRef.current.clear();
     loadedPedigreeArchiveKeysRef.current.clear();
     snapshotRef.current = fresh;
@@ -1837,7 +1842,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     return registerFreezeLifecycleListener({
       id: 'barn-store-photo-cache-trim',
       onHidden: () => {
-        photoCacheRef.current?.clear();
+        clearPhotoCache(photoCacheRef);
         pedigreeAncestorCacheRef.current.clear();
         loadedPedigreeArchiveKeysRef.current.clear();
       },
@@ -2770,7 +2775,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             }));
             await adapter.saveAnimalPhotosBatch(newPhotoRecords);
             for (const rec of newPhotoRecords) {
-              photoCacheRef.current.set(rec.id, rec.dataUrl);
+              rememberPhoto(photoCacheRef, rec.id, rec.dataUrl);
             }
           }
 
@@ -3065,7 +3070,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           await adapterRef.current!.deleteAnimalsBatch(Array.from(idSet));
           for (const photo of currentSnapshot.animalPhotos ?? []) {
             if (idSet.has(photo.animalId)) {
-              photoCacheRef.current.delete(photo.id);
+              forgetPhoto(photoCacheRef, photo.id);
             }
           }
           for (const id of idSet) {
@@ -3222,7 +3227,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         try {
           await adapterRef.current!.saveAnimalPhotosBatch(records);
           for (const rec of records) {
-            photoCacheRef.current.set(rec.id, rec.dataUrl);
+            rememberPhoto(photoCacheRef, rec.id, rec.dataUrl);
           }
           // Metadata-only delta sync (binary blobs travel via .ZIP backups)
           await recordOutboxOps(
@@ -3350,7 +3355,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const ts = getAdjustedNowIsoUtc();
         try {
           await adapterRef.current!.deleteAnimalPhoto(photoId);
-          photoCacheRef.current.delete(photoId);
+          forgetPhoto(photoCacheRef, photoId);
           const ops: SyncOperation[] = [
             createOutboxOperation({
               entityType: 'photo',
@@ -7328,7 +7333,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           const keptPhotoIds = new Set((nextSnapshot.animalPhotos ?? []).map((p) => p.id));
           for (const photo of currentSnapshot.animalPhotos ?? []) {
             if (!keptPhotoIds.has(photo.id)) {
-              photoCacheRef.current.delete(photo.id);
+              forgetPhoto(photoCacheRef, photo.id);
             }
           }
           if (selectedAnimalId && removedAnimalIds.has(selectedAnimalId)) {
@@ -7367,7 +7372,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           const keptPhotoIds = new Set((nextSnapshot.animalPhotos ?? []).map((p) => p.id));
           for (const photo of currentSnapshot.animalPhotos ?? []) {
             if (!keptPhotoIds.has(photo.id)) {
-              photoCacheRef.current.delete(photo.id);
+              forgetPhoto(photoCacheRef, photo.id);
             }
           }
           if (selectedAnimalId && removedAnimalIds.has(selectedAnimalId)) {
@@ -7406,7 +7411,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           const keptPhotoIds = new Set((nextSnapshot.animalPhotos ?? []).map((p) => p.id));
           for (const photo of currentSnapshot.animalPhotos ?? []) {
             if (!keptPhotoIds.has(photo.id)) {
-              photoCacheRef.current.delete(photo.id);
+              forgetPhoto(photoCacheRef, photo.id);
             }
           }
           if (selectedAnimalId && removedAnimalIds.has(selectedAnimalId)) {
@@ -7464,7 +7469,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           judgeExpenses: [],
         };
         await adapterRef.current!.replaceSnapshot(empty);
-        photoCacheRef.current.clear();
+        clearPhotoCache(photoCacheRef);
         await clearLocalSyncAndBackupReminderState();
         setSelectedAnimalId(null);
         setPedigreeAnimalId(null);
@@ -7493,7 +7498,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const { buildFullPredefinedSampleSnapshot } = await import('../domain/sampleData');
         const factorySnapshot = buildFullPredefinedSampleSnapshot();
         await adapterRef.current!.replaceSnapshot(factorySnapshot);
-        photoCacheRef.current.clear();
+        clearPhotoCache(photoCacheRef);
         await clearLocalSyncAndBackupReminderState();
         setSelectedAnimalId(null);
         setPedigreeAnimalId(null);
@@ -7529,7 +7534,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             if (currentSnapshot.animals.length > 0) {
               await saveSafetyRollingBackup(currentSnapshot, 'Pre-JSON-replace safety snapshot');
             }
-            photoCacheRef.current.clear();
+            clearPhotoCache(photoCacheRef);
             const flagRes = applyImportConflictAttentionFlags(incoming.animals);
             const nextSnap: BarnDatabaseSnapshot = {
               ...incoming,
@@ -7662,7 +7667,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             if (currentSnapshot.animals.length > 0) {
               await saveSafetyRollingBackup(currentSnapshot, 'Pre-archive-replace safety snapshot');
             }
-            photoCacheRef.current.clear();
+            clearPhotoCache(photoCacheRef);
             const flagRes = applyImportConflictAttentionFlags(parsed.snapshot.animals);
             const nextSnap: BarnDatabaseSnapshot = {
               ...parsed.snapshot,
@@ -8151,7 +8156,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           if (currentSnapshot && !wipedRecoveryContext?.detected && currentSnapshot.animals.length > 0) {
             await saveSafetyRollingBackup(currentSnapshot, 'Pre-rolling-restore safety snapshot');
           }
-          photoCacheRef.current?.clear();
+          clearPhotoCache(photoCacheRef);
           const cleanedRollingSnap: BarnDatabaseSnapshot = {
             ...snap,
             settings: {
@@ -8304,7 +8309,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         if (currentSnapshot && !wipedRecoveryContext?.detected && currentSnapshot.animals.length > 0) {
           await saveSafetyRollingBackup(currentSnapshot, 'Pre-vault-restore safety snapshot');
         }
-        photoCacheRef.current?.clear();
+        clearPhotoCache(photoCacheRef);
         const cleanedVaultSnap: BarnDatabaseSnapshot = {
           ...migrated.snapshot,
           settings: {
@@ -8414,7 +8419,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         }
         await saveOpfsHerdArchive(built.indexEntry, built.zipBytes);
         await adapterRef.current!.replaceSnapshot(built.nextActiveSnapshot);
-        photoCacheRef.current?.clear();
+        clearPhotoCache(photoCacheRef);
 
         const removedSet = new Set(built.removedAnimalIds);
         if (selectedAnimalId && removedSet.has(selectedAnimalId)) setSelectedAnimalId(null);
@@ -8546,7 +8551,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           if (options?.deleteArchiveAfterRestore !== false) {
             await deleteOpfsHerdArchive(archiveKey);
           }
-          photoCacheRef.current?.clear();
+          clearPhotoCache(photoCacheRef);
           setWipedRecoveryContext(null);
           await reloadFromAdapter();
           notify(
@@ -8624,7 +8629,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     return enqueueStoreMutation(async () => {
       try {
         clearPriorUseSentinel();
-        photoCacheRef.current?.clear();
+        clearPhotoCache(photoCacheRef);
         const adapter = adapterRef.current!;
         const fresh = adapter.rebuildCleanDatabase
           ? await adapter.rebuildCleanDatabase({ lightweightPhotos: true, allowSeedFresh: true })
@@ -8817,7 +8822,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           if (currentSnapshot && currentSnapshot.animals.length > 0) {
             await saveSafetyRollingBackup(currentSnapshot, 'Pre-SQLite-import safety snapshot');
           }
-          photoCacheRef.current.clear();
+          clearPhotoCache(photoCacheRef);
           const snap = await adapterRef.current!.importRawSqliteBytes(bytes, {
             lightweightPhotos: true,
           });
@@ -8904,7 +8909,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       await saveSafetyRollingBackup(hydrated, 'Pre-orphan-photo-prune safety snapshot');
       await adapterRef.current!.replaceSnapshot(res.nextSnapshot);
       for (const id of res.removedPhotoIds) {
-        photoCacheRef.current.delete(id);
+        forgetPhoto(photoCacheRef, id);
       }
       await reloadFromAdapter();
       void refreshStorageStatus();
@@ -8970,7 +8975,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         await saveSafetyRollingBackup(hydrated, 'Pre-photo-reoptimization safety snapshot');
         await adapterRef.current!.saveAnimalPhotosBatch(updatedPhotos);
         for (const p of updatedPhotos) {
-          photoCacheRef.current.set(p.id, p.dataUrl);
+          rememberPhoto(photoCacheRef, p.id, p.dataUrl);
         }
         await reloadFromAdapter();
         void refreshStorageStatus();
@@ -9016,7 +9021,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       await saveSafetyRollingBackup(hydrated, 'Pre-fullres-photo-prune safety snapshot');
       await adapterRef.current!.saveAnimalPhotosBatch(res.updatedPhotos);
       for (const p of res.updatedPhotos) {
-        photoCacheRef.current.delete(p.id);
+        forgetPhoto(photoCacheRef, p.id);
       }
       await reloadFromAdapter();
       void refreshStorageStatus();
@@ -9066,7 +9071,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     return enqueueStoreMutation(async () => {
       try {
         const adapter = adapterRef.current!;
-        photoCacheRef.current.clear();
+        clearPhotoCache(photoCacheRef);
         const fresh = adapter.resetConnection
           ? await adapter.resetConnection({ lightweightPhotos: true })
           : await adapter.initialize({ lightweightPhotos: true });
@@ -9119,7 +9124,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
 
         const { cachesCleared, serviceWorkersUnregistered } = await purgeStaleBrowserCaches();
 
-        photoCacheRef.current.clear();
+        clearPhotoCache(photoCacheRef);
         const fresh =
           options.rebuildLocalDb && adapter.rebuildCleanDatabase
             ? await adapter.rebuildCleanDatabase({ lightweightPhotos: true })
