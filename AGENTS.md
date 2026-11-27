@@ -257,6 +257,25 @@ Consequences for a sweep:
   from; say which workflows it will actually run, and that `deploy-pages.yml` and
   `build-android-apk.yml` are the ones worth excluding for a personal copy.
 
+### Deferred scope (owner decision — do not start)
+
+Two areas are deliberately frozen. Not "backlog", not "low priority": **out of scope until the
+owner lifts them.**
+
+- **Registry (`/registry`) work — frozen.** The improvement registry stays exactly as it is until
+  the owner has shown the current build to friends, family and trusted breeder friends. The next
+  release is meant to *show visible change*, so pre-empting that work removes the demonstration.
+  Do not split `improvementRegistry.ts`, do not externalise its prose, do not add scaffolding,
+  lazy-loading or generated data files toward that refactor. A sweep may still **measure** its
+  size and shipping weight, but the finding must be labelled **"deferred by owner decision"** and
+  must not propose an immediate fix.
+- **The `release` branch — stands on its own.** It is the presentation copy, not a staging area.
+  Do not push to it, do not port fixes into it, and do not change its Pages source unless the
+  owner asks. Work committed on `main` reaches users only when the owner republishes `release`.
+
+The owner lifts these explicitly ("unfreeze /registry", "update release"). Until then, treat any
+plan that starts either one as out of scope, however tempting the improvement looks.
+
 When a check is blocked by something changeable, name the change instead of stopping at
 "unavailable":
 
