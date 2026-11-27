@@ -1167,4 +1167,52 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Do not change the two storage key strings — they are the only link to reminders already snoozed on users\' devices.',
     ],
   },
+  {
+    id: 'IMP-092',
+    title: 'Backup-Reminder Callbacks Moved Into a Sub-Hook',
+    category: 'backup-safety',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Make the store actually smaller by moving the reminder actions out, not just their inline expressions.',
+    summary:
+      'Third barn-store slice: `recordBackupExport` and `snoozeBackupReminder` now live in `src/hooks/barnStore/useBackupReminderActions.ts`, which takes exactly the wiring it needs — `enqueueStoreMutation`, `updateSettingsInternal`, `snapshotRef`, and the two local setters. Their bodies are plain exported functions (`recordBackupExportAction`, `snoozeBackupReminderAction`) so the real logic is unit-tested without a renderer; `useBackupReminderActions` only adds `useCallback` identity with the same dependency list the inline versions had. Behaviour is unchanged: export metadata still uses the adjusted UTC clock, the snooze is cleared on export, a 24-hour default is kept, settings writes stay wrapped in the write queue and marked silent, and nothing is written to settings before a snapshot exists. `useBarnStore.ts` dropped from 9,530 to 9,498 lines and the 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useBackupReminderActions.ts',
+      'src/hooks/__tests__/backupReminderActions.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useBackupReminderActions.ts',
+        requiredSubstrings: [
+          'export function useBackupReminderActions',
+          'recordBackupExportAction',
+          'snoozeBackupReminderAction',
+          'Deps',
+        ],
+        rationale:
+          'The actions and their dependency contract must stay in this slice; the plain bodies are what make the behaviour testable.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useBackupReminderActions'"],
+        forbiddenSubstrings: ['const recordBackupExport = useCallback(', 'const snoozeBackupReminder = useCallback('],
+        rationale:
+          'Re-inlining either callback would undo the extraction and split the ownership of reminder behaviour again.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/backupReminderActions.test.ts',
+        requiredSubstrings: ['defaults to a 24 hour snooze', 'no snapshot is loaded yet'],
+        rationale:
+          'The two easy-to-break behaviours: the default snooze length and skipping settings writes when no snapshot is loaded.',
+      },
+    ],
+    restorePlaybook: [
+      'Reminder actions live in `useBackupReminderActions`; extend the deps object rather than reaching back into the store for new wiring.',
+      'Keep the plain `*Action` bodies exported and tested — they are the only place reminder behaviour can be verified without a DOM harness.',
+      'Preserve `{ silent: true }` on these settings writes; they must not fire the "Barn preferences saved" toast after an export or snooze.',
+    ],
+  },
 ];

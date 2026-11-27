@@ -283,14 +283,11 @@ import type { PendingGoogleCalendarSync } from '../domain/calendarExport';
 import { getPhotoCacheBudgetForTier } from './barnStore/photoCacheBudget';
 import {
   clearStoredBackupReminderState,
-  clearStoredSnoozedUntilMs,
-  computeSnoozedUntilMs,
   readStoredLastBackupMeta,
   readStoredSnoozedUntilMs,
   resolveEffectiveSnoozedUntilMs,
-  writeStoredLastBackupMeta,
-  writeStoredSnoozedUntilMs,
 } from './barnStore/backupReminder';
+import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
   | 'home'
@@ -2192,42 +2189,13 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [enqueueStoreMutation, updateSettingsInternal]
   );
 
-  const recordBackupExport = useCallback(
-    async (format: 'zip' | 'sqlite' | 'json', fileName?: string) => {
-      const meta: LastBackupMeta = {
-        exportedAtIso: getAdjustedNowIsoUtc(),
-        format,
-        fileName,
-      };
-      setLocalLastBackupMeta(meta);
-      setLocalSnoozedUntilMs(0);
-      writeStoredLastBackupMeta(meta);
-      clearStoredSnoozedUntilMs();
-      if (snapshotRef.current) {
-        await enqueueStoreMutation(() =>
-          updateSettingsInternal(
-            { lastBackupMeta: meta, backupReminderSnoozedUntilMs: 0 },
-            { silent: true }
-          )
-        );
-      }
-    },
-    [enqueueStoreMutation, updateSettingsInternal]
-  );
-
-  const snoozeBackupReminder = useCallback(
-    async (hours: number = 24) => {
-      const untilMs = computeSnoozedUntilMs(getAdjustedNowMs(), hours);
-      setLocalSnoozedUntilMs(untilMs);
-      writeStoredSnoozedUntilMs(untilMs);
-      if (snapshotRef.current) {
-        await enqueueStoreMutation(() =>
-          updateSettingsInternal({ backupReminderSnoozedUntilMs: untilMs }, { silent: true })
-        );
-      }
-    },
-    [enqueueStoreMutation, updateSettingsInternal]
-  );
+  const { recordBackupExport, snoozeBackupReminder } = useBackupReminderActions({
+    enqueueStoreMutation,
+    updateSettingsInternal,
+    snapshotRef,
+    setLocalLastBackupMeta,
+    setLocalSnoozedUntilMs,
+  });
 
   const togglePinSpeciesLanding = useCallback(
     async (speciesName: string) => {
