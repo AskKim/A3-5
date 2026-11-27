@@ -1267,4 +1267,54 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The cache is transient and rebuildable: never persist it, and keep the memory-pressure clear wired to the same ref the loaders use.',
     ],
   },
+  {
+    id: 'IMP-094',
+    title: 'Task & Memo Alert Dismissals Moved Into a Sub-Hook',
+    category: 'alerts-home',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Shrink the barn store again with the smallest remaining cluster, without changing when an ignored task or dismissed memo alert returns.',
+    summary:
+      'Fifth barn-store slice: `src/hooks/barnStore/useAlertDismissals.ts` now owns the three settings-only dismissal actions (permanent task-alert ignore, clearing one species overdue-alert group, dismissing a species memo alert). The sub-hook takes `enqueueStoreMutation`, `updateSettingsInternal`, `snapshotRef` and `notify`; the store keeps revisions, the outbox and the settings writer. The map merges are plain exported functions (`mergeIgnoredTaskIds`, `buildDismissedTaskGroupKeys`, `buildDismissedMemoAlertSignatures`) with a shared `normalizeAlertSpeciesKey`, so the persistence decisions are pinned by tests instead of hidden in callbacks: blank or empty-array signatures record nothing, other species are preserved, task ids dedupe against existing entries, and only the task-ignore and group-clear paths toast. Toast strings, silent writes, empty-input early returns and the no-snapshot guard are unchanged. `useBarnStore.ts` dropped from 9,391 to 9,347 lines and the 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useAlertDismissals.ts',
+      'src/hooks/__tests__/alertDismissals.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useAlertDismissals.ts',
+        requiredSubstrings: [
+          'export function useAlertDismissals',
+          'mergeIgnoredTaskIds',
+          'buildDismissedTaskGroupKeys',
+          'buildDismissedMemoAlertSignatures',
+          'normalizeAlertSpeciesKey',
+        ],
+        rationale:
+          'The three merges and the species-key normaliser are the only record of which dismissal survives and under which key; inlining them again would hide the rule inside a callback.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useAlertDismissals'"],
+        forbiddenSubstrings: ['const clearTaskAlertGroup = useCallback('],
+        rationale:
+          'Re-inlining a dismissal callback forks the map merge and silently changes when the alert returns.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/alertDismissals.test.ts',
+        requiredSubstrings: ['Dismissed 2 task alert(s) permanently.', 'ignores a blank signature'],
+        rationale:
+          'The count-toasted message and the blank-signature no-op are the two behaviours most likely to drift; both are user-visible.',
+      },
+    ],
+    restorePlaybook: [
+      'Alert dismissals live in `barnStore/useAlertDismissals.ts`; the store only wires the queue, settings writer, ref and notifier.',
+      'Keep `normalizeAlertSpeciesKey` shared by all three maps — divergent keys make a dismissal appear not to stick.',
+      'Only the task-ignore and group-clear paths toast; memo dismissal is deliberately silent, and empty input must never write settings.',
+    ],
+  },
 ];

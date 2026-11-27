@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (29 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (30 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (93)
+## Logged Improvements (94)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2051,3 +2051,23 @@ npm run lint && npm run build
 1. Photo cache policy lives in `barnStore/usePhotoCache.ts`; the store keeps the ref only for imperative clear/set/delete calls.
 2. Keep the key prefixes (`feed-tag:`, `ledger-receipt:`) — dropping them lets a batch or entry id overwrite an animal photo.
 3. The cache is transient and rebuildable: never persist it, and keep the memory-pressure clear wired to the same ref the loaders use.
+
+### IMP-094: Task & Memo Alert Dismissals Moved Into a Sub-Hook
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Home & Alerts (`alerts-home`)
+- **Origin:** Session Improvement
+- **User Goal:** Shrink the barn store again with the smallest remaining cluster, without changing when an ignored task or dismissed memo alert returns.
+- **Summary:** Fifth barn-store slice: `src/hooks/barnStore/useAlertDismissals.ts` now owns the three settings-only dismissal actions (permanent task-alert ignore, clearing one species overdue-alert group, dismissing a species memo alert). The sub-hook takes `enqueueStoreMutation`, `updateSettingsInternal`, `snapshotRef` and `notify`; the store keeps revisions, the outbox and the settings writer. The map merges are plain exported functions (`mergeIgnoredTaskIds`, `buildDismissedTaskGroupKeys`, `buildDismissedMemoAlertSignatures`) with a shared `normalizeAlertSpeciesKey`, so the persistence decisions are pinned by tests instead of hidden in callbacks: blank or empty-array signatures record nothing, other species are preserved, task ids dedupe against existing entries, and only the task-ignore and group-clear paths toast. Toast strings, silent writes, empty-input early returns and the no-snapshot guard are unchanged. `useBarnStore.ts` dropped from 9,391 to 9,347 lines and the 200-key contract snapshot is untouched.
+- **Tracked Files:** `src/hooks/barnStore/useAlertDismissals.ts`, `src/hooks/__tests__/alertDismissals.test.ts`, `src/hooks/useBarnStore.ts`, `docs/plans/handoff-modularity-reusability.yaml`, `MODULES.md`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/useAlertDismissals.ts` must contain `export function useAlertDismissals`, `mergeIgnoredTaskIds`, `buildDismissedTaskGroupKeys`, `buildDismissedMemoAlertSignatures`, `normalizeAlertSpeciesKey` — *The three merges and the species-key normaliser are the only record of which dismissal survives and under which key; inlining them again would hide the rule inside a callback.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/useAlertDismissals'` — *Re-inlining a dismissal callback forks the map merge and silently changes when the alert returns.*
+  - Forbidden regression: `const clearTaskAlertGroup = useCallback(`
+- `src/hooks/__tests__/alertDismissals.test.ts` must contain `Dismissed 2 task alert(s) permanently.`, `ignores a blank signature` — *The count-toasted message and the blank-signature no-op are the two behaviours most likely to drift; both are user-visible.*
+
+**Restoration Playbook if Overwritten:**
+1. Alert dismissals live in `barnStore/useAlertDismissals.ts`; the store only wires the queue, settings writer, ref and notifier.
+2. Keep `normalizeAlertSpeciesKey` shared by all three maps — divergent keys make a dismissal appear not to stick.
+3. Only the task-ignore and group-clear paths toast; memo dismissal is deliberately silent, and empty input must never write settings.

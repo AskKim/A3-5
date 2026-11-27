@@ -290,6 +290,7 @@ import {
   readStoredSnoozedUntilMs,
   resolveEffectiveSnoozedUntilMs,
 } from './barnStore/backupReminder';
+import { useAlertDismissals } from './barnStore/useAlertDismissals';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -2029,58 +2030,13 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [enqueueStoreMutation, updateSettingsInternal]
   );
 
-  const ignoreTaskAlertsPermanently = useCallback(
-    async (taskIds: string[]) => {
-      if (taskIds.length === 0) return;
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const merged = Array.from(
-          new Set([...(currentSnapshot.settings.ignoredTaskIds || []), ...taskIds])
-        );
-        await updateSettingsInternal({ ignoredTaskIds: merged }, { silent: true });
-        notify(`Dismissed ${taskIds.length} task alert(s) permanently.`);
-      });
-    },
-    [enqueueStoreMutation, updateSettingsInternal, notify]
-  );
-
-  const clearTaskAlertGroup = useCallback(
-    async (speciesName: string, groupSignature: string | string[]) => {
-      const isEmpty = Array.isArray(groupSignature)
-        ? groupSignature.length === 0
-        : !groupSignature;
-      if (isEmpty) return;
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const key = speciesName.trim().toLowerCase();
-        const prevMap = currentSnapshot.settings.dismissedTaskGroupKeys || {};
-        const nextMap: Record<string, string | string[]> = { ...prevMap, [key]: groupSignature };
-        await updateSettingsInternal({ dismissedTaskGroupKeys: nextMap }, { silent: true });
-        notify(`Cleared alert for current ${speciesName} overdue tasks.`);
-      });
-    },
-    [enqueueStoreMutation, updateSettingsInternal, notify]
-  );
-
-  const dismissSpeciesMemoAlert = useCallback(
-    async (speciesName: string, memoSignature: string) => {
-      if (!memoSignature) return;
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const key = speciesName.trim().toLowerCase();
-        const prevMap = currentSnapshot.settings.dismissedMemoAlertSignatures || {};
-        const nextMap: Record<string, string> = { ...prevMap, [key]: memoSignature };
-        await updateSettingsInternal(
-          { dismissedMemoAlertSignatures: nextMap },
-          { silent: true }
-        );
-      });
-    },
-    [enqueueStoreMutation, updateSettingsInternal]
-  );
+  const { ignoreTaskAlertsPermanently, clearTaskAlertGroup, dismissSpeciesMemoAlert } =
+    useAlertDismissals({
+      enqueueStoreMutation,
+      updateSettingsInternal,
+      snapshotRef,
+      notify,
+    });
 
   const { recordBackupExport, snoozeBackupReminder } = useBackupReminderActions({
     enqueueStoreMutation,
