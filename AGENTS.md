@@ -136,14 +136,23 @@ Minimum tokens and minimum round trips are requirements here, not preferences. T
   targeted edit is enough; where a generator is the source of truth, edit the source and regenerate
   exactly once.
 - **Skill edits:** `cloud_manage_skills` has no patch API — every save rewrites the entire skill and
-  needs approval. Save only when the content actually changes, at most once per change, and never
-  re-save merely to check read-back (reads lag one write by design).
+  needs approval, so each save produces another "replace skill?" prompt for the owner.
+  **Therefore: never re-publish the account skill as part of ordinary repo work.** The canonical
+  text lives in `docs/FULL_SWEEP_SKILL.md`; edit that file (and this section) instead, and publish
+  only when the owner asks for it ("publish/update the skill") or the portable text changes for
+  every project. Read back at most once after publishing, never re-save to check.
 
 ---
 
 ## Full sweep
 
 Trigger: full sweep
+
+The portable, project-agnostic copy of this routine is mirrored in
+`docs/FULL_SWEEP_SKILL.md`. Repo-specific refinements belong here; changes that apply to
+
+every project belong in the mirror, and only reach the account-level skill when the owner
+explicitly asks for it to be published.
 
 Purpose: one request produces the most comprehensive report this environment can
 generate about the repo, using three independent evidence sources — the repo's own
