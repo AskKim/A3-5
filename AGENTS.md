@@ -257,24 +257,22 @@ Consequences for a sweep:
   from; say which workflows it will actually run, and that `deploy-pages.yml` and
   `build-android-apk.yml` are the ones worth excluding for a personal copy.
 
-### Deferred scope (owner decision — do not start)
+### The `release` branch is a frozen presentation copy (owner decision)
 
-Two areas are deliberately frozen. Not "backlog", not "low priority": **out of scope until the
-owner lifts them.**
+Only one thing is frozen: **`release` keeps serving the old version of the code** as the GitHub
+Pages site. It is the demo shown to friends, family and trusted breeder friends, and it is meant to
+look exactly as it does until the owner deliberately updates it.
 
-- **Registry (`/registry`) work — frozen.** The improvement registry stays exactly as it is until
-  the owner has shown the current build to friends, family and trusted breeder friends. The next
-  release is meant to *show visible change*, so pre-empting that work removes the demonstration.
-  Do not split `improvementRegistry.ts`, do not externalise its prose, do not add scaffolding,
-  lazy-loading or generated data files toward that refactor. A sweep may still **measure** its
-  size and shipping weight, but the finding must be labelled **"deferred by owner decision"** and
-  must not propose an immediate fix.
-- **The `release` branch — stands on its own.** It is the presentation copy, not a staging area.
-  Do not push to it, do not port fixes into it, and do not change its Pages source unless the
-  owner asks. Work committed on `main` reaches users only when the owner republishes `release`.
+- **Do not** push to `release`, port fixes into it, rebase it, or change its Pages source until the
+owner says "update release". Fixes made on `main` are not to be transplanted there.
+- **`main` is unrestricted.** Normal development continues there, the improvement registry
+  included — no feature or refactor is off limits merely because `release` predates it.
+- A commit on `main` is **not live**; it reaches users only when the owner republishes `release`.
+- Sweeps must report `release` as **intentionally behind** `main`. That divergence is expected, not
+  drift to repair, and no finding should propose syncing it.
 
-The owner lifts these explicitly ("unfreeze /registry", "update release"). Until then, treat any
-plan that starts either one as out of scope, however tempting the improvement looks.
+When the owner says "update release", the usual route is `docs/HOW_TO_UPDATE_RELEASE_FROM_MAIN.md`:
+promote `main` to `release`, then let the site republish.
 
 When a check is blocked by something changeable, name the change instead of stopping at
 "unavailable":
