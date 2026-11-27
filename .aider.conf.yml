@@ -1,0 +1,8 @@
+read:
+  - AGENTS.md
+  - GEMINI.md
+  - prompts/master_system_prompt.md
+auto-lint: true
+lint-cmd: npm run lint
+auto-test: true
+test-cmd: npm test

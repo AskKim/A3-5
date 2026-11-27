@@ -1,0 +1,84 @@
+Pedigree/
+├── .cursor/
+│   └── rules/                             <-- Cursor IDE project & path-scoped rules
+├── .github/
+│   ├── instructions/                      <-- Copilot path-scoped instruction files
+│   ├── workflows/
+│   │   ├── build-android-apk.yml
+│   │   ├── ci.yml
+│   │   ├── deploy-pages.yml
+│   │   ├── export_repo_to_md.yml
+│   │   ├── guardrails.yml
+│   │   ├── preflight.yml
+│   │   ├── release.yml
+│   │   ├── security-audit.yml
+│   │   └── unzip.yml
+│   ├── WORKFLOWS_GUIDE.md                 <-- Beginner-friendly guide to all GitHub Actions workflows
+│   ├── copilot-instructions.md            <-- GitHub Copilot repository instructions
+│   ├── pull_request_template.md           <-- PR checklist & contributor license confirmation
+│   └── structure.txt
+├── android-wrapper/                       <-- THIN native Android WebView shell ONLY (Kotlin + Gradle bridges; NEVER recode the React PWA in Kotlin)
+│   └── README.md                          <-- Hybrid wrapper boundary & build instructions
+├── apple-wrapper/                         <-- iOS & macOS WKWebView bridge and native SQLite anti-eviction contracts
+├── desktop-wrapper/                       <-- Windows/macOS/Linux (Tauri/Electron) bridge & installer blueprints
+├── docs/
+│   ├── ARCHITECTURE_GUIDE.md              <-- Dual-audience plain-English & developer architecture guide
+│   ├── HOW_TO_CREATE_A_RELEASE.md         <-- Step-by-step guide to creating GitHub Releases (now & after updating)
+│   ├── HOW_TO_UPDATE_RELEASE_FROM_MAIN.md <-- Step-by-step guide to updating release from main & redeploying Pages
+│   └── plans/
+│       └── suggestions-backlog.md
+├── export/                                <-- Codebase Markdown export & dated ZIP archive directory (protected via .gitkeep)
+├── fastlane/
+│   └── metadata/
+│       └── android/
+├── import/                                <-- Read-only staging folder (DO NOT execute, bundle, or boot without explicit confirmation; protected via .gitkeep)
+├── ios-wrapper/                           <-- Legacy iOS placeholder & WKWebView storage bridge draft (see apple-wrapper/)
+├── old/                                   <-- Inactive archive excluded from runtime/builds (protected via .gitkeep)
+├── prompts/                               <-- Do not remove prompts without confirmation (update src/components/PromptsDirectoryScreen.tsx, src/domain/promptsCatalog.ts, and vite.config.ts if moved)
+│   ├── preflight/                         <-- Modular preflight launcher, manifest schemas, and helper scripts
+│   ├── fix_error_log_prompt.md            <-- Active crash & error log remediation prompt
+│   ├── master_system_prompt.md            <-- Active Master System Prompt
+│   ├── master_system_prompt_old_v1.md     <-- Archived v1 prompt (reference only)
+│   ├── master_system_prompt_old_v2.md     <-- Archived v2 prompt (reference only)
+│   ├── master_system_prompt_old_v4.md     <-- Archived v4 prompt (reference only)
+│   ├── resume_backlog_plan_prompt.md      <-- Active backlog plan continuation prompt
+│   └── start_new_backlog_prompt.md        <-- Active backlog plan starter prompt
+├── public/
+├── scripts/
+│   ├── audit-layers.ts                    <-- Three-layer import & pure-code ratchet (npm run verify:layers)
+│   ├── layer-allowlist.json               <-- Shrinking allowlist of legacy layer violations
+│   ├── rehearse-engine-extraction.ts      <-- Isolated temp-dir framework compilation check (npm run verify:extraction)
+│   └── verify-improvements.ts             <-- Anti-drift invariant checker (npm run verify:improvements)
+├── src/                                   <-- MANDATORY CORE PWA (React + Vite + TypeScript — NEVER convert away from React)
+│   ├── app/                               <-- Layer 3 composition root, PlatformBridgeContext, species/CSV wiring
+│   ├── components/                        <-- React UI screens, modals & print preview
+│   ├── domain/                            <-- Pure TypeScript livestock/pedigree domain logic & Alpha 2 facades
+│   ├── engine/                            <-- Layer 1 content-agnostic core (primitives, codecs, bridge, storage, sync)
+│   ├── features/                          <-- Layer 2 isolated reusable feature modules (CSV, backup, print, ICS, OCR)
+│   ├── hooks/                             <-- React store (useBarnStore.ts)
+│   ├── native/                            <-- Hybrid Android/iOS/Web bridge (pedigreeBridge.ts)
+│   ├── storage/                           <-- sql.js SQLite adapter, OPFS vault, workers, OCR scanner
+│   └── utils/                             <-- Content-agnostic browser/React utilities (PDF, file actions, ES2018 shims)
+├── upload/                                <-- Protected upload staging directory (keep even when empty via .gitkeep)
+├── .aider.conf.yml                        <-- Aider CLI auto-read & test/lint configuration
+├── .clinerules                            <-- Cline agent rules
+├── .env.example
+├── .roorules                              <-- Roo Code agent rules
+├── .windsurfrules                         <-- Windsurf IDE rules
+├── AGENTS.md                              <-- Workspace AI rules (includes React-only core PWA lock)
+├── ARCHITECTURE.md                        <-- Hybrid architecture & pure TS domain guardrails
+├── CLAUDE.md                              <-- Claude Code / Anthropic agent rules
+├── CONTRIBUTING.md                        <-- Contributor licensing terms & verification guide
+├── EXTRACTION_INVENTORY.md                <-- File-by-file module classification & storage touchpoints
+├── GEMINI.md                              <-- Cross-model handoff & startup work-check rules
+├── IMPROVEMENTS.md                        <-- Anti-wipeout improvement log synced with improvementRegistry.ts
+├── LICENSE
+├── README.md
+├── ROADMAP.md                             <-- Alpha 3 roadmap, modularity strategy & baseline guardrails
+├── index.html                             <-- React PWA HTML entry point
+├── metadata.json                          <-- AI Studio app metadata (React + Vite + TypeScript PWA)
+├── package.json
+├── tsconfig.engine.json                   <-- Isolated framework TypeScript profile (npm run verify:engine)
+├── tsconfig.json
+├── vite.config.ts
+└── vitest.config.ts

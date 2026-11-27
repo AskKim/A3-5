@@ -1,0 +1,9 @@
+---
+description: Thin hybrid WebView shell boundary for android-wrapper/
+globs:
+  - android-wrapper/**
+alwaysApply: false
+---
+- `android-wrapper/` is strictly a thin native Kotlin WebView shell serving the compiled React PWA (`dist/` -> `assets/www/`).
+- Never move application screens, domain logic, or database schemas into Kotlin, and never add Google Play Services, Firebase, Capacitor, or analytics SDKs (enforced by `.github/workflows/security-audit.yml`).
+- Keep `versionName` in `android-wrapper/app/build.gradle.kts` synchronized with `package.json` and `public/version.json`.

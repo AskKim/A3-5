@@ -1,0 +1,66 @@
+# SPDX-FileCopyrightText: 2024-2026 AskKim
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Preflight CI
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Target branch name"
+        required: false
+        default: "${{ github.ref_name }}"
+      version:
+        description: "Target version tag"
+        required: false
+        default: "0.1.0-alpha.3"
+      dry_run:
+        description: "Run launcher in dry‑run mode"
+        required: false
+        default: "false"
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci || npm install --legacy-peer-deps --no-audit --no-fund
+          else
+            npm install --legacy-peer-deps --no-audit --no-fund
+          fi
+
+      - name: Validate preflight JSON, anchors & integrity
+        run: npm run preflight:lint
+
+      - name: Validate preflight manifest
+        run: node prompts/preflight/scripts/gen-preflight.mjs
+
+      - name: Run Preflight Context Check
+        env:
+          TARGET_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+          TARGET_VERSION: ${{ github.event.inputs.version || '0.1.0-alpha.3' }}
+        run: node prompts/preflight/scripts/preflight-run-context.mjs --branch "$TARGET_BRANCH" --version "$TARGET_VERSION" --dry-run

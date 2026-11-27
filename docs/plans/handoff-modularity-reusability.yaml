@@ -1,0 +1,18 @@
+goal: Finish remaining architectural modularity and reusability across storage adapters, monolithic store/SQLite hubs, UI component seams, shim retirement, and standalone @engine extraction
+status:
+  - [DONE] src/storage/* | Aligned browser/worker storage probes, OPFS streaming, passphrase crypto, cross-tab sync, background freeze, photo cache, LAN WebRTC, PKCE sessionStorage, and weather localStorage onto @engine/storage/* and @engine/primitives/* contracts (with verified @engine unit tests)
+  - [WIP] src/storage/webSqliteAdapter.ts | Split schema DDL (sqliteSchema.ts) and IndexedDB persistence/quota recovery (sqliteIdbPersistence.ts); next extract row mappers, snapshot readers/writers, and generic batch/delete mutation helpers
+  - [TODO] src/hooks/useBarnStore.ts | Decompose the 344 KB state store into domain slice controllers, injected storage/sync ports, and headless action dispatchers
+  - [TODO] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
+  - [TODO] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Codemod remaining callers directly onto @engine/*, retire compatibility shims, and extract generic non-domain logic left in src/domain/*
+  - [TODO] src/domain/improvementRegistry.ts | Audit domain seed/test files for PII/contact hygiene via prompts/core_hygiene.md and expand layer/duplication checks across components & storage
+  - [TODO] /engine & package.json | Extract verified content-agnostic @engine/*, @features/*, and @utils/* into standalone reusable package/repository once app coupling hits zero
+  - [TODO] EXTRACTION_INVENTORY.md & src/domain/improvementRegistry.ts | Sync documentation, run npm run verify + npm run build, and register final IMP entry
+constraints:
+  - Keep Core PWA strictly in React + Vite + TypeScript (ES2018 target) — never convert to Kotlin or Compose
+  - Preserve BOOT_ENTRY_LOCK_CHECKSUMS (src/main.tsx, src/App.tsx, index.html) unless explicitly authorized
+  - Maintain zero layer violations (scripts/layer-allowlist.json = []) and zero as any / @ts-ignore / @ts-expect-error
+  - Do not modify or import /import/ staging files; keep Alpha 2 features intact with thin facades until callers migrate
+decisions: Standalone /engine extraction waits until Phase 3 storage alignment, useBarnStore/webSqliteAdapter split, and shim retirement complete so extracted packages require zero rewrites
+verified: tsc=pass | test=pass | build=pass
+next_action: Extract snapshot row readers, row upserters, and generic batch/delete CRUD helpers out of src/storage/webSqliteAdapter.ts while preserving all improvementRegistry.ts invariants

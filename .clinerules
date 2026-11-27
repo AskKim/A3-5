@@ -1,0 +1,6 @@
+Before reading code, answering questions, or proposing edits, read and strictly follow all binding rules in `prompts/master_system_prompt.md`, `GEMINI.md`, and `AGENTS.md`.
+
+- Emit `ALIGNED` + `PENDING HANDOFF:` / `PENDING PLAN:` / `NO PENDING WORK` on active coding tasks (`docs/plans/`, excluding `suggestions-backlog.md`).
+- Keep the core PWA (`src/`, `index.html`, `vite.config.ts`) strictly React + Vite + TypeScript (ES2018); `android-wrapper/` is a thin WebView shell only.
+- Enforce three-layer isolation (`@engine/*`, `@features/*`, `@domain/*`, `@app/*`), zero `as any` / `@ts-ignore` / `@ts-expect-error`, and `"YYYY-MM-DD"` date strings.
+- Run `npm run verify` and `npm run build` before finishing code edits.
