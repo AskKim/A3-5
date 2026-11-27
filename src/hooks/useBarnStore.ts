@@ -25,7 +25,6 @@ import {
 } from '../domain/animalConflicts';
 import type { PreRestoreArchiveInspection } from '../domain/archiveInspector';
 import type { BarnBenchBatchEntryDraft } from '../domain/barnBench';
-import type { CloudSyncProvider, CloudSyncSettings } from '../domain/cloudAppFolderSync';
 import type { P2pReconciliationSummary } from '../domain/p2pSyncProtocol';
 import type { PhotoStorageFootprintReport } from '../domain/photoMaintenance';
 import {
@@ -188,16 +187,12 @@ import {
 import {
   acknowledgeCloudCircuitBreakerWarning,
   clearAllCloudSyncState,
-  clearCloudSyncMemoryToken,
   CloudSyncClientState,
   consumeCloudOAuthPkceCallback,
   getCloudSyncClientState,
   resetPersistedCloudCircuitBreaker,
   runCloudAppFolderSync,
   RunCloudAppFolderSyncResult,
-  setCloudSyncMemoryToken,
-  startCloudOAuthPkceRedirect,
-  updatePersistedCloudSyncSettings,
 } from '../storage/cloudAppFolderSync';
 import {
   assertForegroundOrPause,
@@ -291,6 +286,7 @@ import {
   resolveEffectiveSnoozedUntilMs,
 } from './barnStore/backupReminder';
 import { useAlertDismissals } from './barnStore/useAlertDismissals';
+import { useCloudSyncActions } from './barnStore/useCloudSyncActions';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -8036,53 +8032,12 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     };
   }, [notify]);
 
-  const updateCloudSyncSettings = useCallback(
-    (patch: Partial<CloudSyncSettings>) => {
-      const next = updatePersistedCloudSyncSettings(patch);
-      setCloudSyncState(next);
-      return next;
-    },
-    []
-  );
-
-  const connectCloudSyncAccessToken = useCallback(
-    (provider: CloudSyncProvider, accessToken: string) => {
-      const ok = setCloudSyncMemoryToken(provider, accessToken);
-      const next = updatePersistedCloudSyncSettings({
-        provider,
-        enabled: ok ? true : getCloudSyncClientState().settings.enabled,
-      });
-      setCloudSyncState(next);
-      if (ok) {
-        notify(
-          `Connected ${
-            provider === 'onedrive' ? 'OneDrive AppRoot' : 'Google Drive AppFolder'
-          } (access token held in memory only).`
-        );
-      }
-      return ok;
-    },
-    [notify]
-  );
-
-  const disconnectCloudSync = useCallback(
-    (provider?: CloudSyncProvider) => {
-      clearCloudSyncMemoryToken(provider);
-      const next = getCloudSyncClientState();
-      setCloudSyncState(next);
-      notify('Disconnected cloud app-folder access token from memory.');
-    },
-    [notify]
-  );
-
-  const startCloudSyncPkce = useCallback(
-    async (provider: CloudSyncProvider, clientId: string) => {
-      updatePersistedCloudSyncSettings({ provider, customOAuthClientId: clientId, enabled: true });
-      setCloudSyncState(getCloudSyncClientState());
-      await startCloudOAuthPkceRedirect(provider, clientId);
-    },
-    []
-  );
+  const {
+    updateCloudSyncSettings,
+    connectCloudSyncAccessToken,
+    disconnectCloudSync,
+    startCloudSyncPkce,
+  } = useCloudSyncActions({ setCloudSyncState, notify });
 
   const runManualCloudSyncNow = useCallback(async () => {
     return executeCloudAppFolderSync('manual');

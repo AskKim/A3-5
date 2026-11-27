@@ -1317,4 +1317,56 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Only the task-ignore and group-clear paths toast; memo dismissal is deliberately silent, and empty input must never write settings.',
     ],
   },
+  {
+    id: 'IMP-095',
+    title: 'Cloud-Sync Settings & PKCE Actions Moved Into a Sub-Hook',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Move the cloud app-folder settings and sign-in controls out of the store so the OAuth hand-off and its toasts are readable and testable in one place.',
+    summary:
+      'Sixth barn-store slice: `src/hooks/barnStore/useCloudSyncActions.ts` owns the four cloud-sync controls — persist a settings patch, adopt a hand-entered access token, disconnect, and start the OAuth PKCE redirect. Each mirrors the client-state module result into React state, so the slice takes `setCloudSyncState` and `notify`; the client-state module is reached through `CLOUD_SYNC_CLIENT_PORT`, which tests replace with fakes and production leaves unset. Behaviour is unchanged: a rejected token keeps the previously persisted `enabled` flag, persists `provider` anyway and stays silent; an accepted one forces `enabled: true` and toasts the provider label; disconnect always toasts and clears either one provider or all of them; PKCE persists `provider`, `customOAuthClientId` and `enabled` before the redirect and lets a redirect failure reject to the caller. The store keeps the sync run, background schedule and busy flag. `useBarnStore.ts` dropped from 9,347 to 9,302 lines; the 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/useCloudSyncActions.ts',
+      'src/hooks/__tests__/cloudSyncActions.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useCloudSyncActions.ts',
+        requiredSubstrings: [
+          'export function useCloudSyncActions',
+          'CLOUD_SYNC_CLIENT_PORT',
+          'cloudSyncProviderLabel',
+          'startCloudSyncPkceAction',
+        ],
+        rationale:
+          'The provider label and the injectable client port are what keep the four actions testable; recreating the label inline is how OneDrive and Drive toasts drift apart.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useCloudSyncActions'"],
+        forbiddenSubstrings: ['const startCloudSyncPkce = useCallback('],
+        rationale:
+          'Re-inlining an auth control would split the settings write from the state mirror and can strand a token without an enabled provider.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/cloudSyncActions.test.ts',
+        requiredSubstrings: [
+          'held in memory only',
+          'persists provider, client id and enabled before redirecting',
+        ],
+        rationale:
+          'Memory-only tokens are a privacy promise, and persisting settings before redirecting is what lets the OAuth callback find its provider.',
+      },
+    ],
+    restorePlaybook: [
+      'Cloud-sync controls live in `barnStore/useCloudSyncActions.ts`; the store supplies `setCloudSyncState` and `notify` and keeps the actual sync run.',
+      'Never persist an access token — only settings and the custom client id may be written; tokens stay in memory by design.',
+      'Persist the provider and client id before starting the PKCE redirect, or the callback cannot resolve which provider it belongs to.',
+    ],
+  },
 ];
