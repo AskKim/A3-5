@@ -428,23 +428,12 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,woff,woff2}'],
-          // Diagnostics-only chunks are not part of boot: precaching them taxed every install for a
-          // panel most users never open. They are cached on first online use instead (see runtimeCaching).
-          globIgnores: ['**/improvement-registry-*.js', '**/rationales-*.js'],
+          // Offline-first: every chunk the app can reach must be precached, including the diagnostics
+          // panel's lazily-imported registry/rationales. Trimming them broke first-offline-open; see IMP-088.
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [/^\/api\//, /\/version\.json$/, /\/status\.json$/],
           runtimeCaching: [
-            {
-              urlPattern: /\/assets\/(?:improvement-registry|rationales)-[^/]+\.js$/,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'diagnostics-chunks',
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
             {
               urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
               handler: 'CacheFirst',

@@ -1012,31 +1012,28 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-088',
-    title: 'Diagnostics Chunks Kept Out of the Install Precach',
+    title: 'Diagnostics Chunks Stay Precached (Offline-First Beats Install Size)',
     category: 'stability-pwa',
     release: 'alpha-3',
     source: 'session',
     userIntent:
-      'Stop making every PWA install pay for a developer diagnostics panel that most users never open.',
+      'Keep every reachable feature working on a first run with no network, without paying for it with a panel that only fails offline.',
     summary:
-      'The improvement registry and its rationale prose were precached by the service worker even though both load only when the diagnostics panel asks for them. Workbox `globIgnores` now excludes `improvement-registry-*.js` and `rationales-*.js`, cutting the precache from 113 files / 4.64 MB to 111 files / 4.35 MB (−308 KB raw, ~85 KB gzip) on every install; a `StaleWhileRevalidate` runtime cache (`diagnostics-chunks`) still stores both after the first online use, so the panel keeps working offline once seen. The trade, accepted deliberately: on a device that has never opened that panel online, the diagnostics panel reports a load error while the rest of the app is unaffected — livestock data never depends on these chunks.',
+      'Excluding the lazily-imported improvement registry (`improvement-registry-*.js`) and its rationale prose (`rationales-*.js`) from the Workbox precache was measured and rejected: it trimmed install weight from 113 files / 4.64 MB to 111 / 4.35 MB, but it also meant a device that opened the developer diagnostics panel for the first time while offline got a load error there. In an offline-first app every reachable screen must work with no network, so both chunks stay in `globPatterns` and the exclusion/runtime-cache pair was removed. If install weight ever needs to shrink again, shrink the registry data itself — never the offline capability.',
     files: ['vite.config.ts'],
     invariants: [
       {
         filePath: 'vite.config.ts',
-        requiredSubstrings: [
-          'globIgnores: [',
-          '**/improvement-registry-*.js',
-          '**/rationales-*.js',
-          'diagnostics-chunks',
-        ],
+        requiredSubstrings: ['globPatterns: ['],
+        forbiddenSubstrings: ['**/improvement-registry-*.js', '**/rationales-*.js', 'diagnostics-chunks'],
         rationale:
-          'Both diagnostics chunks must stay out of the precache manifest while remaining reachable through the runtime cache; deleting either half reintroduces either install bloat or an unrecoverable panel.',
+          'The diagnostics chunks must stay in the precache manifest: excluding them (or re-adding a dedicated runtime cache as a substitute) reintroduces the first-offline-open failure this entry exists to prevent.',
       },
     ],
     restorePlaybook: [
-      'Keep the two globIgnores patterns and the diagnostics-chunks runtime rule together: one halves install weight, the other keeps the panel usable after first use.',
-      'If offline export of IMPROVEMENTS.md from a never-visited device becomes a requirement, remove the patterns from globIgnores and drop the runtimeCaching entry — do not precache one chunk and exclude the other.',
+      'Do not exclude `improvement-registry-*.js` or `rationales-*.js` from `globPatterns`; a lazy import is still reachable, and reachable means precached.',
+      'Before any future precache trim, test the screen offline on a device that has never visited it — the online path hides this class of bug completely.',
+      'Genuine offline-safe savings must come from smaller registry data, not from dropping a feature out of the precache.',
     ],
   },
 ];
