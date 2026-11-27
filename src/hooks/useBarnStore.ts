@@ -292,6 +292,7 @@ import { useSyncConflictDismissal } from './barnStore/useSyncConflictDismissal';
 import { useSyncConflictResolution } from './barnStore/useSyncConflictResolution';
 import { useRollingBackupActions } from './barnStore/useRollingBackupActions';
 import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
+import { useAnimalsCrud, type AnimalsCrudAdapter } from './barnStore/useAnimalsCrud';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -2589,220 +2590,43 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [snapshot, hydrateSnapshotForExport, recordBackupExport, notify]
   );
 
-  const saveAnimal = useCallback(
-    async (
-      draft: AnimalSaveDraft,
-      linkParentTarget?: { childId: string; asSire: boolean },
-      initialPhotos?: Array<OptimizedImagePayload & { caption?: string }>
-    ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const adapter = adapterRef.current!;
-        if (adapter.syncFromPersistedStorageIfStale) {
-          const synced = await adapter.syncFromPersistedStorageIfStale().catch(() => false);
-          if (synced) {
-            await reloadFromAdapterSilently();
-          }
-        }
-        const {
-          _concurrentBase,
-          _forceConcurrentOverwrite,
-          ...cleanDraft
-        } = draft;
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const previous = cleanDraft.id
-          ? latestSnapshot?.animals.find((a) => a.id === cleanDraft.id)
-          : undefined;
-        const hasExplicitRaw = typeof cleanDraft.genotypeRaw === 'string';
-        const trimmedRaw = (cleanDraft.genotypeRaw || '').trim();
-        const needsGeneticsEngine =
-          (hasExplicitRaw && Boolean(trimmedRaw)) ||
-          (!hasExplicitRaw && Boolean(cleanDraft.genotype && cleanDraft.genotype.length > 0));
-        let parsedGeno =
-          !hasExplicitRaw && cleanDraft.genotype && cleanDraft.genotype.length > 0
-            ? cleanDraft.genotype
-            : [];
-        let normalizedRaw = trimmedRaw;
-        if (needsGeneticsEngine) {
-          const { formatGenotypeArray, parseGenotypeString } = await import(
-            '../domain/geneticsEngine'
-          );
-          if (hasExplicitRaw && trimmedRaw) {
-            parsedGeno =
-              cleanDraft.genotype &&
-              cleanDraft.genotype.length > 0 &&
-              formatGenotypeArray(cleanDraft.genotype) === trimmedRaw
-                ? cleanDraft.genotype
-                : parseGenotypeString(trimmedRaw, cleanDraft.species);
-          }
-          normalizedRaw = trimmedRaw || (hasExplicitRaw ? '' : formatGenotypeArray(parsedGeno));
-        }
-
-        const carriers = reconcileCarrierTraitLists(
-          cleanDraft.suspectedCarrierOf,
-          cleanDraft.confirmedCarrierOf,
-          cleanDraft.clearedCarrierOf
-        );
-
-        const resolvedIgnored = normalizeIgnoredConflicts(
-          cleanDraft.ignoredConflicts ?? previous?.ignoredConflicts
-        );
-
-        const animalId = cleanDraft.id || generateUuid();
-        const rev = nextEntityRev(animalId, previous?._rev);
-        let adjustedTs = getAdjustedNowIsoUtc();
-        if (previous?.updatedAt && adjustedTs <= previous.updatedAt) {
-          const prevMs = Date.parse(previous.updatedAt);
-          if (Number.isFinite(prevMs)) {
-            adjustedTs = new Date(prevMs + 1).toISOString();
-          }
-        }
-
-        const candidateAnimal: Animal = {
-          ...cleanDraft,
-          id: animalId,
-          tattoo: cleanDraft.tattoo.trim(),
-          name: cleanDraft.name.trim(),
-          archived: Boolean(cleanDraft.archived),
-          needsAttention: Boolean(cleanDraft.needsAttention),
-          ignoredConflicts: resolvedIgnored,
-          genotype: parsedGeno,
-          genotypeRaw: normalizedRaw,
-          rufusLevel: normalizeRufusLevel(cleanDraft.rufusLevel),
-          suspectedCarrierOf: carriers.suspectedCarrierOf,
-          confirmedCarrierOf: carriers.confirmedCarrierOf,
-          clearedCarrierOf: carriers.clearedCarrierOf,
-          _rev: rev,
-          createdAt: cleanDraft.createdAt || previous?.createdAt || adjustedTs,
-          updatedAt: adjustedTs,
-        };
-
-        let animal = candidateAnimal;
-        let mergedRemoteLabels: string[] = [];
-        if (previous && _concurrentBase && !_forceConcurrentOverwrite) {
-          const mergeResult = mergeConcurrentAnimalEdit({
-            base: _concurrentBase,
-            remote: previous,
-            local: candidateAnimal,
-          });
-          if (mergeResult.status === 'conflict') {
-            throw new ConcurrentEditConflictError(mergeResult.conflictingFields, previous);
-          }
-          if (mergeResult.status === 'merged') {
-            animal = mergeResult.mergedAnimal;
-            mergedRemoteLabels = mergeResult.mergedRemoteFields.map((f) => f.label);
-          }
-        }
-
-        try {
-          await adapter.saveAnimal(animal);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'animal',
-              previous,
-              next: animal,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: adjustedTs,
-              recordRev: rev,
-            })
-          );
-
-          if (initialPhotos && initialPhotos.length > 0) {
-            const existingPhotos = (latestSnapshot?.animalPhotos ?? []).filter(
-              (p) => p.animalId === animal.id
-            );
-            const hasPrimary = existingPhotos.some((p) => p.isPrimary);
-            const newPhotoRecords: AnimalPhoto[] = initialPhotos.map((pay, idx) => ({
-              id: generateUuid(),
-              species: animal.species,
-              animalId: animal.id,
-              isPrimary: !hasPrimary && idx === 0,
-              sortOrder: existingPhotos.length + idx,
-              caption: (pay.caption || '').trim(),
-              originalFileName: pay.originalFileName,
-              mimeType: pay.mimeType,
-              width: pay.width,
-              height: pay.height,
-              originalBytes: pay.originalBytes,
-              storedBytes: pay.storedBytes,
-              thumbnailDataUrl: pay.thumbnailDataUrl,
-              dataUrl: pay.dataUrl,
-              createdAt: adjustedTs,
-              updatedAt: adjustedTs,
-            }));
-            await adapter.saveAnimalPhotosBatch(newPhotoRecords);
-            for (const rec of newPhotoRecords) {
-              rememberPhoto(photoCacheRef, rec.id, rec.dataUrl);
-            }
-          }
-
-          if (linkParentTarget && latestSnapshot) {
-            const child = latestSnapshot.animals.find((a) => a.id === linkParentTarget.childId);
-            const expectedSex = linkParentTarget.asSire ? 'Male' : 'Female';
-            if (child && isSameSpecies(child.species, animal.species) && child.id !== animal.id) {
-              if (animal.sex !== expectedSex) {
-                logDiagnosticEvent({
-                  level: 'warn',
-                  category: 'storage',
-                  message: `Prevented parent sex mismatch when linking "${animal.name}" (${animal.sex}) as ${
-                    linkParentTarget.asSire ? 'Sire' : 'Dam'
-                  } of "${child.name}"`,
-                });
-              } else {
-                const childRev = nextEntityRev(child.id, child._rev);
-                const updatedChild: Animal = {
-                  ...child,
-                  sireId: linkParentTarget.asSire ? animal.id : child.sireId,
-                  damId: !linkParentTarget.asSire ? animal.id : child.damId,
-                  _rev: childRev,
-                  updatedAt: adjustedTs,
-                };
-                await adapter.saveAnimal(updatedChild);
-                await recordOutboxOps(
-                  diffEntityFieldsToOperations({
-                    entityType: 'animal',
-                    previous: child,
-                    next: updatedChild,
-                    deviceId,
-                    nextCounter: allocateNextLogicalCounter,
-                    timestamp: adjustedTs,
-                    recordRev: childRev,
-                  })
-                );
-              }
-            }
-          }
-
-          await reloadFromAdapter();
-          const baseNotify =
-            initialPhotos && initialPhotos.length > 0
-              ? `${animal.name} saved with ${initialPhotos.length} optimized photo(s).`
-              : `${animal.name} (${animal.tattoo || 'No ID'}) saved.`;
-          notify(
-            mergedRemoteLabels.length > 0
-              ? `${baseNotify} Merged concurrent updates (${mergedRemoteLabels.join(', ')}).`
-              : baseNotify
-          );
-          return animal.id;
-        } catch (err) {
-          reportPersistenceFailure(`save ${animal.name}`, err);
-          return null;
-        }
-      });
-    },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      reloadFromAdapterSilently,
-      notify,
-      reportPersistenceFailure,
-    ]
+  // Stable adapter facade so the CRUD callbacks keep their identity across renders.
+  const animalsCrudAdapter = useMemo<AnimalsCrudAdapter>(
+    () => ({
+      saveAnimal: (animal) => adapterRef.current!.saveAnimal(animal),
+      saveAnimalPhotosBatch: (photos) => adapterRef.current!.saveAnimalPhotosBatch(photos),
+      saveAnimalsBatch: (animals) => adapterRef.current!.saveAnimalsBatch(animals),
+      deleteAnimalsBatch: (ids) => adapterRef.current!.deleteAnimalsBatch(ids),
+      syncFromPersistedStorageIfStale: () =>
+        adapterRef.current?.syncFromPersistedStorageIfStale?.() ?? Promise.resolve(false),
+    }),
+    []
   );
 
+  const { saveAnimal, archiveAnimals, deleteAnimalsBatch, deleteAnimal } = useAnimalsCrud({
+    enqueueStoreMutation,
+    snapshotRef,
+    fallbackSnapshot: snapshot,
+    adapter: animalsCrudAdapter,
+    deviceId,
+    nextEntityRev,
+    allocateNextLogicalCounter,
+    nowIsoUtc: getAdjustedNowIsoUtc,
+    recordOutboxOps,
+    reloadFromAdapter,
+    reloadFromAdapterSilently,
+    notify,
+    reportPersistenceFailure,
+    rememberPhoto: (photoId, dataUrl) => rememberPhoto(photoCacheRef, photoId, dataUrl),
+    forgetPhoto: (photoId) => forgetPhoto(photoCacheRef, photoId),
+    saveSafetyRollingBackup,
+    selectedAnimalId,
+    pedigreeAnimalId,
+    clearSelectedAnimal: () => setSelectedAnimalId(null),
+    clearPedigreeAnimal: () => setPedigreeAnimalId(null),
+    isOpfsSupported: () => isOpfsSupported(),
+    getOffloadAnimals: () => offloadAnimalsRef.current,
+  });
   const ignoreAnimalConflicts = useCallback(
     async (animalId: string, kinds: AnimalConflictKind[]) => {
       if (kinds.length === 0) return;
@@ -2903,171 +2727,6 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       });
     },
     [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, notify, reportPersistenceFailure]
-  );
-
-  const archiveAnimals = useCallback(
-    async (animalIds: string[], archived: boolean) => {
-      if (animalIds.length === 0) return;
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const idSet = new Set(animalIds);
-        const ts = getAdjustedNowIsoUtc();
-        const ops: SyncOperation[] = [];
-        const updatedBatch: Animal[] = [];
-
-        for (const animal of currentSnapshot.animals) {
-          if (!idSet.has(animal.id)) continue;
-          const rev = nextEntityRev(animal.id, animal._rev);
-          const nextStatus =
-            !archived &&
-            (animal.status === 'Archived' ||
-              animal.status === 'Deceased' ||
-              animal.status === 'Sold' ||
-              animal.status === 'Retired')
-              ? 'Active'
-              : archived && (animal.status === 'Active' || animal.status === 'Junior')
-              ? 'Archived'
-              : animal.status;
-          const updated: Animal = {
-            ...animal,
-            archived,
-            status: nextStatus,
-            _rev: rev,
-            updatedAt: ts,
-          };
-          updatedBatch.push(updated);
-          ops.push(
-            ...diffEntityFieldsToOperations({
-              entityType: 'animal',
-              previous: animal,
-              next: updated,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-        }
-
-        try {
-          if (updatedBatch.length > 0) {
-            await adapterRef.current!.saveAnimalsBatch(updatedBatch);
-          }
-          await recordOutboxOps(ops);
-          const autoOffloadIds =
-            archived && currentSnapshot.settings.autoOffloadRetiredToOpfs && isOpfsSupported()
-              ? updatedBatch
-                  .filter((a) => a.status === 'Sold' || a.status === 'Deceased')
-                  .map((a) => a.id)
-              : [];
-          if (autoOffloadIds.length > 0 && offloadAnimalsRef.current) {
-            const offloaded = await offloadAnimalsRef.current(autoOffloadIds);
-            if (offloaded) return;
-          }
-          await reloadFromAdapter();
-          notify(
-            archived
-              ? `Moved ${animalIds.length} animal${animalIds.length === 1 ? '' : 's'} to Archived (retained for pedigrees).`
-              : `Restored ${animalIds.length} animal${animalIds.length === 1 ? '' : 's'} back to Active herd.`
-          );
-        } catch (err) {
-          reportPersistenceFailure(archived ? 'archive animal(s)' : 'restore animal(s)', err);
-        }
-      });
-    },
-    [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, notify, reportPersistenceFailure]
-  );
-
-  const deleteAnimalsBatch = useCallback(
-    async (animalIds: string[]) => {
-      if (animalIds.length === 0) return;
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        try {
-          await saveSafetyRollingBackup(currentSnapshot);
-          const idSet = new Set(animalIds);
-          const ts = getAdjustedNowIsoUtc();
-          const ops: SyncOperation[] = [];
-
-          // Unlink offspring sire/dam references pointing to deleted animals in a single batch
-          const unlinkedChildren: Animal[] = [];
-          for (const a of currentSnapshot.animals) {
-            if (idSet.has(a.id)) continue;
-            const clearSire = a.sireId && idSet.has(a.sireId);
-            const clearDam = a.damId && idSet.has(a.damId);
-            if (clearSire || clearDam) {
-              const childRev = nextEntityRev(a.id, a._rev);
-              const nextChild: Animal = {
-                ...a,
-                sireId: clearSire ? '' : a.sireId,
-                damId: clearDam ? '' : a.damId,
-                _rev: childRev,
-                updatedAt: ts,
-              };
-              unlinkedChildren.push(nextChild);
-              ops.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'animal',
-                  previous: a,
-                  next: nextChild,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: childRev,
-                })
-              );
-            }
-          }
-          if (unlinkedChildren.length > 0) {
-            await adapterRef.current!.saveAnimalsBatch(unlinkedChildren);
-          }
-
-          await adapterRef.current!.deleteAnimalsBatch(Array.from(idSet));
-          for (const photo of currentSnapshot.animalPhotos ?? []) {
-            if (idSet.has(photo.animalId)) {
-              forgetPhoto(photoCacheRef, photo.id);
-            }
-          }
-          for (const id of idSet) {
-            const deletedAnimal = currentSnapshot.animals.find((a) => a.id === id);
-            ops.push(
-              createOutboxOperation({
-                entityType: 'animal',
-                entityUuid: id,
-                deviceId,
-                logicalCounter: allocateNextLogicalCounter(),
-                fieldName: '__delete__',
-                newValue: true,
-                timestamp: ts,
-                recordRev: nextEntityRev(id, deletedAnimal?._rev),
-              })
-            );
-          }
-
-          if (selectedAnimalId && idSet.has(selectedAnimalId)) setSelectedAnimalId(null);
-          if (pedigreeAnimalId && idSet.has(pedigreeAnimalId)) setPedigreeAnimalId(null);
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify(`Deleted ${idSet.size} selected animal${idSet.size === 1 ? '' : 's'}.`);
-        } catch (err) {
-          reportPersistenceFailure('delete selected animal(s)', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      saveSafetyRollingBackup,
-      selectedAnimalId,
-      pedigreeAnimalId,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
   );
 
   /**
@@ -3369,13 +3028,6 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       notify,
       reportPersistenceFailure,
     ]
-  );
-
-  const deleteAnimal = useCallback(
-    async (animal: Animal) => {
-      await deleteAnimalsBatch([animal.id]);
-    },
-    [deleteAnimalsBatch]
   );
 
   const saveCage = useCallback(

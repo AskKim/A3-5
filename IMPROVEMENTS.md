@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (36 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (38 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (100)
+## Logged Improvements (102)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2191,3 +2191,40 @@ npm run lint && npm run build
 1. Offload lives in `barnStore/useOpfsArchiveOffload.ts`; the store supplies the adapter read/replace and selection setters.
 2. Always build from `loadFreshSnapshot`, never from React state.
 3. Keep the `backupVault` dynamic import; `verify:chunks` guards the split.
+
+### IMP-101: Typed Facades Over the Barn Store Surface
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Let a screen import only the part of the store it needs, without changing the flat return object that the 200-key contract pins.
+- **Summary:** Adds `src/hooks/barnStore/storeFacades.ts`: nine `Pick<BarnStore, ...>` facades (shell, animal, photo, backup, sync, species, calendar, husbandry, data) plus identity selectors, so consumers can name the slice they use and a domain-crossing call becomes visible in review. Nothing is added to the store object: the runtime surface, key order and `barnStoreContract.keys.json` are unchanged. `BarnStoreFacadeCoverage` is a compile-time `AssertNever<Exclude<keyof BarnStore, BarnStoreFacadeKeys>>`, so a new store key that no facade claims fails the typecheck instead of drifting. Typecheck and the 3-test contract gate pass unchanged.
+- **Tracked Files:** `src/hooks/barnStore/storeFacades.ts`, `src/hooks/__tests__/barnStoreContract.keys.json`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/storeFacades.ts` must contain `export type BarnStoreFacadeCoverage`, `BarnStoreUnfacetedKeys`, `selectAnimalFacade`, `export type BarnStoreBackupFacade` — *The coverage assertion is the whole point: without it the facades silently fall behind the store and stop describing the surface.*
+- `src/hooks/__tests__/barnStoreContract.keys.json` must contain `addOptimizedAnimalPhotos` — *The contract snapshot must stay byte-identical through facade work — facades are type-level and may never add, rename or reorder a key.*
+
+**Restoration Playbook if Overwritten:**
+1. Facades are type-only `Pick`s plus identity selectors; never add runtime keys to the store for them.
+2. When the store gains a key, claim it in exactly one facade or the build fails by design.
+
+### IMP-102: Animal CRUD Moved Into `useAnimalsCrud`
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Keep the four actions that write or remove animal rows together, so the revision and outbox rules are written once instead of four times.
+- **Summary:** Extracts `saveAnimal`, `archiveAnimals`, `deleteAnimalsBatch` and `deleteAnimal` into `src/hooks/barnStore/useAnimalsCrud.ts` (~348 lines out of the store). Behaviour is unchanged: saves still reconcile carriers, parse genotypes lazily, merge concurrent edits and refuse with `ConcurrentEditConflictError`; archives still auto-offload retired stock when OPFS is available; deletes still write a safety snapshot first, unlink offspring sire/dam references before removing rows, forget cached photos, clear stale selections and emit a `__delete__` outbox operation per animal. The store passes a stable adapter facade memoised once, so the returned callbacks keep their identity across renders. `useBarnStore.ts` 9,075 → 8,727 lines; 12 new unit tests; the 200-key contract snapshot is untouched.
+- **Tracked Files:** `src/hooks/barnStore/useAnimalsCrud.ts`, `src/hooks/__tests__/animalsCrud.test.ts`, `src/hooks/useBarnStore.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/useAnimalsCrud.ts` must contain `export function useAnimalsCrud`, `saveAnimalAction`, `deleteAnimalsBatchAction`, `ConcurrentEditConflictError` — *A concurrent edit must keep rejecting the save rather than silently overwrite a remote change; that check lives in the save action and nowhere else.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/useAnimalsCrud'` — *Re-inlining save would separate the `_rev` bump from the outbox diff, which is how rows and sync operations drift apart.*
+  - Forbidden regression: `const saveAnimal = useCallback(`
+- `src/hooks/__tests__/animalsCrud.test.ts` must contain `takes a safety snapshot, unlinks offspring and forgets photos`, `hands retired stock to the offloader and stops when it succeeds` — *Those two tests pin the destructive-delete ordering and the archive-to-offload hand-off, the two paths where a regression loses user data.*
+
+**Restoration Playbook if Overwritten:**
+1. Animal mutations live in `barnStore/useAnimalsCrud.ts`; the store supplies a memoised adapter facade and the refs.
+2. Every animal row write needs a matching `diffEntityFieldsToOperations` call with the same `_rev` and timestamp.
+3. Deletes take a safety rolling snapshot before any unlink or removal.
