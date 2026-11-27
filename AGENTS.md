@@ -114,6 +114,33 @@ The application must execute reliably across diverse host environments:
 
 ---
 
+## 6. Token-Sparing Edit Discipline (Required)
+
+Minimum tokens and minimum round trips are requirements here, not preferences. This extends the
+"Diffs First" rule in `prompts/master_system_prompt.md` §1 to file writes and tool usage.
+
+- **Diff-first writes:** Change an existing file with targeted edits (`str_replace` / patch hunks).
+  Never whole-file-replace a file that already exists unless the user explicitly asks for a rewrite.
+- **Diff-first reporting:** Show `git diff -- <path>` or a minimal unified diff, never full file
+  contents. Collapse untouched regions with `// ... existing code ...`.
+- **Read the window, not the file:** Locate with `code_search` / `glob`, then read only the lines
+  needed (`offset` / `limit`, tens of lines). Never re-read a file you just wrote to confirm an edit
+  the tool already acknowledged.
+- **Batch:** Put independent tool calls in one response, and run several checks in one command,
+  instead of serial round trips.
+- **Scope the output:** Summarise tool output and quote only the lines that change a decision. No
+  build logs, no unchanged code, no restating the prompt, no postmortems.
+- **Scratch space:** Logs, drafts and throwaway scripts live in `/tmp`, never in the repo.
+- **Incremental docs:** Insert or replace only the affected section of a Markdown file. Do not
+  regenerate whole documents — including `MODULES.md`, `IMPROVEMENTS.md` and this file — when a
+  targeted edit is enough; where a generator is the source of truth, edit the source and regenerate
+  exactly once.
+- **Skill edits:** `cloud_manage_skills` has no patch API — every save rewrites the entire skill and
+  needs approval. Save only when the content actually changes, at most once per change, and never
+  re-save merely to check read-back (reads lag one write by design).
+
+---
+
 ## Full sweep
 
 Trigger: full sweep

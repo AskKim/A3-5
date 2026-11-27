@@ -2,6 +2,9 @@
 
 > Applies to **all** coding assistants, models, and platforms (Gemini, Claude, Codex, Copilot, Cursor, Windsurf, Cline, Roo, Aider, etc.) when working in this repository.
 
+## Token Discipline (Required)
+Edit existing files with targeted diffs (`str_replace` / patch), never whole-file rewrites. Report `git diff`, not full file contents. Read only the line window you need, batch independent tool calls, keep scratch files in `/tmp`, and never re-save an account skill just to test read-back. Full rules: `AGENTS.md` §6.
+
 ## Startup Check: Incomplete Plan / Work Notice
 Whenever project rules (`GEMINI.md`, `AGENTS.md`, or `prompts/master_system_prompt.md`) are loaded for a coding task (omit on standalone make-handoff-only requests, read-only Q&A/inline completions, or import-only fast-boot checks) — emit this status **at most once per response** right after `ALIGNED` (never repeat it at the end):
 - Check `docs/plans/` (excluding `suggestions-backlog.md`) for any existing incomplete plan or handoff file (`handoff-*.yaml`, `handoff.yaml`, `*.yaml`, or active `*.md` plan with `[WIP]`/`[TODO]` or uncompleted steps).
