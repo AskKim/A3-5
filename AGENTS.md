@@ -221,5 +221,22 @@ the wart concretely, and one plain sentence prefixed "Explain it like I'm 5:".
 Then state plainly what could not run and why, and the environment state left behind
 (servers, untracked files, `dist/`).
 
+When a check is blocked by something changeable, name the change instead of stopping at
+"unavailable":
+
+- **Private repository** — unauthenticated CI reads (run conclusions, check runs, hosting
+  settings) return 404, so remote CI cannot be confirmed even though local gates ran. To
+  complete those checks the repo must be made **public**, or a `GH_TOKEN` /
+  `GITHUB_TOKEN` with `actions:read` (plus `repo` scope for a private repo) must be
+  supplied, e.g. `GH_TOKEN=… node scripts/android-build-remote.mjs --ref main`.
+- **Job logs** — `/actions/runs/{id}/logs` returns 403 even for public repos; logs always
+  need a token, while job names, steps and conclusions do not.
+- **Repository settings** — e.g. no Pages site (404) or a disabled workflow: no commit can
+  fix it; name the setting and where to change it.
+- **Missing SDK/toolchain or local dependency** — name it, its approximate size, and which
+  CI job covers that check instead.
+
+Format each as: check — blocker — exact change needed — what it unblocks.
+
 Known blocked checks: coverage (no `@vitest/coverage-*` provider installed) and the
 Android APK build (needs Gradle + Android SDK).
