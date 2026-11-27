@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (24 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (25 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (88)
+## Logged Improvements (89)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1952,3 +1952,22 @@ npm run lint && npm run build
 1. Do not exclude `improvement-registry-*.js` or `rationales-*.js` from `globPatterns`; a lazy import is still reachable, and reachable means precached.
 2. Before any future precache trim, test the screen offline on a device that has never visited it — the online path hides this class of bug completely.
 3. Genuine offline-safe savings must come from smaller registry data, not from dropping a feature out of the precache.
+
+### IMP-089: Barn Store Surface Contract (Prerequisite for the Slice Decomposition)
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Make it impossible to lose or rename a store action while `useBarnStore` is split up, without a DOM test harness the project does not have.
+- **Summary:** The store returns 200 keys through a single context value consumed by every screen, and the repo has no jsdom/testing-library renderer, so no runtime test could catch a dropped action. `barnStoreContract.test.ts` parses the hook's returned object literal straight from source and compares its keys against `barnStoreContract.keys.json`. Adding a key is a normal snapshot update; removing or renaming one fails by name until the snapshot and consumers move in the same commit. The parser rejects spread and computed keys so the contract cannot be silently bypassed, and a `MIN_EXPECTED_KEYS` floor stops a parser regression from passing by finding nothing. Proven against a real edit: deleting `deviceId` from the literal fails the test naming `deviceId`. `export type BarnStore = ReturnType<typeof useBarnStore>` gives the same guarantee at the type level.
+- **Tracked Files:** `src/hooks/useBarnStore.ts`, `src/hooks/__tests__/barnStoreContract.test.ts`, `src/hooks/__tests__/barnStoreContract.keys.json`
+
+**Automated Invariants Checked:**
+- `src/hooks/__tests__/barnStoreContract.test.ts` must contain `barnStoreContract.keys.json`, `MIN_EXPECTED_KEYS`, `computed key is not allowed` — *The contract must keep comparing against its snapshot, keep its sanity floor, and keep refusing spread/computed keys.*
+- `src/hooks/__tests__/barnStoreContract.keys.json` must contain `"deviceId"`, `"isLoading"` — *The snapshot is the record of the public surface; deleting it or trimming it to a stub would let a decomposition drop actions unnoticed.*
+- `src/hooks/useBarnStore.ts` must contain `export type BarnStore = ReturnType<typeof useBarnStore>` — *Consumers and slices must be able to type against the exported store shape rather than re-deriving it.*
+
+**Restoration Playbook if Overwritten:**
+1. When splitting the store, carry the returned keys over unchanged and update `barnStoreContract.keys.json` only in the same commit that changes a consumer.
+2. Never satisfy this contract by adding spread (`...slice`) or computed keys: the parser rejects both on purpose.
+3. Extend this file into the per-slice contract as slices land; the snapshot stays the single source of truth for the public surface.

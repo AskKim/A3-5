@@ -1036,4 +1036,45 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Genuine offline-safe savings must come from smaller registry data, not from dropping a feature out of the precache.',
     ],
   },
+  {
+    id: 'IMP-089',
+    title: 'Barn Store Surface Contract (Prerequisite for the Slice Decomposition)',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Make it impossible to lose or rename a store action while `useBarnStore` is split up, without a DOM test harness the project does not have.',
+    summary:
+      'The store returns 200 keys through a single context value consumed by every screen, and the repo has no jsdom/testing-library renderer, so no runtime test could catch a dropped action. `barnStoreContract.test.ts` parses the hook\'s returned object literal straight from source and compares its keys against `barnStoreContract.keys.json`. Adding a key is a normal snapshot update; removing or renaming one fails by name until the snapshot and consumers move in the same commit. The parser rejects spread and computed keys so the contract cannot be silently bypassed, and a `MIN_EXPECTED_KEYS` floor stops a parser regression from passing by finding nothing. Proven against a real edit: deleting `deviceId` from the literal fails the test naming `deviceId`. `export type BarnStore = ReturnType<typeof useBarnStore>` gives the same guarantee at the type level.',
+    files: [
+      'src/hooks/useBarnStore.ts',
+      'src/hooks/__tests__/barnStoreContract.test.ts',
+      'src/hooks/__tests__/barnStoreContract.keys.json',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/__tests__/barnStoreContract.test.ts',
+        requiredSubstrings: ['barnStoreContract.keys.json', 'MIN_EXPECTED_KEYS', 'computed key is not allowed'],
+        rationale:
+          'The contract must keep comparing against its snapshot, keep its sanity floor, and keep refusing spread/computed keys.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/barnStoreContract.keys.json',
+        requiredSubstrings: ['"deviceId"', '"isLoading"'],
+        rationale:
+          'The snapshot is the record of the public surface; deleting it or trimming it to a stub would let a decomposition drop actions unnoticed.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['export type BarnStore = ReturnType<typeof useBarnStore>'],
+        rationale:
+          'Consumers and slices must be able to type against the exported store shape rather than re-deriving it.',
+      },
+    ],
+    restorePlaybook: [
+      'When splitting the store, carry the returned keys over unchanged and update `barnStoreContract.keys.json` only in the same commit that changes a consumer.',
+      'Never satisfy this contract by adding spread (`...slice`) or computed keys: the parser rejects both on purpose.',
+      'Extend this file into the per-slice contract as slices land; the snapshot stays the single source of truth for the public surface.',
+    ],
+  },
 ];

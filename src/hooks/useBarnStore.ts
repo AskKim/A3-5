@@ -9546,3 +9546,6 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     clearLocalSyncAndBackupReminderState,
   };
 }
+
+/** Public shape of the store context value; keeps the decomposition honest at the type level. */
+export type BarnStore = ReturnType<typeof useBarnStore>;
