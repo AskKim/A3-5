@@ -5,13 +5,13 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 230
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (25.2%)
+- **Total Non-Test Source Modules:** 236
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (24.6%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 10
-- **Content-Specific Modules:** 172 (74.8%)
-  - Domain Engines (`src/domain/`): 78
+- **Content-Specific Modules:** 178 (75.4%)
+  - Domain Engines (`src/domain/`): 84
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
@@ -109,9 +109,9 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (172)
+## 2. Content-Specific Modules (178)
 
-### Domain Engines & Compatibility Facades (`src/domain/`) (78)
+### Domain Engines & Compatibility Facades (`src/domain/`) (84)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -159,6 +159,12 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/importers/registry.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/importers/universalPedigreeImporter.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/improvementRegistry.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/improvements/registry-part-01.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/improvements/registry-part-02.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/improvements/registry-part-03.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/improvements/registry-part-04.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/improvements/registry-part-05.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/improvements/types.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/inputSanitization.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/judgeNotebook.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/mileageTaxLog.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |

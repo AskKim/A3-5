@@ -130,9 +130,14 @@ for (const file of walk(SRC)) {
   const layer = layerOf(rel);
   const text = fs.readFileSync(file, 'utf8');
 
+  // Registry part modules are 85 human-written entries: prose that *mentions* `node:path` or a DOM
+  // global is data, not an import or a call. The same exemption the single registry file always had
+  // is scoped here to these five data files only — import-direction rules below still apply.
+  const isRegistryData = /^src\/domain\/improvements\/registry-part-\d+\.ts$/.test(rel);
+
   const specs = extractSpecifiers(text);
   for (const spec of specs) {
-    if (spec.startsWith('node:')) {
+    if (!isRegistryData && spec.startsWith('node:')) {
       violations.add(`${rel} -> ${spec} [Node built-in forbidden in browser PWA source]`);
     }
   }
@@ -163,7 +168,7 @@ for (const file of walk(SRC)) {
       .join('\n');
     if (DOM_PATTERN.test(code)) violations.add(`${rel} [DOM global in pure ${layer} code]`);
   }
-  if (layer === 'domain' && !DOMAIN_DOM_EXEMPT.test(rel)) {
+  if (layer === 'domain' && !DOMAIN_DOM_EXEMPT.test(rel) && !isRegistryData) {
     const code = text
       .split('\n')
       .filter((line) => !/^\s*(\*|\/\/|\/\*)/.test(line))

@@ -119,6 +119,12 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/domain/importers/pedigreeOcrParser.ts` — `pedigree-domain` — 2D paper pedigree card tree OCR parser.
 - `src/domain/importers/universalPedigreeImporter.ts` — `pedigree-domain` — Universal pedigree CSV/archive importer.
 - `src/domain/improvementRegistry.ts` — `pedigree-domain` — Anti-wipeout invariant registry, boot-entry lock checksums, and recovery log formatter.
+- `src/domain/improvements/types.ts` — `pedigree-domain` — Shared registry types (entry, invariant, category, release) so part modules avoid a registry import cycle.
+- `src/domain/improvements/registry-part-01.ts` — `pedigree-domain` — Registry entries IMP-001 … IMP-017.
+- `src/domain/improvements/registry-part-02.ts` — `pedigree-domain` — Registry entries IMP-018 … IMP-034.
+- `src/domain/improvements/registry-part-03.ts` — `pedigree-domain` — Registry entries IMP-035 … IMP-051.
+- `src/domain/improvements/registry-part-04.ts` — `pedigree-domain` — Registry entries IMP-052 … IMP-068.
+- `src/domain/improvements/registry-part-05.ts` — `pedigree-domain` — Registry entries IMP-069 … IMP-085.
 - `src/domain/judgeNotebook.ts` — `pedigree-domain` — Show judge comments and placement notebook engine.
 - `src/domain/mileageTaxLog.ts` — `pedigree-domain` — Agricultural travel mileage and tax deduction calculator.
 - `src/domain/milestones.ts` — `pedigree-domain` — Youth 4-H/FFA and breeder milestone trackers.
