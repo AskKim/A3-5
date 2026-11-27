@@ -3,7 +3,7 @@ status:
   - [DONE] src/storage/* | Aligned browser/worker storage probes, OPFS streaming, passphrase crypto, cross-tab sync, background freeze, photo cache, LAN WebRTC, PKCE sessionStorage, and weather localStorage onto @engine/storage/* and @engine/primitives/* contracts (with verified @engine unit tests)
   - [DONE] src/storage/webSqliteAdapter.ts | Split schema DDL (sqliteSchema.ts), IndexedDB persistence/quota recovery (sqliteIdbPersistence.ts), row mappers (sqliteRowMappers.ts) and row writers (sqliteRowWriters.ts) out of the adapter
   - [WIP] src/storage/webSqliteAdapter.ts | Adapter still ~2.6k lines: extract snapshot row readers plus generic batch/delete mutation helpers next
-  - [WIP] src/hooks/useBarnStore.ts | Slice extraction started: seven sub-hooks/policy modules landed under src/hooks/barnStore/* (photo-cache budget, backup-reminder policy + actions, photo cache + loaders, alert dismissals, cloud-sync settings/PKCE actions, OPFS vault save/describe/delete/restore) with their own tests; remaining work is domain slice controllers, injected storage/sync ports, and headless action dispatchers.
+  - [WIP] src/hooks/useBarnStore.ts | Slice extraction started: eight sub-hooks/policy modules landed under src/hooks/barnStore/* (photo-cache budget, backup-reminder policy + actions, photo cache + loaders, alert dismissals, cloud-sync settings/PKCE actions, OPFS vault save/describe/delete/restore, sync-conflict dismissal) with their own tests; remaining work is domain slice controllers, injected storage/sync ports, and headless action dispatchers.
     - [DONE] photoCacheBudget.ts | Category cache budgets per device tier (IMP-090)
     - [DONE] backupReminder.ts | Local backup/snooze storage policy (IMP-091)
     - [DONE] useBackupReminderActions.ts | recordBackupExport / snoozeBackupReminder (IMP-092)
@@ -11,7 +11,8 @@ status:
     - [DONE] useAlertDismissals.ts | Ignore-task, clear-group and dismiss-memo settings merges (IMP-094)
     - [DONE] useCloudSyncActions.ts | Settings patch, access token, disconnect and PKCE redirect (IMP-095)
     - [DONE] useOpfsVaultActions.ts | Vault save, describe, download, delete and restore-by-key (IMP-096)
-    - [ ] Next candidates: sync-conflict dismissal, rolling-backup restore, OPFS herd-archive offload
+    - [DONE] useSyncConflictDismissal.ts | Dismiss a conflict and shared resolved-marking helpers (IMP-097)
+    - [ ] Next candidates: OPFS herd-archive offload, rolling-backup restore, sync-conflict resolution
   - [TODO] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
   - [TODO] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Codemod remaining callers directly onto @engine/*, retire compatibility shims, and extract generic non-domain logic left in src/domain/*
   - [TODO] src/domain/improvementRegistry.ts | Audit domain seed/test files for PII/contact hygiene via prompts/core_hygiene.md and expand layer/duplication checks across components & storage
@@ -24,4 +25,4 @@ constraints:
   - Do not modify or import /import/ staging files; keep Alpha 2 features intact with thin facades until callers migrate
 decisions: Standalone /engine extraction waits until Phase 3 storage alignment, useBarnStore/webSqliteAdapter split, and shim retirement complete so extracted packages require zero rewrites
 verified: tsc=pass | test=pass | build=pass
-next_action: Continue the src/hooks/useBarnStore.ts split with sync-conflict dismissal or rolling-backup restore, keeping the 200-key contract snapshot unchanged; then resume snapshot row readers/upserters in src/storage/webSqliteAdapter.ts
+next_action: Continue the src/hooks/useBarnStore.ts split with sync-conflict resolution or rolling-backup restore, keeping the 200-key contract snapshot unchanged; then resume snapshot row readers/upserters in src/storage/webSqliteAdapter.ts

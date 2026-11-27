@@ -288,6 +288,11 @@ import {
 import { useAlertDismissals } from './barnStore/useAlertDismissals';
 import { useCloudSyncActions } from './barnStore/useCloudSyncActions';
 import { useOpfsVaultActions } from './barnStore/useOpfsVaultActions';
+import {
+  buildResolvedSyncConflict,
+  markSyncConflictResolved,
+  useSyncConflictDismissal,
+} from './barnStore/useSyncConflictDismissal';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -7889,11 +7894,9 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             setSyncOperations(applied.mergedOperations);
           }
 
-          const resolvedConflict: SyncConflictEntry = { ...conflict, resolved: true };
+          const resolvedConflict = buildResolvedSyncConflict(conflict);
           await saveSyncConflictInIdb(resolvedConflict);
-          setSyncConflicts((prev) =>
-            prev.map((c) => (c.conflict_id === conflictId ? resolvedConflict : c))
-          );
+          setSyncConflicts((prev) => markSyncConflictResolved(prev, resolvedConflict));
           await reloadFromAdapter();
           notify(`Applied chosen value for ${conflict.entity_label} (${conflict.field_name}).`);
         } catch (err) {
@@ -7914,18 +7917,11 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
-  const dismissSyncConflict = useCallback(
-    async (conflictId: string) => {
-      const conflict = syncConflicts.find((c) => c.conflict_id === conflictId);
-      if (!conflict) return;
-      const resolvedConflict: SyncConflictEntry = { ...conflict, resolved: true };
-      await saveSyncConflictInIdb(resolvedConflict);
-      setSyncConflicts((prev) =>
-        prev.map((c) => (c.conflict_id === conflictId ? resolvedConflict : c))
-      );
-    },
-    [syncConflicts]
-  );
+  const { dismissSyncConflict } = useSyncConflictDismissal({
+    syncConflicts,
+    setSyncConflicts,
+    saveConflict: saveSyncConflictInIdb,
+  });
 
   const buildLocalDeltaJsonPayload = useCallback(() => {
     return {

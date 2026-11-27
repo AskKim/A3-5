@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (32 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (33 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (96)
+## Logged Improvements (97)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2111,3 +2111,23 @@ npm run lint && npm run build
 1. Vault operations live in `barnStore/useOpfsVaultActions.ts`; the store supplies the snapshot refs, adapter replace and listing.
 2. Restore order is the safety contract: safety snapshot, clear photo cache, replace snapshot, clear sync/reminder state, reset species, reload — then toast.
 3. Call `restoreOpfsVaultBackupUnqueued` only from code that already runs inside `enqueueStoreMutation`, never from UI handlers.
+
+### IMP-097: Sync-Conflict Dismissal Moved Into a Sub-Hook
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Diagnostics & Sync (`diagnostics-sync`)
+- **Origin:** Session Improvement
+- **User Goal:** Make the two ways a sync conflict is cleared share one definition of “resolved”, so dismissing and resolving can never disagree about what the settled record looks like.
+- **Summary:** Eighth barn-store slice: `src/hooks/barnStore/useSyncConflictDismissal.ts` owns dismissing a sync conflict — find it, mark a resolved copy, persist it, replace it in the React list — and exports the two pure helpers (`buildResolvedSyncConflict`, `markSyncConflictResolved`) that `resolveSyncConflict` now also uses instead of rebuilding the same `{ ...conflict, resolved: true }` mapping inline. Behaviour is unchanged: an unknown conflict id stays a silent no-op with no IndexedDB write, dismissal applies no delta operation and toasts nothing (the toast belongs to resolve), and a failed write propagates without touching the list. The store keeps `syncConflicts` state, `resolveSyncConflict` and the sync runs. `useBarnStore.ts` dropped from 9,199 to 9,195 lines; the 200-key contract snapshot is untouched.
+- **Tracked Files:** `src/hooks/barnStore/useSyncConflictDismissal.ts`, `src/hooks/__tests__/syncConflictDismissal.test.ts`, `src/hooks/useBarnStore.ts`, `docs/plans/handoff-modularity-reusability.yaml`, `MODULES.md`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/useSyncConflictDismissal.ts` must contain `export function useSyncConflictDismissal`, `buildResolvedSyncConflict`, `markSyncConflictResolved` — *Both cleared-conflict paths must build the same resolved record; a local `resolved: true` guess in either caller is how the list and IndexedDB drift apart.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/useSyncConflictDismissal'` — *Dismissal is the quiet path: it must not grow a delta operation or a toast of its own, which is exactly what re-inlining it next to resolve invites.*
+  - Forbidden regression: `const dismissSyncConflict = useCallback(`
+- `src/hooks/__tests__/syncConflictDismissal.test.ts` must contain `persists the resolved copy before updating the list`, `leaves the barn-data fields alone` — *Dismissal must write before it mutates UI state, and it must never touch winning/losing values — those two facts are what make it a dismissal rather than a resolution.*
+
+**Restoration Playbook if Overwritten:**
+1. Conflict dismissal lives in `barnStore/useSyncConflictDismissal.ts`; the store supplies the list, its setter and the IndexedDB write.
+2. Dismissal is silent by design — no toast, no delta operation, no barn write. Only `resolveSyncConflict` applies a chosen value.
+3. Use `buildResolvedSyncConflict` + `markSyncConflictResolved` for any new cleared-conflict path instead of rebuilding the mapping.
