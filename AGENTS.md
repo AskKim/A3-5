@@ -221,6 +221,33 @@ the wart concretely, and one plain sentence prefixed "Explain it like I'm 5:".
 Then state plainly what could not run and why, and the environment state left behind
 (servers, untracked files, `dist/`).
 
+### Branch topology and hosting (read before touching deploy workflows)
+
+The live product and the working copy are **not the same repository**, and the default
+branch is **not** the deploy path:
+
+| Location | Role |
+| --- | --- |
+| `AskKim/Pedigree` → `release` | **Live presentation**: `https://askkim.github.io/Pedigree/` (HTTP 200). Pages is served by branch, not by Actions. |
+| `AskKim/Pedigree` → `main` | Original development trunk; AI Studio can only write here. |
+| `AskKim/A3-5` → `main` | Working copy used by this agent. **No Pages site exists** (`/A3-5/` → 404), so `deploy-pages.yml` cannot succeed here. |
+| Personal/test branch (planned) | A second branch holding a copy for the owner's own setup and hands-on testing. |
+
+Consequences for a sweep:
+
+- Never infer deployment health from the branch you happen to be on. Resolve the live URL
+  (`package.json` `homepage`, repo `homepage`, or the site probe) and check which
+  repository **and branch** actually serve it.
+- A repository with no Pages site, or one whose Pages source is a branch, cannot be deployed by
+  `actions/configure-pages` + `deploy-pages`. That is a configuration mismatch, not a code
+  bug: report which hosting source is in use and what would change it.
+- Compare the live branch with the working branch before claiming a fix is live: `release`
+  in `AskKim/Pedigree` was last updated 2026-11-24, so commits on `main` here are **not**
+  published.
+- A planned personal/test branch inherits the workflow triggers of the branch it is cut
+  from; say which workflows it will actually run, and that `deploy-pages.yml` and
+  `build-android-apk.yml` are the ones worth excluding for a personal copy.
+
 When a check is blocked by something changeable, name the change instead of stopping at
 "unavailable":
 
