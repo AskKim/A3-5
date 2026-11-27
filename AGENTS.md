@@ -116,17 +116,77 @@ The application must execute reliably across diverse host environments:
 
 ## Full sweep
 
-Package manager: **npm** (declared in `.npmrc` and `package.json`; the repo ships **no lockfile**, so use `npm install` — `npm ci` will fail).
-
-| Step | Command |
-| --- | --- |
-| Install | `npm install` |
-| Typecheck | `npm run lint` (`tsc --noEmit`) |
-| Typecheck (engine layer) | `npm run verify:engine` (`tsc -p tsconfig.engine.json --noEmit`) |
-| Tests | `npm test` (`vitest run`) |
-| Build | `npm run build` (`vite build`) |
-| Dev server | `npm run dev` (Vite bound to `0.0.0.0:3000`) |
-| Aggregate verification | `npm run verify` (lint + test + all `verify:*` invariants) |
-| Invariant checks | `npm run verify:improvements`, `npm run verify:prompts`, `npm run verify:modules`, `npm run verify:layers`, `npm run verify:extraction` |
-
 Trigger: full sweep
+
+Purpose: one request produces the most comprehensive report this environment can
+generate about the repo, using three independent evidence sources — the repo's own
+gates, the Git/repo environment, and the agent environment (browser, static analysis,
+report artifact). Report only: never auto-fix, commit, push, upgrade dependencies, or
+weaken a gate to make it pass. Run every step even when an earlier one fails, so one
+run reports the whole picture.
+
+### Phase 1 — The repo's own gates
+
+Package manager: **npm** (`.npmrc` + `package.json`; the repo ships **no lockfile**,
+so `npm install` — `npm ci` fails).
+
+| # | Step | Command |
+| --- | --- | --- |
+| 1 | Install | `npm install` (note blocked install scripts) |
+| 2 | Typecheck (app) | `npm run lint` (`tsc --noEmit`) |
+| 3 | Typecheck (engine/features/utils) | `npm run verify:engine` |
+| 4 | Tests | `npm test` (`vitest run`, full suite) |
+| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction` |
+| 6 | Aggregate shortcut | `npm run verify` — equals steps 2–5; use it **instead of** them, never in addition |
+| 7 | Preflight | `npm run preflight:lint`; `node prompts/preflight/scripts/preflight-run-context.mjs --branch "$(git rev-parse --abbrev-ref HEAD)" --version "$(node -p "require('./package.json').version")" --dry-run` |
+| 8 | Release metadata | `package.json` version = `public/version.json` `appVersion` = `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts` = `versionName` in `android-wrapper/app/build.gradle.kts` |
+| 9 | Build (root) | `npm run build` |
+| 10 | Pages subpath build | `npm run build -- --base="/<repo-name>/"` then assert `dist/robots.txt`, `dist/sitemap.xml`, manifest `start_url`/`scope`/`id` of `./`, subpath asset + manifest references in `index.html`; re-run the root build afterwards to leave `dist/` in root form |
+
+Guardrails to assert: `import/`, `export/`, `upload/`, `old/` exist with `.gitkeep`;
+`prompts/master_system_prompt.md` exists; no `from 'import/` or `from 'old/` in `src/`
+or `index.html`; `scripts/layer-allowlist.json` parses as a JSON array; no tracked
+`.env*` (except `.env.example`), `.jks`, `.keystore`, `.pem`, `.p12`; `android-wrapper`
+gradle files free of Firebase, Google Play Services, Capacitor, Crashlytics, Amplitude,
+Mixpanel; every `.github/workflows/*.yml` declares `name`, `on`, `jobs` (CI uses PyYAML —
+if `python3 -c 'import yaml'` is unavailable, say strict YAML validation could not run).
+
+Do **not** run `gen-preflight.mjs` in a sweep: it rewrites tracked docs.
+
+### Phase 2 — Repo & Git environment
+
+| Area | What to collect |
+| --- | --- |
+| Git state | `git status -sb`, unpushed commits, branch vs remote, recent commits, total commit count |
+| Pending work | `docs/plans/handoff-*.yaml` and active plans (exclude `suggestions-backlog.md`) |
+| CI parity | Compare `.github/workflows/ci.yml`, `guardrails.yml`, `preflight.yml`, `security-audit.yml`, `release.yml` steps against what the sweep actually ran; list any CI step with no local equivalent |
+| Docs drift | `MODULES.md` vs `src/` (`verify:modules`), `EXTRACTION_INVENTORY.md` coverage, version files |
+| Dependencies | `npm audit --audit-level=high` (advisory only, never `npm audit fix`), `npm outdated`, `npm ls --depth=0` |
+| Code inventory | Source and test file counts, total lines, 8 largest files, test-to-source ratio |
+| Hygiene | `TODO`/`FIXME`/`HACK` markers in `src/`, `as any` / `@ts-ignore` / `@ts-expect-error` occurrences (repo rule forbids type escapes) |
+| Build output | `dist/` size, asset count, largest chunks, PWA precache entry count and size |
+
+### Phase 3 — Agent environment
+
+1. `npm run dev`, confirm the listener is on `0.0.0.0:3000`, probe `/` over HTTP (status,
+   title, page size) and with the preview hostname header.
+2. `cloud_show_dev_server` with that port, then `preview_open` in browser mode at the
+   returned hostname, and check `preview_snapshot` / `preview_logs` for a real render:
+   `#root` populated, visible text length, `<h1>` text, control count.
+3. Accessibility baseline from the live DOM: images missing `alt`, buttons with no
+   accessible name, unlabelled form controls, heading-level skips, `h1` count, `lang`.
+4. Runtime depth: DOMContentLoaded/load timing, resource count and transfer size,
+   service-worker state, console errors and failed requests.
+5. No screenshots and no click-through unless the user asks for them.
+6. Publish the result as a report artifact (Doc) titled `Full Sweep Report — <repo> (<date>)`,
+   and keep the chat summary short with a link to it.
+
+### Report contract
+
+One entry per finding: what prompted it (which check), what that check actually does,
+the wart concretely, and one plain sentence prefixed "Explain it like I'm 5:".
+Then state plainly what could not run and why, and the environment state left behind
+(servers, untracked files, `dist/`).
+
+Known blocked checks: coverage (no `@vitest/coverage-*` provider installed) and the
+Android APK build (needs Gradle + Android SDK).
