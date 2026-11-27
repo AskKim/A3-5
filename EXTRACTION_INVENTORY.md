@@ -187,7 +187,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 4. `src/storage/` File-by-File Inventory (25 Non-Test Files — Phase 3 Storage Alignment)
+## 4. `src/storage/` File-by-File Inventory (27 Non-Test Files — Phase 3 Storage Alignment)
 
 All legacy browser/worker storage modules are classified `pedigree-domain` in Phases 1–3 (`storageProbes`, `opfsTempStream`, `passphraseCrypto`, `backgroundFreezeCoordinator`, `p2pLanChannel`, `photoHydration`, `localSyncChannels`, `storageProtection`, `cloudAppFolderSync`, and `weatherForecast` delegate core primitives to `@engine/storage/*` & `@engine/primitives/*`):
 - `src/storage/archiveAndImport.worker.ts` — `pedigree-domain` — Off-thread `.ZIP` backup and external archive import Web Worker.
@@ -207,6 +207,8 @@ All legacy browser/worker storage modules are classified `pedigree-domain` in Ph
 - `src/storage/photoHydration.ts` — `pedigree-domain` — Bounded LRU photo data URL cache (`@engine/primitives/boundedCache`) and lazy hydration helpers.
 - `src/storage/pwaUpdateManager.ts` — `pedigree-domain` — Service Worker registration and update prompt controller.
 - `src/storage/sqliteIdbPersistence.ts` — `pedigree-domain` — IndexedDB persistence, quota recovery, and browser cache purge helpers for `WebSqliteAdapter`.
+- `src/storage/sqliteRowMappers.ts` — `pedigree-domain` — SQLite row-to-domain mappers (`mapSettingsRow`, `mapSqliteAnimalRow`, `mapCageRow`, …) that rebuild barn models from query rows for `WebSqliteAdapter`.
+- `src/storage/sqliteRowWriters.ts` — `pedigree-domain` — SQLite row upsert/delete writers (`upsertSettingsRow`, `upsertAnimalRow`, …) that bind barn models to statements inside `WebSqliteAdapter` transactions.
 - `src/storage/sqliteSchema.ts` — `pedigree-domain` — Canonical SQLite schema DDL (`PEDIGREE_SQLITE_SCHEMA`) shared across SQLite adapters.
 - `src/storage/storageAdapter.ts` — `pedigree-domain` — Alpha 2 `BarnStorageAdapter` contract.
 - `src/storage/storageProbes.ts` — `pedigree-domain` — Browser storage quota and probe facade over `@engine/storage/browserProbes`.

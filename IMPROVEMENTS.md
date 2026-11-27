@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (17 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (18 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (81)
+## Logged Improvements (82)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1815,3 +1815,24 @@ npm run lint && npm run build
 1. Keep `prompts/core_hygiene.md` registered in `src/domain/promptsCatalog.ts` and tracked in `src/domain/promptRegistry.ts` (`PRM-008`).
 2. Keep `PROMPT_CHANGES.md` synced from `src/domain/promptRegistry.ts` and `MODULES.md` synced via `npx tsx scripts/list-modules.ts --write`.
 3. Keep `verify:prompts` and `verify:modules` chained into `npm run verify` in `package.json`.
+
+### IMP-082: Three-Phase Full-Sweep Routine, Catalog/Inventory Sync & Typed Memory Probe
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Define one comprehensive full-sweep verification routine and clear every issue it surfaced: stale MODULES.md, missing EXTRACTION_INVENTORY coverage for the split SQLite row mapper/writer modules, and untyped performance.memory access in useBarnStore.
+- **Summary:** Records the three-phase full-sweep contract in `AGENTS.md` (repo gates, Git/CI environment, live browser runtime checks ending in a report artifact); resynchronizes `MODULES.md` with `src/` via `scripts/list-modules.ts --write`; classifies `src/storage/sqliteRowMappers.ts` and `src/storage/sqliteRowWriters.ts` as `pedigree-domain` in `EXTRACTION_INVENTORY.md` so the 100% coverage invariant passes; replaces both `as any` casts in `useBarnStore.ts` with a typed Chromium `performance.memory` interface; and commits `package-lock.json` so installs resolve deterministically.
+- **Tracked Files:** `AGENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`, `src/hooks/useBarnStore.ts`, `package-lock.json`, `IMPROVEMENTS.md`
+
+**Automated Invariants Checked:**
+- `EXTRACTION_INVENTORY.md` must contain ``src/storage/sqliteRowMappers.ts` — `pedigree-domain``, ``src/storage/sqliteRowWriters.ts` — `pedigree-domain`` — *EXTRACTION_INVENTORY.md must classify every non-test storage file, including the SQLite row mapper and writer split modules, so inventory coverage stays at 100%.*
+- `MODULES.md` must contain `sqliteRowMappers.ts`, `sqliteRowWriters.ts`, `useBarnStore.ts` — *MODULES.md must stay regenerated from src/ so the module catalog lists the split SQLite row modules and the state hook.*
+- `src/hooks/useBarnStore.ts` must contain `interface PerformanceMemory`, `memory?: PerformanceMemory` — *useBarnStore must read the non-standard Chromium performance.memory API through a typed interface instead of `as any`, per the repo-wide no-type-escapes rule.*
+  - Forbidden regression: `as any`
+- `AGENTS.md` must contain `### Phase 1 — The repo's own gates`, `### Phase 2 — Repo & Git environment`, `### Phase 3 — Agent environment`, `Trigger: full sweep` — *AGENTS.md must keep the three-phase full-sweep contract so future sweeps stay comprehensive.*
+
+**Restoration Playbook if Overwritten:**
+1. Regenerate `MODULES.md` with `npx tsx scripts/list-modules.ts --write` and re-run `npm run verify:modules`.
+2. Keep `src/storage/sqliteRowMappers.ts` and `src/storage/sqliteRowWriters.ts` classified as `pedigree-domain` in `EXTRACTION_INVENTORY.md`.
+3. Keep the typed `PerformanceMemory` interface in `src/hooks/useBarnStore.ts` instead of `as any`, and keep `package-lock.json` committed for deterministic installs.

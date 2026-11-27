@@ -5,15 +5,15 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 228
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (25.4%)
+- **Total Non-Test Source Modules:** 230
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (25.2%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 10
-- **Content-Specific Modules:** 170 (74.6%)
+- **Content-Specific Modules:** 172 (74.8%)
   - Domain Engines (`src/domain/`): 78
   - App Composition & Configs (`src/app/`): 9
-  - Storage Adapters & Workers (`src/storage/`): 25
+  - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
   - State Store Hook (`src/hooks/`): 1
   - UI Screens & Modals (`src/components/`): 53
@@ -109,7 +109,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (170)
+## 2. Content-Specific Modules (172)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (78)
 
@@ -208,7 +208,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/app/pedigreePdfActions.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/PlatformBridgeContext.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 
-### Content-Bound Storage Adapters & Workers (`src/storage/`) (25)
+### Content-Bound Storage Adapters & Workers (`src/storage/`) (27)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -229,6 +229,8 @@ npx tsx scripts/list-modules.ts --check
 | `src/storage/photoHydration.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/pwaUpdateManager.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/sqliteIdbPersistence.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
+| `src/storage/sqliteRowMappers.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
+| `src/storage/sqliteRowWriters.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/sqliteSchema.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/storageAdapter.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/storageProbes.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |

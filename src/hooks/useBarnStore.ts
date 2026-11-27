@@ -372,6 +372,13 @@ export interface UseBarnStoreOptions {
   bridge?: IPlatformBridge;
 }
 
+/** Non-standard Chromium heap metrics exposed at runtime by `performance.memory`. */
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
 export function useBarnStore(options?: UseBarnStoreOptions) {
   const activeBridge = useMemo<IPlatformBridge>(
     () => options?.bridge ?? getDefaultPedigreeBridge(),
@@ -391,12 +398,13 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   const pedigreeAncestorCacheRef = useRef<Map<string, Animal>>(new Map());
   // Monitor memory pressure and clear cache if needed
   useEffect(() => {
-    // Only run in browsers supporting performance.memory
-    if (typeof performance !== 'undefined' && (performance as any).memory) {
-      const mem = performance as any;
+    // Only run in browsers exposing the non-standard Chromium `performance.memory` API
+    if (typeof performance === 'undefined') return;
+    const memoryPerformance = performance as Performance & { memory?: PerformanceMemory };
+    if (memoryPerformance.memory) {
       const interval = setInterval(() => {
-        const used = mem.memory?.usedJSHeapSize ?? 0;
-        const limit = mem.memory?.jsHeapSizeLimit ?? Number.MAX_SAFE_INTEGER;
+        const used = memoryPerformance.memory?.usedJSHeapSize ?? 0;
+        const limit = memoryPerformance.memory?.jsHeapSizeLimit ?? Number.MAX_SAFE_INTEGER;
         // If usage exceeds 80% of limit, clear photo cache to free memory
         if (limit > 0 && used / limit > 0.8) {
           console.warn('High memory usage detected, clearing photo cache');

@@ -5985,6 +5985,65 @@ export const IMPROVEMENTS_REGISTRY: ImprovementEntry[] = [
       'Keep `verify:prompts` and `verify:modules` chained into `npm run verify` in `package.json`.',
     ],
   },
+  {
+    id: 'IMP-082',
+    title: 'Three-Phase Full-Sweep Routine, Catalog/Inventory Sync & Typed Memory Probe',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Define one comprehensive full-sweep verification routine and clear every issue it surfaced: stale MODULES.md, missing EXTRACTION_INVENTORY coverage for the split SQLite row mapper/writer modules, and untyped performance.memory access in useBarnStore.',
+    summary:
+      'Records the three-phase full-sweep contract in `AGENTS.md` (repo gates, Git/CI environment, live browser runtime checks ending in a report artifact); resynchronizes `MODULES.md` with `src/` via `scripts/list-modules.ts --write`; classifies `src/storage/sqliteRowMappers.ts` and `src/storage/sqliteRowWriters.ts` as `pedigree-domain` in `EXTRACTION_INVENTORY.md` so the 100% coverage invariant passes; replaces both `as any` casts in `useBarnStore.ts` with a typed Chromium `performance.memory` interface; and commits `package-lock.json` so installs resolve deterministically.',
+    files: [
+      'AGENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+      'src/hooks/useBarnStore.ts',
+      'package-lock.json',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'EXTRACTION_INVENTORY.md',
+        requiredSubstrings: [
+          '`src/storage/sqliteRowMappers.ts` — `pedigree-domain`',
+          '`src/storage/sqliteRowWriters.ts` — `pedigree-domain`',
+        ],
+        rationale:
+          'EXTRACTION_INVENTORY.md must classify every non-test storage file, including the SQLite row mapper and writer split modules, so inventory coverage stays at 100%.',
+      },
+      {
+        filePath: 'MODULES.md',
+        requiredSubstrings: ['sqliteRowMappers.ts', 'sqliteRowWriters.ts', 'useBarnStore.ts'],
+        rationale:
+          'MODULES.md must stay regenerated from src/ so the module catalog lists the split SQLite row modules and the state hook.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['interface PerformanceMemory', 'memory?: PerformanceMemory'],
+        forbiddenSubstrings: ['as any'],
+        rationale:
+          'useBarnStore must read the non-standard Chromium performance.memory API through a typed interface instead of `as any`, per the repo-wide no-type-escapes rule.',
+      },
+      {
+        filePath: 'AGENTS.md',
+        requiredSubstrings: [
+          "### Phase 1 — The repo's own gates",
+          '### Phase 2 — Repo & Git environment',
+          '### Phase 3 — Agent environment',
+          'Trigger: full sweep',
+        ],
+        rationale:
+          'AGENTS.md must keep the three-phase full-sweep contract so future sweeps stay comprehensive.',
+      },
+    ],
+    restorePlaybook: [
+      'Regenerate `MODULES.md` with `npx tsx scripts/list-modules.ts --write` and re-run `npm run verify:modules`.',
+      'Keep `src/storage/sqliteRowMappers.ts` and `src/storage/sqliteRowWriters.ts` classified as `pedigree-domain` in `EXTRACTION_INVENTORY.md`.',
+      'Keep the typed `PerformanceMemory` interface in `src/hooks/useBarnStore.ts` instead of `as any`, and keep `package-lock.json` committed for deterministic installs.',
+    ],
+  },
 ];
 
 /**
