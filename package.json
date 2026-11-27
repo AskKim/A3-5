@@ -23,7 +23,8 @@
     "verify": "npm run lint && npm test && npm run verify:improvements && npm run verify:prompts && npm run verify:modules && npm run verify:layers && npm run verify:engine && npm run verify:extraction && npm run verify:android",
     "preflight": "node prompts/preflight/scripts/preflight-run-context.mjs",
     "preflight:gen": "node prompts/preflight/scripts/gen-preflight.mjs",
-    "preflight:lint": "node prompts/preflight/scripts/preflight-lint.mjs"
+    "preflight:lint": "node prompts/preflight/scripts/preflight-lint.mjs",
+    "verify:chunks": "tsx scripts/verify-chunk-graph.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

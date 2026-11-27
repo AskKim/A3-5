@@ -62,6 +62,9 @@ jobs:
           NODE_ENV: production
         run: npm run build
 
+      - name: Verify no circular chunk imports in the production build
+        run: npm run verify:chunks
+
       - name: Verify GitHub Pages subpath build
         env:
           NODE_ENV: production

@@ -963,4 +963,45 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the `improvement-registry` codeSplitting group matching `improvements/registry-part-*.ts` as well as the facade — separating them reintroduces the circular chunk that broke the panel in production while dev looked fine.',
     ],
   },
+  {
+    id: 'IMP-087',
+    title: 'Production Chunk-Cycle Gate (Dev-Passes/Prod-Breaks Guard)',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Stop a bundling split that works in dev from shipping a production build that throws on first use.',
+    summary:
+      'Adds `npm run verify:chunks` (scripts/verify-chunk-graph.ts), which walks the static import edges of every emitted chunk in dist/assets and fails when two chunks import each other. Cycles that already exist in the graph are frozen in scripts/chunk-cycle-allowlist.json — a ratchet keyed by hash-stripped chunk names, so content-hash churn does not create phantom entries — and stale entries must be removed. CI runs it after the production build. This is the gate that would have caught the registry split, whose parts chunk and facade chunk imported each other and left the parts undefined at init while dev hid the problem completely.',
+    files: [
+      'scripts/verify-chunk-graph.ts',
+      'scripts/chunk-cycle-allowlist.json',
+      'package.json',
+      '.github/workflows/ci.yml',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/verify-chunk-graph.ts',
+        requiredSubstrings: ['chunk-cycle-allowlist', 'no new circular chunk imports', 'STATIC_IMPORT_RE'],
+        rationale:
+          'The gate must exist, keep its ratchet file, and keep ignoring dynamic imports while inspecting static ones.',
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['"verify:chunks"'],
+        rationale: 'The gate needs a stable npm entry point for CI and the sweep.',
+      },
+      {
+        filePath: '.github/workflows/ci.yml',
+        requiredSubstrings: ['npm run verify:chunks'],
+        rationale:
+          'CI must run the chunk gate on the real build output; running it locally without a fresh dist proves nothing.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep `npm run verify:chunks` in CI after `npm run build`; the check needs the emitted bundles, not the source.',
+      'When it reports a new cycle, group the members in one `codeSplitting` chunk (see the improvement-registry group) instead of adding an allowlist entry.',
+      'Only regenerate scripts/chunk-cycle-allowlist.json with `tsx scripts/verify-chunk-graph.ts --write-allowlist` for cycles that already predate the gate.',
+    ],
+  },
 ];

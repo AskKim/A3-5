@@ -178,6 +178,7 @@ lockfile is stale or a dependency change is intentional.
 | 7 | Preflight | `npm run preflight:lint`; `node prompts/preflight/scripts/preflight-run-context.mjs --branch "$(git rev-parse --abbrev-ref HEAD)" --version "$(node -p "require('./package.json').version")" --dry-run` |
 | 8 | Release metadata | `package.json` version = `public/version.json` `appVersion` = `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts` = `versionName` in `android-wrapper/app/build.gradle.kts` |
 | 9 | Build (root) | `npm run build` |
+| 9b | Chunk graph | `npm run verify:chunks` — must run after `npm run build`; fails on any new circular chunk import (ratchet in `scripts/chunk-cycle-allowlist.json`) |
 | 10 | Pages subpath build | `npm run build -- --base="/<repo-name>/"` then assert `dist/robots.txt`, `dist/sitemap.xml`, manifest `start_url`/`scope`/`id` of `./`, subpath asset + manifest references in `index.html`; re-run the root build afterwards to leave `dist/` in root form |
 
 Guardrails to assert: `import/`, `export/`, `upload/`, `old/` exist with `.gitkeep`;

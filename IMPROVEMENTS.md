@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (22 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (23 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (86)
+## Logged Improvements (87)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1914,3 +1914,22 @@ npm run lint && npm run build
 2. When adding an entry, add its rationale to improvements/rationales.ts under entryId#filePath#ordinal — the resolution test fails if you forget.
 3. The part data files and rationales.ts are exempt from the DOM/Node text scans in scripts/audit-layers.ts because their content is prose, not code.
 4. Keep the `improvement-registry` codeSplitting group matching `improvements/registry-part-*.ts` as well as the facade — separating them reintroduces the circular chunk that broke the panel in production while dev looked fine.
+
+### IMP-087: Production Chunk-Cycle Gate (Dev-Passes/Prod-Breaks Guard)
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Stop a bundling split that works in dev from shipping a production build that throws on first use.
+- **Summary:** Adds `npm run verify:chunks` (scripts/verify-chunk-graph.ts), which walks the static import edges of every emitted chunk in dist/assets and fails when two chunks import each other. Cycles that already exist in the graph are frozen in scripts/chunk-cycle-allowlist.json — a ratchet keyed by hash-stripped chunk names, so content-hash churn does not create phantom entries — and stale entries must be removed. CI runs it after the production build. This is the gate that would have caught the registry split, whose parts chunk and facade chunk imported each other and left the parts undefined at init while dev hid the problem completely.
+- **Tracked Files:** `scripts/verify-chunk-graph.ts`, `scripts/chunk-cycle-allowlist.json`, `package.json`, `.github/workflows/ci.yml`
+
+**Automated Invariants Checked:**
+- `scripts/verify-chunk-graph.ts` must contain `chunk-cycle-allowlist`, `no new circular chunk imports`, `STATIC_IMPORT_RE` — *The gate must exist, keep its ratchet file, and keep ignoring dynamic imports while inspecting static ones.*
+- `package.json` must contain `"verify:chunks"` — *The gate needs a stable npm entry point for CI and the sweep.*
+- `.github/workflows/ci.yml` must contain `npm run verify:chunks` — *CI must run the chunk gate on the real build output; running it locally without a fresh dist proves nothing.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `npm run verify:chunks` in CI after `npm run build`; the check needs the emitted bundles, not the source.
+2. When it reports a new cycle, group the members in one `codeSplitting` chunk (see the improvement-registry group) instead of adding an allowlist entry.
+3. Only regenerate scripts/chunk-cycle-allowlist.json with `tsx scripts/verify-chunk-graph.ts --write-allowlist` for cycles that already predate the gate.
