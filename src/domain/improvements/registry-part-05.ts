@@ -51,14 +51,11 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       {
         filePath: 'src/app/PlatformBridgeContext.tsx',
         requiredSubstrings: ['PlatformBridgeProvider', 'usePlatformBridge'],
-        rationale:
-          'UI components must consume IPlatformBridge via React Context rather than importing concrete pedigreeBridge.',
       },
       {
         filePath: 'src/utils/webFileActions.ts',
         requiredSubstrings: ['configureWebFileBridge', 'NativeExportBridge'],
         forbiddenSubstrings: ['pedigreeBridge'],
-        rationale: 'webFileActions.ts must stay decoupled from concrete pedigreeBridge globals.',
       },
       {
         filePath: 'src/app/pedigreeAppWiring.ts',
@@ -67,14 +64,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'createPedigreeDomainStorageAdapter',
           'NativeBridgeStorageAdapter',
         ],
-        rationale:
-          'Composition root must wire runtime defaults and route iOS WKWebView SQLite persistence through NativeBridgeStorageAdapter.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['backingStore?: IStorageAdapter'],
-        rationale:
-          'WebSqliteAdapter must support an injected IStorageAdapter backing store for iOS anti-eviction routing.',
       },
     ],
     restorePlaybook: [
@@ -129,31 +122,23 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['(!this.backingStore && !getSafeIndexedDb())'],
-        rationale:
-          'WebSqliteAdapter must never silently drop writes into ephemeral mode when backingStore is configured without IndexedDB.',
       },
       {
         filePath: 'src/utils/webFileActions.ts',
         requiredSubstrings: ['configureWebFileRuntime', 'WebFileRuntimeHooks'],
         forbiddenSubstrings: ['../storage/'],
-        rationale:
-          'Extractable UI utilities in src/utils/ must never import legacy pedigree-domain modules from src/storage/.',
       },
       {
         filePath: 'tsconfig.engine.json',
         requiredSubstrings: ['src/engine/index.ts', 'src/features/**/*.ts', 'src/utils/*.ts'],
-        rationale:
-          'Isolated tsconfig.engine.json profile (npm run verify:engine) proves the extractable framework compiles with zero domain/app/storage dependencies.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['"verify:engine": "tsc -p tsconfig.engine.json --noEmit"'],
-        rationale: 'package.json must expose verify:engine for isolated framework compilation checks.',
       },
       {
         filePath: 'src/domain/__tests__/modularLayerArchitecture.test.ts',
         requiredSubstrings: ['enforces zero circular dependencies across core, features, app, utils, and storage'],
-        rationale: 'Automated boundary suite must fail on any circular dependency or src/utils/* storage import.',
       },
     ],
     restorePlaybook: [
@@ -188,22 +173,18 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         filePath: 'src/engine/index.ts',
         requiredSubstrings: ["'./binaryEncoding'", "'./codecs/archiveAndCsvUtils'"],
         forbiddenSubstrings: ['../domain/'],
-        rationale: 'The engine must never import from the domain layer.',
       },
       {
         filePath: 'src/engine/codecs/textFormats.ts',
         requiredSubstrings: ['escapeCsvCell', 'escapeCsvCellWithLimit', 'escapeIcsText', 'formatIcsAlarmTrigger'],
-        rationale: 'CSV and ICS encoders must have a single shared implementation.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['"verify:layers": "tsx scripts/audit-layers.ts"'],
-        rationale: 'package.json must expose verify:layers.',
       },
       {
         filePath: '.github/workflows/ci.yml',
         requiredSubstrings: ['npm run verify:layers', 'npm run verify:engine'],
-        rationale: 'CI must run the layer audit and the isolated engine typecheck.',
       },
     ],
     restorePlaybook: [
@@ -232,17 +213,14 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       {
         filePath: 'package.json',
         requiredSubstrings: ['"verify:extraction": "tsx scripts/rehearse-engine-extraction.ts"'],
-        rationale: 'package.json must expose verify:extraction for isolated engine extraction rehearsal.',
       },
       {
         filePath: '.github/workflows/ci.yml',
         requiredSubstrings: ['npm run verify:extraction'],
-        rationale: 'CI must run the isolated engine extraction rehearsal.',
       },
       {
         filePath: 'scripts/rehearse-engine-extraction.ts',
         requiredSubstrings: ["'src/engine'", "'src/features'", "'src/utils'", "'tsconfig.engine.json'"],
-        rationale: 'Extraction rehearsal must compile engine, features, and utils without domain/app/storage.',
       },
     ],
     restorePlaybook: [
@@ -280,26 +258,18 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'buildContrastGrayscaleCanvas',
           'releaseCanvas',
         ],
-        rationale:
-          'Shared canvas/blob decode and OCR preprocessing helpers must remain centralized in src/utils/canvasUtils.ts.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['try {', 'stmt.free();', '} finally {'],
-        rationale:
-          'SQLite WASM prepared statements in queryObjectsFromDb must always be freed in a finally block.',
       },
       {
         filePath: '.github/workflows/deploy-pages.yml',
         requiredSubstrings: ['bun run verify:layers', 'bun run verify:engine', 'bun run verify:extraction'],
-        rationale:
-          'GitHub Pages deployment workflow must enforce layer boundary and engine extraction gates.',
       },
       {
         filePath: '.github/workflows/build-android-apk.yml',
         requiredSubstrings: ['npm run verify:layers', 'npm run verify:engine', 'npm run verify:extraction'],
-        rationale:
-          'Android APK workflow must enforce layer boundary and engine extraction gates.',
       },
     ],
     restorePlaybook: [
@@ -332,8 +302,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'handleOpenAboutTrigger',
           'AboutModal',
         ],
-        rationale:
-          'SettingsAndSyncScreen must include title header, quick jump links for prompts, about, developer, and help.',
       },
       {
         filePath: 'src/components/AboutModal.tsx',
@@ -343,8 +311,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'Zero Telemetry',
           'AGPL-3.0',
         ],
-        rationale:
-          'AboutModal must present app details, offline architecture, and AGPL-3.0 license.',
       },
       {
         filePath: 'src/App.tsx',
@@ -352,8 +318,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'returnRouteFromPrompts',
           'onOpenPromptsDirectory',
         ],
-        rationale:
-          'App.tsx must wire onOpenPromptsDirectory and track return routing for PromptsDirectoryScreen.',
       },
     ],
     restorePlaybook: [
@@ -388,38 +352,29 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         filePath: 'package.json',
         requiredSubstrings: ['"@types/sql.js"'],
         forbiddenSubstrings: ['"autoprefixer"'],
-        rationale:
-          'Unused autoprefixer must not be re-introduced under Tailwind CSS v4 (@tailwindcss/vite).',
       },
       {
         filePath: 'tsconfig.json',
         requiredSubstrings: ['"target": "ES2018"', '"jsx": "react-jsx"'],
         forbiddenSubstrings: ['"experimentalDecorators"', '"allowJs"'],
-        rationale:
-          'Obsolete decorator and JS-interop compiler flags must stay removed from strict TS config.',
       },
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ["import path from 'node:path';"],
-        rationale: 'Vite config must use explicit Node built-in protocol imports (node:path).',
       },
       {
         filePath: 'index.html',
         requiredSubstrings: ['<meta name="mobile-web-app-capable" content="yes" />'],
-        rationale: 'index.html must include the standard mobile-web-app-capable meta tag.',
       },
       {
         filePath: 'src/engine/binaryEncoding.ts',
         requiredSubstrings: ['RFC 3629 UTF-8 fallback'],
         forbiddenSubstrings: ['unescape(', 'escape(raw)'],
-        rationale:
-          'binaryEncoding.ts must use pure RFC 3629 UTF-8 fallbacks instead of deprecated Annex B escape/unescape globals.',
       },
       {
         filePath: 'src/components/PWAInstallButton.tsx',
         requiredSubstrings: ['export function PWAInstallButton(', 'export function OfflineIndicator()'],
         forbiddenSubstrings: ['React.FC'],
-        rationale: 'PWAInstallButton.tsx must use standard React 19 function component signatures.',
       },
     ],
     restorePlaybook: [
@@ -460,8 +415,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'arrayAtShim',
           'stringAtShim',
         ],
-        rationale:
-          'Zero-dependency ES2018 runtime shims must cover queueMicrotask, Object.hasOwn, replaceAll, and .at() with graceful frozen-host handling.',
       },
       {
         filePath: 'src/storage/weatherForecast.ts',
@@ -469,8 +422,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           "typeof AbortController === 'function' ? new AbortController() : null",
           'if (timer !== null) clearTimeout(timer);',
         ],
-        rationale:
-          'Weather forecast fetches must guard AbortController on legacy browsers and always clear timers in finally blocks.',
       },
       {
         filePath: 'src/index.css',
@@ -480,8 +431,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'prefers-reduced-transparency: reduce',
           'prefers-reduced-motion: reduce',
         ],
-        rationale:
-          'Legacy browsers must receive vh viewport fallbacks and reduced backdrop-filter/motion GPU load.',
       },
       {
         filePath: 'src/storage/deviceCapabilityDetector.ts',
@@ -490,8 +439,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           "classList.toggle('pedigree-low-power'",
           "classList.remove('pedigree-low-power')",
         ],
-        rationale:
-          'useDeviceCapability must toggle pedigree-low-power for constrained/outdated browsers with unmount cleanup.',
       },
     ],
     restorePlaybook: [
@@ -524,8 +471,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'Species, Workspace &amp; Pedigree Standards',
           'Backup, Sync, Install &amp; Shortcuts',
         ],
-        rationale:
-          'SettingsAndSyncScreen must provide consolidated subunits, section jump navigation, collapsible subunits defaulting to collapsed except top_overview, and an Open All control near the title.',
       },
     ],
     restorePlaybook: [
@@ -577,26 +522,19 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         filePath: 'GEMINI.md',
         requiredSubstrings: ['NO PENDING WORK', 'Startup Check: Incomplete Plan / Work Notice'],
         forbiddenSubstrings: ['NO PENDING PLANS OR HANDOFFS'],
-        rationale:
-          'GEMINI.md must emit NO PENDING WORK when no incomplete plan or handoff exists and avoid legacy wording.',
       },
       {
         filePath: 'prompts/master_system_prompt.md',
         requiredSubstrings: ['NO PENDING WORK', 'engine/', 'npm run verify'],
-        rationale:
-          'Master System Prompt must stay aligned with GEMINI.md NO PENDING WORK notice and three-layer boundaries.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['"verify":', '"preflight:lint": "node prompts/preflight/scripts/preflight-lint.mjs"'],
-        rationale:
-          'package.json must expose unified npm run verify and zero-dependency preflight:lint across coding platforms.',
       },
       {
         filePath: 'prompts/start_new_backlog_prompt.md',
         requiredSubstrings: ['src/domain/improvementRegistry.ts'],
         forbiddenSubstrings: ['src/core/improvementRegistry.ts'],
-        rationale: 'Backlog prompts must point to src/domain/improvementRegistry.ts rather than removed src/core/.',
       },
     ],
     restorePlaybook: [
@@ -638,8 +576,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'Prompt Reusability:',
           'DO_NOT_REMOVE_WITHOUT_CONFIRMATION',
         ],
-        rationale:
-          'modularity_check_prompt.md must remain protected, concisely titled, and marked as reusable across repositories.',
       },
       {
         filePath: 'prompts/reusability_check_prompt.md',
@@ -648,44 +584,30 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'Prompt Reusability:',
           'DO_NOT_REMOVE_WITHOUT_CONFIRMATION',
         ],
-        rationale:
-          'reusability_check_prompt.md must remain protected, concisely titled, and marked as reusable across repositories.',
       },
       {
         filePath: 'scripts/audit-layers.ts',
         requiredSubstrings: ['hooks:', 'components:', 'extractSpecifiers', 'withoutComments'],
-        rationale:
-          'audit-layers.ts must audit hooks/ and components/ without false positives from comments or string literals.',
       },
       {
         filePath: 'src/engine/primitives/crypto.ts',
         requiredSubstrings: ['export function fnv1a32Base36'],
-        rationale:
-          'Shared FNV-1a 32-bit base36 hash helper must stay in pure crypto primitives rather than duplicated across importers.',
       },
       {
         filePath: 'src/engine/primitives/sanitization.ts',
         requiredSubstrings: ['export function escapeRegExp', 'export function slugifySegment'],
-        rationale:
-          'Shared escapeRegExp and slugifySegment primitives must remain in @engine/primitives/sanitization.',
       },
       {
         filePath: 'src/utils/lazyRoute.tsx',
         requiredSubstrings: ['export function resetLazyRouteDefaults'],
-        rationale:
-          'lazyRoute singleton configuration must expose resetLazyRouteDefaults for isolated tests and multi-instance reuse.',
       },
       {
         filePath: 'src/utils/webFileActions.ts',
         requiredSubstrings: ['export function resetWebFileConfiguration'],
-        rationale:
-          'webFileActions singleton configuration must expose resetWebFileConfiguration for test and bridge teardown.',
       },
       {
         filePath: 'src/utils/googleCalendarClient.ts',
         requiredSubstrings: ['export function resetGoogleCalendarClientConfiguration'],
-        rationale:
-          'googleCalendarClient singleton hooks must expose resetGoogleCalendarClientConfiguration for isolated testing.',
       },
     ],
     restorePlaybook: [
@@ -730,8 +652,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ['lucide-react.mjs'],
-        rationale:
-          'devLucideDirectImportPlugin must resolve lucide-react v1+ ESM entry (.mjs) so Vite dev startup does not trigger a 2,100+ icon request waterfall.',
       },
       {
         filePath: 'src/domain/models.ts',
@@ -740,32 +660,22 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'export function isSampleTestingId',
           'export function reconcileCarrierTraitLists',
         ],
-        rationale:
-          'Lightweight boot constants and normalizers must live in models.ts so initial boot does not pull heavy backupVault, sampleData, or geneticsEngine modules.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['Promise.all([', "import('../domain/sampleData')"],
-        rationale:
-          'webSqliteAdapter must parallelize sql.js WASM init with IndexedDB reads and lazy-load sampleData only when seeding empty storage.',
       },
       {
         filePath: 'src/storage/opfsStorage.ts',
         requiredSubstrings: ["import('../domain/backupVault')"],
-        rationale:
-          'opfsStorage must dynamically import backupVault only when OPFS vault/archive files are actively read or written.',
       },
       {
         filePath: 'src/domain/barnJournal.ts',
         requiredSubstrings: ['@engine/codecs/textFormats'],
-        rationale:
-          'barnJournal must import CSV primitives from @engine/codecs/textFormats rather than domain csvExport.',
       },
       {
         filePath: 'src/domain/calendarExport.ts',
         requiredSubstrings: ['@engine/primitives/crypto'],
-        rationale:
-          'calendarExport must import sha256HexPure from @engine/primitives/crypto rather than backupVault.',
       },
     ],
     restorePlaybook: [
@@ -806,8 +716,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           '# Core Hygiene & PII Check',
           'Track B: Personal Identifiable Information (PII) & Human Contact Scan',
         ],
-        rationale:
-          'core_hygiene.md must remain protected and cover both core content-free naming and PII scrubbing.',
       },
       {
         filePath: 'src/domain/promptRegistry.ts',
@@ -816,8 +724,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'export function evaluatePromptInvariants',
           'export function formatPromptChangelogMarkdown',
         ],
-        rationale:
-          'promptRegistry.ts must maintain automated invariant checks and recovery markdown generation for /prompts/*.',
       },
       {
         filePath: 'src/domain/moduleCatalog.ts',
@@ -826,14 +732,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'export function buildModuleCatalog',
           'export function verifyNoContentNamesInCoreModules',
         ],
-        rationale:
-          'moduleCatalog.ts must split src/ modules into Core/Non-Content vs Content-Specific and enforce zero content tokens in core filenames.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['verify:prompts', 'list:modules', 'verify:modules'],
-        rationale:
-          'package.json must expose prompt recovery verification and module split listing/checking scripts.',
       },
     ],
     restorePlaybook: [
@@ -867,21 +769,15 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           '`src/storage/sqliteRowMappers.ts` — `pedigree-domain`',
           '`src/storage/sqliteRowWriters.ts` — `pedigree-domain`',
         ],
-        rationale:
-          'EXTRACTION_INVENTORY.md must classify every non-test storage file, including the SQLite row mapper and writer split modules, so inventory coverage stays at 100%.',
       },
       {
         filePath: 'MODULES.md',
         requiredSubstrings: ['sqliteRowMappers.ts', 'sqliteRowWriters.ts', 'useBarnStore.ts'],
-        rationale:
-          'MODULES.md must stay regenerated from src/ so the module catalog lists the split SQLite row modules and the state hook.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['interface PerformanceMemory', 'memory?: PerformanceMemory'],
         forbiddenSubstrings: ['as any'],
-        rationale:
-          'useBarnStore must read the non-standard Chromium performance.memory API through a typed interface instead of `as any`, per the repo-wide no-type-escapes rule.',
       },
       {
         filePath: 'AGENTS.md',
@@ -891,8 +787,6 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           '### Phase 3 — Agent environment',
           'Trigger: full sweep',
         ],
-        rationale:
-          'AGENTS.md must keep the three-phase full-sweep contract so future sweeps stay comprehensive.',
       },
     ],
     restorePlaybook: [
@@ -928,32 +822,22 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       {
         filePath: 'android-wrapper/gradle/wrapper/gradle-wrapper.properties',
         requiredSubstrings: ['gradle-8.13-bin.zip'],
-        rationale:
-          'The Gradle wrapper must stay pinned to the same 8.13 distribution CI installs, so local and CI builds resolve identically.',
       },
       {
         filePath: 'android-wrapper/app/build.gradle.kts',
         requiredSubstrings: ['tasks.register<Copy>("syncWebAssets")', 'verifyWebAssets', 'dependsOn("verifyWebAssets")'],
-        rationale:
-          'The wrapper must stage dist/ into assets/www and fail preBuild when the WebView asset root has no index.html, instead of packaging a shell that renders nothing.',
       },
       {
         filePath: 'scripts/verify-android.ts',
         requiredSubstrings: ['[verify:android] PASS', 'Gradle wrapper is complete', 'Release version is aligned across manifests'],
-        rationale:
-          'The static Android gate must remain intact so wrapper and version drift fail on a machine without the Android SDK.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['verify:android'],
-        rationale:
-          'package.json must expose the Android static gate and keep it chained into `npm run verify`.',
       },
       {
         filePath: 'android-wrapper/README.md',
         requiredSubstrings: ['./gradlew', 'stage-web-assets.sh', 'JDK 17'],
-        rationale:
-          'The wrapper README must document the real build path and the JDK 17 + Android SDK prerequisite.',
       },
     ],
     restorePlaybook: [
@@ -983,14 +867,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'github.event.inputs.branch || github.ref_name',
         ],
         forbiddenSubstrings: ['default: "${{'],
-        rationale:
-          'preflight.yml must keep a literal input default (never an expression, which GitHub rejects without starting a job) while still resolving the current branch at step level.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['preflight:lint', 'preflight'],
-        rationale:
-          'The preflight CLI entry points the workflow runs must stay available in package.json.',
       },
     ],
     restorePlaybook: [
@@ -1022,21 +902,58 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'build_type',
           'needs.guard.outputs.deploy',
         ],
-        rationale:
-          'Pages keeps deploying from main and release with Bun and its SEO assertions, while the guard decides whether Actions may deploy at all.',
       },
       {
         filePath: '.github/workflows/security-audit.yml',
         requiredSubstrings: ['package-lock.json', 'android-wrapper/app/build.gradle.kts'],
         forbiddenSubstrings: ['bun.lock'],
-        rationale:
-          'The audit must trigger on the lockfile this project actually uses; bun.lock does not exist here.',
       },
     ],
     restorePlaybook: [
       'Keep the `guard` job first and both `if: needs.guard.outputs.deploy == \'true\'` conditions on `build` and `deploy`; removing them restores the permanent red failure.',
       'Treat an unreadable Pages API response as "proceed", so a token-scope change can never silently stop real deployments.',
       'Never point the security audit at a lockfile the project does not ship.',
+    ],
+  },
+  {
+    id: 'IMP-086',
+    title: 'Registry Maintainability: Five Part Modules & On-Demand Rationale Prose',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Make the improvement registry reviewable and stop shipping explanatory prose that only the markdown/JSON export ever reads.',
+    summary:
+      'Splits the 85 entries out of a 6,428-line improvementRegistry.ts into five part modules (IMP-001–017 through IMP-069–085) assembled by the unchanged public surface, with shared types in improvements/types.ts so parts never import the registry that owns them. The 484 invariant rationale strings move to improvements/rationales.ts keyed entryId#filePath#ordinal and are resolved by resolveEntryRationales only for markdown export, recovery JSON and verifier messages, which the diagnostics panel loads on demand. The registry chunk drops from 287 KB to 225 KB raw (76 KB to 58.5 KB gzipped) and IMPROVEMENTS.md regenerates byte-identically; a test asserts every invariant still resolves to non-empty prose.',
+    files: [
+      'src/domain/improvementRegistry.ts',
+      'src/domain/improvements/types.ts',
+      'src/domain/improvements/rationales.ts',
+      'scripts/audit-layers.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/improvementRegistry.ts',
+        requiredSubstrings: [
+          'export const IMPROVEMENTS_REGISTRY',
+          'resolveEntryRationales',
+          'formatImprovementsMarkdown',
+          'buildImprovementsRecoveryJson',
+        ],
+        rationale:
+          'The registry must keep one public surface even though its entries are split across part modules and its prose lives elsewhere.',
+      },
+      {
+        filePath: 'src/domain/improvements/types.ts',
+        requiredSubstrings: ['ImprovementRationaleMap', 'rationale?: string'],
+        rationale:
+          'Shared types must stay available so part modules can be typed without importing the registry, and rationale must stay optional for entries that carry it inline.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the five import and spread lines in improvementRegistry.ts; concatenating entries inline again reintroduces the 6,428-line file.',
+      'When adding an entry, add its rationale to improvements/rationales.ts under entryId#filePath#ordinal — the resolution test fails if you forget.',
+      'The part data files and rationales.ts are exempt from the DOM/Node text scans in scripts/audit-layers.ts because their content is prose, not code.',
     ],
   },
 ];

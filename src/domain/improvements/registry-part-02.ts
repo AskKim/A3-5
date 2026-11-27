@@ -42,7 +42,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'buildExportCanaryProbe',
           'buildArchivedAnimalsBundle',
         ],
-        rationale: 'Pure TypeScript OPFS vault envelopes, schema migration, canary verification, and pedigree-stub-safe archive bundling must remain intact.',
       },
       {
         filePath: 'src/storage/opfsStorage.ts',
@@ -53,7 +52,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'detectReturningUserWipedStorage',
           'dumpIndexedDbDatabaseToOpfs',
         ],
-        rationale: 'OPFS `/tmp`, `/backups`, `/archives` persistence, boot sweeps, QuotaExceededError retries, wiped detection, and IDB rescue dumps must stay wired.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -63,7 +61,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'markPriorUseSentinelFromSnapshot',
           'pre_upgrade',
         ],
-        rationale: 'SQLite adapter must pause sample seeding on wiped returning storage, create pre-upgrade snapshots, and update prior-use sentinels.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -74,7 +71,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'offloadAnimalsToOpfsArchive',
           'runOpfsExportCanary',
         ],
-        rationale: 'Barn store must orchestrate unified OPFS/IDB vault actions, archive offload/restore, idle canary checks, and wiped-storage recovery.',
       },
       {
         filePath: 'src/components/UnifiedBackupVaultPanel.tsx',
@@ -83,7 +79,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'onRestoreOpfsBackup',
           'onRestoreRollingBackup',
         ],
-        rationale: 'Settings UI must unify OPFS vault backups and IndexedDB rolling snapshots in one clean recovery panel.',
       },
       {
         filePath: 'src/components/ArchivedHerdsModal.tsx',
@@ -92,7 +87,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'autoOffloadRetiredToOpfs',
           'onRestoreArchive',
         ],
-        rationale: 'Archived Herds modal must support searching, downloading, deleting, and restoring offloaded Sold/Deceased bundles.',
       },
       {
         filePath: 'src/components/WipedStorageRecoveryModal.tsx',
@@ -101,7 +95,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'onRestoreLatestOpfs',
           'onStartFresh',
         ],
-        rationale: 'Blocking wiped-storage recovery dialog must offer latest OPFS restore, local file upload, and explicit two-step Start Fresh.',
       },
       {
         filePath: 'src/App.tsx',
@@ -110,7 +103,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'store.exportCanaryWarning',
           'Save to Vault',
         ],
-        rationale: 'App shell must mount WipedStorageRecoveryModal, Export Canary alerts, and 1-click Save to Vault on backup banners.',
       },
     ],
     restorePlaybook: [
@@ -148,7 +140,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ['es2018', 'safari12', 'cssTarget', "registerType: 'prompt'"],
-        rationale: 'Vite build must target ES2018 / Safari 12+ (2018+ browsers) with manual prompt SW activation.',
       },
       {
         filePath: 'index.html',
@@ -159,32 +150,26 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'emergency_reset=true',
           '__PEDIGREE_RECORD_BOOT_CRASH__',
         ],
-        rationale: 'ES5 pre-flight guard, 3-in-60s crash-loop circuit breaker, and ?emergency_reset=true recovery hatch must remain intact.',
       },
       {
         filePath: 'src/utils/es2018Shims.ts',
         requiredSubstrings: ['ensureEs2018Globals', 'allSettled', 'fromEntries'],
-        rationale: 'Zero-bloat ES2018 runtime shims prevent missing globalThis/allSettled/fromEntries crashes on 2018 browsers.',
       },
       {
         filePath: 'src/storage/pwaUpdateManager.ts',
         requiredSubstrings: ['usePwaUpdateStatus', 'controllerchange', 'applyPwaUpdateNow'],
-        rationale: 'Manual Service Worker update gate and single-reload controllerchange handshake must remain intact.',
       },
       {
         filePath: 'src/domain/deviceCapability.ts',
         requiredSubstrings: ['assessBrowserCompatibility', 'getHeavyZipExportGate'],
-        rationale: 'Pure TypeScript browser compatibility classifier and Tier 1/outdated ZIP caution gate must remain intact.',
       },
       {
         filePath: 'src/utils/webFileActions.ts',
         requiredSubstrings: ['copyTextWithFallback'],
-        rationale: 'Clipboard fallback for restricted/older browser contexts must remain available.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
         requiredSubstrings: ['pendingHeavyZipExport', 'heavyZipGate', 'handleDownloadDatabaseOnlyBackup'],
-        rationale: 'Heavy .ZIP exports must warn Tier 1/outdated browsers and offer Database-Only .JSON fallback without photo hydration.',
       },
     ],
     restorePlaybook: [
@@ -230,8 +215,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'registerPausedBackgroundJob',
           'registerFreezeLifecycleListener',
         ],
-        rationale:
-          'Single-source background freeze coordinator must manage cooperative pauses, auto-resume clean tasks, and hold severity tasks until acknowledged.',
       },
       {
         filePath: 'src/storage/crashLogger.ts',
@@ -241,8 +224,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'handleUnhandledRejectionReason',
           'notifyBackgroundTransition',
         ],
-        rationale:
-          'Uncaught rejections and QuotaExceeded writes must fall back to bounded sessionStorage emergency traces and emit deduplicated non-blocking error toasts.',
       },
       {
         filePath: 'src/storage/localSyncChannels.ts',
@@ -252,8 +233,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'BackgroundPausedError',
           'resumePersistedDirectorySyncIfGranted',
         ],
-        rationale:
-          'Folder Sync must close IDB handles deterministically on abort, checkpoint progress on hide, and support foreground resume.',
       },
       {
         filePath: 'src/utils/useAsyncSubmitLock.ts',
@@ -263,8 +242,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'useAsyncSubmitLock',
           'useAsyncKeyedLock',
         ],
-        rationale:
-          'Synchronous ref-based double-submit locks must gate same-frame double taps and always unlock in finally.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -273,34 +250,26 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'registerFreezeLifecycleListener',
           'emitAsyncErrorToast',
         ],
-        rationale:
-          'Store mutations must run sequentially without interleaving outbox/SQLite writes and surface storage errors without dropping typed form inputs.',
       },
       {
         filePath: 'src/components/AsyncErrorToastHost.tsx',
         requiredSubstrings: ['subscribeAsyncErrorToasts', 'subscribePausedBackgroundJobs', 'Tap to Resume'],
-        rationale:
-          'Global non-blocking toast stack must render auto-dismissing minor notices, sticky error alerts, and severity-only Tap to Resume controls.',
       },
       {
         filePath: 'src/components/AnimalEditorModal.tsx',
         requiredSubstrings: ['useAsyncSubmitLock'],
-        rationale: 'Animal editor modal Save/Delete actions must prevent rapid double-tap duplicate animals.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['breedingSubmitLock', 'outcomeSubmitLock'],
-        rationale: 'Breeding Log and Outcome forms must block rapid double-submits and hold entered fields on storage error.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['careLogSubmitLock', 'inlineAnimalLock'],
-        rationale: 'Care log form and inline quick animal actions must prevent duplicate writes cleanly.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['taskSubmitLock', 'taskToggleLock'],
-        rationale: 'Species hub chore/cage/show forms and silent per-row chore toggles must prevent rapid double-tap races.',
       },
     ],
     restorePlaybook: [
@@ -338,22 +307,18 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/utils/comboboxNav.ts',
         requiredSubstrings: ['clampComboboxIndex', 'stepEnabledComboboxIndex'],
-        rationale: 'Pure combobox index-stepping helper powers keyboard traversal across all custom listboxes.',
       },
       {
         filePath: 'src/components/CarrierTraitCombobox.tsx',
         requiredSubstrings: ['aria-activedescendant', 'stepEnabledComboboxIndex'],
-        rationale: 'Carrier trait combobox must expose aria-activedescendant and full keyboard navigation.',
       },
       {
         filePath: 'src/components/SearchableParentPicker.tsx',
         requiredSubstrings: ['aria-activedescendant', 'stepEnabledComboboxIndex'],
-        rationale: 'Searchable parent picker must expose aria-activedescendant and full keyboard navigation.',
       },
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
         requiredSubstrings: ['aria-activedescendant', 'stepEnabledComboboxIndex', 'speciesOptionRefs'],
-        rationale: 'Default species combobox must support keyboard traversal and close on focus blur.',
       },
       {
         filePath: 'src/App.tsx',
@@ -364,13 +329,10 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           "s: { route: 'settings', label: 'Settings' }",
           'e.isComposing',
         ],
-        rationale:
-          'Root shell tracks open dialogs via subscribeOpenDialogCount (superseding rAF MutationObserver in IMP-052) and guards O/I/S/H/D/R/B/P/? shortcuts cleanly.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['includeCleared: true,\n          includeLineage: true'],
-        rationale: 'PDF snapshot DTO exports must include cleared and ancestral lineage carrier disclosures.',
       },
     ],
     restorePlaybook: [
@@ -409,47 +371,38 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/domain/pedigreeCalculator.ts',
         requiredSubstrings: ['buildPedigreeBranchViewport', 'getGen3BranchesWithKnownAncestors'],
-        rationale: 'Pure branch viewport helper keeps initial 4–6 gen DOM compact while preserving full-depth export slots.',
       },
       {
         filePath: 'src/components/PedigreeScreen.tsx',
         requiredSubstrings: ['expandedGen3Branches', 'buildPedigreeBranchViewport'],
-        rationale: 'Interactive pedigree chart must lazy-expand Gen 4+ branches on demand without losing focus or keyboard access.',
       },
       {
         filePath: 'src/domain/upgradeGate.ts',
         requiredSubstrings: ['evaluateUpgradeGate', 'parseVersionManifestJson', 'parseStatusManifestJson'],
-        rationale: 'Pure pre-flight Upgrade Gate evaluates revoked builds, paused updates, Safe-Harbor schema floors, and schemaDelta>=2 backup gates.',
       },
       {
         filePath: 'src/domain/backupVault.ts',
         requiredSubstrings: ['buildVerifiedPreUpgradeJsonBackup', 'verifyPreUpgradeJsonBackup'],
-        rationale: 'Pre-upgrade safety backups must emit _schemaVersion-stamped envelopes and verify SHA-256 round-trip integrity.',
       },
       {
         filePath: 'src/storage/pwaUpdateManager.ts',
         requiredSubstrings: ['pedigree_pwa_update_policy_v1', 'fetchUpgradeGateDecision'],
-        rationale: 'PWA updater enforces persisted auto/notify/pinned policies and uncached Upgrade Gate checks before posting SKIP_WAITING.',
       },
       {
         filePath: 'src/storage/storageProtection.ts',
         requiredSubstrings: ['pedigree_manual_offline_v1', 'probeNetworkConnectivity'],
-        rationale: 'Connectivity governor combines Manual App Offline Mode with a timed AbortController captive-portal probe.',
       },
       {
         filePath: 'public/version.json',
         requiredSubstrings: ['minDirectUpgradeSchema'],
-        rationale: 'Release version manifest must expose current appVersion, schemaVersion, and minDirectUpgradeSchema floor.',
       },
       {
         filePath: 'public/status.json',
         requiredSubstrings: ['revokedVersions'],
-        rationale: 'Remote killswitch manifest must expose allowUpdates and revokedVersions lists.',
       },
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ['navigateFallbackDenylist: [/^\\/api\\//, /\\/version\\.json$/, /\\/status\\.json$/]'],
-        rationale: 'Service worker navigation fallback must never intercept or precache uncached version.json / status.json manifests on root or subpaths.',
       },
     ],
     restorePlaybook: [
@@ -499,7 +452,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'removeOrphanPhotosFromSnapshotPure',
           'pruneFullResPayloadsFromSnapshotPure',
         ],
-        rationale: 'Pure photo storage footprint analyzer, orphan cleaner, and thumbnail compactor must stay DOM-free.',
       },
       {
         filePath: 'src/domain/archiveInspector.ts',
@@ -507,7 +459,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'inspectSnapshotBeforeRestorePure',
           'inspectParsedArchiveBeforeRestorePure',
         ],
-        rationale: 'Dry-run pre-restore inspector summarizes species, conflicts, and replace/merge impact before DB writes.',
       },
       {
         filePath: 'src/domain/encryptedExport.ts',
@@ -516,12 +467,10 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'wrapEncryptedZipContainer',
           'tryExtractEncryptedEnvelopeFromZip',
         ],
-        rationale: 'Pure encrypted envelope framing and ZIP wrapper/extractor must remain intact.',
       },
       {
         filePath: 'src/storage/passphraseCrypto.ts',
         requiredSubstrings: ['encryptBytesWithPassphrase', 'decryptBytesWithPassphrase'],
-        rationale: 'Client-side PBKDF2-SHA256 + AES-256-GCM encryption runs strictly with memory-only passphrases.',
       },
       {
         filePath: 'src/storage/storageProtection.ts',
@@ -530,37 +479,30 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'getAdjustedNowIsoUtc',
           'clockDriftWarning',
         ],
-        rationale: 'Server Date skew capture compensates timestamps and flags drift >= 5 minutes cleanly.',
       },
       {
         filePath: 'src/domain/syncOutbox.ts',
         requiredSubstrings: ['compareSameEntitySyncOperations', 'bumpRecordRevision'],
-        rationale: 'Monotonic record_rev ensures newer same-entity edits win even when a device clock rewinds.',
       },
       {
         filePath: 'src/domain/calendarExport.ts',
         requiredSubstrings: ['buildDeterministicGoogleCalendarEventId'],
-        rationale: 'Deterministic [a-v0-9] Google Calendar IDs prevent duplicate calendar events on retry/sync.',
       },
       {
         filePath: 'src/utils/googleCalendarClient.ts',
         requiredSubstrings: ['res.status === 409'],
-        rationale: 'Google Calendar push must update existing events via PUT when deterministic ID returns HTTP 409.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
         requiredSubstrings: ['pendingRestoreInspection', 'encryptBackupExport'],
-        rationale: 'Import/Export Hub must require Pre-Restore Inspector confirmation and expose opt-in backup/sync encryption.',
       },
       {
         filePath: 'src/components/DiagnosticsAndSupportPanel.tsx',
         requiredSubstrings: ['onAnalyzePhotoFootprint', 'onPruneOrphanPhotos'],
-        rationale: 'Diagnostics exposes Photo Storage & Orphan Attachment Pruner actions safely.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['connectivity.clockDriftWarning'],
-        rationale: 'Root shell renders non-blocking Clock Drift Nudge Banner when drift reaches threshold.',
       },
     ],
     restorePlaybook: [
@@ -596,8 +538,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'evaluateWithdrawalDispositionWarning',
           'evaluateShowWithdrawalConflicts',
         ],
-        rationale:
-          'Pure withdrawal countdown evaluator and safety conflict helpers must remain intact and DOM-free.',
       },
       {
         filePath: 'src/components/HomeSpeciesScreen.tsx',
@@ -605,30 +545,22 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'evaluateSpeciesActiveWithdrawalsAlert',
           'onDismissWithdrawalAlert',
         ],
-        rationale: 'Home species cards must surface closable session-scoped withdrawal safety alerts.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['buildWithdrawalByAnimalMap', 'withdrawal_soonest', 'Withdrawal ('],
-        rationale:
-          'HerdScreen must display active withdrawal countdowns, filter tab, sort, and profile alert banner.',
       },
       {
         filePath: 'src/components/AnimalEditorModal.tsx',
         requiredSubstrings: ['evaluateWithdrawalDispositionWarning', 'pendingWithdrawalWarning'],
-        rationale:
-          'AnimalEditorModal must require soft confirmation before saving Sold or Flagged-for-Cull stock under active withdrawal.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['evaluateShowWithdrawalConflicts', 'pendingShowWithdrawalWarning'],
-        rationale:
-          'Show entry form must warn when selected animals have medication withdrawals overlapping eventDateIso.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['dismissedWithdrawalSpecies', 'requestedHerdWithdrawalNonce'],
-        rationale: 'Root shell tracks session-scoped Home withdrawal dismissal and Herd filter navigation.',
       },
     ],
     restorePlaybook: [
@@ -661,26 +593,18 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/domain/syncOutbox.ts',
         requiredSubstrings: ['stripPhotoBlobsForSync', 'diffSnapshotsToSyncOperations'],
-        rationale:
-          'Sync outbox must strip binary blobs on photo creates and support snapshot diffing for bulk migrations.',
       },
       {
         filePath: 'src/domain/speciesMigration.ts',
         requiredSubstrings: ['bumpRecordRevision'],
-        rationale:
-          'Cross-species migration must advance `_rev` counters on every migrated or created record.',
       },
       {
         filePath: 'src/domain/backupArchive.ts',
         requiredSubstrings: ['existingHasBlob', 'incHasBlob'],
-        rationale:
-          'Photos-Only ZIP merge must hydrate blobs onto metadata-only photo placeholders without overwriting newer metadata.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['mergeAnimalPhotosWithBlobPreservation'],
-        rationale:
-          'Barn snapshot merges must rehydrate blobs onto metadata-only photos without losing existing local blobs.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -690,14 +614,10 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'stripPhotoBlobsForSync',
           'diffSnapshotsToSyncOperations',
         ],
-        rationale:
-          'Store must clear sync/backup-reminder state on resets/replaces and enqueue metadata-only photo & migration outbox ops.',
       },
       {
         filePath: 'src/components/AnimalPhotoGallery.tsx',
         requiredSubstrings: ['p.thumbnailDataUrl || p.dataUrl'],
-        rationale:
-          'Photo gallery must avoid rendering broken <img src=""> tags for metadata-only synced photo placeholders.',
       },
     ],
     restorePlaybook: [
@@ -726,17 +646,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/domain/upgradeGate.ts',
         requiredSubstrings: ['nowEpochMs', 'computeHttpDateClockSkewMs'],
-        rationale: 'Upgrade-gate HTTP Date skew calculation must default to clock-skew-aware nowEpochMs().',
       },
       {
         filePath: 'src/storage/pwaUpdateManager.ts',
         requiredSubstrings: ['recordServerDateHeaderSkew', 'getAdjustedNowIsoUtc'],
-        rationale: 'Version/status manifest checks must propagate HTTP Date skew and record adjusted timestamps.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
         requiredSubstrings: ['archiveExportLock', 'getAdjustedNowMs', 'archiveExportLock.runLocked'],
-        rationale: 'Archive/backup exports must lock synchronously against double-tap and record skew-adjusted pause timestamps.',
       },
     ],
     restorePlaybook: [
@@ -773,42 +690,34 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/utils/useVirtualWindow.ts',
         requiredSubstrings: ['computeVirtualWindow', 'useVirtualWindow', 'ResizeObserver'],
-        rationale: 'Zero-dependency ES2018 scroll virtualizer must remain intact with guarded ResizeObserver cleanup.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['queryPedigreeNeighborhood', 'queryPedigreeBranchAncestorsExist', 'mapAnimalRow'],
-        rationale: 'SQLite adapter must provide cycle-safe bounded BFS pedigree queries and lightweight branch-existence probes.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['loadPedigreeNeighborhood', 'checkPedigreeBranchesHaveAncestors', 'pedigreeAncestorCacheRef'],
-        rationale: 'Barn store must cache lazily fetched SQLite/OPFS pedigree ancestors in a bounded LRU map.',
       },
       {
         filePath: 'src/domain/pedigreeCalculator.ts',
         requiredSubstrings: ['hasKnownAncestors', 'externalKnownBranches'],
-        rationale: 'Branch summaries must surface externally detected Gen 4+ ancestors before full depth is loaded in RAM.',
       },
       {
         filePath: 'src/components/PedigreeScreen.tsx',
         requiredSubstrings: ['gen0To3BaseMap', 'fetchAndMergeBranchAncestors', 'handleOpenPrintModal'],
-        rationale: 'Pedigree screen must scope initial tree to Gen 0–3 and hydrate Gen 4+ on branch expand or print.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['useVirtualWindow', 'breedingVirtual', 'ledgerStatusFilter'],
-        rationale: 'Breeding & litter ledger must filter and virtualize large pairing histories cleanly.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['useVirtualWindow', 'herdVirtual', 'HERD_PAGE_SIZE'],
-        rationale: 'Herd roster list must virtualize rows via useVirtualWindow with HERD_PAGE_SIZE pre-layout fallback.',
       },
       {
         filePath: 'src/components/ReportsScreen.tsx',
         requiredSubstrings: ['useVirtualWindow', 'reportVirtual', 'windowedRows'],
-        rationale: 'Reports table must virtualize displayed rows while exporting full filtered sets to CSV and Print.',
       },
     ],
     restorePlaybook: [
@@ -845,14 +754,10 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'evaluateSpeciesCagesOccupancy',
           'evaluateCageAssignmentCapacityWarning',
         ],
-        rationale:
-          'Pure occupancy counting and capacity warning evaluation must remain in pure TS core with species isolation.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['assignAnimalToCage'],
-        rationale:
-          'Store must expose queued FIFO assignAnimalToCage mutation updating _rev and syncOutbox.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
@@ -862,8 +767,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'pendingCageAssignConfirm',
           'onAssignAnimalToCage',
         ],
-        rationale:
-          'Cages & Pens cards must show occupancy ratios, quick occupant assignment/unassignment, inline edit, and over-capacity alerts.',
       },
       {
         filePath: 'src/components/AnimalEditorModal.tsx',
@@ -872,20 +775,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'pendingCapacityWarning',
           'checkCapacityThenSave',
         ],
-        rationale:
-          'Animal editor must display live cage occupancy feedback and soft confirmation before saving an over-capacity assignment.',
       },
       {
         filePath: 'src/components/HomeSpeciesScreen.tsx',
         requiredSubstrings: ['evaluateSpeciesCagesOccupancy', 'shouldShowOverCapacityAlert'],
-        rationale:
-          'Home species cards must surface an actionable alert when any species cage exceeds capacity.',
       },
       {
         filePath: 'src/domain/barnBinder.ts',
         requiredSubstrings: ['(over capacity)'],
-        rationale:
-          'Printable Barn Binder cage table must show occupancy/capacity ratios and over-capacity markers.',
       },
     ],
     restorePlaybook: [
@@ -925,8 +822,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'normalizeBreedScheduleOverrides',
           'breedOverrides',
         ],
-        rationale:
-          'SpeciesProfile must carry optional BreedScheduleOverride entries normalized deterministically in pure TypeScript.',
       },
       {
         filePath: 'src/domain/taskMaster.ts',
@@ -937,14 +832,10 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'isPalpationTask',
           'isBirthCheckTask',
         ],
-        rationale:
-          'Breed override resolution, AFTER_BIRTH task date recalculation, and Missed breeding task cleanup helpers must remain pure and reusable.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['breed_overrides_json'],
-        rationale:
-          'SQLite schema and migrations must persist species breedOverrides across reloads.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -952,8 +843,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'recalculateBreedingPostBirthTasks',
           'completeBreedingTaskWithOutcome',
         ],
-        rationale:
-          'Store must expose queued FIFO mutations for post-birth task recalculation and one-click breeding task outcome checkoffs with cleanup.',
       },
       {
         filePath: 'src/components/SpeciesEditorModal.tsx',
@@ -961,8 +850,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'Per-Breed Schedule Overrides',
           'handleSaveBreedOverride',
         ],
-        rationale:
-          'Species Editor must allow configuring optional per-breed gestation, weaning, rebreed, maturity, and milestone day overrides.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
@@ -971,8 +858,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'outcomeStalePostBirth',
           'outcomeMissedCleanupCount',
         ],
-        rationale:
-          'Breeding Lab must resolve breed overrides in previews, offer one-tap post-birth chore shifting, and surface automatic Missed cleanup notice.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
@@ -981,8 +866,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'isPalpationTask',
           'isBirthCheckTask',
         ],
-        rationale:
-          'Species Hub task list must support one-click Palpation & Birth Check checkoffs and inline post-birth chore shifting on active pairings.',
       },
     ],
     restorePlaybook: [
@@ -1017,7 +900,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/domain/exporters/exporterTypes.ts',
         requiredSubstrings: ['ExternalExporterDescriptor', 'ExportedArtifactPayload'],
-        rationale: 'Pure TypeScript exporter interface contracts must remain DOM-free for cross-platform reuse.',
       },
       {
         filePath: 'src/domain/exporters/registry.ts',
@@ -1027,7 +909,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'buildExporterCatalog',
           'runExternalExporter',
         ],
-        rationale: 'Non-native exporter catalog must keep built-in formats and extensible registry hooks intact.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
@@ -1037,22 +918,18 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'UnifiedBackupVaultPanel',
           'BUILTIN_NON_NATIVE_EXPORTERS',
         ],
-        rationale: 'Hub screen must organize System Backup, Native & External Imports, and Exporters cleanly.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ["| 'importExport'"],
-        rationale: 'WorkspaceRoute union must include importExport.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['ImportExportHubScreen', 'openImportExportHub'],
-        rationale: 'Root shell must route, lazy-load, and link banners/shortcuts cleanly to ImportExportHubScreen.',
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
         requiredSubstrings: ['onOpenImportExportHub'],
-        rationale: 'Settings must link cleanly into all sections of the Import/Export Hub without duplicating forms.',
       },
     ],
     restorePlaybook: [
@@ -1082,17 +959,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       {
         filePath: 'src/domain/importers/csvStarterTemplate.ts',
         requiredSubstrings: ['buildStarterCsvTemplate', 'STARTER_CSV_TEMPLATE_HEADERS'],
-        rationale: 'Pure TS starter CSV template generator must remain DOM-free with standard pedigree headers.',
       },
       {
         filePath: 'src/domain/importers/csvColumnMapper.ts',
         requiredSubstrings: ['CSV_TARGET_FIELD_OPTIONS', 'resolveCsvColumnAssignments', 'makeCsvColumnOverrideKey'],
-        rationale: 'Pure TS column mapper must resolve aliases, sample cells, and user overrides cleanly.',
       },
       {
         filePath: 'src/domain/importers/universalPedigreeImporter.ts',
         requiredSubstrings: ['resolveCsvColumnAssignments', 'unresolvedParentLinks', 'csvTables'],
-        rationale: 'Universal importer must perform two-pass parent resolution and surface column mapping & unresolved Sire/Dam links.',
       },
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
@@ -1101,7 +975,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'handleCsvColumnSelectionChange',
           'unresolvedParentLinks',
         ],
-        rationale: 'External importer UI must expose template download, interactive column mapping, and unresolved parent link warnings.',
       },
     ],
     restorePlaybook: [
@@ -1143,17 +1016,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'purgeOpfsTmp',
           'readTempOpfsFileAsBlob',
         ],
-        rationale: 'Worker-safe OPFS /tmp chunk streamer must remain free of React/DOM imports and close writables in try/finally.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['generateBarnBackupJsonChunks'],
-        rationale: 'Pure TypeScript backup JSON chunk generator prevents allocating monolithic strings for photo-heavy backups.',
       },
       {
         filePath: 'src/domain/backupArchive.ts',
         requiredSubstrings: ['streamCompleteBackupZipArchive', 'streamPhotosOnlyZipArchive'],
-        rationale: 'Streaming fflate Zip/ZipPassThrough/ZipDeflate builders decode and flush one entry at a time incrementally.',
       },
       {
         filePath: 'src/utils/webFileActions.ts',
@@ -1162,7 +1032,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'downloadTempOpfsExport',
           'stagePayloadInOpfsTmp',
         ],
-        rationale: 'All printable, shareable, and streamed browser exports stage via OPFS /tmp when supported and clean up deterministically.',
       },
       {
         filePath: 'src/storage/offThreadWorkerClient.ts',
@@ -1170,7 +1039,6 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'buildCompleteBackupZipToOpfsTmpOffThread',
           'buildPhotosOnlyZipToOpfsTmpOffThread',
         ],
-        rationale: 'Off-thread worker bridge streams ZIP chunks straight to OPFS /tmp and falls back gracefully without Worker or OPFS.',
       },
     ],
     restorePlaybook: [
@@ -1209,20 +1077,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'DESTRUCTIVE_CONFIRM_PHRASES',
           'isDestructiveActionConfirmationValid',
         ],
-        rationale:
-          'Pure TS developer guardrails module must stay DOM-free and enforce quota evaluations, strict input validation/sanitization, and confirmation phrases.',
       },
       {
         filePath: 'src/storage/storageProtection.ts',
         requiredSubstrings: ['verifyStorageQuotaForDiagnosticAction'],
-        rationale:
-          'Browser storage adapter must execute OPFS + IndexedDB quota pre-flight checks and log low-headroom diagnostics.',
       },
       {
         filePath: 'src/components/TechyStuffErrorBoundary.tsx',
         requiredSubstrings: ['TechyStuffErrorBoundary', 'recordReactCrash'],
-        rationale:
-          'Developer & Troubleshooting screen must stay isolated in a dedicated Error Boundary so faulty diagnostics cannot crash herd/breeding views.',
       },
       {
         filePath: 'src/components/TechyStuffScreen.tsx',
@@ -1232,20 +1094,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'DEVICE_CAPABILITY_TIER_LIST',
           'destructiveArmed',
         ],
-        rationale:
-          'The Techy Stuff screen must include a permanent non-closeable Tier/Memory Hierarchy block and multi-step armed safeguards for destructive actions.',
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
         requiredSubstrings: ['onOpenTechyStuff', 'DeviceCapabilityCard'],
-        rationale:
-          'Settings must link cleanly to The Techy Stuff while keeping routine barn preferences and original DeviceCapabilityCard intact.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['TechyStuffScreen', 'TechyStuffErrorBoundary', "route === 'techyStuff'"],
-        rationale:
-          'Root shell must lazy-load TechyStuffScreen inside Suspense + TechyStuffErrorBoundary.',
       },
     ],
     restorePlaybook: [
@@ -1284,20 +1140,14 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'findNextBarnBenchIndex',
           'BARN_BENCH_BCS_PRESETS',
         ],
-        rationale:
-          'Pure TS Barn Bench queue builder, commit planner, and auto-advance selector must remain DOM-free and species-isolated.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['saveCareLogsBatch'],
-        rationale:
-          'Transactional batch CareLog persistence prevents multi-flush overhead when logging combined bench entries.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ["| 'bench'", 'commitBarnBenchEntry', 'buildBarnBenchCommitPlan'],
-        rationale:
-          'Store must expose the bench route and queued atomic commitBarnBenchEntry action with outbox sync ops.',
       },
       {
         filePath: 'src/components/BarnBenchScreen.tsx',
@@ -1307,14 +1157,10 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
           'useAsyncSubmitLock',
           'findNextBarnBenchIndex',
         ],
-        rationale:
-          'Barn Bench screen must guard async commits against double-taps, check cage capacity on moves, and auto-advance cleanly.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['BarnBenchScreen', "route === 'bench'", "k: { route: 'bench'"],
-        rationale:
-          'Root shell must lazy-load BarnBenchScreen under route === bench with keyboard shortcut K.',
       },
     ],
     restorePlaybook: [

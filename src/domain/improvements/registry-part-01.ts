@@ -33,32 +33,26 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/backupStatus.ts',
         requiredSubstrings: ['evaluateBackupStatus', 'formatLocalDateTimeReadable', 'hasNonTestingBarnData'],
-        rationale: 'Backup freshness evaluator and human-readable timestamp formatters must stay intact.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['buildCleanBackupFileName', 'exportedAtLocal', 'barnSummary'],
-        rationale: 'Clean filenames (`pedigree-backup-YYYY-MM-DD.json`) and top-level `barnSummary` prevent messy exports.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['recordBackupExport', 'snoozeBackupReminder', 'backupStatus'],
-        rationale: 'Store must track `lastBackupMeta` and expose `recordBackupExport`/`snoozeBackupReminder`.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['backupStatus.showDismissibleBanner', 'snoozeBackupReminder'],
-        rationale: 'Global dismissible/snoozable reminder banner alerts breeders when real edits are unbacked.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
         requiredSubstrings: ['backupStatus', 'recordBackupExport'],
-        rationale: 'Import/Export Hub exports must show live backup timestamps and record external exports immediately.',
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
         requiredSubstrings: ['backupStatus', "onOpenImportExportHub('backup')"],
-        rationale: 'Settings must surface live top-level backup warnings and route exports directly to Import / Export Hub.',
       },
     ],
     restorePlaybook: [
@@ -86,22 +80,18 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['SpeciesBackupReason', 'buildSpeciesSafetyBackupFileName', 'exportSpeciesBackupJson'],
-        rationale: 'Pre-removal species JSON exports require distinct timestamped filenames and reason metadata.',
       },
       {
         filePath: 'src/domain/sampleData.ts',
         requiredSubstrings: ['countSpeciesNonTestingRecords', 'purgeSpeciesNonTestingDataPure'],
-        rationale: 'Non-testing purge must isolate user records cleanly without deleting starter sample rows.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['deleteSpeciesNonTestingData', 'purgeSpeciesNonTestingDataPure'],
-        rationale: 'Store must persist non-testing purges via batch operations and clear stale caches.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['countSpeciesNonTestingRecords', 'pre-remove-non-testing', 'pre-remove-species'],
-        rationale: 'Species hub safety controls must offer 1-click timestamped safety backups before destructive wipes.',
       },
     ],
     restorePlaybook: [
@@ -129,7 +119,6 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/models.ts',
         requiredSubstrings: ['pluralizeSpeciesLabel'],
-        rationale: '`barnAlerts.ts` uses `pluralizeSpeciesLabel` to format arriving-offspring labels cleanly.',
       },
       {
         filePath: 'src/domain/barnAlerts.ts',
@@ -138,17 +127,14 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'evaluateSpeciesArrivingBabiesAlert',
           'buildTaskAlertGroupSignature',
         ],
-        rationale: 'Pure alert evaluation rules ensure group-clear signatures reappear only when new due tasks arrive.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['ignoreTaskAlertsPermanently', 'clearTaskAlertGroup'],
-        rationale: 'Store must persist ignored task IDs and cleared group signatures per species.',
       },
       {
         filePath: 'src/components/HomeSpeciesScreen.tsx',
         requiredSubstrings: ['evaluateSpeciesDueTasksAlert', 'evaluateSpeciesArrivingBabiesAlert'],
-        rationale: 'Home cards must consume `barnAlerts.ts` directly rather than drifting inline logic.',
       },
     ],
     restorePlaybook: [
@@ -176,12 +162,10 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/models.ts',
         requiredSubstrings: ['applyAnimalNamePrefix', 'defaultAnimalPrefix'],
-        rationale: 'Delimiter-aware prefix helper handles hyphens/colons (`OR-Ruby`) and case-insensitive duplicate checks.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['applyAnimalNamePrefix'],
-        rationale: 'Litter offspring auto-creation in `updateBreedingOutcome` must respect the species default prefix.',
       },
     ],
     restorePlaybook: [
@@ -209,22 +193,18 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/speciesMigration.ts',
         requiredSubstrings: ['expandPedigreeFamilyInSpecies', 'migrateAnimalsToSpecies'],
-        rationale: 'Cross-species migration preserves ancestor/descendant links and moves photos/logs/breedings/tasks cleanly.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['SpeciesMigrationModal', 'HERD_PAGE_SIZE'],
-        rationale: 'Herd screen uses `SpeciesMigrationModal` and paginates large rosters at 50 rows per page.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['SpeciesMigrationModal', 'onDownloadTimestampedSpeciesBackup'],
-        rationale: 'Species Hub exposes hub-level backup, migration, and safety-backed deletion controls.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['migrateAnimalsToSpecies', 'SpeciesMigrationOptions'],
-        rationale: 'Store delegates species migration to the tested `migrateAnimalsToSpecies` engine.',
       },
     ],
     restorePlaybook: [
@@ -251,12 +231,10 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/models.ts',
         requiredSubstrings: ["'Archived'", 'isAnimalActive', 'normalizeAnimalStatus'],
-        rationale: 'Canonical Archived status and importer helpers must stay exported from `models.ts`.',
       },
       {
         filePath: 'src/domain/importers/herdBossImporter.ts',
         requiredSubstrings: ['rawArchivedFlag', 'rawActiveFlag'],
-        rationale: 'CSV `Archived` / `Active` flags must map cleanly to `Archived` instead of collapsing into `Retired` or `Active`.',
       },
     ],
     restorePlaybook: [
@@ -286,22 +264,18 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
         filePath: 'vite.config.ts',
         requiredSubstrings: ['devServiceWorkerCleanupPlugin', 'enabled: false'],
         forbiddenSubstrings: ['devOptions: {\n      enabled: true'],
-        rationale: 'Workbox devOptions enabled=true inside preview iframes causes stale chunk/SW crash loops on mobile.',
       },
       {
         filePath: 'src/main.tsx',
         requiredSubstrings: ['import.meta.env.PROD', "navigator.serviceWorker.getRegistrations"],
-        rationale: 'Dev mode must unregister lingering service workers and clear caches instead of registering Workbox.',
       },
       {
         filePath: 'src/domain/pedigreeCalculator.ts',
         requiredSubstrings: ['inbreeding(id: string, activeCalls: Set<string> = new Set())'],
-        rationale: 'Cycle guard prevents stack overflow if an imported pedigree has an ancestral loop.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['saveAnimalsBatch', 'deleteAnimalsBatch', 'deleteTasksBatch'],
-        rationale: 'Single-transaction SQLite batch methods prevent O(N) disk/IDB flushes on bulk edits.',
       },
     ],
     restorePlaybook: [
@@ -325,35 +299,27 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
         filePath: 'vite.config.ts',
         requiredSubstrings: ["const basePath = '/'", 'hmr: false', 'watch: null'],
         forbiddenSubstrings: ['process.env.VITE_BASE_PATH', 'process.env.DISABLE_HMR'],
-        rationale:
-          "Hardcoding `basePath = '/'`, `hmr: false`, and `watch: null` prevents AI Studio from prompting for `VITE_BASE_PATH` or `DISABLE_HMR`.",
       },
       {
         filePath: '.env.example',
         requiredSubstrings: ['# No required environment variables.'],
         forbiddenSubstrings: ['VITE_BASE_PATH', 'DISABLE_HMR'],
-        rationale:
-          'Omitting `VITE_BASE_PATH` and `DISABLE_HMR` from `.env.example` prevents AI Studio from prompting for unconfigured env vars.',
       },
       {
         filePath: '.github/workflows/ci.yml',
         requiredSubstrings: ['npm test', 'npm run verify:improvements', 'npm run lint', 'npm run build'],
-        rationale: 'CI must block merges if tests, improvement invariants, TypeScript, or builds break.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['"test": "vitest run"', '"verify:improvements": "tsx scripts/verify-improvements.ts"'],
-        rationale: 'Standard npm scripts power local & CI verification.',
       },
       {
         filePath: '.github/workflows/deploy-pages.yml',
         requiredSubstrings: ['oven-sh/setup-bun', 'bun run build --base='],
-        rationale: 'GitHub Pages deployment strictly requires Bun and passes dynamic --base on CLI.',
       },
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ["scope: './'", "start_url: './'", "id: './'"],
-        rationale: 'Relative PWA manifest fields ensure installability on both root (/) and GitHub Pages subpaths (/Pedigree/).',
       },
     ],
     restorePlaybook: [
@@ -383,17 +349,14 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/main.tsx',
         requiredSubstrings: ['CrashErrorBoundary', 'installGlobalCrashHandlers'],
-        rationale: 'Root mount must remain wrapped in `CrashErrorBoundary` with global handlers active.',
       },
       {
         filePath: 'src/domain/dataHealthCheck.ts',
         requiredSubstrings: ['analyzeBarnDataHealth', 'repairBarnDataHealth'],
-        rationale: 'Health scan & self-repair logic protects against orphaned pointers or malformed rows.',
       },
       {
         filePath: 'src/domain/supportBundle.ts',
         requiredSubstrings: ['buildSupportBundleZipArchive'],
-        rationale: 'Diagnostic ZIP generator packages device info, crash logs, and DB health safely.',
       },
     ],
     restorePlaybook: [
@@ -420,12 +383,10 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/syncOutbox.ts',
         requiredSubstrings: ['diffEntityFieldsToOperations', 'mergeDeltaOperations'],
-        rationale: 'Field-level sync outbox prevents whole-record overwrites across peer devices.',
       },
       {
         filePath: 'src/domain/backupArchive.ts',
         requiredSubstrings: ['buildCompleteBackupZipArchive', 'parseBackupArchiveInput'],
-        rationale: 'ZIP archive builder/parser handles combined data + real image directory trees.',
       },
     ],
     restorePlaybook: [
@@ -457,17 +418,14 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'formatImprovementsMarkdown',
           'buildImprovementsRecoveryJson',
         ],
-        rationale: 'Core registry and pure export/verification helpers must remain intact.',
       },
       {
         filePath: 'scripts/verify-improvements.ts',
         requiredSubstrings: ['evaluateImprovementInvariants', 'IMPROVEMENTS_REGISTRY'],
-        rationale: 'CLI script verifies actual workspace source files against registry invariants.',
       },
       {
         filePath: 'src/components/DiagnosticsAndSupportPanel.tsx',
         requiredSubstrings: ['IMPROVEMENTS_REGISTRY', 'formatImprovementsMarkdown', 'buildImprovementsRecoveryJson'],
-        rationale: 'Users can view, download (.md / .json), or copy the improvement recovery log directly in the app.',
       },
     ],
     restorePlaybook: [
@@ -494,22 +452,18 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['normalizeRufusLevel', 'Promise.allSettled', 'Corrective action:'],
-        rationale: 'Startup must import normalizeRufusLevel, isolate secondary boot promises, and log corrective recovery actions.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['safeParseJson', 'Corrective action:'],
-        rationale: 'Malformed SQLite row JSON must auto-recover cleanly and record a diagnostic log entry.',
       },
       {
         filePath: 'src/utils/googleCalendarClient.ts',
         requiredSubstrings: ['initGoogleCalendarAuth', 'Corrective action:'],
-        rationale: 'Calendar auth hooks must initialize cleanly offline without external Firebase dependencies before React mounts.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['Local Database Recovery Needed'],
-        rationale: 'Render a non-blocking recovery UI if snapshot loading fails instead of trapping users on a loading skeleton.',
       },
     ],
     restorePlaybook: [
@@ -541,27 +495,22 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
       {
         filePath: 'src/domain/importers/universalPedigreeImporter.ts',
         requiredSubstrings: ['UniversalPedigreeImporter', 'parseEvansHtmlEntry', 'MULTI_GEN_COLUMN_SPECS'],
-        rationale: 'Universal importer handles Evans HTML, multi-generation spreadsheets, nested JSON, and unsupported binary warnings.',
       },
       {
         filePath: 'src/engine/codecs/archiveAndCsvUtils.ts',
         requiredSubstrings: ['decodeTextBytes', 'detectUnbommedUtf16', 'validateAndFormatYmd'],
-        rationale: 'Handles UTF-16LE/BE, Windows-1252, Excel serial dates, and calendar validation without crashing.',
       },
       {
         filePath: 'src/domain/importers/registry.ts',
         requiredSubstrings: ['UniversalPedigreeImporter'],
-        rationale: 'Registers the Universal Pedigree importer alongside HerdBoss.',
       },
       {
         filePath: 'src/domain/pedigreeCalculator.ts',
         requiredSubstrings: ['visitedPath: Set<string> = new Set()'],
-        rationale: 'Direct ancestor counting guards against circular ancestry loops.',
       },
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
         requiredSubstrings: ['effectiveParseError', 'role="progressbar"'],
-        rationale: 'Keeps parse error calculation pure and exposes accessible alert/progress semantics.',
       },
     ],
     restorePlaybook: [
@@ -597,27 +546,22 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'isOverrideConfirmationValid',
           'analyzeBarnAnimalConflicts',
         ],
-        rationale: 'Core conflict detection, override confirmation, and summary logic must remain intact.',
       },
       {
         filePath: 'src/domain/dataHealthCheck.ts',
         requiredSubstrings: ['duplicateTattooAnimalsCount', 'parentSexMismatchCount'],
-        rationale: 'Database health checks must report duplicate within-species tattoos and parent sex mismatches.',
       },
       {
         filePath: 'src/components/AnimalEditorModal.tsx',
         requiredSubstrings: ['findSameSexDuplicateTattooCollisions', 'isOverrideConfirmationValid'],
-        rationale: 'Single-animal editor must warn on same-sex duplicate tattoos and require explicit override typing.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['isOverrideConfirmationValid', 'isLitterOverrideConfirmed'],
-        rationale: 'Bulk litter creation must enforce the same duplicate tattoo override guardrail.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['conflicts_first', 'duplicateTattooPeers'],
-        rationale: 'Herd screen must allow sorting/filtering conflicted animals and ignoring/restoring soft warnings.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -626,12 +570,10 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'restoreAnimalConflictAlert',
           'importConflictAlert',
         ],
-        rationale: 'Store must emit post-import conflict alerts and persist per-animal ignored conflict flags.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['store.importConflictAlert', 'locateConflictsInHerd'],
-        rationale: 'Root shell renders non-blocking import conflict banners with direct Locate Conflicted Animals action.',
       },
     ],
     restorePlaybook: [
@@ -667,37 +609,30 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'classifyDeviceCapability',
           'evaluateBarnWorkloadForTier',
         ],
-        rationale: 'Pure 5-tier classification, dismissal rules, and workload evaluator must remain intact.',
       },
       {
         filePath: 'src/storage/deviceCapabilityDetector.ts',
         requiredSubstrings: ['useDeviceCapability', 'readBrowserHardwareSignals'],
-        rationale: 'Per-device hardware signal collector and localStorage dismissal hook isolate device state from portable backups.',
       },
       {
         filePath: 'src/components/DeviceCapabilityCard.tsx',
         requiredSubstrings: ['DeviceCapabilityCard', 'evaluateBarnWorkloadForTier'],
-        rationale: 'Shared tier banner respects Home vs Settings tier-specific close/reopen rules.',
       },
       {
         filePath: 'src/components/HomeSpeciesScreen.tsx',
         requiredSubstrings: ['DeviceCapabilityCard'],
-        rationale: 'Home onboarding displays device capability card on startup.',
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
         requiredSubstrings: ['DeviceCapabilityCard'],
-        rationale: 'Settings exposes upper Device Capability section with persistent Tier 1–2 status and reopen control.',
       },
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
         requiredSubstrings: ['evaluateBarnWorkloadForTier'],
-        rationale: 'Importer evaluates incoming record counts against host device capability tier.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['useDeviceCapability'],
-        rationale: 'Root shell runs `useDeviceCapability()` and passes controller to Home and Settings.',
       },
     ],
     restorePlaybook: [
@@ -728,12 +663,10 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'RouteErrorBoundary',
           'RouteLoadingFallback',
         ],
-        rationale: 'Named-export lazy wrapper, single chunk retry, and route error boundary prevent blank-screen crashes.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['lazyNamedRoute', 'RouteErrorBoundary', 'RouteLoadingFallback'],
-        rationale: 'Secondary routes in `App.tsx` must stay lazily loaded inside `RouteErrorBoundary` + `Suspense`.',
       },
     ],
     restorePlaybook: [
@@ -769,7 +702,6 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'stripPhotoDataUrlsFromSnapshot',
           'hydrateSnapshotWithPhotoDataUrls',
         ],
-        rationale: 'Bounded LRU cache and batch hydration helpers keep full-res base64 strings out of steady-state RAM.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -778,7 +710,6 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'loadAnimalPhotoDataUrl',
           'loadAnimalPhotoDataUrlsBatch',
         ],
-        rationale: 'SQLite adapter supports thumbnail-only snapshot loads, on-demand photo reads, and non-destructive dehydrated writes.',
       },
       {
         filePath: 'src/storage/archiveAndImport.worker.ts',
@@ -787,7 +718,6 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'buildPhotosOnlyZipArchive',
           'parseBackupArchiveInput',
         ],
-        rationale: 'Dedicated module worker runs heavy ZIP builds/extractions and importer parsing off the UI thread.',
       },
       {
         filePath: 'src/storage/offThreadWorkerClient.ts',
@@ -796,7 +726,6 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'parseExternalImportOffThread',
           'buildImporterWorkerSnapshot',
         ],
-        rationale: 'Worker client strips base64 images before cloning snapshots and falls back gracefully when `Worker` is unavailable.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -806,17 +735,14 @@ export const REGISTRY_PART_01: ImprovementEntry[] = [
           'hydrateSnapshotForExport',
           'buildCompleteBackupZipToOpfsTmpOffThread',
         ],
-        rationale: 'Store loads lightweight snapshots, caches hydrated photos, hydrates rolling/export snapshots, and streams off-thread ZIP archives via OPFS /tmp.',
       },
       {
         filePath: 'src/components/AnimalPhotoGallery.tsx',
         requiredSubstrings: ['onLoadFullPhoto', 'activePhotoSrc'],
-        rationale: 'Photo gallery and lightbox fetch full-resolution images lazily while displaying thumbnails immediately.',
       },
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
         requiredSubstrings: ['parseExternalImportOffThread', 'isParsingArchive'],
-        rationale: 'External importer unpacks and parses staged archives asynchronously off-thread with request sequencing.',
       },
     ],
     restorePlaybook: [

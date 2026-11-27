@@ -23,9 +23,16 @@ export interface ImprovementInvariant {
   requiredSubstrings: string[];
   /** Anti-patterns or regressions that must NOT reappear in this file */
   forbiddenSubstrings?: string[];
-  /** Short explanation of why this check exists */
-  rationale: string;
+  /**
+   * Short explanation of why this check exists. Usually omitted from entries: the prose lives in
+   * `improvements/rationales.ts` and is resolved through `resolveEntryRationales` only where it is
+   * displayed, so the registry chunk stays lean.
+   */
+  rationale?: string;
 }
+
+/** Rationale prose keyed `${entryId}#${filePath}#${ordinalForThatFile}`, see `improvements/rationales.ts`. */
+export type ImprovementRationaleMap = Readonly<Record<string, string>>;
 
 export type ImprovementRelease = 'alpha-2' | 'alpha-3' | (string & {});
 

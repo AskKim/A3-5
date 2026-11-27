@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (21 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (22 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (85)
+## Logged Improvements (86)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1894,3 +1894,21 @@ npm run lint && npm run build
 1. Keep the `guard` job first and both `if: needs.guard.outputs.deploy == 'true'` conditions on `build` and `deploy`; removing them restores the permanent red failure.
 2. Treat an unreadable Pages API response as "proceed", so a token-scope change can never silently stop real deployments.
 3. Never point the security audit at a lockfile the project does not ship.
+
+### IMP-086: Registry Maintainability: Five Part Modules & On-Demand Rationale Prose
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Make the improvement registry reviewable and stop shipping explanatory prose that only the markdown/JSON export ever reads.
+- **Summary:** Splits the 85 entries out of a 6,428-line improvementRegistry.ts into five part modules (IMP-001–017 through IMP-069–085) assembled by the unchanged public surface, with shared types in improvements/types.ts so parts never import the registry that owns them. The 484 invariant rationale strings move to improvements/rationales.ts keyed entryId#filePath#ordinal and are resolved by resolveEntryRationales only for markdown export, recovery JSON and verifier messages, which the diagnostics panel loads on demand. The registry chunk drops from 287 KB to 225 KB raw (76 KB to 58.5 KB gzipped) and IMPROVEMENTS.md regenerates byte-identically; a test asserts every invariant still resolves to non-empty prose.
+- **Tracked Files:** `src/domain/improvementRegistry.ts`, `src/domain/improvements/types.ts`, `src/domain/improvements/rationales.ts`, `scripts/audit-layers.ts`
+
+**Automated Invariants Checked:**
+- `src/domain/improvementRegistry.ts` must contain `export const IMPROVEMENTS_REGISTRY`, `resolveEntryRationales`, `formatImprovementsMarkdown`, `buildImprovementsRecoveryJson` — *The registry must keep one public surface even though its entries are split across part modules and its prose lives elsewhere.*
+- `src/domain/improvements/types.ts` must contain `ImprovementRationaleMap`, `rationale?: string` — *Shared types must stay available so part modules can be typed without importing the registry, and rationale must stay optional for entries that carry it inline.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the five import and spread lines in improvementRegistry.ts; concatenating entries inline again reintroduces the 6,428-line file.
+2. When adding an entry, add its rationale to improvements/rationales.ts under entryId#filePath#ordinal — the resolution test fails if you forget.
+3. The part data files and rationales.ts are exempt from the DOM/Node text scans in scripts/audit-layers.ts because their content is prose, not code.

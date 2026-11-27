@@ -26,6 +26,7 @@ import type {
   ImprovementCategory,
   ImprovementEntry,
   ImprovementInvariant,
+  ImprovementRationaleMap,
   ImprovementRelease,
 } from './improvements/types';
 
@@ -94,9 +95,27 @@ export const BOOT_ENTRY_LOCK_CHECKSUMS: Readonly<Record<string, string>> = {
  * Evaluates all `IMPROVEMENTS_REGISTRY` code invariants against an in-memory map of file contents.
  * Keys may be POSIX relative paths (`src/domain/models.ts`) with or without a leading `/`.
  */
+/**
+ * Resolves the explanatory prose for every invariant of an entry, in declaration order.
+ * Entries may still carry an inline `rationale`; otherwise it is read from the supplied map
+ * (see `improvements/rationales.ts`) and an empty string is returned when neither has it.
+ */
+export function resolveEntryRationales(
+  entry: ImprovementEntry,
+  rationales?: ImprovementRationaleMap
+): string[] {
+  const seenPerFile = new Map<string, number>();
+  return entry.invariants.map((inv) => {
+    const ordinal = (seenPerFile.get(inv.filePath) ?? 0) + 1;
+    seenPerFile.set(inv.filePath, ordinal);
+    return inv.rationale ?? rationales?.[`${entry.id}#${inv.filePath}#${ordinal}`] ?? '';
+  });
+}
+
 export function evaluateImprovementInvariants(
   filesByPath: Record<string, string | undefined>,
-  entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY
+  entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY,
+  rationales?: ImprovementRationaleMap
 ): ImprovementDriftReport {
   const normalizedMap = new Map<string, string>();
   for (const [k, v] of Object.entries(filesByPath)) {
@@ -111,8 +130,9 @@ export function evaluateImprovementInvariants(
 
   for (const entry of entries) {
     let entryPassed = true;
+    const why = resolveEntryRationales(entry, rationales);
 
-    for (const inv of entry.invariants) {
+    for (const [invIdx, inv] of entry.invariants.entries()) {
       const cleanPath = inv.filePath.replace(/^\/+/, '');
       checkedFiles.add(cleanPath);
       const content = normalizedMap.get(cleanPath);
@@ -123,7 +143,7 @@ export function evaluateImprovementInvariants(
           entryId: entry.id,
           title: entry.title,
           filePath: cleanPath,
-          issue: `Missing tracked file "${cleanPath}" (${inv.rationale})`,
+          issue: `Missing tracked file "${cleanPath}" (${why[invIdx]})`,
           restorePlaybook: entry.restorePlaybook,
         });
         continue;
@@ -136,7 +156,7 @@ export function evaluateImprovementInvariants(
             entryId: entry.id,
             title: entry.title,
             filePath: cleanPath,
-            issue: `Missing expected token "${req}" in ${cleanPath} — ${inv.rationale}`,
+            issue: `Missing expected token "${req}" in ${cleanPath} — ${why[invIdx]}`,
             restorePlaybook: entry.restorePlaybook,
           });
         }
@@ -149,7 +169,7 @@ export function evaluateImprovementInvariants(
             entryId: entry.id,
             title: entry.title,
             filePath: cleanPath,
-            issue: `Detected regression pattern "${forbidden}" in ${cleanPath} — ${inv.rationale}`,
+            issue: `Detected regression pattern "${forbidden}" in ${cleanPath} — ${why[invIdx]}`,
             restorePlaybook: entry.restorePlaybook,
           });
         }
@@ -222,7 +242,8 @@ export function getImprovementsByRelease(
  * Generates a clean, self-contained Markdown improvements & GitHub-overwrite recovery manual.
  */
 export function formatImprovementsMarkdown(
-  entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY
+  entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY,
+  rationales?: ImprovementRationaleMap
 ): string {
   const alpha2Count = entries.filter(isAlpha2Improvement).length;
   const alpha3Count = entries.filter(isAlpha3Improvement).length;
@@ -276,9 +297,11 @@ export function formatImprovementsMarkdown(
     lines.push(`- **Tracked Files:** ${entry.files.map((f) => `\`${f}\``).join(', ')}`);
     lines.push('');
     lines.push('**Automated Invariants Checked:**');
-    for (const inv of entry.invariants) {
+    const why = resolveEntryRationales(entry, rationales);
+    for (const [invIdx, inv] of entry.invariants.entries()) {
       const reqList = inv.requiredSubstrings.map((s) => `\`${s}\``).join(', ');
-      lines.push(`- \`${inv.filePath}\` must contain ${reqList} — *${inv.rationale}*`);
+      const suffix = why[invIdx] ? ` — *${why[invIdx]}*` : '';
+      lines.push(`- \`${inv.filePath}\` must contain ${reqList}${suffix}`);
       if (inv.forbiddenSubstrings && inv.forbiddenSubstrings.length > 0) {
         const forbList = inv.forbiddenSubstrings.map((s) => `\`${s}\``).join(', ');
         lines.push(`  - Forbidden regression: ${forbList}`);
@@ -300,12 +323,17 @@ export function formatImprovementsMarkdown(
  * downloadable directly from Settings -> Diagnostics & Support.
  */
 export function buildImprovementsRecoveryJson(
-  entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY
+  entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY,
+  rationales?: ImprovementRationaleMap
 ): string {
-  const entriesWithRelease = entries.map((e) => ({
-    ...e,
-    release: getImprovementRelease(e),
-  }));
+  const entriesWithRelease = entries.map((e) => {
+    const why = resolveEntryRationales(e, rationales);
+    return {
+      ...e,
+      release: getImprovementRelease(e),
+      invariants: e.invariants.map((inv, idx) => ({ ...inv, rationale: why[idx] })),
+    };
+  });
   return JSON.stringify(
     {
       format: 'community-pedigree-improvements-log',

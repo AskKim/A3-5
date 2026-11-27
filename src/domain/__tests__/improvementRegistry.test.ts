@@ -9,9 +9,11 @@ import {
   getImprovementRelease,
   getImprovementsByRelease,
   IMPROVEMENTS_REGISTRY,
+  resolveEntryRationales,
   isAlpha2Improvement,
   isAlpha3Improvement,
 } from '../improvementRegistry';
+import { INVARIANT_RATIONALES } from '../improvements/rationales';
 
 describe('improvementRegistry — anti-wipeout tracking & drift verification', () => {
   it('defines unique IDs, non-empty tracked files, invariants, and restoration playbooks for every entry', () => {
@@ -42,7 +44,7 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
       }
     }
 
-    const cleanReport = evaluateImprovementInvariants(mockDisk);
+    const cleanReport = evaluateImprovementInvariants(mockDisk, IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
     expect(cleanReport.ok).toBe(true);
     expect(cleanReport.violations).toHaveLength(0);
     expect(cleanReport.passedCount).toBe(IMPROVEMENTS_REGISTRY.length);
@@ -54,7 +56,7 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
       'vite.config.ts': `${mockDisk['vite.config.ts']}\ndevOptions: {\n      enabled: true`,
     };
 
-    const driftedReport = evaluateImprovementInvariants(driftedDisk);
+    const driftedReport = evaluateImprovementInvariants(driftedDisk, IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
     expect(driftedReport.ok).toBe(false);
     expect(driftedReport.violations.some((v) => v.entryId === 'IMP-001')).toBe(true);
     expect(driftedReport.violations.some((v) => v.entryId === 'IMP-007')).toBe(true);
@@ -64,7 +66,7 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
   });
 
   it('generates readable Markdown documentation and valid JSON recovery bundles', () => {
-    const md = formatImprovementsMarkdown();
+    const md = formatImprovementsMarkdown(IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
     expect(md).toContain('# Community Pedigree — App Improvements & GitHub-Overwrite Recovery Log');
     expect(md).toContain('npm run verify:improvements');
     expect(md).toContain('IMP-001');
@@ -109,7 +111,7 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
     expect(md).toContain('IMP-060');
     expect(md).toContain('IMP-061');
 
-    const jsonText = buildImprovementsRecoveryJson();
+    const jsonText = buildImprovementsRecoveryJson(IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
     const parsed = JSON.parse(jsonText);
     expect(parsed.format).toBe('community-pedigree-improvements-log');
     expect(parsed.totalEntries).toBe(IMPROVEMENTS_REGISTRY.length);
@@ -188,12 +190,12 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
     expect(getImprovementRelease({ id: 'IMP-099', release: 'alpha-2' })).toBe('alpha-2');
 
     // Recovery bundle JSON reflects Alpha 2 and Alpha 3 counts
-    const json = JSON.parse(buildImprovementsRecoveryJson());
+    const json = JSON.parse(buildImprovementsRecoveryJson(IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES));
     expect(json.alpha2Total).toBe(64);
     expect(json.alpha3Total).toBeGreaterThanOrEqual(6);
 
     // Markdown documentation reflects classification header
-    const md = formatImprovementsMarkdown();
+    const md = formatImprovementsMarkdown(IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
     expect(md).toContain('## Release Milestone Classification');
     expect(md).toContain('- **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).');
     expect(md).toContain(
@@ -204,5 +206,21 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
     expect(md).toContain('### IMP-070:');
     expect(md).toContain('- **Release Milestone:** Alpha 2 (`alpha-2`)');
     expect(md).toContain('- **Release Milestone:** Alpha 3 (`alpha-3`)');
+  });
+
+  it('resolves an explanation for every invariant from the rationale map', () => {
+    // The prose lives outside the entries (improvements/rationales.ts). If an entry is added or a
+    // file path changes without a matching key, the markdown export silently loses that sentence —
+    // so every invariant must resolve to non-empty text.
+    const missing: string[] = [];
+    for (const entry of IMPROVEMENTS_REGISTRY) {
+      const resolved = resolveEntryRationales(entry, INVARIANT_RATIONALES);
+      entry.invariants.forEach((inv, idx) => {
+        if (!resolved[idx] || resolved[idx].trim().length === 0) {
+          missing.push(`${entry.id} -> ${inv.filePath} (#${idx + 1})`);
+        }
+      });
+    }
+    expect(missing).toEqual([]);
   });
 });

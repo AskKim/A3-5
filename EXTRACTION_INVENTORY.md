@@ -119,6 +119,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/domain/importers/pedigreeOcrParser.ts` — `pedigree-domain` — 2D paper pedigree card tree OCR parser.
 - `src/domain/importers/universalPedigreeImporter.ts` — `pedigree-domain` — Universal pedigree CSV/archive importer.
 - `src/domain/improvementRegistry.ts` — `pedigree-domain` — Anti-wipeout invariant registry, boot-entry lock checksums, and recovery log formatter.
+- `src/domain/improvements/rationales.ts` — `pedigree-domain` — Invariant rationale prose keyed by entry/file/ordinal, loaded only for markdown and JSON export.
 - `src/domain/improvements/types.ts` — `pedigree-domain` — Shared registry types (entry, invariant, category, release) so part modules avoid a registry import cycle.
 - `src/domain/improvements/registry-part-01.ts` — `pedigree-domain` — Registry entries IMP-001 … IMP-017.
 - `src/domain/improvements/registry-part-02.ts` — `pedigree-domain` — Registry entries IMP-018 … IMP-034.

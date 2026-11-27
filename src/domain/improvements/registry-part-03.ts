@@ -39,14 +39,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'computeBatchPrintPageCount',
           'buildBatchPrintFileName',
         ],
-        rationale:
-          'Pure TS batch print engine must remain DOM-free and support cage cards, 4-up mini sheets, 4x6 photo cards, and stacked pedigrees.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['loadAnimalPhotoDataUrlsBatch'],
-        rationale:
-          'Store must expose bounded on-demand batch photo hydration without retaining full-res images in reactive snapshot RAM.',
       },
       {
         filePath: 'src/components/PrintPreviewModal.tsx',
@@ -55,8 +51,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'onChangeBatchPrintOptions',
           'BATCH_PRINT_LAYOUTS',
         ],
-        rationale:
-          'Print preview modal must render live layout switcher and batch print options toolbar.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
@@ -66,8 +60,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'resolveBatchPrintAnimals',
           'Batch Print (',
         ],
-        rationale:
-          'HerdScreen multi-select bulk bar must launch batch print previews and clean up hydrated photos on close.',
       },
     ],
     restorePlaybook: [
@@ -112,8 +104,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildCageBoardDeepLink',
           'parseAppDeepLinkParams',
         ],
-        rationale:
-          'Pure TS offline QR encoder, vector SVG renderer, and deep-link helpers must remain zero-DOM and self-contained.',
       },
       {
         filePath: 'src/domain/facilityBoard.ts',
@@ -124,20 +114,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildCageMaintenanceTaskDraft',
           'matchesFacilityBoardFilter',
         ],
-        rationale:
-          'Pure TS facility board grouping, feedlot rollups, and UTC calendar maintenance evaluators must remain DOM-free.',
       },
       {
         filePath: 'src/domain/batchPrint.ts',
         requiredSubstrings: ['includeQrCodes', 'supportsQrCode', 'buildAnimalProfileDeepLink'],
-        rationale:
-          '8-up batch cage cards must support scannable QR profile codes via includeQrCodes.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['ThermalCageCardOptions', 'buildAnimalProfileDeepLink', 'renderQrSvg'],
-        rationale:
-          'Single thermal cage cards must embed optional QR profile deep links and backup JSON must preserve extended CageLocation metadata.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -146,14 +130,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'maintenance_interval_days',
           'last_maintenance_date_iso',
         ],
-        rationale:
-          'SQLite cages table and idempotent migrations must persist housing type, feedlot inventory, and maintenance schedule columns.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['parseAppDeepLinkParams', 'highlightedCageId', 'setHighlightedCageId'],
-        rationale:
-          'Store startup deep-link handler must resolve scanned QR animalId and cageId routes cleanly.',
       },
       {
         filePath: 'src/components/FacilityPenBoard.tsx',
@@ -162,8 +142,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildCageMaintenanceTaskDraft',
           'onPrintCageCardsForAnimals',
         ],
-        rationale:
-          'Visual Hutch-Row & Pasture Board must display grouped pens, feedlot controls, maintenance checkoffs, and QR cage card printing.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
@@ -173,8 +151,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'handlePrintCageCardsForAnimals',
           'highlightedCageId',
         ],
-        rationale:
-          'Species dashboard Cages & Pens block must mount FacilityPenBoard alongside compact list view, full-screen board modal, and QR card print preview.',
       },
     ],
     restorePlaybook: [
@@ -209,8 +185,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'analyzePairingCarrierRisksFromAnalyses',
           'simulatePairingGenetics',
         ],
-        rationale:
-          'Pure TS multi-candidate comparison matrix must share one species COI evaluator, run carrier lineage + Punnett simulations, and remain zero-DOM.',
       },
       {
         filePath: 'src/components/PairingComparisonMatrix.tsx',
@@ -220,14 +194,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'ColorGeneticsNotice',
           'onLoadPairingInLogger',
         ],
-        rationale:
-          'Breeding Lab comparison matrix UI must render anchor/candidate selectors, sort/filter controls, coat genetics notice, and Load in Logger wiring.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['PairingComparisonMatrix', 'handleLoadPairingFromMatrix'],
-        rationale:
-          'BreedingScreen must mount PairingComparisonMatrix and connect Load in Logger to the Cage-Side Pairing Logger.',
       },
     ],
     restorePlaybook: [
@@ -262,8 +232,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'AlleleProvenanceSource',
           'AnimalAlleleProvenanceResult',
         ],
-        rationale:
-          'Pure TS allele provenance classifier must support Mendelian elimination, offspring inference, X-linked loci, and custom species isolation without DOM dependencies.',
       },
       {
         filePath: 'src/domain/pedigreeAnalysis.ts',
@@ -272,14 +240,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'evaluateAnimalArbaRegistration',
           'analyzePedigreeTree',
         ],
-        rationale:
-          'Pure TS pedigree convergence and ARBA registration evaluator must scope ARBA rules to Rabbit/Cavy Gen 0–3 nodes and remain zero-DOM.',
       },
       {
         filePath: 'src/components/ColoredGenotypeDisplay.tsx',
         requiredSubstrings: ['ColoredGenotypeDisplay', 'AlleleProvenanceLegend'],
-        rationale:
-          'Reusable provenance renderer must style Sire, Dam, Offspring, Manual, and Unverified alleles with accessible labels and legend.',
       },
       {
         filePath: 'src/components/PedigreeScreen.tsx',
@@ -290,14 +254,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'showRegistrationFlags',
           'ColoredGenotypeDisplay',
         ],
-        rationale:
-          'PedigreeScreen must wire Dim Unique convergence spotlighting, ARBA registration flags, and color-coded node alleles.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['analyzeAlleleProvenance', 'ColoredGenotypeDisplay'],
-        rationale:
-          'HerdScreen Genetics & Allele Inference card must display color-coded allele provenance and uncommitted inference previews.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
@@ -306,8 +266,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'ColoredGenotypeDisplay',
           'AlleleProvenanceLegend',
         ],
-        rationale:
-          'BreedingScreen Coat Color Punnett panel must display color-coded Sire/Dam allele provenance alongside locus pair highlights.',
       },
     ],
     restorePlaybook: [
@@ -345,8 +303,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'formatWeightArbaLbsOzDot',
           'formatPedigreeWeight',
         ],
-        rationale:
-          'BarnSettings must persist optional breederLogoDataUrl and models.ts must expose pure ARBA lbs.oz dot notation formatters.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
@@ -356,20 +312,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'showBreederLogo',
           'barn-logo',
         ],
-        rationale:
-          'generateEvansHtmPedigree must support Landscape/Portrait @page sizing, ARBA lbs.oz dot weights, and header logo rendering.',
       },
       {
         filePath: 'src/domain/pdfExporter.ts',
         requiredSubstrings: ['buildPedigreePdfBytes', 'PdfRasterImage', '/DCTDecode'],
-        rationale:
-          'Pure TS offline PDF 1.4 generator must emit valid PDF binaries with JPEG XObjects and zero DOM dependencies.',
       },
       {
         filePath: 'src/components/PrintPreviewModal.tsx',
         requiredSubstrings: ['onDownloadPdf', 'Download .PDF', 'ARBA lbs.oz (10.04)', 'Portrait (8.5'],
-        rationale:
-          'PrintPreviewModal must expose orientation toggle, lbs.oz dot toggle, logo controls, and direct Download .PDF action.',
       },
     ],
     restorePlaybook: [
@@ -412,8 +362,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'normalizePedigreeGenerationDepth',
           'normalizeDefaultPedigreeGenerations',
         ],
-        rationale:
-          'models.ts must separate 3–6G startup defaults from on-demand 3–8G PedigreeGenerationDepth.',
       },
       {
         filePath: 'src/domain/pedigreePrintStyles.ts',
@@ -423,8 +371,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'PEDIGREE_LAYOUT_PRESETS',
           'resolvePedigreePrintTheme',
         ],
-        rationale:
-          'Pure TS print preset engine must define color, border, and layout presets locked to #FFFFFF paper.',
       },
       {
         filePath: 'src/domain/shareablePedigreeCard.ts',
@@ -433,14 +379,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildShareablePedigreeCardFileName',
           'ShareablePedigreeCardOptions',
         ],
-        rationale:
-          'Pure TS shareable HTML pedigree card generator must render zero-DOM self-contained cards with collapsible Gen 4–8 ancestry.',
       },
       {
         filePath: 'src/domain/exporters/registry.ts',
         requiredSubstrings: ['shareable-pedigree-card', 'generateShareablePedigreeCardHtml'],
-        rationale:
-          'Exporters registry must expose Shareable Pedigree Card (.HTML) alongside 8-gen Evans .HTM.',
       },
       {
         filePath: 'src/components/PrintPreviewModal.tsx',
@@ -451,14 +393,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'PEDIGREE_BORDER_STYLES',
           'PEDIGREE_LAYOUT_PRESETS',
         ],
-        rationale:
-          'PrintPreviewModal must allow switching between Formal Certificate and Shareable Card and picking color, border, and layout presets.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['Math.min(8, Math.max(0, Math.floor(maxDepth)))', 'MAX_RECORDS = 512'],
-        rationale:
-          'SQLite neighborhood loader must fetch up to 8 generations with expanded ancestor node cap (512).',
       },
     ],
     restorePlaybook: [
@@ -503,8 +441,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'ShowELegAttachment',
           'ShowAnimalResult',
         ],
-        rationale:
-          'Canonical show award codes, E-Leg attachment types, and ShowEvent.results schema must stay intact.',
       },
       {
         filePath: 'src/domain/showResults.ts',
@@ -514,68 +450,46 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'computeShowLegDeltas',
           'computeAnimalShowSummary',
         ],
-        rationale:
-          'Pure TS show results normalization, XSS-safe E-Leg attachment sanitization, leg delta reconciliation, and GC progress calculation must remain zero-DOM.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['results_json', 'normalizeShowResults'],
-        rationale:
-          'SQLite shows table and idempotent schema migration must persist and normalize results_json.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['normalizeShowResults', 'computeShowLegDeltas'],
-        rationale:
-          'Store show save/delete mutations must normalize results and reconcile Animal.legsCount deltas atomically.',
       },
       {
         filePath: 'src/domain/reportGenerators.ts',
         requiredSubstrings: ['computeAnimalShowSummary', 'gcProgress', 'showWins', 'showPoints'],
-        rationale:
-          'Male/Female reports must aggregate show wins, points, combined legs, and Grand Champion progress automatically.',
       },
       {
         filePath: 'src/domain/barnBinder.ts',
         requiredSubstrings: ['computeAnimalShowSummary', 'Show Legs / GC Progress'],
-        rationale:
-          'Barn Binder must include structured show placements, judge notes, E-Leg cert numbers, and E-Leg photo thumbnails.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['computeAnimalShowSummary', 'gcProgress.shortLabel'],
-        rationale:
-          'Evans .HTM pedigrees and JSON backups must carry structured ShowEvent.results and display show honors.',
       },
       {
         filePath: 'src/domain/pdfExporter.ts',
         requiredSubstrings: ['computeAnimalShowSummary', 'gcProgress.shortLabel'],
-        rationale:
-          'Offline PDF 1.4 pedigrees must render show legs/GC status, awards, points, and ancestor honors.',
       },
       {
         filePath: 'src/domain/shareablePedigreeCard.ts',
         requiredSubstrings: ['computeAnimalShowSummary', 'awardsSummaryText'],
-        rationale:
-          'Shareable pedigree cards must badge show legs, GC eligibility, awards, and points.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['ShowAnimalResult', 'SHOW_AWARD_OPTIONS', 'eLegLightboxRef', 'showSubmitLock'],
-        rationale:
-          'Species Hub must expose the accessible Show & Results Editor Modal, multi-award toggles, E-Leg photo vault uploader, and lightbox viewer.',
       },
       {
         filePath: 'src/components/PedigreeScreen.tsx',
         requiredSubstrings: ['computeAnimalShowSummary', 'subjectShowSummary'],
-        rationale:
-          'PedigreeScreen must surface show honors and forward shows/careLogs to all pedigree exports.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['computeAnimalShowSummary', 'activeAnimalShowSummary', 'eLegLightboxRef'],
-        rationale:
-          'HerdScreen profile must display GC progress bar, show history, E-Leg vault lightbox, and forward shows/careLogs to formal prints.',
       },
     ],
     restorePlaybook: [
@@ -607,8 +521,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'evaluateSingleGenotypeSandbox',
           'buildSandboxHypotheticalAnimal',
         ],
-        rationale:
-          'Pure TS Coat Explorer Sandbox evaluator and hypothetical animal shell builder must remain zero-DOM and custom-species isolated.',
       },
       {
         filePath: 'src/components/CoatExplorerSandbox.tsx',
@@ -618,14 +530,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildSandboxHypotheticalAnimal',
           'ColorGeneticsNotice',
         ],
-        rationale:
-          'Breeding Lab Coat Explorer Sandbox UI must remain strictly ephemeral (no persistence writes) with What-If Single & Cross modes and ColorGeneticsNotice.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['<CoatExplorerSandbox'],
-        rationale:
-          'BreedingScreen must mount CoatExplorerSandbox inside Breeding Lab.',
       },
     ],
     restorePlaybook: [
@@ -666,8 +574,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'LitterWeightMilestone',
           'normalizeLitterWeightMilestones',
         ],
-        rationale:
-          'Target weight curve points and litter weight-gain milestone types/normalizers must remain intact on SpeciesProfile and BreedingRecord.',
       },
       {
         filePath: 'src/domain/growthAnalytics.ts',
@@ -678,20 +584,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildComparativeGrowthChartModel',
           'resolveMeteorologicalSeason',
         ],
-        rationale:
-          'Pure TS growth, seasonal litter survival, cohort benchmark, and comparative ADG engine must stay zero-DOM.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['target_weight_curve_json', 'litter_weight_milestones_json'],
-        rationale:
-          'SQLite schema and idempotent migrations must persist species target curves and breeding litter milestones.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['updateSpeciesTargetWeightCurve', 'openGrowthCompareForAnimals'],
-        rationale:
-          'Store must persist species target weight curves, litter milestones, and launch preselected multi-animal growth comparisons.',
       },
       {
         filePath: 'src/components/GrowthAndSurvivalLab.tsx',
@@ -700,20 +600,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildComparativeGrowthChartModel',
           'evaluateLitterSurvivalAndMilestones',
         ],
-        rationale:
-          'GrowthAndSurvivalLab UI must expose Comparative Rate of Gain charts with goal/cohort overlays and Litter Survival & Parent Curves.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['<GrowthAndSurvivalLab', 'litterWeightMilestones'],
-        rationale:
-          'BreedingScreen must mount GrowthAndSurvivalLab and expose litter weight milestone editing inside the Outcome modal.',
       },
       {
         filePath: 'src/domain/reportGenerators.ts',
         requiredSubstrings: ['litter-survival-performance-report', 'evaluateLitterSurvivalAndMilestones'],
-        rationale:
-          'Reports catalog and generator must expose Litter Survival & Parent Performance Report.',
       },
     ],
     restorePlaybook: [
@@ -753,8 +647,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'FEED_PURGE_WINDOW_OPTIONS',
           'normalizeFeedPurgeWindowDays',
         ],
-        rationale:
-          'FeedBatch, FeedAllocation, and 30/60/90/0 biosecurity purge window options must remain intact in core models.',
       },
       {
         filePath: 'src/domain/feedInventory.ts',
@@ -764,8 +656,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'traceFeedLotToCagesAndLitters',
           'formatFeedLedgerCsv',
         ],
-        rationale:
-          'Pure TS lot OCR parser, lot-gated biosecurity purge transform, lot traceability, and CSV exporter must stay zero-DOM.',
       },
       {
         filePath: 'src/domain/feedManufacturerDirectory.ts',
@@ -774,20 +664,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'filterFeedManufacturerDirectory',
           'matchManufacturerForBrand',
         ],
-        rationale:
-          'Bundled offline manufacturer emergency & recall directory must stay accessible with zero network.',
       },
       {
         filePath: 'src/storage/feedTagOcr.ts',
         requiredSubstrings: ['captureFeedTagWithPreCompressionOcr', 'optimizeImageBlob'],
-        rationale:
-          'Feed tag OCR must decode and analyze full-resolution images BEFORE compact image compression.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['feed_batches', 'feed_allocations', 'saveFeedBatchesBatch'],
-        rationale:
-          'SQLite persistence schema and adapter methods must store and hydrate feed batches and intake allocations.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -796,8 +680,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'logFeedAllocation',
           'runFeedTagBiosecurityAutoPurge',
         ],
-        rationale:
-          'Store must expose species-isolated feed ledger mutations, cage stock sync, and idle biosecurity auto-purge.',
       },
       {
         filePath: 'src/components/FeedLedgerScreen.tsx',
@@ -806,13 +688,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'captureFeedTagWithPreCompressionOcr',
           'FEED_MANUFACTURER_DIRECTORY',
         ],
-        rationale:
-          'FeedLedgerScreen must provide purchase/OCR scanning, intake allocations, lot traceability, and offline manufacturer contacts.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['FeedLedgerScreen', "route === 'feed'"],
-        rationale: 'Root router must lazy-load and mount FeedLedgerScreen on route feed.',
       },
     ],
     restorePlaybook: [
@@ -847,8 +726,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'MAX_PDF_SCAN_BYTES',
           'MAX_PDF_SCAN_PAGES',
         ],
-        rationale:
-          'Pure TS offline PDF vector text (`BT...ET`) and embedded `/DCTDecode` JPEG extractor must remain zero-DOM.',
       },
       {
         filePath: 'src/domain/importers/pedigreeOcrParser.ts',
@@ -858,14 +735,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'parsePedigreeOcrResult',
           'buildPlatformImportPreviewFromOcrDrafts',
         ],
-        rationale:
-          'Pure TS 2D tree/line pedigree parser and Import Review Queue preview bridge must stay zero-DOM and deterministic.',
       },
       {
         filePath: 'src/storage/pedigreeOcrScanner.ts',
         requiredSubstrings: ['scanPedigreeDocumentFile', 'tesseract.js'],
-        rationale:
-          'Browser OCR runner must lazy-load Tesseract worker with bounded timeout, native TextDetector precheck, and soft offline manual fallback.',
       },
       {
         filePath: 'src/components/PedigreeOcrScannerPanel.tsx',
@@ -874,20 +747,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'scanPedigreeDocumentFile',
           'buildPlatformImportPreviewFromOcrDrafts',
         ],
-        rationale:
-          'Scanner UI must offer camera/photo/PDF capture, editable 15-slot 3-generation review, and staging into Import Review Queue.',
       },
       {
         filePath: 'src/components/ExternalImporterPanel.tsx',
         requiredSubstrings: ['externalOcrPreview', 'onClearExternalOcrPreview'],
-        rationale:
-          'ExternalImporterPanel must accept staged OCR PlatformImportPreview drafts for full conflict resolution and WebP photo optimization.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
         requiredSubstrings: ['<PedigreeOcrScannerPanel', 'stagedOcrPreview'],
-        rationale:
-          'ImportExportHubScreen Section 02 must mount PedigreeOcrScannerPanel connected to ExternalImporterPanel.',
       },
     ],
     restorePlaybook: [
@@ -928,8 +795,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'PELT_GRADE_OPTIONS',
           'YouthProjectBook',
         ],
-        rationale:
-          'LedgerEntry, ProcessingLog, and YouthProjectBook domain models and normalizers must remain intact.',
       },
       {
         filePath: 'src/domain/economicsLedger.ts',
@@ -942,8 +807,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'evaluateYouthProjectSummary',
           'generateYouthProjectReportHtml',
         ],
-        rationale:
-          'Pure TS economics margins, yield analytics, CSV exporters, and printable youth completion report builder must remain zero-DOM.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -955,8 +818,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'saveProcessingLog',
           'saveYouthProjectBook',
         ],
-        rationale:
-          'SQLite persistence schema v4 and adapter CRUD methods must store and hydrate ledger entries, processing logs, and youth project books.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -965,8 +826,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'saveProcessingLog',
           'saveYouthProjectBook',
         ],
-        rationale:
-          'Store must expose species-isolated economics, processing, and 4-H/FFA project mutations with delta outbox sync.',
       },
       {
         filePath: 'src/components/EconomicsLedgerScreen.tsx',
@@ -975,13 +834,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'generateYouthProjectReportHtml',
           'evaluateSpeciesEconomicsSummary',
         ],
-        rationale:
-          'EconomicsLedgerScreen must provide general ledger + receipt photos, meat/pelt yields, and 4-H/FFA project record books.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['EconomicsLedgerScreen', "route === 'economics'"],
-        rationale: 'Root router must lazy-load and mount EconomicsLedgerScreen on route economics.',
       },
     ],
     restorePlaybook: [
@@ -1021,12 +877,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
       {
         filePath: 'AGENTS.md',
         requiredSubstrings: ['Never Convert PWA Away From React'],
-        rationale: 'Workspace agent rules must lock the PWA against non-React rewrites.',
       },
       {
         filePath: 'src/domain/speciesMigration.ts',
         requiredSubstrings: ['feedBatchesMigrated', 'feedAllocationsMigrated'],
-        rationale: 'Cross-species migrations must move linked feedBatches and feedAllocations.',
       },
       {
         filePath: 'src/domain/archiveInspector.ts',
@@ -1037,12 +891,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'processingLogCount',
           'youthProjectBookCount',
         ],
-        rationale: 'Pre-restore dry-run inspection must count v3/v4 feed, ledger, processing, and youth records.',
       },
       {
         filePath: 'src/domain/exporters/registry.ts',
         requiredSubstrings: ['herdboss-transfer-bundle', 'registry-worksheet-csv', 'binaryContent'],
-        rationale: 'HerdBoss Transfer Tables (.ZIP) and Breed Registry & Show Worksheets (.CSV) must stay active ready exporters.',
       },
       {
         filePath: 'src/components/PrintPreviewModal.tsx',
@@ -1051,12 +903,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'extractScopedPrintCssFromRules',
           'detectDocumentPrintOrientation',
         ],
-        rationale: 'PrintPreviewModal must enable Share .HTM on native wrappers, extract @media print rules, and forward orientation/HTML to native print.',
       },
       {
         filePath: 'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PrintBridge.kt',
         requiredSubstrings: ['printFromBridge', 'printHtmlDocument', 'buildPrintAttributes'],
-        rationale: 'Android PrintBridge must render self-contained HTML in a hardened offscreen WebView with landscape/portrait PrintAttributes.',
       },
     ],
     restorePlaybook: [
@@ -1097,8 +947,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'Core PWA MUST Always Stay in React',
           'NEVER recode the site in Kotlin',
         ],
-        rationale:
-          'AGENTS.md must explicitly define the hybrid wrapper boundary and forbid Kotlin rewrites during bootability recovery.',
       },
       {
         filePath: 'README.md',
@@ -1106,8 +954,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'Core PWA MUST Always Stay in React',
           'Never Recode the PWA in Kotlin',
         ],
-        rationale:
-          'Root README must immediately clarify the React + Vite + TypeScript core PWA vs thin android-wrapper/ split.',
       },
       {
         filePath: 'ARCHITECTURE.md',
@@ -1115,8 +961,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'Critical Hybrid Architecture Boundary',
           'Never Convert PWA Away From React',
         ],
-        rationale:
-          'ARCHITECTURE.md must define the thin Kotlin WebView shell vs mandatory React PWA architecture.',
       },
       {
         filePath: 'metadata.json',
@@ -1124,20 +968,14 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'React + Vite + TypeScript offline-first PWA',
           'thin hybrid Kotlin WebView shell',
         ],
-        rationale:
-          'AI Studio metadata.json must state that the core app is a React + Vite + TypeScript PWA.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['React + Vite + TypeScript offline-first PWA'],
-        rationale:
-          'package.json description must identify the React + Vite + TypeScript PWA stack and thin hybrid wrapper.',
       },
       {
         filePath: 'index.html',
         requiredSubstrings: ['NEVER CONVERT THIS PWA AWAY FROM REACT'],
-        rationale:
-          'HTML entry point must carry an explicit guard comment against converting the PWA into Kotlin.',
       },
       {
         filePath: 'android-wrapper/README.md',
@@ -1145,14 +983,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'Thin Hybrid Shell ONLY',
           'NEVER convert, rewrite, or recode the core PWA into Kotlin',
         ],
-        rationale:
-          'android-wrapper/ must explicitly warn readers that it is only a thin WebView container.',
       },
       {
         filePath: 'android-wrapper/app/build.gradle.kts',
         requiredSubstrings: ['CRITICAL HYBRID BOUNDARY'],
-        rationale:
-          'Android Gradle config must mark itself as a thin WebView shell packaging the React PWA.',
       },
     ],
     restorePlaybook: [
@@ -1192,8 +1026,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'RESERVATION_STATUSES',
           'WAITLIST_STATUSES',
         ],
-        rationale:
-          'ClientContact, WaitlistEntry, and AnimalReservation domain models and normalizers must remain intact.',
       },
       {
         filePath: 'src/domain/clientCrm.ts',
@@ -1204,8 +1036,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'generateSalesAgreementHtml',
           'formatReservationsCsv',
         ],
-        rationale:
-          'Pure TS CRM financial evaluation, automated follow-up reminders, waitlist matching, CSV export, and printable Sales Agreement generator must stay zero-DOM.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -1217,8 +1047,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'saveWaitlistEntry',
           'saveAnimalReservation',
         ],
-        rationale:
-          'SQLite schema v5 and adapter CRUD methods must store and hydrate CRM contacts, waitlist entries, and reservations.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -1229,8 +1057,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'completeReservationSale',
           'createCrmReminderTask',
         ],
-        rationale:
-          'Store must expose species-isolated CRM mutations, atomic sale completion, and reminder task creation with delta outbox sync.',
       },
       {
         filePath: 'src/components/ClientCrmScreen.tsx',
@@ -1240,13 +1066,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'evaluateCrmFollowUpReminders',
           'findWaitlistMatches',
         ],
-        rationale:
-          'ClientCrmScreen must render reminders, reservation/deposit tracking, ranked waitlist matching, client directory, and printable sales agreements.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['ClientCrmScreen', "route === 'crm'"],
-        rationale: 'Root router must lazy-load and mount ClientCrmScreen on route crm.',
       },
     ],
     restorePlaybook: [
@@ -1294,7 +1117,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'WOOL_HARVEST_METHODS',
           'normalizeWoolHarvestMethod',
         ],
-        rationale: 'WoolHarvest and IagarbScorecard domain models and normalizers must remain intact.',
       },
       {
         filePath: 'src/domain/woolFiber.ts',
@@ -1305,8 +1127,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'compute90DayEquivalentGrams',
           'summarizeAnimalWoolHarvests',
         ],
-        rationale:
-          'Pure TS IAGARB 100-point rubric, 325g/90-day performance yield normalization, and harvest summary calculators must stay zero-DOM.',
       },
       {
         filePath: 'src/domain/alternativeCertificates.ts',
@@ -1316,8 +1136,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildPetBirthCertificateFileName',
           'buildBreedingCertificateFileName',
         ],
-        rationale:
-          'Pure TS Pet-Sale Birth Certificate (no breeder contact/pricing) and Breeding Certificate generators must remain zero-DOM and XSS-safe.',
       },
       {
         filePath: 'src/domain/showDocuments.ts',
@@ -1327,23 +1145,18 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildShowEntryMailtoUrl',
           'buildShowEntryPlainTextSummary',
         ],
-        rationale:
-          'Pure TS ARBA Show Entry Form, emailable plain-text/mailto dispatchers, and 4-up/1-up Remark Card generators must remain zero-DOM.',
       },
       {
         filePath: 'src/domain/pedigreePrintStyles.ts',
         requiredSubstrings: ['family_portrait', 'iagarb_angora'],
-        rationale: 'Family Portrait and IAGARB German Angora pedigree presets must stay registered.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['wool_harvests', 'saveWoolHarvest', 'deleteWoolHarvest'],
-        rationale: 'SQLite schema v6 must store and hydrate wool_harvests cleanly.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['saveWoolHarvest', 'deleteWoolHarvest'],
-        rationale: 'Store must expose species-isolated wool harvest mutations with delta outbox sync.',
       },
       {
         filePath: 'src/components/WoolHarvestPanel.tsx',
@@ -1352,8 +1165,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'onSaveWoolHarvest',
           'IAGARB_JUDGING_POSITIONS',
         ],
-        rationale:
-          'WoolHarvestPanel must provide lazy-loaded Wool / Fiber logging and IAGARB 100-pt judging scorecards.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
@@ -1362,13 +1173,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'onSaveWoolHarvest',
           'WoolHarvestPanel',
         ],
-        rationale:
-          'HerdScreen must provide Pet-Sale Birth Certificate previews and mount WoolHarvestPanel.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['generateBreedingCertificateHtml', 'Breeding Cert'],
-        rationale: 'BreedingScreen must expose Breeding Certificate preview controls.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
@@ -1377,8 +1185,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'generateShowRemarkCardsHtml',
           'buildShowEntryMailtoUrl',
         ],
-        rationale:
-          'SpeciesDashboardScreen must expose Show Entry Form and Remark Cards print/email previews directly from ShowEvents.',
       },
     ],
     restorePlaybook: [
@@ -1423,8 +1229,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'analyzeSpeciesFounderLoss',
           'analyzeSpeciesHeritabilityTrends',
         ],
-        rationale:
-          'Pure TS founder contribution, effective founders fe, founder-loss ledger, and heritability h² calculators must remain zero-DOM.',
       },
       {
         filePath: 'src/domain/barnScheduler.ts',
@@ -1435,8 +1239,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'shiftTaskDatesByDays',
           'resizeTaskStartDateByDays',
         ],
-        rationale:
-          'Pure TS Gantt timeline builder, UTC span shift/resize helpers, and critical-task escalation engine must remain zero-DOM.',
       },
       {
         filePath: 'src/domain/p2pSyncProtocol.ts',
@@ -1447,8 +1249,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'parseP2pWireOrDeltaPayload',
           'summarizeTaskReconciliation',
         ],
-        rationale:
-          'Pure TS LAN P2P CP-LAN1 signaling codec, wire delta framing, and reconciliation summary helpers must remain intact.',
       },
       {
         filePath: 'src/storage/p2pLanChannel.ts',
@@ -1457,13 +1257,10 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'createLanP2pSession',
           'reconcileWithPickedSyncFolder',
         ],
-        rationale:
-          'Zero-server WebRTC DataChannel (iceServers: []) and Sync Folder reconciliation bridge must remain wired.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['start_date_iso'],
-        rationale: 'SQLite barn_tasks table must persist and hydrate startDateIso across reloads.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -1472,8 +1269,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'applySmartTaskEscalations',
           'reconcileP2pOutboxOps',
         ],
-        rationale:
-          'Store must expose serialized mutations for Gantt rescheduling, smart priority escalation, and P2P outbox reconciliation.',
       },
       {
         filePath: 'src/components/FounderAndHeritabilityPanel.tsx',
@@ -1482,8 +1277,6 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'analyzeSpeciesFounderLoss',
           'analyzeSpeciesHeritabilityTrends',
         ],
-        rationale:
-          'FounderAndHeritabilityPanel must render subject founder balance, herd bottleneck ledger, and cohort h² SVG trends.',
       },
       {
         filePath: 'src/components/BarnSchedulerGantt.tsx',
@@ -1492,24 +1285,18 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
           'buildBarnGanttTimeline',
           'createLanP2pSession',
         ],
-        rationale:
-          'BarnSchedulerGantt must render interactive drag/resize Gantt lanes, smart escalations, and LAN P2P sync controls.',
       },
       {
         filePath: 'src/components/PedigreeScreen.tsx',
         requiredSubstrings: ['FounderAndHeritabilityPanel', 'mode="pedigree"'],
-        rationale: 'PedigreeScreen must lazy-mount FounderAndHeritabilityPanel in pedigree mode.',
       },
       {
         filePath: 'src/components/BreedingScreen.tsx',
         requiredSubstrings: ['FounderAndHeritabilityPanel', 'mode="breeding"'],
-        rationale: 'BreedingScreen must lazy-mount FounderAndHeritabilityPanel in breeding mode.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['BarnSchedulerGantt', 'taskViewMode', 'onReconcileOutboxOps'],
-        rationale:
-          'SpeciesDashboardScreen must expose List/Gantt chore view switching and mount lazy-loaded BarnSchedulerGantt.',
       },
     ],
     restorePlaybook: [

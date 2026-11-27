@@ -46,22 +46,18 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       {
         filePath: '.env.example',
         requiredSubstrings: ['# No required environment variables.'],
-        rationale: 'Keep .env.example present with zero secret placeholders to satisfy IMP-008.',
       },
       {
         filePath: '.github/workflows/build-android-apk.yml',
         requiredSubstrings: ['NODE_ENV: production'],
-        rationale: 'Android APK CI must force NODE_ENV=production so jsx-dev-runtime never ships in APK assets.',
       },
       {
         filePath: 'index.html',
         requiredSubstrings: ['indexedDbAvailable', 'media="print"', "this.media='all'"],
-        rationale: 'Preflight must allow Safari Lockdown/Private Ephemeral Mode and keep Google Fonts non-render-blocking.',
       },
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ['codeSplitting', 'vendor-react', 'vendor-icons', 'vendor-sql'],
-        rationale: 'Rolldown code-splitting must isolate vendor chunks and consolidate lucide-react micro-chunks.',
       },
       {
         filePath: 'src/engine/binaryEncoding.ts',
@@ -73,7 +69,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'dataUrlToBinary',
           'binaryToDataUrl',
         ],
-        rationale: 'Pure TS binary/base64/dataURL encoding helpers must stay decoupled from fflate and DOM.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -83,22 +78,18 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'ROLLBACK;',
           'this.loadSnapshotUnlocked({ lightweightPhotos: true })',
         ],
-        rationale: 'SQLite migrations must be version-gated, PRAGMA-checked, atomic, and memory-bounded during pre-upgrade backups.',
       },
       {
         filePath: 'src/storage/storageProbes.ts',
         requiredSubstrings: ['registerIndexedDbOpfsDumper', 'triggerIndexedDbOpfsDump'],
-        rationale: 'Shared callback registry avoids circular dynamic import warnings for opfsStorage.',
       },
       {
         filePath: 'src/utils/webFileActions.ts',
         requiredSubstrings: ['shouldBypassOpfsForIosGesture'],
-        rationale: 'Small (<512 KB) iOS standalone PWA shares must bypass OPFS /tmp staging to preserve tap gesture activation.',
       },
       {
         filePath: 'src/utils/useAccessibleDialog.ts',
         requiredSubstrings: ['getOpenDialogCount', 'subscribeOpenDialogCount'],
-        rationale: 'Dialog count subscription replaces document.body MutationObserver in App.tsx.',
       },
       {
         filePath: 'src/App.tsx',
@@ -107,7 +98,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           '__PEDIGREE_MARK_BOOT_STABLE__',
           'routeKey="calendar-sync-confirm"',
         ],
-        rationale: 'Root shell must mark boot stable after store hydration, track dialogs via subscription, and guard CalendarSyncConfirmModal.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -116,12 +106,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'ensureMaxRevIndexInitialized',
           "import('../domain/archiveInspector')",
         ],
-        rationale: 'Store must defer non-critical startup probes, scope syncOperations state to sync routes, and dynamic-import cold modules.',
       },
       {
         filePath: 'src/components/AnimalPhotoGallery.tsx',
         requiredSubstrings: ['hydratedUrlsRef', 'inFlightPhotoIdsRef'],
-        rationale: 'Photo gallery lazy hydration must guard duplicate requests via refs instead of self-retriggering effect deps.',
       },
     ],
     restorePlaybook: [
@@ -165,12 +153,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           '"useUnknownInCatchVariables": true',
           '"noFallthroughCasesInSwitch": true',
         ],
-        rationale: 'Targeted strict TypeScript checks must remain enabled to catch implicit-any and untyped catch regressions before release.',
       },
       {
         filePath: 'src/engine/codecs/archiveAndCsvUtils.ts',
         requiredSubstrings: ['Date.UTC(1899, 11, 30 + serial)'],
-        rationale: 'Excel serial date decoding must use explicit Date.UTC calendar offset math instead of raw millisecond addition.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -183,7 +169,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           "import('../domain/feedInventory')",
           "import('../domain/importers/conflictResolver')",
         ],
-        rationale: 'Cold domain modules must remain dynamically imported inside async store handlers to keep the initial entry bundle lean.',
       },
       {
         filePath: 'src/storage/offThreadWorkerClient.ts',
@@ -192,7 +177,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'archive-worker-freeze-trim',
           'registerFreezeLifecycleListener',
         ],
-        rationale: 'Idle archive/import Web Workers must terminate promptly on background hide/pagehide to release mobile RAM.',
       },
       {
         filePath: '.github/workflows/release.yml',
@@ -202,7 +186,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'publish-github-release:',
           'release-pwa-dist',
         ],
-        rationale: 'GitHub tag releases must verify version sync and package + attach both the PWA ZIP and Android WebView APKs with SHA-256 checksums.',
       },
       {
         filePath: 'prompts/master_system_prompt.md',
@@ -210,7 +193,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'Plan Lifecycle (Delete on Wrap-Up)',
           'Mandatory Improvement Logging (`IMPROVEMENTS.md` & `src/domain/improvementRegistry.ts`)',
         ],
-        rationale: 'Master System Prompt must enforce deleting wrapped-up plan files and logging every significant boot/load/memory change in IMPROVEMENTS.md.',
       },
     ],
     restorePlaybook: [
@@ -249,12 +231,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'forSale?: boolean',
           'breederEmail?: string',
         ],
-        rationale: 'Animal For-Sale eligibility helper and BarnSettings showcase contact fields must stay intact.',
       },
       {
         filePath: 'src/domain/inputSanitization.ts',
         requiredSubstrings: ['sanitizeSafeExternalHttpUrl'],
-        rationale: 'Showcase website links must enforce strict http/https protocol sanitization.',
       },
       {
         filePath: 'src/domain/breederShowcase.ts',
@@ -263,42 +243,34 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'generateBreederShowcaseHtml',
           'buildBreederShowcaseFileName',
         ],
-        rationale: 'Pure TypeScript zero-server showcase HTML + stock sheet generator must stay decoupled from DOM.',
       },
       {
         filePath: 'src/domain/exporters/registry.ts',
         requiredSubstrings: ['breeder-showcase-html', 'buildBreederShowcaseResult'],
-        rationale: 'Import/Export Hub exporter registry must retain breeder-showcase-html.',
       },
       {
         filePath: 'src/domain/syncAndExports.ts',
         requiredSubstrings: ['breederEmail', 'askingPriceCents'],
-        rationale: 'JSON backup parser must preserve breeder contact info and animal asking prices.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['SQLITE_SCHEMA_VERSION', 'for_sale', 'asking_price_cents'],
-        rationale: 'SQLite schema v7+ must persist and migrate For-Sale columns and contact settings atomically.',
       },
       {
         filePath: 'src/components/AnimalEditorModal.tsx',
         requiredSubstrings: ['askingPriceInput', 'saleNotes'],
-        rationale: 'Animal editor must expose For-Sale toggle, asking price, and buyer-facing listing notes.',
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
         requiredSubstrings: ['breederEmail', 'showcaseTagline'],
-        rationale: 'Barn settings must expose public showcase contact info and catalog tagline.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['For-Sale Catalog', 'generateBreederShowcaseHtml'],
-        rationale: 'Herd screen must expose For-Sale filter pill and live PrintPreviewModal catalog toggles.',
       },
       {
         filePath: 'src/components/ImportExportHubScreen.tsx',
         requiredSubstrings: ['breeder-showcase-html'],
-        rationale: 'Import/Export Hub must hydrate photos on Tier 2+ devices for breeder-showcase-html exports.',
       },
     ],
     restorePlaybook: [
@@ -339,8 +311,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'filterAndSortVetPdfEntries',
           'normalizeVetDocsFolderMeta',
         ],
-        rationale:
-          'Pure TypeScript health wiki directory and external PDF folder backup reminder evaluator must remain DOM-free and strict https:// validated.',
       },
       {
         filePath: 'src/storage/localSyncChannels.ts',
@@ -350,8 +320,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'deleteNamedDirectoryHandleFromIdb',
           'queryDirectoryHandleReadPermission',
         ],
-        rationale:
-          'Shared IDB sync_handles accessors allow vetDocsFolder persistence without bumping the IDB schema version.',
       },
       {
         filePath: 'src/storage/vetDocsFolder.ts',
@@ -363,13 +331,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'markVetDocsBackedUpNow',
           'clearAllVetDocsFolderState',
         ],
-        rationale:
-          'Vet PDF folder adapter must persist read-only directory handles, scan PDFs safely, track backup acknowledgments, and support full factory reset cleanup.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['clearAllVetDocsFolderState'],
-        rationale: 'Factory reset and sync-state wipe flows must clear stored vet PDF handles and metadata.',
       },
       {
         filePath: 'src/components/HealthReferencePanel.tsx',
@@ -379,8 +344,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'platformBridge.openExternalUrl',
           'URL.revokeObjectURL',
         ],
-        rationale:
-          'Lazy health reference modal must route external links through IPlatformBridge and deterministically revoke PDF blob URLs.',
       },
       {
         filePath: 'src/App.tsx',
@@ -389,23 +352,18 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'vetDocsReminder.showBanner',
           'onOpenHealthReference',
         ],
-        rationale:
-          'App shell must lazy-load HealthReferenceModal, surface periodic external PDF folder backup reminders, and pass launcher handlers to screens.',
       },
       {
         filePath: 'src/components/SpeciesDashboardScreen.tsx',
         requiredSubstrings: ['onOpenHealthReference'],
-        rationale: 'Species Dashboard must expose quick Health Wikis & Vet PDFs launcher.',
       },
       {
         filePath: 'src/components/HerdScreen.tsx',
         requiredSubstrings: ['onOpenHealthReference'],
-        rationale: 'Animal Health Journal must expose contextual Health Wikis & Vet PDFs launcher.',
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
         requiredSubstrings: ['onOpenHealthReference'],
-        rationale: 'Barn Settings must expose Health Reference Wikis & Local Vet PDF Folder launcher.',
       },
     ],
     restorePlaybook: [
@@ -441,8 +399,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'normalizeRestrictedWikiSources',
         ],
         forbiddenSubstrings: ['wiki-rabbit-hrs'],
-        rationale:
-          'House Rabbit Society must remain on the built-in restricted wiki sources list and excluded from curated health wiki links.',
       },
       {
         filePath: 'src/storage/vetDocsFolder.ts',
@@ -452,8 +408,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'addCustomRestrictedWikiSource',
           'removeCustomRestrictedWikiSource',
         ],
-        rationale:
-          'Custom restricted wiki sources must persist locally without allowing built-in restricted entries to be deleted.',
       },
       {
         filePath: 'src/components/HealthReferencePanel.tsx',
@@ -462,8 +416,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'findMatchingRestrictedWikiSource',
           'handleAddRestrictedSource',
         ],
-        rationale:
-          'Health Reference panel must enforce restricted source checks at click time and let users view/manage restricted sources.',
       },
     ],
     restorePlaybook: [
@@ -500,18 +452,14 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'normalizeBcp47LanguageTag',
           'extractBaseLanguageCode',
         ],
-        rationale:
-          'Application code and translation baseline must remain explicitly typed as English (United States) `en-US`.',
       },
       {
         filePath: 'index.html',
         requiredSubstrings: ['<html lang="en-US">'],
-        rationale: 'Root HTML document language must declare English USA (`en-US`).',
       },
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ["lang: 'en-US'"],
-        rationale: 'PWA web app manifest must declare `lang: "en-US"`.',
       },
       {
         filePath: 'src/domain/healthReference.ts',
@@ -523,8 +471,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'findMatchingPreferredWikiSource',
           'sortHealthWikiReferencesWithPreferred',
         ],
-        rationale:
-          'Preferred sources (Merck, global federal ag/vet agencies, global universities) and configurable multi-language English filtering must remain intact.',
       },
       {
         filePath: 'src/storage/vetDocsFolder.ts',
@@ -535,8 +481,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'readAllowedWikiLanguages',
           'setAllowedWikiLanguages',
         ],
-        rationale:
-          'Custom preferred wiki sources and multi-language wiki filters must persist locally with built-in locking.',
       },
       {
         filePath: 'src/components/HealthReferencePanel.tsx',
@@ -546,8 +490,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'handleAddPreferredSource',
           'APP_LOCALE',
         ],
-        rationale:
-          'Health Reference panel must surface preferred source badges, language requirements, and preferred source management.',
       },
     ],
     restorePlaybook: [
@@ -593,8 +535,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'buildBreedingCalendarMonth',
           'formatTemperatureForUnit',
         ],
-        rationale:
-          'Pure TypeScript moon-phase, holiday, and monthly calendar computation must stay DOM-free and UTC-deterministic.',
       },
       {
         filePath: 'src/storage/weatherForecast.ts',
@@ -603,8 +543,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'fetchWeeklyWeatherForecast',
           'clearWeatherForecastCache',
         ],
-        rationale:
-          'Optional Open-Meteo 7-day forecast client must respect connectivity checks, cache TTL, and reset clearing.',
       },
       {
         filePath: 'src/domain/mileageTaxLog.ts',
@@ -614,8 +552,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'exportMileageTaxCsv',
           'generateAnnualMileageTaxHtml',
         ],
-        rationale:
-          'IRS mileage tax deduction calculations and formula/HTML-escaped annual exports must remain pure TypeScript.',
       },
       {
         filePath: 'src/domain/barnJournal.ts',
@@ -626,8 +562,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'exportBarnJournalMarkdown',
           'generateBarnJournalHtml',
         ],
-        rationale:
-          'Personal Barn Journal search, grouping, tag normalization, and exports must remain DOM-free and AST-sanitized.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -636,18 +570,14 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'mileage_logs',
           'journal_entries',
         ],
-        rationale:
-          'SQLite schema must create and migrate mileage_logs and journal_entries tables atomically.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
         requiredSubstrings: ['saveMileageLog', 'deleteMileageLog', 'saveJournalEntry', 'deleteJournalEntry'],
-        rationale: 'Store must expose persisted CRUD mutators for mileage logs and journal entries.',
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['BarnJournalScreen', "route === 'journal'"],
-        rationale: 'App router must lazy-load and mount BarnJournalScreen at route journal.',
       },
     ],
     restorePlaybook: [
@@ -695,8 +625,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'JudgeAssignment',
           'JudgeExpense',
         ],
-        rationale:
-          'BarnSettings must preserve the optional enableJudgeNotebook flag alongside Judge domain interfaces.',
       },
       {
         filePath: 'src/domain/judgeNotebook.ts',
@@ -708,8 +636,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'generateJudgeContractHtml',
           'generateJudgeSummaryReportHtml',
         ],
-        rationale:
-          'Pure TypeScript Judge Notebook conflict checks, mileage/expense calculations, CSV exports, and XSS-safe HTML contracts must remain DOM-free.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
@@ -720,8 +646,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'judge_expenses',
           'enableJudgeNotebook',
         ],
-        rationale:
-          'SQLite schema v9 must create, migrate, and persist judge_clubs, judge_assignments, judge_expenses, and enableJudgeNotebook.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -733,8 +657,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'saveJudgeExpense',
           'deleteJudgeExpense',
         ],
-        rationale:
-          'Store must expose outbox-tracked CRUD mutators for Judge clubs, assignments, and expenses.',
       },
       {
         filePath: 'src/components/JudgeNotebookScreen.tsx',
@@ -744,13 +666,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'generateJudgeContractHtml',
           'PrintPreviewModal',
         ],
-        rationale:
-          "JudgeNotebookScreen must provide the opt-in gate, conflict alerts, financial tabs, and printable contract preview.",
       },
       {
         filePath: 'src/App.tsx',
         requiredSubstrings: ['JudgeNotebookScreen', "route === 'judge'"],
-        rationale: "App router must lazy-load and mount JudgeNotebookScreen at route 'judge'.",
       },
     ],
     restorePlaybook: [
@@ -789,8 +708,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'selectRollingCloudBackupsToPrune',
           'shouldRunAutomatedCloudSync',
         ],
-        rationale:
-          'Pure TypeScript incremental delta chunk planner, HTTP 403/507 classifier, circuit breaker state machine, and rolling backup pruner must remain DOM-free.',
       },
       {
         filePath: 'src/storage/cloudAppFolderSync.ts',
@@ -800,8 +717,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'createOneDriveAppRootTransport',
           'runCloudAppFolderSync',
         ],
-        rationale:
-          'Cloud app-folder transport must keep OAuth tokens strictly in JS memory, isolate appDataFolder/approot, and never block or roll back local IndexedDB writes.',
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',
@@ -811,8 +726,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'resetAndRetryCloudSync',
           'dismissCloudCircuitBreakerWarning',
         ],
-        rationale:
-          'Store must schedule non-blocking background cloud delta sync after outbox commits and expose manual sync, reset-and-retry, and warning dismissal controls.',
       },
       {
         filePath: 'src/components/CloudAppFolderSyncPanel.tsx',
@@ -821,8 +734,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'Reset Circuit Breaker',
           'Sync Cloud App-Folder Now',
         ],
-        rationale:
-          'Cloud App-Folder Sync panel must provide opt-in provider/token controls, tight-storage chunk indicators, and circuit breaker reset actions.',
       },
       {
         filePath: 'src/App.tsx',
@@ -831,8 +742,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'store.dismissCloudCircuitBreakerWarning',
           'cloudSyncState={store.cloudSyncState}',
         ],
-        rationale:
-          'App shell must display the persistent global 403/507 quota circuit breaker warning banner and wire cloud sync state into ImportExportHubScreen and SettingsAndSyncScreen.',
       },
     ],
     restorePlaybook: [
@@ -870,14 +779,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'normalizeDeveloperConsoleTab',
           'computeSnapshotCollectionFootprint',
         ],
-        rationale:
-          'Pure TypeScript developer console tab registry, 15-subunit collapsible state helpers, and 20-collection snapshot footprint calculator must remain DOM-free.',
       },
       {
         filePath: 'src/storage/storageProbes.ts',
         requiredSubstrings: ['getTrackedActiveResourceCounts'],
-        rationale:
-          'Storage probes must expose live IDB connection/transaction, BroadcastChannel, and Web Lock resource counts for runtime inspection.',
       },
       {
         filePath: 'src/storage/opfsStorage.ts',
@@ -886,14 +791,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'getActiveOpfsHandleCount',
           'getActiveTempFiles',
         ],
-        rationale:
-          'OPFS storage adapter must expose read-only namespace inspection across /tmp, /backups, and /archives alongside live OPFS handle counters.',
       },
       {
         filePath: 'src/components/DiagnosticsAndSupportPanel.tsx',
         requiredSubstrings: ['visibleSections', 'collapsible'],
-        rationale:
-          'DiagnosticsAndSupportPanel must support section filtering (`all`, `logs-and-support`, `maintenance`) and optional collapsible outer wrapping without breaking standalone rendering.',
       },
       {
         filePath: 'src/components/TechyStuffScreen.tsx',
@@ -907,8 +808,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'detectCurrentBrowserCompatibility',
           'getTrackedActiveResourceCounts',
         ],
-        rationale:
-          'TechyStuffScreen must keep the title header open with an Open All Sections toggle, make all 15 subunits collapsible, and surface OPFS inspection, snapshot footprint, browser compatibility matrix, and live handle telemetry.',
       },
       {
         filePath: 'src/App.tsx',
@@ -916,8 +815,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'syncOperations={store.syncOperations}',
           'backupSyncStatus={store.backupSyncStatus}',
         ],
-        rationale:
-          'App shell must pass live sync outbox operations and backup sync folder status into TechyStuffScreen.',
       },
     ],
     restorePlaybook: [
@@ -956,39 +853,27 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'Build production PWA bundle (root path)',
           'NODE_ENV: production',
         ],
-        rationale:
-          'Android APK CI must install devDependencies without NODE_ENV=production and apply NODE_ENV=production strictly to the Vite production build step.',
       },
       {
         filePath:
           'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PedigreeAssetPathHandler.kt',
         requiredSubstrings: ['resolvedPath == "status.json"'],
-        rationale:
-          'Android WebView asset handler must serve status.json with Cache-Control: no-cache alongside version.json.',
       },
       {
         filePath: 'src/storage/webSqliteAdapter.ts',
         requiredSubstrings: ['executeIdbWriteWithQuotaRecovery', 'purgeOpfsTmp'],
-        rationale:
-          'Primary IndexedDB writes must catch QuotaExceededError, purge OPFS /tmp and non-essential fallback caches, and retry once before failing.',
       },
       {
         filePath: 'src/components/PrintPreviewModal.tsx',
         requiredSubstrings: ['sanitizePrintStageHtml'],
-        rationale:
-          'Print stage DOM mounting must strip executable tags, inline event handlers, and dangerous URLs before inserting HTML into #barn-print-stage.',
       },
       {
         filePath: 'src/domain/backupVault.ts',
         requiredSubstrings: ["from './binaryEncoding'"],
-        rationale:
-          'backupVault.ts must import binary encoding helpers directly from binaryEncoding.ts instead of pulling backupArchive.ts into the startup graph.',
       },
       {
         filePath: 'src/components/DiagnosticsAndSupportPanel.tsx',
         requiredSubstrings: ['loadImprovementRegistryModule', "import('../domain/improvementRegistry')"],
-        rationale:
-          'DiagnosticsAndSupportPanel must lazy-load the 200+ kB improvementRegistry manifest on demand instead of bloating TechyStuffScreen.',
       },
       {
         filePath: 'vite.config.ts',
@@ -998,8 +883,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'improvement-registry',
           'includeDependenciesRecursively: false',
         ],
-        rationale:
-          'Rolldown codeSplitting must isolate app storage, backup, domain, and registry chunks with includeDependenciesRecursively: false so no chunk exceeds 500 kB.',
       },
     ],
     restorePlaybook: [
@@ -1030,22 +913,16 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'devLucideDirectImportPlugin',
           "exclude: ['lucide-react']",
         ],
-        rationale:
-          'Dev preview must strip multi-megabyte base64 inline sourcemaps and resolve lucide-react icons directly without pre-bundling all 1,600+ icons so mobile Chrome preview iframes do not OOM.',
       },
       {
         filePath: 'src/components/CrashErrorBoundary.tsx',
         requiredSubstrings: ["import('../domain/syncAndExports')"],
         forbiddenSubstrings: ["from '../domain/syncAndExports'"],
-        rationale:
-          'CrashErrorBoundary mounts at root and must load formatTimestampedBackupSlug dynamically on click rather than eagerly pulling syncAndExports into startup.',
       },
       {
         filePath: 'src/components/TechyStuffErrorBoundary.tsx',
         requiredSubstrings: ["import('../domain/syncAndExports')"],
         forbiddenSubstrings: ["from '../domain/syncAndExports'"],
-        rationale:
-          'TechyStuffErrorBoundary mounts in App.tsx and must load formatTimestampedBackupSlug dynamically on click rather than eagerly pulling syncAndExports into startup.',
       },
     ],
     restorePlaybook: [
@@ -1081,34 +958,26 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'twitter:card',
           'rel="canonical"',
         ],
-        rationale:
-          'index.html must maintain canonical, OpenGraph, Twitter card, and Schema.org structured data for SEO.',
       },
       {
         filePath: 'public/robots.txt',
         requiredSubstrings: ['User-agent: *', 'Sitemap: https://askkim.github.io/Pedigree/sitemap.xml'],
-        rationale: 'public/robots.txt must guide search crawlers to the sitemap.',
       },
       {
         filePath: 'public/sitemap.xml',
         requiredSubstrings: ['<loc>https://askkim.github.io/Pedigree/</loc>'],
-        rationale: 'public/sitemap.xml must define the canonical GitHub Pages location.',
       },
       {
         filePath: 'public/404.html',
         requiredSubstrings: ['Community Pedigree Project - GitHub Pages SPA Fallback'],
-        rationale: 'public/404.html must provide client-side route fallback for GitHub Pages.',
       },
       {
         filePath: '.github/workflows/deploy-pages.yml',
         requiredSubstrings: ['- main', '- release', 'dist/robots.txt', 'dist/sitemap.xml'],
-        rationale:
-          'deploy-pages.yml must deploy from both main and release branches and verify SEO artifacts.',
       },
       {
         filePath: 'package.json',
         requiredSubstrings: ['"homepage": "https://askkim.github.io/Pedigree/"'],
-        rationale: 'package.json must state the official GitHub Pages homepage URL.',
       },
     ],
     restorePlaybook: [
@@ -1139,8 +1008,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ['export function stripDevSourceMapTrailer', 'hasEncoding'],
-        rationale:
-          'Dev sourcemap stripping must only remove trailing EOF comments and skip Content-Length mutation on encoded responses.',
       },
       {
         filePath: 'index.html',
@@ -1149,20 +1016,14 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'attemptOneShotPreBootReload',
           'handlePreBootTransientFetchFailure',
         ],
-        rationale:
-          'Pre-boot guard must separate transient module fetch/504 glitches from real ES2018 browser incompatibility and recover via cooldown-guarded reload.',
       },
       {
         filePath: 'src/main.tsx',
         requiredSubstrings: ['hadActiveController', 'pedigree_dev_sw_cleanup_reload_ts'],
-        rationale:
-          'Dev startup must reload cleanly once if a stale Service Worker controller intercepted the initial boot.',
       },
       {
         filePath: 'src/utils/lazyRoute.tsx',
         requiredSubstrings: ['isRecoverableChunkError', 'attemptOneTimeChunkReload'],
-        rationale:
-          'Lazy route loader and RouteErrorBoundary must detect stale chunk / 504 errors and perform a guarded clean reload instead of retrying a permanently rejected ES module entry.',
       },
     ],
     restorePlaybook: [
@@ -1208,17 +1069,14 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       {
         filePath: 'src/engine/primitives/sanitization.ts',
         requiredSubstrings: ['isSafeObjectKey', 'sanitizeCsvFormulaCell', 'escapeSafeHtml'],
-        rationale: 'Shared pure sanitization helpers must live in @engine/primitives without DOM/Node or domain dependencies.',
       },
       {
         filePath: 'src/engine/primitives/crypto.ts',
         requiredSubstrings: ['fnv1a64Hex', 'sha256HexPure', 'wrapGenericEncryptedZip'],
-        rationale: 'Shared FNV-1a and SHA-256 primitives must live in @engine/primitives.',
       },
       {
         filePath: 'src/engine/bridge/desktopBridgeAdapter.ts',
         requiredSubstrings: ['detectDesktopShellType', 'createDesktopBridgeDelegates'],
-        rationale: 'Desktop Electron/Tauri runtime detection must remain dependency-free in @engine/bridge.',
       },
       {
         filePath: 'src/engine/bridge/platformBridge.ts',
@@ -1227,48 +1085,39 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'handleStorageBridgeResponse',
           'openExternalUrl',
         ],
-        rationale: 'PlatformBridge must support correlated iOS WKWebView storage replies and unified safe URL/desktop/Android routing.',
       },
       {
         filePath: 'src/engine/storage/nativeBridgeStorageAdapter.ts',
         requiredSubstrings: ['return caps.hasNativeBridge;', 'Native storage bridge is not configured'],
-        rationale: 'NativeBridgeStorageAdapter must verify caps.hasNativeBridge is active instead of accepting unbacked iOS signals.',
       },
       {
         filePath: 'src/engine/storage/resilientStorageAdapter.ts',
         requiredSubstrings: ['if (caps.requiresIosStorageBridge)', 'fnv1a64Hex'],
-        rationale: 'createResilientStorageAdapter must strictly route ios-wkwebview through native bridge storage rather than evictable IndexedDB/OPFS.',
       },
       {
         filePath: 'src/features/csv-exporter/csvExporter.ts',
         requiredSubstrings: ['exportRecordsToCsv', 'createCsvExporterFeatureModule'],
-        rationale: 'Decoupled CSV exporter must remain domain-agnostic in @features/csv-exporter.',
       },
       {
         filePath: 'src/features/backup-vault/portableVault.ts',
         requiredSubstrings: ['exportPortableVault', 'restorePortableVault', 'createBackupVaultFeatureModule'],
-        rationale: 'Decoupled SHA-256 verified portable vault must remain domain-agnostic in @features/backup-vault.',
       },
       {
         filePath: 'src/features/document-export/htmlPrintPackage.ts',
         requiredSubstrings: ['buildPrintableHtmlDocument', 'dispatchPrintPackage', 'createDocumentExportFeatureModule'],
-        rationale: 'Printable HTML packager must dispatch through IPlatformBridge without domain coupling.',
       },
       {
         filePath: 'src/features/ics-calendar/icsBuilder.ts',
         requiredSubstrings: ['buildGenericIcsCalendar', 'createIcsCalendarFeatureModule'],
-        rationale: 'RFC 5545 calendar builder must accept generic events without livestock domain coupling.',
       },
       {
         filePath: 'src/features/ocr-parser/ocrTextPipeline.ts',
         requiredSubstrings: ['groupWordBoxesIntoLines', 'extractStructuredFieldsFromOcr', 'createOcrParserFeatureModule'],
-        rationale: 'OCR line/field extraction pipeline must remain schema-driven and domain-agnostic.',
       },
       {
         filePath: 'src/app/pedigreeAppConfig.ts',
         requiredSubstrings: ['export const PEDIGREE_APP_CONFIG', 'document-export', 'backup-vault'],
         forbiddenSubstrings: ['fflate', 'sql.js'],
-        rationale: 'PEDIGREE_APP_CONFIG must stay lightweight so useBarnStore startup does not pull ZIP or SQLite WASM engines.',
       },
       {
         filePath: 'src/app/pedigreeAppWiring.ts',
@@ -1279,7 +1128,6 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'buildBarnTasksIcsFeed',
           'extractPedigreeOcrSummary',
         ],
-        rationale: '@app/pedigreeAppWiring.ts is the sole composition layer connecting domain configs to @features/* and @engine/*.',
       },
       {
         filePath: 'android-wrapper/app/build.gradle.kts',
@@ -1290,12 +1138,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'pedigree.wrapper.diagnosticsClipLabel',
           'pedigree.wrapper.defaultExportFilename',
         ],
-        rationale: 'Android wrapper must preserve minSdk = 26 and Gradle property parameterization.',
       },
       {
         filePath: 'ios-wrapper/BRIDGE_CONTRACT.md',
         requiredSubstrings: ['NATIVE_STORAGE_OP', '__platformBridgeStorageReceive', '.applicationSupportDirectory'],
-        rationale: 'iOS WKWebView SQLite storage bridge protocol must remain documented for native Apple shell implementations.',
       },
     ],
     restorePlaybook: [
@@ -1346,12 +1192,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'extractable-ui-util',
           'pedigree-domain',
         ],
-        rationale: 'Extraction inventory must document FLASH_HYGIENE_PLAN.md absorption and classify 100% of non-test source files.',
       },
       {
         filePath: 'src/domain/improvementRegistry.ts',
         requiredSubstrings: ['export const BOOT_ENTRY_LOCK_CHECKSUMS', 'src/main.tsx', 'src/App.tsx', 'index.html'],
-        rationale: 'Boot-entry SHA-256 lock checksums must remain registered to protect active boot stability.',
       },
       {
         filePath: 'src/engine/primitives/index.ts',
@@ -1363,12 +1207,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           './deviceCapabilityCore',
           './pdfDocumentExtractor',
         ],
-        rationale: 'Pure content-agnostic Phase 2 primitives must stay exported from @engine/primitives.',
       },
       {
         filePath: 'src/engine/codecs/archiveAndCsvUtils.ts',
         requiredSubstrings: ['@engine/primitives/sanitization', '@engine/primitives/genericRegistries'],
-        rationale: 'archiveAndCsvUtils.ts must depend solely on content-agnostic @engine/primitives contracts.',
       },
       {
         filePath: 'src/app/pedigreeAppWiring.ts',
@@ -1378,19 +1220,16 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'buildPedigreeRecordDeepLink',
           'getPedigreeHeavyZipGate',
         ],
-        rationale: '@app/pedigreeAppWiring.ts must inject Pedigree defaults into pure @engine/primitives helpers.',
       },
       {
         filePath: 'src/utils/es2018Shims.ts',
         requiredSubstrings: ['__coreEs2018Shim'],
         forbiddenSubstrings: ['__pedigreeEs2018Shim'],
-        rationale: 'Reusable ES2018 shims must stay free of domain-specific internal marker names.',
       },
       {
         filePath: 'src/utils/lazyRoute.tsx',
         requiredSubstrings: ['configureLazyRouteDefaults', 'ChunkReloadOptions'],
         forbiddenSubstrings: ['Back to All Species'],
-        rationale: 'lazyRoute.tsx must expose parameterized reload defaults and domain-neutral fallback UI copy.',
       },
     ],
     restorePlaybook: [
@@ -1425,21 +1264,15 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'Minimal Initial Screen Output',
           'Ready: Community Pedigree (port 3000).',
         ],
-        rationale:
-          'AGENTS.md must enforce reading master_system_prompt.md, fast-boot skip rules on GitHub import, and compact 2-line initial screen output.',
       },
       {
         filePath: '.npmrc',
         requiredSubstrings: ['legacy-peer-deps=true', 'audit=false', 'fund=false'],
-        rationale:
-          '.npmrc must disable npm audit and funding network calls to accelerate cold AI Studio dependency installation.',
       },
       {
         filePath: 'vite.config.ts',
         requiredSubstrings: ['reportCompressedSize: false'],
         forbiddenSubstrings: ["'tesseract.js',"],
-        rationale:
-          'Vite must skip gzip size reporting on build and avoid eagerly pre-bundling lazy tesseract.js during dev startup.',
       },
     ],
     restorePlaybook: [

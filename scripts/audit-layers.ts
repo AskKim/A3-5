@@ -133,7 +133,7 @@ for (const file of walk(SRC)) {
   // Registry part modules are 85 human-written entries: prose that *mentions* `node:path` or a DOM
   // global is data, not an import or a call. The same exemption the single registry file always had
   // is scoped here to these five data files only — import-direction rules below still apply.
-  const isRegistryData = /^src\/domain\/improvements\/registry-part-\d+\.ts$/.test(rel);
+  const isRegistryData = /^src\/domain\/improvements\/(registry-part-\d+|rationales)\.ts$/.test(rel);
 
   const specs = extractSpecifiers(text);
   for (const spec of specs) {
