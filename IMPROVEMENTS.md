@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (19 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (20 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (83)
+## Logged Improvements (84)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1857,3 +1857,21 @@ npm run lint && npm run build
 1. Keep `gradlew`, `gradlew.bat` and `gradle/wrapper/gradle-wrapper.jar` committed and pinned to Gradle 8.13; regenerate with `gradle wrapper --gradle-version 8.13` if lost.
 2. Keep `npm run verify:android` chained into `npm run verify` and run it before touching `android-wrapper/`.
 3. Keep `assets/www/.gitkeep` tracked and stage assets with `android-wrapper/scripts/stage-web-assets.sh` or `./gradlew syncWebAssets`.
+
+### IMP-084: Preflight Workflow Validation Fix (Never-Starting CI Job)
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Find out why the preflight workflow had never passed and make it actually run, now that CI results are readable from the public API.
+- **Summary:** Preflight.yml had failed on all seven pushes since the repository first commit, producing zero jobs and no check-runs — GitHub rendering the workflow name as the file path, which is what it does for a definition it rejects. The `workflow_dispatch` `branch` input used `${{ github.ref_name }}` as its default, an expression GitHub does not evaluate in that position. The default is now empty and the step-level `github.event.inputs.branch || github.ref_name` fallback supplies the branch; the workflow runs all eight steps green for the first time. A forbidden-substring invariant prevents an expression default from returning.
+- **Tracked Files:** `.github/workflows/preflight.yml`, `IMPROVEMENTS.md`
+
+**Automated Invariants Checked:**
+- `.github/workflows/preflight.yml` must contain `name: Preflight CI`, `workflow_dispatch`, `npm run preflight:lint`, `github.event.inputs.branch || github.ref_name` — *preflight.yml must keep a literal input default (never an expression, which GitHub rejects without starting a job) while still resolving the current branch at step level.*
+  - Forbidden regression: `default: "${{`
+- `package.json` must contain `preflight:lint`, `preflight` — *The preflight CLI entry points the workflow runs must stay available in package.json.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the `branch` input default a literal empty string; resolve the branch with `${{ github.event.inputs.branch || github.ref_name }}` inside the step env instead.
+2. If the preflight run shows zero jobs and its name is the file path, the workflow definition was rejected — check `on.workflow_dispatch.inputs.*.default` first.

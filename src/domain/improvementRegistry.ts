@@ -6105,6 +6105,42 @@ export const IMPROVEMENTS_REGISTRY: ImprovementEntry[] = [
       'Keep `assets/www/.gitkeep` tracked and stage assets with `android-wrapper/scripts/stage-web-assets.sh` or `./gradlew syncWebAssets`.',
     ],
   },
+  {
+    id: 'IMP-084',
+    title: 'Preflight Workflow Validation Fix (Never-Starting CI Job)',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Find out why the preflight workflow had never passed and make it actually run, now that CI results are readable from the public API.',
+    summary:
+      'Preflight.yml had failed on all seven pushes since the repository first commit, producing zero jobs and no check-runs — GitHub rendering the workflow name as the file path, which is what it does for a definition it rejects. The `workflow_dispatch` `branch` input used `${{ github.ref_name }}` as its default, an expression GitHub does not evaluate in that position. The default is now empty and the step-level `github.event.inputs.branch || github.ref_name` fallback supplies the branch; the workflow runs all eight steps green for the first time. A forbidden-substring invariant prevents an expression default from returning.',
+    files: ['.github/workflows/preflight.yml', 'IMPROVEMENTS.md'],
+    invariants: [
+      {
+        filePath: '.github/workflows/preflight.yml',
+        requiredSubstrings: [
+          'name: Preflight CI',
+          'workflow_dispatch',
+          'npm run preflight:lint',
+          'github.event.inputs.branch || github.ref_name',
+        ],
+        forbiddenSubstrings: ['default: "${{'],
+        rationale:
+          'preflight.yml must keep a literal input default (never an expression, which GitHub rejects without starting a job) while still resolving the current branch at step level.',
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['preflight:lint', 'preflight'],
+        rationale:
+          'The preflight CLI entry points the workflow runs must stay available in package.json.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the `branch` input default a literal empty string; resolve the branch with `${{ github.event.inputs.branch || github.ref_name }}` inside the step env instead.',
+      'If the preflight run shows zero jobs and its name is the file path, the workflow definition was rejected — check `on.workflow_dispatch.inputs.*.default` first.',
+    ],
+  },
 ];
 
 /**
