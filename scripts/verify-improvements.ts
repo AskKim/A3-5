@@ -15,6 +15,7 @@ import {
   evaluateImprovementInvariants,
   IMPROVEMENTS_REGISTRY,
 } from '../src/domain/improvementRegistry';
+import { INVARIANT_RATIONALES } from '../src/domain/improvements/rationales';
 
 async function main() {
   const rootDir = process.cwd();
@@ -38,7 +39,7 @@ async function main() {
     })
   );
 
-  const report = evaluateImprovementInvariants(filesByPath, IMPROVEMENTS_REGISTRY);
+  const report = evaluateImprovementInvariants(filesByPath, IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
 
   console.log(
     `[verify:improvements] Checked ${report.totalEntries} improvements across ${report.totalFilesChecked} files.`

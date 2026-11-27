@@ -187,6 +187,11 @@ export function DiagnosticsAndSupportPanel({
   } | null>(null);
   const [loadingImprovementsLog, setLoadingImprovementsLog] = useState(false);
 
+  const loadInvariantRationales = useCallback(async () => {
+    const mod = await import('../domain/improvements/rationales');
+    return mod.INVARIANT_RATIONALES;
+  }, []);
+
   const loadImprovementRegistryModule = useCallback(async () => {
     const mod = await import('../domain/improvementRegistry');
     setLoadedImprovements((prev) =>
@@ -1806,7 +1811,12 @@ export function DiagnosticsAndSupportPanel({
             onClick={async () => {
               try {
                 const { formatImprovementsMarkdown } = await loadImprovementRegistryModule();
-                await downloadTextFile('IMPROVEMENTS.md', formatImprovementsMarkdown(), 'text/markdown');
+                const rationales = await loadInvariantRationales();
+                await downloadTextFile(
+                  'IMPROVEMENTS.md',
+                  formatImprovementsMarkdown(undefined, rationales),
+                  'text/markdown'
+                );
                 setImprovementsFeedback('Downloaded IMPROVEMENTS.md recovery manual.');
               } catch (err) {
                 setImprovementsFeedback(
@@ -1825,9 +1835,10 @@ export function DiagnosticsAndSupportPanel({
             onClick={async () => {
               try {
                 const { buildImprovementsRecoveryJson } = await loadImprovementRegistryModule();
+                const rationales = await loadInvariantRationales();
                 await downloadTextFile(
                   'pedigree-improvements-log.json',
-                  buildImprovementsRecoveryJson(),
+                  buildImprovementsRecoveryJson(undefined, rationales),
                   'application/json'
                 );
                 setImprovementsFeedback('Downloaded pedigree-improvements-log.json.');
@@ -1850,7 +1861,8 @@ export function DiagnosticsAndSupportPanel({
             onClick={async () => {
               try {
                 const { formatImprovementsMarkdown } = await loadImprovementRegistryModule();
-                const markdown = formatImprovementsMarkdown();
+                const rationales = await loadInvariantRationales();
+                const markdown = formatImprovementsMarkdown(undefined, rationales);
                 const mode = await copyTextWithFallback(markdown);
                 if (mode !== 'unsupported') {
                   setManualCopyBox(null);
