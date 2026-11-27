@@ -280,13 +280,7 @@ import {
 } from '../app/pedigreeAppWiring';
 import type { IPlatformBridge } from '@engine/bridge';
 import type { PendingGoogleCalendarSync } from '../domain/calendarExport';
-
-function getPhotoCacheBudgetForTier(tier: number): { maxEntries: number; maxBytes: number } {
-  if (tier <= 1) return { maxEntries: 6, maxBytes: 2 * 1024 * 1024 };
-  if (tier === 2) return { maxEntries: 10, maxBytes: 4 * 1024 * 1024 };
-  if (tier === 3) return { maxEntries: 16, maxBytes: 8 * 1024 * 1024 };
-  return { maxEntries: 24, maxBytes: 16 * 1024 * 1024 };
-}
+import { getPhotoCacheBudgetForTier } from './barnStore/photoCacheBudget';
 
 export type WorkspaceRoute =
   | 'home'

@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (25 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (26 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (89)
+## Logged Improvements (90)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1971,3 +1971,22 @@ npm run lint && npm run build
 1. When splitting the store, carry the returned keys over unchanged and update `barnStoreContract.keys.json` only in the same commit that changes a consumer.
 2. Never satisfy this contract by adding spread (`...slice`) or computed keys: the parser rejects both on purpose.
 3. Extend this file into the per-slice contract as slices land; the snapshot stays the single source of truth for the public surface.
+
+### IMP-090: Barn Store Decomposition Begins: Pure Policy Leaves First
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Start shrinking the 9.5k-line store without changing behaviour, one provably pure slice at a time.
+- **Summary:** First slice of the `useBarnStore` decomposition: `getPhotoCacheBudgetForTier` moved to `src/hooks/barnStore/photoCacheBudget.ts` with a `PhotoCacheBudget` type and its first direct unit tests (tier floors, caps, monotonicity, non-finite probes). The hook keeps all state and wiring and simply imports the policy. Extraction was made behaviour-neutral on purpose: a non-finite tier still falls through to the largest budget because that is what the inline version did, and the test now pins that as intentional rather than letting a refactor quietly change cache sizing. The `src/hooks/barnStore/*` folder is the destination for later slices; `MODULES.md` was regenerated for the new module.
+- **Tracked Files:** `src/hooks/barnStore/photoCacheBudget.ts`, `src/hooks/__tests__/photoCacheBudget.test.ts`, `src/hooks/useBarnStore.ts`, `MODULES.md`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/photoCacheBudget.ts` must contain `export function getPhotoCacheBudgetForTier`, `export interface PhotoCacheBudget` — *The extracted slice must keep its public surface so the hook and any future slice share one policy.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/photoCacheBudget'` — *The hook must consume the extracted policy rather than reintroducing a private copy, which would let the two drift.*
+- `src/hooks/__tests__/photoCacheBudget.test.ts` must contain `never shrinks as the tier rises`, `non-finite tiers` — *The slice keeps the guard rails that made it safe to move: monotonic sizing and the preserved non-finite behaviour.*
+
+**Restoration Playbook if Overwritten:**
+1. Every later slice follows this shape: pure policy to `src/hooks/barnStore/*`, state and wiring stay in the hook, tests land with the move.
+2. Never change behaviour inside a move. Pin the old quirk in a test first (as with non-finite tiers) or leave it in place.
+3. Run `npm test`, `npm run verify` and `npx tsx scripts/list-modules.ts --write` for each slice; the contract snapshot must stay untouched unless a key truly changes.

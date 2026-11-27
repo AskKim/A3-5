@@ -1077,4 +1077,46 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Extend this file into the per-slice contract as slices land; the snapshot stays the single source of truth for the public surface.',
     ],
   },
+  {
+    id: 'IMP-090',
+    title: 'Barn Store Decomposition Begins: Pure Policy Leaves First',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Start shrinking the 9.5k-line store without changing behaviour, one provably pure slice at a time.',
+    summary:
+      'First slice of the `useBarnStore` decomposition: `getPhotoCacheBudgetForTier` moved to `src/hooks/barnStore/photoCacheBudget.ts` with a `PhotoCacheBudget` type and its first direct unit tests (tier floors, caps, monotonicity, non-finite probes). The hook keeps all state and wiring and simply imports the policy. Extraction was made behaviour-neutral on purpose: a non-finite tier still falls through to the largest budget because that is what the inline version did, and the test now pins that as intentional rather than letting a refactor quietly change cache sizing. The `src/hooks/barnStore/*` folder is the destination for later slices; `MODULES.md` was regenerated for the new module.',
+    files: [
+      'src/hooks/barnStore/photoCacheBudget.ts',
+      'src/hooks/__tests__/photoCacheBudget.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/photoCacheBudget.ts',
+        requiredSubstrings: ['export function getPhotoCacheBudgetForTier', 'export interface PhotoCacheBudget'],
+        rationale:
+          'The extracted slice must keep its public surface so the hook and any future slice share one policy.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/photoCacheBudget'"],
+        rationale:
+          'The hook must consume the extracted policy rather than reintroducing a private copy, which would let the two drift.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/photoCacheBudget.test.ts',
+        requiredSubstrings: ['never shrinks as the tier rises', 'non-finite tiers'],
+        rationale:
+          'The slice keeps the guard rails that made it safe to move: monotonic sizing and the preserved non-finite behaviour.',
+      },
+    ],
+    restorePlaybook: [
+      'Every later slice follows this shape: pure policy to `src/hooks/barnStore/*`, state and wiring stay in the hook, tests land with the move.',
+      'Never change behaviour inside a move. Pin the old quirk in a test first (as with non-finite tiers) or leave it in place.',
+      'Run `npm test`, `npm run verify` and `npx tsx scripts/list-modules.ts --write` for each slice; the contract snapshot must stay untouched unless a key truly changes.',
+    ],
+  },
 ];
