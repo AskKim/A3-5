@@ -19,7 +19,55 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A copy of this repository, or one whose Pages source is a branch, cannot deploy through
+  # Actions: `configure-pages` fails before anything is built, turning every push red.
+  # Ask the Pages API what this repository actually supports and skip cleanly when the
+  # answer is "not here" — the deploy itself is unchanged once Pages allows Actions.
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.check.outputs.deploy }}
+    steps:
+      - name: Check Pages availability
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/pages"
+          code=$(curl -sS -o /tmp/pages.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' "$api")
+          build_type=$(jq -r '.build_type // "legacy"' /tmp/pages.json 2>/dev/null || echo unknown)
+          echo "Pages API: HTTP ${code}, build_type=${build_type}"
+          case "${code}" in
+            200)
+              if [ "${build_type}" = "workflow" ]; then
+                echo "deploy=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              reason="Pages is served from a branch (build_type=${build_type}), so a branch push publishes the site and Actions cannot. Switch Settings → Pages → Build and deployment → Source to GitHub Actions to let this workflow deploy."
+              ;;
+            404)
+              reason="This repository has no GitHub Pages site, so there is nothing to deploy to. Create one (Settings → Pages → Source: GitHub Actions) before running this workflow."
+              ;;
+            *)
+              echo "deploy=true" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+          echo "deploy=false" >> "$GITHUB_OUTPUT"
+          {
+            echo "### GitHub Pages deployment skipped"
+            echo ""
+            echo "${reason}"
+            echo ""
+            echo "The workflow is unchanged and will deploy again as soon as that is satisfied."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   build:
+    needs: guard
+    if: needs.guard.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -92,7 +140,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [guard, build]
+    if: needs.guard.outputs.deploy == 'true'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

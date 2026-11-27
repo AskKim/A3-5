@@ -6,12 +6,12 @@ on:
   push:
     paths:
       - "package.json"
-      - "bun.lock"
+      - "package-lock.json"
       - "android-wrapper/app/build.gradle.kts"
   pull_request:
     paths:
       - "package.json"
-      - "bun.lock"
+      - "package-lock.json"
       - "android-wrapper/app/build.gradle.kts"
   workflow_dispatch:
 

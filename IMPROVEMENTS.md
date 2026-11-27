@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (20 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (21 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (84)
+## Logged Improvements (85)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1875,3 +1875,22 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Keep the `branch` input default a literal empty string; resolve the branch with `${{ github.event.inputs.branch || github.ref_name }}` inside the step env instead.
 2. If the preflight run shows zero jobs and its name is the file path, the workflow definition was rejected — check `on.workflow_dispatch.inputs.*.default` first.
+
+### IMP-085: CI Honesty: Pages Deploy Guard & Dependency Audit Trigger Fix
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Stop a deploy workflow from reporting failures for conditions it cannot control, and make the dependency audit actually re-run when the npm lockfile changes.
+- **Summary:** deploy-pages.yml failed on every push because `actions/configure-pages` cannot configure a site that is served from a branch, or one that does not exist in this copy of the repository. A `guard` job now asks the Pages API (with the workflow token) for the site and its `build_type`: deployment proceeds only when Pages reports `workflow`; otherwise the run ends green with a step-summary notice naming the exact Settings change, and an unreadable response falls through to the real deploy rather than blocking it. Branch triggers, Bun tooling and the SEO artifact assertions are untouched. Separately, security-audit.yml watched `bun.lock`, a file this npm project does not have, so dependency changes never triggered the audit; it now watches `package-lock.json`.
+- **Tracked Files:** `.github/workflows/deploy-pages.yml`, `.github/workflows/security-audit.yml`, `IMPROVEMENTS.md`
+
+**Automated Invariants Checked:**
+- `.github/workflows/deploy-pages.yml` must contain `oven-sh/setup-bun`, `bun run build --base=`, `- main`, `- release`, `dist/robots.txt`, `dist/sitemap.xml`, `build_type`, `needs.guard.outputs.deploy` — *Pages keeps deploying from main and release with Bun and its SEO assertions, while the guard decides whether Actions may deploy at all.*
+- `.github/workflows/security-audit.yml` must contain `package-lock.json`, `android-wrapper/app/build.gradle.kts` — *The audit must trigger on the lockfile this project actually uses; bun.lock does not exist here.*
+  - Forbidden regression: `bun.lock`
+
+**Restoration Playbook if Overwritten:**
+1. Keep the `guard` job first and both `if: needs.guard.outputs.deploy == 'true'` conditions on `build` and `deploy`; removing them restores the permanent red failure.
+2. Treat an unreadable Pages API response as "proceed", so a token-scope change can never silently stop real deployments.
+3. Never point the security audit at a lockfile the project does not ship.

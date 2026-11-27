@@ -6141,6 +6141,47 @@ export const IMPROVEMENTS_REGISTRY: ImprovementEntry[] = [
       'If the preflight run shows zero jobs and its name is the file path, the workflow definition was rejected — check `on.workflow_dispatch.inputs.*.default` first.',
     ],
   },
+  {
+    id: 'IMP-085',
+    title: 'CI Honesty: Pages Deploy Guard & Dependency Audit Trigger Fix',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Stop a deploy workflow from reporting failures for conditions it cannot control, and make the dependency audit actually re-run when the npm lockfile changes.',
+    summary:
+      'deploy-pages.yml failed on every push because `actions/configure-pages` cannot configure a site that is served from a branch, or one that does not exist in this copy of the repository. A `guard` job now asks the Pages API (with the workflow token) for the site and its `build_type`: deployment proceeds only when Pages reports `workflow`; otherwise the run ends green with a step-summary notice naming the exact Settings change, and an unreadable response falls through to the real deploy rather than blocking it. Branch triggers, Bun tooling and the SEO artifact assertions are untouched. Separately, security-audit.yml watched `bun.lock`, a file this npm project does not have, so dependency changes never triggered the audit; it now watches `package-lock.json`.',
+    files: ['.github/workflows/deploy-pages.yml', '.github/workflows/security-audit.yml', 'IMPROVEMENTS.md'],
+    invariants: [
+      {
+        filePath: '.github/workflows/deploy-pages.yml',
+        requiredSubstrings: [
+          'oven-sh/setup-bun',
+          'bun run build --base=',
+          '- main',
+          '- release',
+          'dist/robots.txt',
+          'dist/sitemap.xml',
+          'build_type',
+          'needs.guard.outputs.deploy',
+        ],
+        rationale:
+          'Pages keeps deploying from main and release with Bun and its SEO assertions, while the guard decides whether Actions may deploy at all.',
+      },
+      {
+        filePath: '.github/workflows/security-audit.yml',
+        requiredSubstrings: ['package-lock.json', 'android-wrapper/app/build.gradle.kts'],
+        forbiddenSubstrings: ['bun.lock'],
+        rationale:
+          'The audit must trigger on the lockfile this project actually uses; bun.lock does not exist here.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the `guard` job first and both `if: needs.guard.outputs.deploy == \'true\'` conditions on `build` and `deploy`; removing them restores the permanent red failure.',
+      'Treat an unreadable Pages API response as "proceed", so a token-scope change can never silently stop real deployments.',
+      'Never point the security audit at a lockfile the project does not ship.',
+    ],
+  },
 ];
 
 /**
