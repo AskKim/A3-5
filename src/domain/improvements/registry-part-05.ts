@@ -4651,4 +4651,45 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Starting a drag from the separator selects the owning bar, not the separator: assert selection on the bar.',
     ],
   },
+  {
+    id: 'IMP-172',
+    title: 'Cover the Gantt LAN Handshake Wiring',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The Gantt drawer mounts the whole LAN pairing UI — offer code, answer code, connect, push outbox, shared folder — but every one of those handlers was unreachable in tests because jsdom has no WebRTC, so a mis-wired argument would have shipped silently.',
+    summary:
+      'Adds `barnSchedulerGanttLan.render.test.tsx`, mocking the `p2pLanChannel` port and driving the drawer: generating an offer passes the device id and shows the token, a rejected offer shows its error instead of a code, a pasted host offer produces the answer code, Connect refuses with no session and then completes a real one, Push Outbox is absent until the link reports connected and then sends the delta (with send failures surfaced), a picked sync folder reads peer files and merges them through `onReconcileOutboxOps`, and unmounting closes the session. Gantt coverage goes 64.5% → 85.1% (branches 79%); totals 63.79/53.55/49.98/65.38, inside the existing floors, so no ratchet is needed.',
+    files: [
+      'src/components/__tests__/barnSchedulerGanttLan.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/__tests__/barnSchedulerGanttLan.render.test.tsx',
+        requiredSubstrings: [
+          "vi.mock('../../app/ports/p2pLanChannel'",
+          'Paste host Offer code',
+          'Push Outbox to Peer',
+        ],
+        rationale:
+          'The port mock, the offer-code input and the connected-only push control are what make this a wiring test of the drawer rather than of the transport.',
+      },
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/engine/**'"],
+        rationale:
+          'The floors did not move in this change, so the entry only guards that the per-area thresholds still exist.',
+      },
+    ],
+    restorePlaybook: [
+      'Use `vi.hoisted` for the controller stub and keep mutable capture (the options handed to `createLanP2pSession`) inside that hoisted object — referencing the hoisted object from its own initializer is a TDZ error.',
+      'Drive the connected state by calling the captured `onStateChange(\'connected\')` inside `act`, then the Push Outbox button appears.',
+      'The component closes the session on unmount, so assert `close` after `unmount()` rather than after a click.',
+    ],
+  },
 ];

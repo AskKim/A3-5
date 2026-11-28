@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (106 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (107 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (170)
+## Logged Improvements (171)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3291,3 +3291,17 @@ Status:     active
 1. jsdom reports `clientWidth` as 0, so the component falls back to a 560px track; with the default 21-day window one column is 560/21 ≈ 26.7px and a two-column drag is +2 days.
 2. Fire `pointermove` and `pointerup` on `window` (the effect binds there), and wait for the bar to report `aria-pressed="true"` before moving, or the listener is not attached yet.
 3. Starting a drag from the separator selects the owning bar, not the separator: assert selection on the bar.
+
+## 2026-11-28 — Cover the Gantt LAN Handshake Wiring
+Why:        The Gantt drawer mounts the whole LAN pairing UI — offer code, answer code, connect, push outbox, shared folder — but every one of those handlers was unreachable in tests because jsdom has no WebRTC, so a mis-wired argument would have shipped silently.
+Changed:    `src/components/__tests__/barnSchedulerGanttLan.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/__tests__/barnSchedulerGanttLan.render.test.tsx` must contain `vi.mock('../../app/ports/p2pLanChannel'`, `Paste host Offer code`, `Push Outbox to Peer` — *The port mock, the offer-code input and the connected-only push control are what make this a wiring test of the drawer rather than of the transport.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/engine/**'` — *The floors did not move in this change, so the entry only guards that the per-area thresholds still exist.*
+
+**Restoration Playbook if Overwritten:**
+1. Use `vi.hoisted` for the controller stub and keep mutable capture (the options handed to `createLanP2pSession`) inside that hoisted object — referencing the hoisted object from its own initializer is a TDZ error.
+2. Drive the connected state by calling the captured `onStateChange('connected')` inside `act`, then the Push Outbox button appears.
+3. The component closes the session on unmount, so assert `close` after `unmount()` rather than after a click.
