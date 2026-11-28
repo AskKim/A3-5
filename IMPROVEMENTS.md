@@ -2904,11 +2904,12 @@ Status:     active
 
 ## 2026-11-28 — Diagnostics Panel Drops In-Flight Refreshes After Unmount
 Why:        CI kept failing the render tests with `ReferenceError: window is not defined` from a state update dispatched by `DiagnosticsAndSupportPanel`, so a suite that passes locally would go red on an unrelated commit — the failure looked like the ledger work and was not.
-Changed:    `src/components/DiagnosticsAndSupportPanel.tsx`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Changed:    `src/components/DiagnosticsAndSupportPanel.tsx`, `src/components/__tests__/backupExportSurfaces.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
 Status:     active
 
 **Automated Invariants Checked:**
 - `src/components/DiagnosticsAndSupportPanel.tsx` must contain `isMountedRef`, `if (!isMountedRef.current) return` — *The awaits in `refreshDiagnostics` can resolve after unmount; without this guard the update is dispatched into a document that no longer exists.*
+- `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `drops a diagnostics refresh that resolves after the panel unmounts`, `readEmergencyTraceSpy` — *That call sits inside the guarded tail of `refreshDiagnostics`, so a spy on it is the only signal React exposes: an update on an unmounted root is a silent no-op.*
 
 **Restoration Playbook if Overwritten:**
 1. Keep the `isMountedRef` check after the awaits in `refreshDiagnostics`, before any `setState` call.

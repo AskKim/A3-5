@@ -3487,9 +3487,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'CI kept failing the render tests with `ReferenceError: window is not defined` from a state update dispatched by `DiagnosticsAndSupportPanel`, so a suite that passes locally would go red on an unrelated commit — the failure looked like the ledger work and was not.',
     summary:
-      '`refreshDiagnostics` performs two awaited reads and then sets four state slices with no mounted check, and it is started by the mount effect, the diagnostic-log subscription and the 15-second interval. When the panel unmounted while those reads were in flight, React scheduled the update against a torn-down jsdom document and the file reported an unhandled error after its tests finished. The panel now keeps an `isMountedRef` (the same pattern as `SuggestionsBacklogScreen`) and drops a refresh result when it is no longer mounted. This fixes the cause in the component: the test keeps unmounting through Testing Library `cleanup()` rather than being skipped, retried or wrapped.',
+      '`refreshDiagnostics` performs two awaited reads and then sets four state slices with no mounted check, and it is started by the mount effect, the diagnostic-log subscription and the 15-second interval. When the panel unmounted while those reads were in flight, React scheduled the update against a torn-down jsdom document and the file reported an unhandled error after its tests finished. The panel now keeps an `isMountedRef` (the same pattern as `SuggestionsBacklogScreen`) and drops a refresh result when it is no longer mounted. This fixes the cause in the component: the test keeps unmounting through Testing Library `cleanup()` rather than being skipped, retried or wrapped. A regression test unmounts in the same tick as the mount refresh and asserts the guarded tail never runs; removing the guard makes it fail with the late applications counted.',
     files: [
       'src/components/DiagnosticsAndSupportPanel.tsx',
+      'src/components/__tests__/backupExportSurfaces.render.test.tsx',
       'src/domain/improvements/registry-part-05.ts',
       'src/domain/improvements/rationales.ts',
     ],
@@ -3499,6 +3500,12 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         requiredSubstrings: ['isMountedRef', 'if (!isMountedRef.current) return'],
         rationale:
           'The awaits in `refreshDiagnostics` can resolve after unmount; without this guard the update is dispatched into a document that no longer exists.',
+      },
+      {
+        filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+        requiredSubstrings: ['drops a diagnostics refresh that resolves after the panel unmounts', 'readEmergencyTraceSpy'],
+        rationale:
+          'That call sits inside the guarded tail of `refreshDiagnostics`, so a spy on it is the only signal React exposes: an update on an unmounted root is a silent no-op.',
       },
     ],
     restorePlaybook: [
