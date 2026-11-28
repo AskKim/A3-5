@@ -3191,4 +3191,41 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.',
     ],
   },
+  {
+    id: 'IMP-138',
+    title: 'Coverage Ratchet Raised and the CSV Exporter Executed End to End',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The coverage floors were still set against the 48/40/34/49 baseline, roughly four points under the post-render-test measurement, so a new untested module could absorb the render gains before the gate noticed. The hub tests also only proved the exporter registry rendered, never that an export produced a file.',
+    summary:
+      'Raises the `vitest.config.ts` floors to statements 51, branches 42, functions 37 and lines 53 — one point under the re-measured 52.69 / 43.02 / 38.77 / 54.11 — and records the measurement and its rationale in the config comment. Adds an end-to-end exporter test: `backupExportSurfaces.render.test.tsx` now mocks only `downloadTextFile` from `webFileActions` (via `importOriginal`, keeping every other export real), locates the Herd Roster Spreadsheet card, clicks its export button, and asserts the download received a `.csv` filename, a `text/csv` MIME type, a UTF-8 BOM, the `Species` header and a real animal tattoo from the snapshot, then that the panel reports its artifact summary through `role="status"`.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['thresholds:', 'statements: 51', 'branches: 42', 'functions: 37', 'lines: 53'],
+        rationale:
+          'The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.',
+      },
+      {
+        filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+        requiredSubstrings: ['downloadTextFileMock', 'Herd Roster Spreadsheet', "getByRole('status')"],
+        rationale:
+          'Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.',
+      },
+    ],
+    restorePlaybook: [
+      'Re-measure before moving a floor, and keep it one point under the measured number so the ratchet stays achievable but tight.',
+      'Stub only the boundary in an end-to-end UI test: mock the download call, keep the exporter registry, snapshot and CSV serializer real.',
+      'Assert the artifact contract (filename, MIME type, BOM, header, a real record) rather than a snapshot of generated text.',
+    ],
+  },
 ];

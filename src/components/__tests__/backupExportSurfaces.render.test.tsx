@@ -9,7 +9,7 @@
  */
 
 import 'fake-indexeddb/auto';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUILTIN_NON_NATIVE_EXPORTERS } from '../../domain/exporters/registry';
@@ -21,9 +21,23 @@ import { SyncStateSliceProvider } from '../../hooks/barnStore/syncStateSlice';
 import { DiagnosticsAndSupportPanel } from '../DiagnosticsAndSupportPanel';
 import { ImportExportHubScreen } from '../ImportExportHubScreen';
 
+const downloadTextFileMock = vi.fn(
+  async (_fileName: string, _content: string, _mimeType?: string) => undefined
+);
+
+vi.mock('../../utils/webFileActions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/webFileActions')>();
+  return {
+    ...actual,
+    downloadTextFile: (...args: Parameters<typeof actual.downloadTextFile>) =>
+      downloadTextFileMock(...args),
+  };
+});
+
 afterEach(() => {
   // Unmount before jsdom teardown so deferred React work cannot run without a window.
   cleanup();
+  downloadTextFileMock.mockClear();
   vi.restoreAllMocks();
 });
 
@@ -130,6 +144,26 @@ describe('ImportExportHubScreen backup & export workspaces', () => {
       'true'
     );
     expect(screen.getAllByText(/Import|Restore/i).length).toBeGreaterThan(0);
+  });
+
+  it('executes the CSV exporter end to end and hands the file to the download layer', async () => {
+    renderHub();
+    const snapshot = buildFullPredefinedSampleSnapshot();
+    const sampleAnimal = snapshot.animals[0];
+    const csvCard = screen.getByRole('heading', { name: /Herd Roster Spreadsheet/i }).closest('article');
+    expect(csvCard).not.toBeNull();
+
+    fireEvent.click(within(csvCard as HTMLElement).getByRole('button', { name: /Export .*\.CSV/i }));
+
+    await waitFor(() => expect(downloadTextFileMock).toHaveBeenCalledTimes(1));
+    const [fileName, content, mimeType] = downloadTextFileMock.mock.calls[0];
+    expect(fileName).toMatch(/\.csv$/i);
+    expect(mimeType).toContain('text/csv');
+    // RFC-4180 payload: UTF-8 BOM, human-readable header row, and a real animal from the barn.
+    expect(content.startsWith('\uFEFF')).toBe(true);
+    expect(content).toMatch(/Species/);
+    expect(content).toContain(sampleAnimal.tattoo || sampleAnimal.name);
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBeTruthy());
   });
 
   it('reports the active species and engine it is exporting from', () => {
