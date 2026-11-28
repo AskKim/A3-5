@@ -27,7 +27,8 @@
     "verify:chunks": "tsx scripts/verify-chunk-graph.ts",
     "verify:contract": "tsx scripts/verify-contract-changelog.ts",
     "verify:coverage": "vitest run --coverage",
-    "verify:site-identity": "tsx scripts/verify-site-identity.ts"
+    "verify:site-identity": "tsx scripts/verify-site-identity.ts",
+    "regen:ledgers": "tsx scripts/regen-ledgers.ts --write"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

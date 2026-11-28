@@ -16,6 +16,7 @@
  */
 
 import { nowIsoUtc } from './models';
+import { formatLedgerHeader } from './ledgerContract';
 import { REGISTRY_PART_01 } from './improvements/registry-part-01';
 import { REGISTRY_PART_02 } from './improvements/registry-part-02';
 import { REGISTRY_PART_03 } from './improvements/registry-part-03';
@@ -239,7 +240,40 @@ export function getImprovementsByRelease(
 }
 
 /**
+ * Renders one entry's automated invariants (shared by the legacy and contract-shaped blocks).
+ */
+function pushInvariantLines(
+  lines: string[],
+  entry: ImprovementEntry,
+  why: readonly string[]
+): void {
+  lines.push('**Automated Invariants Checked:**');
+  for (const [invIdx, inv] of entry.invariants.entries()) {
+    const reqList = inv.requiredSubstrings.map((s) => `\`${s}\``).join(', ');
+    const suffix = why[invIdx] ? ` — *${why[invIdx]}*` : '';
+    lines.push(`- \`${inv.filePath}\` must contain ${reqList}${suffix}`);
+    if (inv.forbiddenSubstrings && inv.forbiddenSubstrings.length > 0) {
+      const forbList = inv.forbiddenSubstrings.map((s) => `\`${s}\``).join(', ');
+      lines.push(`  - Forbidden regression: ${forbList}`);
+    }
+  }
+}
+
+/**
+ * `Changed:` value for a contract-shaped entry: paths, each tagged with the commit when known.
+ */
+function formatChangedPaths(entry: ImprovementEntry): string {
+  return entry.files
+    .map((file) => (entry.commitSha ? `\`${file}\` @ ${entry.commitSha}` : `\`${file}\``))
+    .join(', ');
+}
+
+/**
  * Generates a clean, self-contained Markdown improvements & GitHub-overwrite recovery manual.
+ *
+ * Starts with the append-only ledger contract (`formatLedgerHeader`) so regenerating the manual
+ * cannot drop it, and renders entries that opt in via `decidedOn` in the documented
+ * Why/Changed/Rejected/Status shape. Legacy entries keep their existing block untouched.
  */
 export function formatImprovementsMarkdown(
   entries: ImprovementEntry[] = IMPROVEMENTS_REGISTRY,
@@ -249,6 +283,8 @@ export function formatImprovementsMarkdown(
   const alpha3Count = entries.filter(isAlpha3Improvement).length;
 
   const lines: string[] = [
+    ...formatLedgerHeader('improvements'),
+    '',
     '# Community Pedigree — App Improvements & GitHub-Overwrite Recovery Log',
     '',
     'This document is synchronized with `src/domain/improvementRegistry.ts` and verified automatically',
@@ -281,6 +317,32 @@ export function formatImprovementsMarkdown(
   ];
 
   for (const entry of entries) {
+    if (entry.decidedOn) {
+      const status = entry.status ?? 'active';
+      lines.push(`## ${entry.decidedOn} — ${entry.title}`);
+      lines.push(`Why:        ${entry.userIntent}`);
+      lines.push(`Changed:    ${formatChangedPaths(entry)}`);
+      if (entry.rejected) {
+        lines.push(`Rejected:   ${entry.rejected}`);
+      }
+      lines.push(
+        `Status:     ${
+          status === 'superseded' && entry.supersededBy
+            ? `superseded by ${entry.supersededBy}`
+            : status
+        }`
+      );
+      lines.push('');
+      pushInvariantLines(lines, entry, resolveEntryRationales(entry, rationales));
+      lines.push('');
+      lines.push('**Restoration Playbook if Overwritten:**');
+      entry.restorePlaybook.forEach((step, idx) => {
+        lines.push(`${idx + 1}. ${step}`);
+      });
+      lines.push('');
+      continue;
+    }
+
     const rel = getImprovementRelease(entry);
     const relLabel = IMPROVEMENT_RELEASE_LABELS[rel] ?? rel;
     const sourceBadge =
@@ -296,17 +358,7 @@ export function formatImprovementsMarkdown(
     lines.push(`- **Summary:** ${entry.summary}`);
     lines.push(`- **Tracked Files:** ${entry.files.map((f) => `\`${f}\``).join(', ')}`);
     lines.push('');
-    lines.push('**Automated Invariants Checked:**');
-    const why = resolveEntryRationales(entry, rationales);
-    for (const [invIdx, inv] of entry.invariants.entries()) {
-      const reqList = inv.requiredSubstrings.map((s) => `\`${s}\``).join(', ');
-      const suffix = why[invIdx] ? ` — *${why[invIdx]}*` : '';
-      lines.push(`- \`${inv.filePath}\` must contain ${reqList}${suffix}`);
-      if (inv.forbiddenSubstrings && inv.forbiddenSubstrings.length > 0) {
-        const forbList = inv.forbiddenSubstrings.map((s) => `\`${s}\``).join(', ');
-        lines.push(`  - Forbidden regression: ${forbList}`);
-      }
-    }
+    pushInvariantLines(lines, entry, resolveEntryRationales(entry, rationales));
     lines.push('');
     lines.push('**Restoration Playbook if Overwritten:**');
     entry.restorePlaybook.forEach((step, idx) => {

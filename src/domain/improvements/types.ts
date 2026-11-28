@@ -47,4 +47,19 @@ export interface ImprovementEntry {
   files: string[];
   invariants: ImprovementInvariant[];
   restorePlaybook: string[];
+  /**
+   * Append-only ledger contract (`src/domain/ledgerContract.ts`). Setting `decidedOn` opts the entry
+   * into the contract shape (`## YYYY-MM-DD — title` plus Why/Changed/Rejected/Status) instead of the
+   * legacy `### IMP-0NN:` block, so a newly logged improvement renders exactly the documented shape.
+   * Entries without it are legacy and are never rewritten.
+   */
+  decidedOn?: string;
+  /** Ledger status; omitted means `active`. Ignored by the legacy rendering. */
+  status?: 'active' | 'reverted' | 'superseded';
+  /** Rendered as `superseded by <entry>` when `status` is `superseded`. */
+  supersededBy?: string;
+  /** The alternative considered and why it lost; omit when there was none. */
+  rejected?: string;
+  /** Commit the tracked files were in when the entry landed (rendered after each path). */
+  commitSha?: string;
 }

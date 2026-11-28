@@ -12,8 +12,12 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
   evaluatePromptInvariants,
+  formatPromptChangelogMarkdown,
   PROMPT_CHANGES_REGISTRY,
 } from '../src/domain/promptRegistry';
+import { evaluateLedgerContract, evaluateLedgerFreshness } from '../src/domain/ledgerContract';
+
+const LEDGER_PATH = 'PROMPT_CHANGES.md';
 
 async function main() {
   const rootDir = process.cwd();
@@ -43,24 +47,77 @@ async function main() {
     `[verify:prompts] Checked ${report.totalEntries} prompt revisions across ${report.totalFilesChecked} files.`
   );
 
-  if (report.ok) {
+  let ledgerMarkdown: string | undefined;
+  try {
+    ledgerMarkdown = await readFile(resolve(rootDir, LEDGER_PATH), 'utf8');
+  } catch {
+    ledgerMarkdown = undefined;
+  }
+  const ledgerReport = evaluateLedgerContract(ledgerMarkdown ?? '', 'prompt-changes');
+  const ledgerViolations = [
+    ...(ledgerMarkdown === undefined
+      ? [{ heading: LEDGER_PATH, issue: `ledger file is missing from ${rootDir}` }]
+      : []),
+    ...ledgerReport.violations,
+  ];
+
+  const freshnessViolations =
+    ledgerMarkdown === undefined
+      ? []
+      : evaluateLedgerFreshness(ledgerMarkdown, formatPromptChangelogMarkdown());
+
+  if (report.ok && ledgerViolations.length === 0 && freshnessViolations.length === 0) {
     console.log(
       `[verify:prompts] PASS — all ${report.passedCount}/${report.totalEntries} prompt invariants are intact.`
+    );
+    console.log(
+      `[verify:prompts] Ledger contract: ${LEDGER_PATH} header intact, ${ledgerReport.contractEntries} contract-shaped entr${
+        ledgerReport.contractEntries === 1 ? 'y' : 'ies'
+      }, ${ledgerReport.totalEntries - ledgerReport.contractEntries} grandfathered.`
+    );
+    console.log(
+      `[verify:prompts] Ledger freshness: ${LEDGER_PATH} matches a fresh render of src/domain/promptRegistry.ts (${ledgerReport.totalEntries} entries).`
     );
     process.exit(0);
   }
 
-  console.error(
-    `[verify:prompts] FAIL — detected ${report.violations.length} prompt drift violation(s):`
-  );
-  for (const v of report.violations) {
-    console.error(`\n  [${v.entryId}] ${v.title}`);
-    console.error(`    File: ${v.filePath}`);
-    console.error(`    Issue: ${v.issue}`);
-    console.error('    Recovery Playbook:');
-    v.restorePlaybook.forEach((step, idx) => {
-      console.error(`      ${idx + 1}. ${step}`);
-    });
+  if (report.violations.length > 0) {
+    console.error(
+      `[verify:prompts] FAIL — detected ${report.violations.length} prompt drift violation(s):`
+    );
+    for (const v of report.violations) {
+      console.error(`\n  [${v.entryId}] ${v.title}`);
+      console.error(`    File: ${v.filePath}`);
+      console.error(`    Issue: ${v.issue}`);
+      console.error('    Recovery Playbook:');
+      v.restorePlaybook.forEach((step, idx) => {
+        console.error(`      ${idx + 1}. ${step}`);
+      });
+    }
+  }
+
+  if (ledgerViolations.length > 0) {
+    console.error(
+      `[verify:prompts] FAIL — ${ledgerViolations.length} append-only ledger contract violation(s) in ${LEDGER_PATH}:`
+    );
+    for (const v of ledgerViolations) {
+      console.error(`  - ${v.heading}: ${v.issue}`);
+    }
+    console.error(
+      '    Restore the header from `formatLedgerHeader(\'prompt-changes\')` in src/domain/ledgerContract.ts and shape new entries as documented there.'
+    );
+  }
+
+  if (freshnessViolations.length > 0) {
+    console.error(
+      `[verify:prompts] FAIL — ${freshnessViolations.length} freshness drift(s) between ${LEDGER_PATH} and src/domain/promptRegistry.ts:`
+    );
+    for (const v of freshnessViolations) {
+      console.error(`  - ${v.heading}: ${v.issue}`);
+    }
+    console.error(
+      '    Fix: `npm run regen:ledgers` — the registry is the source of truth; appended entries are preserved.'
+    );
   }
 
   process.exit(1);

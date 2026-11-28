@@ -1,3 +1,18 @@
+# append-only, oldest first. Never rewrite past entries.
+# Agents: read this before starting work; append an entry when you finish.
+# Format updated 2026-11-28. Entries below predate Status/Rejected; do not backfill them.
+# New entries are generated from the registry — add the entry, then run `npm run regen:ledgers` —
+# and land at the bottom, after the last existing entry, in this shape:
+#
+#   ## YYYY-MM-DD — short imperative title
+#   Why:        the problem this solved
+#   Changed:    path(s), with @ <commit-sha> where the state matters
+#   Rejected:   the alternative considered and why it lost (omit if none)
+#   Status:     active | reverted | superseded by <entry>
+#
+# Escalation: if Rejected needs more than two lines, promote that entry to
+#   docs/decisions/NNNN-slug.md (Context / Decision / Alternatives / Consequences)
+
 # Community Pedigree — App Improvements & GitHub-Overwrite Recovery Log
 
 This document is synchronized with `src/domain/improvementRegistry.ts` and verified automatically
@@ -8,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (57 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (58 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (121)
+## Logged Improvements (122)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2573,3 +2588,19 @@ npm run lint && npm run build
 1. Wrap any consumer that needs conflicts in `<SyncConflictSliceProvider>`; it throws outside one, by design.
 2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
 3. Add the next slice the same way: provider at the route, derived lists memoised inside it.
+
+## 2026-11-28 — Append-Only Ledgers Generated From Their Registries
+Why:        IMPROVEMENTS.md and PROMPT_CHANGES.md were hand-maintained and generated at the same time, so the append-only header vanished on regeneration and their prose silently drifted from the registries.
+Changed:    `IMPROVEMENTS.md`, `PROMPT_CHANGES.md`, `src/domain/ledgerContract.ts`, `src/domain/improvementRegistry.ts`, `src/domain/promptRegistry.ts`, `src/domain/improvements/types.ts`, `src/domain/__tests__/ledgerContract.test.ts`, `scripts/regen-ledgers.ts`, `scripts/verify-improvements.ts`, `scripts/verify-prompts.ts`, `package.json`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`
+Rejected:   Keeping a hand-appended ledger tail that regeneration carries over. It lost because two writers had already drifted ten lines in PRM-003/PRM-004, and once appends moved to the registry the region logic rendered the new contract entry and then cut it back out of the file.
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/ledgerContract.ts` must contain `export function formatLedgerHeader`, `export function evaluateLedgerContract`, `export function evaluateLedgerFreshness` — *The header, the entry-shape gate and the freshness comparison must stay in one module, or the two ledgers drift apart again.*
+- `scripts/verify-improvements.ts` must contain `evaluateLedgerFreshness` — *A ledger checked only for its header still drifts; the improvement verifier must compare the file with the registry render.*
+- `scripts/verify-prompts.ts` must contain `evaluateLedgerFreshness` — *The prompt changelog is generated too — stale prose there is exactly the drift this gate exists to catch.*
+- `package.json` must contain `regen:ledgers` — *Appending means registry plus regeneration; without the command the documented workflow cannot be followed.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `formatLedgerHeader` as the only source of the ledger header and run `npm run regen:ledgers` after every registry change.
+2. Add the ledger fields (`decidedOn`, `status`, `rejected`) to new registry entries; never hand-edit the generated ledgers.

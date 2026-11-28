@@ -13,9 +13,13 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
   evaluateImprovementInvariants,
+  formatImprovementsMarkdown,
   IMPROVEMENTS_REGISTRY,
 } from '../src/domain/improvementRegistry';
 import { INVARIANT_RATIONALES } from '../src/domain/improvements/rationales';
+import { evaluateLedgerContract, evaluateLedgerFreshness } from '../src/domain/ledgerContract';
+
+const LEDGER_PATH = 'IMPROVEMENTS.md';
 
 async function main() {
   const rootDir = process.cwd();
@@ -45,24 +49,80 @@ async function main() {
     `[verify:improvements] Checked ${report.totalEntries} improvements across ${report.totalFilesChecked} files.`
   );
 
-  if (report.ok) {
+  let ledgerMarkdown: string | undefined;
+  try {
+    ledgerMarkdown = await readFile(resolve(rootDir, LEDGER_PATH), 'utf8');
+  } catch {
+    ledgerMarkdown = undefined;
+  }
+  const ledgerReport = evaluateLedgerContract(ledgerMarkdown ?? '', 'improvements');
+  const ledgerViolations = [
+    ...(ledgerMarkdown === undefined
+      ? [{ heading: LEDGER_PATH, issue: `ledger file is missing from ${rootDir}` }]
+      : []),
+    ...ledgerReport.violations,
+  ];
+
+  const freshnessViolations =
+    ledgerMarkdown === undefined
+      ? []
+      : evaluateLedgerFreshness(
+          ledgerMarkdown,
+          formatImprovementsMarkdown(undefined, INVARIANT_RATIONALES)
+        );
+
+  if (report.ok && ledgerViolations.length === 0 && freshnessViolations.length === 0) {
     console.log(
       `[verify:improvements] PASS — all ${report.passedCount}/${report.totalEntries} tracked improvements are intact.`
+    );
+    console.log(
+      `[verify:improvements] Ledger contract: ${LEDGER_PATH} header intact, ${ledgerReport.contractEntries} contract-shaped entr${
+        ledgerReport.contractEntries === 1 ? 'y' : 'ies'
+      }, ${ledgerReport.totalEntries - ledgerReport.contractEntries} grandfathered.`
+    );
+    console.log(
+      `[verify:improvements] Ledger freshness: ${LEDGER_PATH} matches a fresh render of src/domain/improvementRegistry.ts (${ledgerReport.totalEntries} entries).`
     );
     process.exit(0);
   }
 
-  console.error(
-    `[verify:improvements] FAIL — detected ${report.violations.length} drift violation(s):`
-  );
-  for (const v of report.violations) {
-    console.error(`\n  [${v.entryId}] ${v.title}`);
-    console.error(`    File: ${v.filePath}`);
-    console.error(`    Issue: ${v.issue}`);
-    console.error('    Restore Playbook:');
-    v.restorePlaybook.forEach((step, idx) => {
-      console.error(`      ${idx + 1}. ${step}`);
-    });
+  if (report.violations.length > 0) {
+    console.error(
+      `[verify:improvements] FAIL — detected ${report.violations.length} drift violation(s):`
+    );
+    for (const v of report.violations) {
+      console.error(`\n  [${v.entryId}] ${v.title}`);
+      console.error(`    File: ${v.filePath}`);
+      console.error(`    Issue: ${v.issue}`);
+      console.error('    Restore Playbook:');
+      v.restorePlaybook.forEach((step, idx) => {
+        console.error(`      ${idx + 1}. ${step}`);
+      });
+    }
+  }
+
+  if (ledgerViolations.length > 0) {
+    console.error(
+      `[verify:improvements] FAIL — ${ledgerViolations.length} append-only ledger contract violation(s) in ${LEDGER_PATH}:`
+    );
+    for (const v of ledgerViolations) {
+      console.error(`  - ${v.heading}: ${v.issue}`);
+    }
+    console.error(
+      '    Restore the header from `formatLedgerHeader(\'improvements\')` in src/domain/ledgerContract.ts and shape new entries as documented there.'
+    );
+  }
+
+  if (freshnessViolations.length > 0) {
+    console.error(
+      `[verify:improvements] FAIL — ${freshnessViolations.length} freshness drift(s) between ${LEDGER_PATH} and src/domain/improvementRegistry.ts:`
+    );
+    for (const v of freshnessViolations) {
+      console.error(`  - ${v.heading}: ${v.issue}`);
+    }
+    console.error(
+      '    Fix: `npm run regen:ledgers` — the registry is the source of truth; appended entries are preserved.'
+    );
   }
 
   process.exit(1);

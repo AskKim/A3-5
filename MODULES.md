@@ -5,13 +5,13 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 258
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.9%)
+- **Total Non-Test Source Modules:** 259
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.8%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 199 (77.1%)
-  - Domain Engines (`src/domain/`): 87
+- **Content-Specific Modules:** 200 (77.2%)
+  - Domain Engines (`src/domain/`): 88
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
@@ -110,9 +110,9 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (199)
+## 2. Content-Specific Modules (200)
 
-### Domain Engines & Compatibility Facades (`src/domain/`) (87)
+### Domain Engines & Compatibility Facades (`src/domain/`) (88)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -170,6 +170,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/improvements/types.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/inputSanitization.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/judgeNotebook.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/ledgerContract.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/mileageTaxLog.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/milestones.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/models.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |

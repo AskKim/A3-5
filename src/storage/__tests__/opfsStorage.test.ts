@@ -345,6 +345,8 @@ describe('opfsStorage handles, QuotaExceededError recovery & /tmp sweeps', () =>
 });
 
 describe('opfsStorage Backup Vault retention, monthly scheduling & recovery dumps', () => {
+  // 8 monthly + 5 pre_upgrade vault ZIPs take ~0.9s bare but run past vitest's 5s default once v8
+  // coverage instrumentation is on, so this one test carries an explicit budget.
   it('enforces 6 monthly and 3 pre_upgrade retention caps and restores migrated snapshots', async () => {
     installLocalStorageShim();
     const mock = createInMemoryOpfsMock();
@@ -379,7 +381,7 @@ describe('opfsStorage Backup Vault retention, monthly scheduling & recovery dump
     expect(await deleteOpfsVaultBackup(target.key)).toBe(true);
     const afterDelete = await listOpfsVaultBackups();
     expect(afterDelete.some((b) => b.key === target.key)).toBe(false);
-  });
+  }, 20_000);
 
   it('respects 30-day monthly backup cadence', async () => {
     installLocalStorageShim();
