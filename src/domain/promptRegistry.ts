@@ -505,6 +505,77 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
     commitShaOrTag: '7a57c35',
     status: 'active',
   },
+  {
+    id: 'PRM-010',
+    promptFile: 'prompts/resume_backlog_plan_prompt.md',
+    title: 'Resume Backlog Plan Prompt — All-Handoff Scan Revision',
+    category: 'backlog-workflow',
+    lifecycle: 'active',
+    lastEdited: '2026-11-28',
+    intent:
+      'A run ended with `NO PENDING WORK` after closing one handoff, while `docs/plans/handoff-modularity-reusability.yaml` still had seven open steps: the run-end rule only looked at the handoff it was reading.',
+    changeSummary:
+      'The run now ends only when **every** open handoff and plan in `docs/plans/` is empty. Closing a `handoff-*.yaml` is explicitly not completion: the step-2 check lists every open `handoff-*.yaml` before picking one, names the single-file read as the failure mode, and re-scans the directory after each closure to continue the next open handoff.',
+    trackedFiles: ['prompts/resume_backlog_plan_prompt.md'],
+    invariants: [
+      {
+        filePath: 'prompts/resume_backlog_plan_prompt.md',
+        requiredSubstrings: [
+          '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
+          'prompts/master_system_prompt.md',
+          'handoff-*.yaml',
+          'checkpoint, not a turn boundary',
+          're-scan `docs/plans/handoff-*.yaml` after every closure',
+          'List **every** open `handoff-*.yaml`',
+        ],
+        rationale:
+          'The resume path decides when a run is finished, so both the all-files scan and the post-closure re-scan have to live there and cannot be edited away silently.',
+      },
+    ],
+    restorePlaybook: [
+      'Restore the all-handoff run-end rule and the per-closure re-scan sentence; a single-file check is the regression this entry prevents.',
+      'Keep the redirect to `prompts/start_new_backlog_prompt.md` for the case where no handoff and no plan is open.',
+    ],
+    decidedOn: '2026-11-28',
+    version: '2026-11-28',
+    commitShaOrTag: '170a49d',
+    status: 'active',
+  },
+  {
+    id: 'PRM-011',
+    promptFile: 'prompts/start_new_backlog_prompt.md',
+    title: 'Start New Backlog Prompt — Every-Handoff Precheck Revision',
+    category: 'backlog-workflow',
+    lifecycle: 'active',
+    lastEdited: '2026-11-28',
+    intent:
+      'The precheck stopped at the first handoff it found, so a second open handoff could sit untouched while the workflow moved on to a new backlog entry.',
+    changeSummary:
+      'The precheck now says to scan every `handoff-*.yaml`, not just the first, continues the first open handoff and then re-scans for the next, states plainly that a finished file is not a finished directory, and allows a new backlog entry only when no active plan and no open step in any handoff exists.',
+    trackedFiles: ['prompts/start_new_backlog_prompt.md'],
+    invariants: [
+      {
+        filePath: 'prompts/start_new_backlog_prompt.md',
+        requiredSubstrings: [
+          '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
+          'suggestions-backlog.md',
+          'resume_backlog_plan_prompt.md',
+          'handoff-*.yaml',
+          'scan every `handoff-*.yaml`, not just the first',
+          'a finished file is not a finished directory',
+        ],
+        rationale:
+          'The backlog gate is the other place that can start unrelated work while a handoff is still open; the all-files scan and its reason must both survive.',
+      },
+    ],
+    restorePlaybook: [
+      'Restore the all-handoff precheck and the "finished file is not a finished directory" rule, then keep the redirect to the resume prompt for active plans.',
+    ],
+    decidedOn: '2026-11-28',
+    version: '2026-11-28',
+    commitShaOrTag: '170a49d',
+    status: 'active',
+  },
 ];
 
 /**
