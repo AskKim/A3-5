@@ -4558,9 +4558,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/domain/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the Gantt suite could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the Gantt suite could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
@@ -4634,9 +4634,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the pointer-coverage tests could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
@@ -4690,6 +4690,85 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Use `vi.hoisted` for the controller stub and keep mutable capture (the options handed to `createLanP2pSession`) inside that hoisted object — referencing the hoisted object from its own initializer is a TDZ error.',
       'Drive the connected state by calling the captured `onStateChange(\'connected\')` inside `act`, then the Push Outbox button appears.',
       'The component closes the session on unmount, so assert `close` after `unmount()` rather than after a click.',
+    ],
+  },
+  {
+    id: 'IMP-173',
+    title: 'Add the Web Reminder Delivery Port and Persisted Opt-In',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The schedule builder needs a channel: an opt-in that survives reloads, a permission handshake that never nags, and delivery that cannot double-fire when a tab is reopened — with the layering rule that `src/storage` may not import `@features`.',
+    summary:
+      'Two modules instead of one: `src/storage/reminderScheduler.ts` owns the persisted state (`pedigree.reminders.v1`), the OS permission mapping, snoozes and the delivered-key watermark, and shows notifications only when permission is granted, the user opted in, the document is visible and a service worker is ready; `src/app/ports/reminders.tsx` is the composition point that builds the `@features/reminders` schedule and hands the due entries to delivery, exposed as an injectable port with a provider. Delivery is a silent no-op in every failure mode and one failing notification cannot block the batch. 13 storage cases and 4 port cases cover persistence, permission, freeze, dedupe and composition.',
+    files: [
+      'src/storage/reminderScheduler.ts',
+      'src/storage/__tests__/reminderScheduler.test.ts',
+      'src/app/ports/reminders.tsx',
+      'src/app/ports/__tests__/remindersPort.test.ts',
+      'docs/plans/handoff-platform-capabilities.yaml',
+      'EXTRACTION_INVENTORY.md',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/reminderScheduler.ts',
+        requiredSubstrings: ['deliverDueReminders', 'pedigree.reminders.v1'],
+        rationale:
+          'Delivery must stay a single, watermark-guarded path: a second notifier or an uncapped key ring either double-fires or grows storage without bound.',
+      },
+      {
+        filePath: 'src/app/ports/reminders.tsx',
+        requiredSubstrings: ['buildReminderSchedule', 'deliverDueReminders'],
+        rationale:
+          'The app layer is the only place allowed to import both halves; losing either import means the schedule and its channel drifted apart.',
+      },
+    ],
+    restorePlaybook: [
+      'Do not move delivery into `@features/reminders` and do not import `@features` from `src/storage`: the app port is the permitted composition point.',
+      'Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.',
+    ],
+  },
+  {
+    id: 'IMP-174',
+    title: 'Cover the Crash Logger Config, Toasts and Retention',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The crash logger only got exercised incidentally, yet it decides what survives a dying tab: which messages are kept, how long, what a breeder sees as a toast, and whether the next boot reports an unclean exit.',
+    summary:
+      'Adds `crashLogger.test.ts` with `fake-indexeddb` for the verbose store and real jsdom storage for the ring buffer: config defaults against missing/corrupt/invalid values, patches persisted with `supportEmail` forced empty, the Vite websocket noise filter, memory-fault classification for Errors and strings, heap sampling, toast emission with dedupe/dismiss/subscriber notification, verbose-off suppression with errors still recorded, quota reclassification to the memory category, React crash entries, base64 scrubbing and message truncation, newest-first listing with summary counts and clearing, subscriber notification, and the emergency trace compaction/dedupe/clear paths including a corrupt blob. Coverage 54.1% → 68.3%; storage rises to 57.9/44.7/51.9/59.8, so storage floors move to 56/43/50/58 and the global function floor to 49.',
+    files: [
+      'vitest.config.ts',
+      'src/storage/__tests__/crashLogger.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 49', 'lines: 64'],
+        rationale:
+          'This entry carries the current numeric floors; without them the crash-logger suite could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/storage/__tests__/crashLogger.test.ts',
+        requiredSubstrings: ["import 'fake-indexeddb/auto'", 'writeEmergencySessionTraceSync', 'QuotaExceededError'],
+        rationale:
+          'The IDB shim, the synchronous trace write and the quota reclassification are the three behaviours that only exist because a crash destroys the normal async path.',
+      },
+    ],
+    restorePlaybook: [
+      'Import `fake-indexeddb/auto` first: `listDiagnosticLogs`, pruning and clearing all open the verbose store, and without the shim the IDB branches silently fall back to the ring buffer.',
+      '`isMemoryLikeError` only classifies strings and `Error` instances — a plain object stringifies to "[object Object]", so pass a real `RangeError`.',
+      'The config storage key is private; seed it with `updateDiagnosticConfig(...)` and then find the `diagnostic`-named key instead of hard-coding it.',
     ],
   },
 ];

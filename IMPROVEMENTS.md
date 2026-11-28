@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (107 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (109 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (171)
+## Logged Improvements (173)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3258,7 +3258,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.ren
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors; without them the Gantt suite could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/domain/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the Gantt suite could be deleted while the global gate still passed.*
 - `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `role="button"`, `Apply 1 Smart Escalation`, `getByLabelText('Paste peer delta JSON')` — *The bar role, the escalation banner button and the manual-delta input are the three interactive surfaces this suite exists to protect.*
 
 **Restoration Playbook if Overwritten:**
@@ -3284,7 +3284,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.ren
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the pointer-coverage tests could be deleted while the global gate still passed.*
 - `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `COLUMN_PX`, `pointerCancel`, `getByRole('separator')` — *The pixel-to-column constant, the cancel branch and the resize separator are the three pieces that make the drag tests exercise real commit logic instead of a click.*
 
 **Restoration Playbook if Overwritten:**
@@ -3305,3 +3305,30 @@ Status:     active
 1. Use `vi.hoisted` for the controller stub and keep mutable capture (the options handed to `createLanP2pSession`) inside that hoisted object — referencing the hoisted object from its own initializer is a TDZ error.
 2. Drive the connected state by calling the captured `onStateChange('connected')` inside `act`, then the Push Outbox button appears.
 3. The component closes the session on unmount, so assert `close` after `unmount()` rather than after a click.
+
+## 2026-11-28 — Add the Web Reminder Delivery Port and Persisted Opt-In
+Why:        The schedule builder needs a channel: an opt-in that survives reloads, a permission handshake that never nags, and delivery that cannot double-fire when a tab is reopened — with the layering rule that `src/storage` may not import `@features`.
+Changed:    `src/storage/reminderScheduler.ts`, `src/storage/__tests__/reminderScheduler.test.ts`, `src/app/ports/reminders.tsx`, `src/app/ports/__tests__/remindersPort.test.ts`, `docs/plans/handoff-platform-capabilities.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/reminderScheduler.ts` must contain `deliverDueReminders`, `pedigree.reminders.v1` — *Delivery must stay a single, watermark-guarded path: a second notifier or an uncapped key ring either double-fires or grows storage without bound.*
+- `src/app/ports/reminders.tsx` must contain `buildReminderSchedule`, `deliverDueReminders` — *The app layer is the only place allowed to import both halves; losing either import means the schedule and its channel drifted apart.*
+
+**Restoration Playbook if Overwritten:**
+1. Do not move delivery into `@features/reminders` and do not import `@features` from `src/storage`: the app port is the permitted composition point.
+2. Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.
+
+## 2026-11-28 — Cover the Crash Logger Config, Toasts and Retention
+Why:        The crash logger only got exercised incidentally, yet it decides what survives a dying tab: which messages are kept, how long, what a breeder sees as a toast, and whether the next boot reports an unclean exit.
+Changed:    `vitest.config.ts`, `src/storage/__tests__/crashLogger.test.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 49`, `lines: 64` — *This entry carries the current numeric floors; without them the crash-logger suite could be deleted while the gate still passed at the old, lower numbers.*
+- `src/storage/__tests__/crashLogger.test.ts` must contain `import 'fake-indexeddb/auto'`, `writeEmergencySessionTraceSync`, `QuotaExceededError` — *The IDB shim, the synchronous trace write and the quota reclassification are the three behaviours that only exist because a crash destroys the normal async path.*
+
+**Restoration Playbook if Overwritten:**
+1. Import `fake-indexeddb/auto` first: `listDiagnosticLogs`, pruning and clearing all open the verbose store, and without the shim the IDB branches silently fall back to the ring buffer.
+2. `isMemoryLikeError` only classifies strings and `Error` instances — a plain object stringifies to "[object Object]", so pass a real `RangeError`.
+3. The config storage key is private; seed it with `updateDiagnosticConfig(...)` and then find the `diagnostic`-named key instead of hard-coding it.

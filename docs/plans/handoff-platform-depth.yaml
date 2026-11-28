@@ -9,7 +9,7 @@ status:
   - [TODO] vitest.config.ts | Raise each floor to its measured value after the suites land — global and per area (domain/components/storage/hooks/engine) — so one area's gains can never subsidise another's gaps.
   - [TODO] docs/ + registry | MODULES.md / EXTRACTION_INVENTORY.md sync, IMP-### entry per finished milestone, `npm run regen:ledgers`, and one short engineering note listing each new gate and what it fails on.
 constraints:
-  - Build order — this handoff is SECOND and is blocked until `docs/plans/handoff-platform-ingress.yaml` is fully [DONE] and deleted. Do not start it alongside or before that file: the coverage floors, precache/chunk ratchets and bridge conformance spec here must be measured against the post-ingress tree, not a baseline the first handoff is still changing.
+  - Build order — this handoff is SECOND and is blocked until `docs/plans/handoff-platform-capabilities.yaml` is fully [DONE] and deleted. Do not start it alongside or before that file: the coverage floors, precache/chunk ratchets and bridge conformance spec here must be measured against the post-ingress tree, not a baseline the first handoff is still changing.
   - No new user-facing features, no UI copy or layout changes, no dependency additions, upgrades or swaps.
   - Do not start the standalone `/engine` package and do not retitle `src/engine` (owner decision); the remaining [WIP] presenter extraction in handoff-modularity-reusability stays out of scope here.
   - Boot-locked entry files untouched; zero type escapes; `scripts/layer-allowlist.json` stays `[]` and `scripts/ui-storage-coupling-budget.json` stays empty.
