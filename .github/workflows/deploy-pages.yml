@@ -130,6 +130,7 @@ jobs:
             grep -q "${BASE_PATH}assets/" dist/index.html
             grep -q "${BASE_PATH}manifest.webmanifest" dist/index.html
           fi
+          bun scripts/verify-site-identity.ts --base="$BASE_PATH"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -777,13 +777,25 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
   'IMP-064#public/robots.txt#1':
     'public/robots.txt must guide search crawlers to the sitemap.',
   'IMP-064#public/sitemap.xml#1':
-    'public/sitemap.xml must define the canonical GitHub Pages location.',
+    'public/sitemap.xml must define the canonical GitHub Pages location through the build-time site URL token.',
   'IMP-064#public/404.html#1':
     'public/404.html must provide client-side route fallback for GitHub Pages.',
   'IMP-064#.github/workflows/deploy-pages.yml#1':
     'deploy-pages.yml must deploy from both main and release branches and verify SEO artifacts.',
   'IMP-064#package.json#1':
-    'package.json must state the official GitHub Pages homepage URL.',
+    'package.json must state the official GitHub Pages homepage URL and stay the single authored source for every derived URL.',
+  'IMP-119#scripts/siteIdentity.ts#1':
+    'Every emitted site URL, base path and sitemap date must be resolved from one authored homepage value plus the build base path rather than repository-specific literals.',
+  'IMP-119#vite.config.ts#1':
+    'The site-identity plugin must stay registered in Vite so dev HTML and the built public assets share one URL source.',
+  'IMP-119#scripts/verify-site-identity.ts#1':
+    'A gate must compare the emitted canonical, robots sitemap, sitemap location and 404 redirect against the build base instead of trusting the token substitution.',
+  'IMP-119#package.json#1':
+    'The site-identity gate needs a stable npm entry point for CI.',
+  'IMP-119#.github/workflows/ci.yml#1':
+    'CI must run the site-identity gate right after the subpath build, while that build is still in dist.',
+  'IMP-119#.github/workflows/deploy-pages.yml#1':
+    'The Pages deploy must gate on the real base_path it is publishing, not one inferred from source.',
   'IMP-065#vite.config.ts#1':
     'Dev sourcemap stripping must only remove trailing EOF comments and skip Content-Length mutation on encoded responses.',
   'IMP-065#index.html#1':

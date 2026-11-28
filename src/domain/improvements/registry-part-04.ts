@@ -938,7 +938,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
     userIntent:
       'Optimize all GitHub Pages for utility, setup, social preview cards, and search engine discoverability.',
     summary:
-      'Enhances GitHub Pages delivery and SEO discovery: configures GitHub repository description, homepage URL, and 16 topics; optimizes index.html with keyword-rich meta tags, canonical link, Open Graph preview tags, Twitter summary card, and Schema.org WebApplication structured data; creates public/robots.txt, public/sitemap.xml, and public/404.html SPA router fallback; updates deploy-pages.yml to trigger on both main and release branches while verifying robots.txt, sitemap.xml, and 404.html in distribution; and adds GitHub Pages status badges and direct web app launch links to README.md and package.json.',
+      'Enhances GitHub Pages delivery and SEO discovery: configures GitHub repository description, homepage URL, and 16 topics; optimizes index.html with keyword-rich meta tags, canonical link, Open Graph preview tags, Twitter summary card, and Schema.org WebApplication structured data resolved from `%SITE_URL%` tokens instead of a hardcoded path; creates public/robots.txt, public/sitemap.xml, and public/404.html SPA router fallback templates; updates deploy-pages.yml to trigger on both main and release branches while verifying robots.txt, sitemap.xml, and 404.html in distribution; and adds GitHub Pages status badges and direct web app launch links to README.md and package.json.',
     files: [
       'index.html',
       'public/robots.txt',
@@ -952,7 +952,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       {
         filePath: 'index.html',
         requiredSubstrings: [
-          'https://askkim.github.io/Pedigree/',
+          '%SITE_URL%',
           'application/ld+json',
           'og:image',
           'twitter:card',
@@ -961,11 +961,11 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       },
       {
         filePath: 'public/robots.txt',
-        requiredSubstrings: ['User-agent: *', 'Sitemap: https://askkim.github.io/Pedigree/sitemap.xml'],
+        requiredSubstrings: ['User-agent: *', 'Sitemap: %SITE_URL%sitemap.xml'],
       },
       {
         filePath: 'public/sitemap.xml',
-        requiredSubstrings: ['<loc>https://askkim.github.io/Pedigree/</loc>'],
+        requiredSubstrings: ['<loc>%SITE_URL%</loc>'],
       },
       {
         filePath: 'public/404.html',
@@ -981,10 +981,10 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Preserve SEO meta tags, canonical link, Open Graph, and JSON-LD structured data in `index.html`.',
-      'Keep `public/robots.txt`, `public/sitemap.xml`, and `public/404.html` in place.',
+      'Preserve SEO meta tags, canonical link, Open Graph, and JSON-LD structured data in `index.html`, keeping the absolute URLs as `%SITE_URL%` tokens.',
+      'Keep `public/robots.txt`, `public/sitemap.xml`, and `public/404.html` in place as `%SITE_URL%` / `%SITE_BASE%` templates; `scripts/siteIdentity.ts` fills them during the build.',
       'Ensure `.github/workflows/deploy-pages.yml` triggers on `main` and `release` and verifies `dist/robots.txt` and `dist/sitemap.xml`.',
-      'Keep `"homepage": "https://askkim.github.io/Pedigree/"` in `package.json` and live links in `README.md`.',
+      'Keep `"homepage"` in `package.json` as the one authored site URL and live links in `README.md`; every other URL is derived from it.',
     ],
   },
   {
