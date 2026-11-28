@@ -4044,4 +4044,39 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Regenerate the ledger with `npx tsx scripts/audit-layers.ts --write-ui-budget` after a migration; an empty file is the goal, and `verify:layers` fails if the file is stale in either direction.',
     ],
   },
+  {
+    id: 'IMP-157',
+    title: 'Prove the Framework Layers Stand Alone Before Any /engine Extraction',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The /engine milestone had one unproven claim left: that `src/engine`, `src/features` and `src/utils` could travel to a standalone package unchanged. `verify:extraction` only typechecked the sources, so three UI tests filed under `src/utils/__tests__` still imported `PrintPreviewModal`, `SearchableParentPicker` and the crash logger and would have broken the moment the directory was copied.',
+    summary:
+      'Those three tests now live in `src/components/__tests__` next to their subjects, and `scripts/rehearse-engine-extraction.ts` additionally fails when any file in the extracted layers — tests included — resolves a relative import into `src/domain`, `src/app`, `src/storage`, `src/hooks` or `src/components`, which `tsc` could not catch because `tsconfig.engine.json` excludes `__tests__`. The framework layers now name no domain, application, storage, hook or component file at all, so their standalone compile is a real isolation proof rather than a partial one.',
+    files: [
+      'scripts/rehearse-engine-extraction.ts',
+      'src/components/__tests__/printPreviewFileActions.test.ts',
+      'src/components/__tests__/printPreviewHelpers.test.ts',
+      'src/components/__tests__/parentPickerAndMemory.test.ts',
+      'EXTRACTION_INVENTORY.md',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/rehearse-engine-extraction.ts',
+        requiredSubstrings: ['FORBIDDEN_LAYER_RE', 'collectForeignImports'],
+        rationale:
+          'The extraction rehearsal must name the reach-back check, or a framework test can quietly re-acquire a component dependency.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep UI tests in `src/components/__tests__`; a test that renders or asserts on a component is a UI test no matter which pure helper it covers.',
+      'Run `npm run verify:extraction` after adding any file to `src/engine`, `src/features` or `src/utils`; it is the only gate that sees test-only imports inside the framework layers.',
+    ],
+  },
 ];

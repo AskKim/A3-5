@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (91 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (92 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (155)
+## Logged Improvements (156)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3081,3 +3081,15 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Never import `src/storage/*` from `src/components/*` at runtime: add the capability to an `@app/ports` module and import that instead (type-only imports are already exempt).
 2. Regenerate the ledger with `npx tsx scripts/audit-layers.ts --write-ui-budget` after a migration; an empty file is the goal, and `verify:layers` fails if the file is stale in either direction.
+
+## 2026-11-28 — Prove the Framework Layers Stand Alone Before Any /engine Extraction
+Why:        The /engine milestone had one unproven claim left: that `src/engine`, `src/features` and `src/utils` could travel to a standalone package unchanged. `verify:extraction` only typechecked the sources, so three UI tests filed under `src/utils/__tests__` still imported `PrintPreviewModal`, `SearchableParentPicker` and the crash logger and would have broken the moment the directory was copied.
+Changed:    `scripts/rehearse-engine-extraction.ts`, `src/components/__tests__/printPreviewFileActions.test.ts`, `src/components/__tests__/printPreviewHelpers.test.ts`, `src/components/__tests__/parentPickerAndMemory.test.ts`, `EXTRACTION_INVENTORY.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `docs/plans/handoff-modularity-reusability.yaml`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/rehearse-engine-extraction.ts` must contain `FORBIDDEN_LAYER_RE`, `collectForeignImports` — *The extraction rehearsal must name the reach-back check, or a framework test can quietly re-acquire a component dependency.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep UI tests in `src/components/__tests__`; a test that renders or asserts on a component is a UI test no matter which pure helper it covers.
+2. Run `npm run verify:extraction` after adding any file to `src/engine`, `src/features` or `src/utils`; it is the only gate that sees test-only imports inside the framework layers.

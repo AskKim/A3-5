@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-24 (delta appended 2026-11-28)  
 **Target Architecture:** Alpha 3 Three-Layer Modularity (`@engine/*`, `@features/*`, `@app/*`) — NEON Phases 1 & 2 Baseline  
-**Status:** 100% non-test file classification across `src/domain/`, `src/features/`, `src/app/`, `src/storage/`, and `src/utils/`; boot-entry lock verified; zero domain terms in shared/reusable modules; standalone `engine` (`/engine`) extraction deferred until Phase 7.
+**Status:** 100% non-test file classification across `src/domain/`, `src/features/`, `src/app/`, `src/storage/`, and `src/utils/`; boot-entry lock verified; zero domain terms in shared/reusable modules; zero component→storage runtime edges; `src/engine`, `src/features` and `src/utils` name no domain/app/storage/hooks/components code in sources or tests, so they are extraction-ready. Standalone `engine` (`/engine`) package creation itself is an owner scope decision (ROADMAP §2 places it out of scope for v0.1.0-alpha.3).
 
 ---
 
@@ -377,3 +377,15 @@ See `src/hooks/barnStore/README.md` for the map and the contract rules.
 `docs/README.md` (index), `docs/contracts/barn-store-contract.md`, `docs/decisions/0001-destructive-restore.md`,
 and the layer READMEs in `src/engine/`, `src/features/`, `src/storage/`, `src/hooks/barnStore/`,
 `src/domain/improvements/` and `scripts/`.
+
+### 8.7 Extraction-readiness closure (IMP-156, IMP-157)
+
+- `src/app/ports/` grew from 4 to 20 capability ports; every remaining component→storage runtime
+  import moved behind one of them and `scripts/ui-storage-coupling-budget.json` is now `[]`.
+- Three UI tests moved out of the framework layer to sit with the components they exercise:
+  `printPreviewFileActions.test.ts`, `printPreviewHelpers.test.ts` and `parentPickerAndMemory.test.ts`
+  now live in `src/components/__tests__/`.
+- `scripts/rehearse-engine-extraction.ts` (`verify:extraction`) now also fails when any file in
+  `src/engine`, `src/features` or `src/utils` — tests included — imports from `src/domain`,
+  `src/app`, `src/storage`, `src/hooks` or `src/components`: the reach-back `tsc` cannot see, because
+  it skips `__tests__`.
