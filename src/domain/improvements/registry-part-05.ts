@@ -3315,4 +3315,106 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'A new file format imports through `installImportedSnapshot`; decode it, then pass `mode` and the safety note, and word the toast in the caller.',
     ],
   },
+  {
+    id: 'IMP-141',
+    title: 'Barn Store Cascade Controllers and One Shared Slice-Port Bundle',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The remaining store actions that touch more than one row (show legs, feed-batch allocations, reservation waitlist sync, task calendar export) still hand-rolled the whole queue/diff/reload sequence, and every one of the nine `use*` slices was wired by hand with the same ten capabilities — a capability added at one call site could be silently missing at another.',
+    summary:
+      'Extends `entityCrudController` with a `cascade` hook (related rows written before the outbox flush, sharing the primary row timestamp and operations batch), an `afterSave` hook whose text is appended to the toast, and an `onAborted` hook for builders that reject a draft; delete specs gain `cascade` and an optional `message`. Shows now delegate their leg-counter cascade, feed batches their linked-allocation cascade, feed allocations their batch/cage stock cascade, reservations their waitlist status cascade and tasks their calendar-export side effect, all through the one controller. Adds `src/hooks/barnStore/slicePorts.ts` (`SliceCorePorts`, `SLICE_CORE_PORT_KEYS`, `createSliceCorePorts`) and spreads one memoised `sliceCorePorts` bundle into all nine slices, so a shared capability is wired once; `slicePorts.test.ts` proves at compile time that every slice\'s declared core capabilities are satisfied by the bundle. `useBarnStore.ts` drops 6,986 → 6,743 lines (7,676 at the start of this phase) with the 200-key contract snapshot unchanged.',
+    files: [
+      'src/hooks/barnStore/entityCrudController.ts',
+      'src/hooks/barnStore/slicePorts.ts',
+      'src/hooks/__tests__/slicePorts.test.ts',
+      'src/hooks/__tests__/entityCrudController.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/slicePorts.ts',
+        requiredSubstrings: ['SliceCorePorts', 'SLICE_CORE_PORT_KEYS', 'createSliceCorePorts'],
+        rationale:
+          'The shared bundle and its key list are the wiring contract; a slice that needs a new shared capability must take it from here, not from the store.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/entityCrudController.ts',
+        requiredSubstrings: ['EntitySaveCascadeContext', 'EntityDeleteCascadeContext', 'afterSave'],
+        rationale:
+          'Cascades must run inside the same queue slot and operations batch as the row that caused them, or a crash between the two writes leaves related rows permanently out of step.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['sliceCorePorts', 'applyShowLegDeltas'],
+        rationale:
+          'The store must keep spreading the shared bundle into every slice and keep show leg maths in one helper used by both save and delete.',
+      },
+    ],
+    restorePlaybook: [
+      'An action that writes related rows belongs on the controller with a `cascade`; that is how the related rows share the primary row timestamp, revision allocation and outbox batch.',
+      'Never wire a slice by hand: spread `sliceCorePorts` and add only that slice\'s own capabilities.',
+      'A slice that needs a new shared capability adds it to `SliceCorePorts` and `SLICE_CORE_PORT_KEYS`; the test tuple then fails until every slice agrees on the shape.',
+    ],
+  },
+  {
+    id: 'IMP-142',
+    title: 'Retire the Domain Binary/Archive Compatibility Shims',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      '`src/domain/binaryEncoding.ts` and `src/domain/importers/archiveAndCsvUtils.ts` were eight-line re-export shims kept alive for six callers plus three tests. They advertised the engine path as optional, so new code could keep importing through the domain and quietly re-couple the domain layer to what was meant to be the extracted engine surface.',
+    summary:
+      'Every caller now imports `@engine/binaryEncoding` and `@engine/codecs/archiveAndCsvUtils` directly: the four importer consumers (`herdBossImporter`, `pedigreeOcrParser`, `universalPedigreeImporter`, `csvColumnMapper`), `backupVault`, `backupArchive`, and the three test files. Both shim files are deleted, IMP-052\'s invariant on `backupVault.ts` now requires the engine path, and `EXTRACTION_INVENTORY.md` records the retirement instead of listing the shims as pending.',
+    files: [
+      'src/domain/binaryEncoding.ts',
+      'src/domain/importers/archiveAndCsvUtils.ts',
+      'src/domain/importers/herdBossImporter.ts',
+      'src/domain/importers/pedigreeOcrParser.ts',
+      'src/domain/importers/universalPedigreeImporter.ts',
+      'src/domain/importers/csvColumnMapper.ts',
+      'src/domain/backupVault.ts',
+      'src/domain/backupArchive.ts',
+      'EXTRACTION_INVENTORY.md',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'src/domain/improvements/registry-part-04.ts',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/backupVault.ts',
+        requiredSubstrings: ["from '@engine/binaryEncoding'"],
+        rationale:
+          'The vault must import encoding helpers straight from the engine module; the domain re-export that used to sit in between is gone.',
+      },
+      {
+        filePath: 'src/domain/importers/universalPedigreeImporter.ts',
+        requiredSubstrings: ["from '@engine/codecs/archiveAndCsvUtils'"],
+        rationale:
+          'Importers read archive/CSV helpers from the engine codec module, which is what makes the domain layer droppable later.',
+      },
+      {
+        filePath: 'EXTRACTION_INVENTORY.md',
+        requiredSubstrings: ['retired in IMP-142'],
+        rationale:
+          'The inventory must not advertise deleted shims as available entry points.',
+      },
+    ],
+    restorePlaybook: [
+      'Import `@engine/binaryEncoding` and `@engine/codecs/archiveAndCsvUtils` directly; do not recreate a domain re-export.',
+      'Before deleting a shim, codemod every caller (production and test) in one change; a partially migrated shim is worse than none.',
+      'Update the inventory and any registry invariant that names the old path in the same change, or the ledger advertises a file that no longer exists.',
+    ],
+  },
 ];

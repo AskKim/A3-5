@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { normalizeFlexibleDateIso } from '../importers/archiveAndCsvUtils';
+import { normalizeFlexibleDateIso } from '@engine/codecs/archiveAndCsvUtils';
 import {
   CURRENT_APP_VERSION,
   parseStatusManifestJson,

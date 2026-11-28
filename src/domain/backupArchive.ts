@@ -25,7 +25,7 @@ import {
   binaryToDataUrl,
   bytesToBase64Pure,
   dataUrlToBinary,
-} from './binaryEncoding';
+} from '@engine/binaryEncoding';
 
 export { base64ToBytesPure, binaryToDataUrl, bytesToBase64Pure, dataUrlToBinary };
 import {

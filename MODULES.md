@@ -5,17 +5,17 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 267
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.1%)
+- **Total Non-Test Source Modules:** 266
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.2%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 208 (77.9%)
-  - Domain Engines (`src/domain/`): 89
+- **Content-Specific Modules:** 207 (77.8%)
+  - Domain Engines (`src/domain/`): 87
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 29
   - Native Bridge (`src/native/`): 1
-  - State Store Hook (`src/hooks/`): 24
+  - State Store Hook (`src/hooks/`): 25
   - UI Screens & Modals (`src/components/`): 53
   - Root Entry & Styles (`src/`): 3
 
@@ -110,9 +110,9 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (208)
+## 2. Content-Specific Modules (207)
 
-### Domain Engines & Compatibility Facades (`src/domain/`) (89)
+### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -128,7 +128,6 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/barnJournal.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/barnScheduler.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/batchPrint.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
-| `src/domain/binaryEncoding.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/breederShowcase.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/breedingCalendar.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/calendarExport.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
@@ -150,7 +149,6 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/growthAnalytics.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/healthReference.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/imageOptimizationSpec.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
-| `src/domain/importers/archiveAndCsvUtils.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/importers/conflictResolver.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/importers/csvColumnMapper.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/importers/csvStarterTemplate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
@@ -260,7 +258,7 @@ npx tsx scripts/list-modules.ts --check
 | --- | --- |
 | `src/native/pedigreeBridge.ts` | Content-specific native Android/iOS WebView container bridge (`pedigreeNative`), consumed via `@engine/bridge` contracts. |
 
-### Content-Specific State Controller Hook (`src/hooks/`) (24)
+### Content-Specific State Controller Hook (`src/hooks/`) (25)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -269,6 +267,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/hooks/barnStore/entityCrudController.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/photoCacheBudget.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/restoreOrchestrator.ts` | Content-specific application state hook. |
+| `src/hooks/barnStore/slicePorts.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/speciesSelectors.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storeFacades.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storePorts.ts` | Content-specific application state hook. |

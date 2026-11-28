@@ -49,6 +49,25 @@ export interface EntityCrudPorts {
   generateId: () => string;
 }
 
+/** Everything a cascade needs to write related rows in the same queue slot. */
+export interface EntitySaveCascadeContext<TRow extends SyncableRow> {
+  row: TRow;
+  prev: TRow | undefined;
+  snapshot: BarnDatabaseSnapshot | null;
+  /** Timestamp the primary row was stamped with; related rows must share it. */
+  timestamp: string;
+  /** Collects the operations for the related rows the cascade wrote. */
+  ops: SyncOperation[];
+}
+
+/** Everything a delete cascade needs; the row may already be gone from the snapshot. */
+export interface EntityDeleteCascadeContext<TRow extends SyncableRow> {
+  target: TRow | undefined;
+  snapshot: BarnDatabaseSnapshot | null;
+  timestamp: string;
+  ops: SyncOperation[];
+}
+
 /** How to persist one collection's rows. */
 export interface EntitySaveSpec<TRow extends SyncableRow, TDraft> {
   entityType: SyncEntityType;
@@ -61,9 +80,19 @@ export interface EntitySaveSpec<TRow extends SyncableRow, TDraft> {
   build: (
     draft: TDraft,
     base: EntityRowBase,
-    snapshot: BarnDatabaseSnapshot | null
+    snapshot: BarnDatabaseSnapshot | null,
+    prev: TRow | undefined
   ) => TRow | null | Promise<TRow | null>;
   persist: (row: TRow) => Promise<void>;
+  /**
+   * Related rows written after this one but before the outbox flush (leg counters, stock levels,
+   * linked records). Push their operations into `ops` so they ship in the same batch.
+   */
+  cascade?: (context: EntitySaveCascadeContext<TRow>) => Promise<void>;
+  /** Runs after the reload and before the toast; its text is appended to the toast. */
+  afterSave?: (context: EntitySaveCascadeContext<TRow>) => Promise<string | undefined>;
+  /** Called when `build` returns null, so the caller can explain why nothing was saved. */
+  onAborted?: (snapshot: BarnDatabaseSnapshot | null) => void;
   /** Toast copy for a successful save. */
   describe: (row: TRow) => string;
   /** Action label reported when the write throws. */
@@ -79,9 +108,11 @@ export interface EntityDeleteSpec<TRow extends SyncableRow> {
   entityType: SyncEntityType;
   readRows: (snapshot: BarnDatabaseSnapshot | null) => TRow[] | undefined;
   remove: (id: string) => Promise<void>;
-  /** Toast copy for a successful delete. */
-  message: string;
+  /** Toast copy for a successful delete; omit when the action stays silent (sync-style writes). */
+  message?: string;
   failureLabel: string;
+  /** Related rows to remove or rewrite after the tombstone (linked allocations, show legs). */
+  cascade?: (context: EntityDeleteCascadeContext<TRow>) => Promise<void>;
 }
 
 /**
@@ -104,13 +135,18 @@ export async function saveEntityRecord<TRow extends SyncableRow, TDraft>(
     const row = await spec.build(
       draft,
       { id, _rev: rev, createdAt: prev?.createdAt || ts, updatedAt: ts },
-      latestSnapshot
+      latestSnapshot,
+      prev
     );
-    if (!row) return null;
+    if (!row) {
+      spec.onAborted?.(latestSnapshot);
+      return null;
+    }
     try {
       await spec.persist(row);
-      await ports.recordOutboxOps(
-        diffEntityFieldsToOperations({
+      const context = { row, prev, snapshot: latestSnapshot, timestamp: ts, ops: [] as SyncOperation[] };
+      context.ops.push(
+        ...diffEntityFieldsToOperations({
           entityType: spec.entityType,
           previous: prev,
           next: prev || !spec.outboxRow ? row : spec.outboxRow(row),
@@ -121,8 +157,11 @@ export async function saveEntityRecord<TRow extends SyncableRow, TDraft>(
           recordRev: rev,
         })
       );
+      await spec.cascade?.(context);
+      await ports.recordOutboxOps(context.ops);
       await ports.reloadFromAdapter();
-      ports.notify(spec.describe(row));
+      const suffix = await spec.afterSave?.(context);
+      ports.notify(suffix ? `${spec.describe(row)} ${suffix}` : spec.describe(row));
       return row;
     } catch (err) {
       ports.reportPersistenceFailure(spec.failureLabel(row), err);
@@ -142,20 +181,27 @@ export async function deleteEntityRecord<TRow extends SyncableRow>(
     const ts = ports.nowIsoUtc();
     try {
       await spec.remove(id);
-      await ports.recordOutboxOps([
-        createOutboxOperation({
-          entityType: spec.entityType,
-          entityUuid: id,
-          deviceId: ports.deviceId,
-          logicalCounter: ports.allocateNextLogicalCounter(),
-          fieldName: '__delete__',
-          newValue: true,
-          timestamp: ts,
-          recordRev: ports.nextEntityRev(id, target?._rev),
-        }),
-      ]);
+      const context = {
+        target,
+        snapshot: ports.snapshotRef.current,
+        timestamp: ts,
+        ops: [
+          createOutboxOperation({
+            entityType: spec.entityType,
+            entityUuid: id,
+            deviceId: ports.deviceId,
+            logicalCounter: ports.allocateNextLogicalCounter(),
+            fieldName: '__delete__',
+            newValue: true,
+            timestamp: ts,
+            recordRev: ports.nextEntityRev(id, target?._rev),
+          }),
+        ],
+      };
+      await spec.cascade?.(context);
+      await ports.recordOutboxOps(context.ops);
       await ports.reloadFromAdapter();
-      ports.notify(spec.message);
+      if (spec.message) ports.notify(spec.message);
     } catch (err) {
       ports.reportPersistenceFailure(spec.failureLabel, err);
     }

@@ -9,7 +9,7 @@
  */
 
 import { isSafeRecordKey, sanitizeSingleLineText } from '../inputSanitization';
-import { normalizeColumnKey } from './archiveAndCsvUtils';
+import { normalizeColumnKey } from '@engine/codecs/archiveAndCsvUtils';
 import type {
   CsvColumnMappingSelection,
   CsvColumnPreviewItem,

@@ -12,7 +12,7 @@
 
 import { strFromU8, strToU8, zipSync, Zippable } from 'fflate';
 import type { BackupPhotoManifestEntry } from './backupArchive';
-import { binaryToDataUrl, dataUrlToBinary } from './binaryEncoding';
+import { binaryToDataUrl, dataUrlToBinary } from '@engine/binaryEncoding';
 import {
   isSvgImageInput,
   MAX_JSON_BACKUP_BYTES,

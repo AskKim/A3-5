@@ -333,6 +333,7 @@ import {
   installImportedSnapshot,
   type BackupImportPorts,
 } from './barnStore/backupImportController';
+import { createSliceCorePorts, type SliceCorePorts } from './barnStore/slicePorts';
 
 export type WorkspaceRoute =
   | 'home'
@@ -1737,6 +1738,35 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     void refreshVaultAndArchives();
   }, [refreshStorageStatus, refreshVaultAndArchives]);
 
+  /**
+   * Shared slice wiring: every `use*` slice takes these ten capabilities from one bundle, so a
+   * capability cannot be wired into one call site and silently missed at another.
+   */
+  const sliceCorePorts = useMemo<SliceCorePorts>(
+    () =>
+      createSliceCorePorts({
+        enqueueStoreMutation,
+        snapshotRef,
+        deviceId,
+        nextEntityRev,
+        allocateNextLogicalCounter,
+        nowIsoUtc: getAdjustedNowIsoUtc,
+        recordOutboxOps,
+        reloadFromAdapter,
+        notify,
+        reportPersistenceFailure,
+      }),
+    [
+      deviceId,
+      nextEntityRev,
+      enqueueStoreMutation,
+      recordOutboxOps,
+      reloadFromAdapter,
+      notify,
+      reportPersistenceFailure,
+    ]
+  );
+
   const reloadFromAdapterSilently = useCallback(async () => {
     const adapter = adapterRef.current;
     if (!adapter) return;
@@ -1985,16 +2015,13 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
 
   const { ignoreTaskAlertsPermanently, clearTaskAlertGroup, dismissSpeciesMemoAlert } =
     useAlertDismissals({
-      enqueueStoreMutation,
+      ...sliceCorePorts,
       updateSettingsInternal,
-      snapshotRef,
-      notify,
     });
 
   const { recordBackupExport, snoozeBackupReminder } = useBackupReminderActions({
-    enqueueStoreMutation,
+    ...sliceCorePorts,
     updateSettingsInternal,
-    snapshotRef,
     setLocalLastBackupMeta,
     setLocalSnoozedUntilMs,
   });
@@ -2555,19 +2582,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   );
 
   const { saveAnimal, archiveAnimals, deleteAnimalsBatch, deleteAnimal } = useAnimalsCrud({
-    enqueueStoreMutation,
-    snapshotRef,
+    ...sliceCorePorts,
     fallbackSnapshot: snapshot,
     adapter: animalsCrudAdapter,
-    deviceId,
-    nextEntityRev,
-    allocateNextLogicalCounter,
-    nowIsoUtc: getAdjustedNowIsoUtc,
-    recordOutboxOps,
-    reloadFromAdapter,
     reloadFromAdapterSilently,
-    notify,
-    reportPersistenceFailure,
     rememberPhoto: (photoId, dataUrl) => rememberPhoto(photoCacheRef, photoId, dataUrl),
     forgetPhoto: (photoId) => forgetPhoto(photoCacheRef, photoId),
     saveSafetyRollingBackup,
@@ -2766,17 +2784,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     updateAnimalPhotoCaption,
     deleteAnimalPhoto,
   } = usePhotoMutations({
-    enqueueStoreMutation,
-    snapshotRef,
+    ...sliceCorePorts,
     adapter: photoMutationAdapter,
-    deviceId,
-    nextEntityRev,
-    allocateNextLogicalCounter,
-    nowIsoUtc: getAdjustedNowIsoUtc,
-    recordOutboxOps,
-    reloadFromAdapter,
-    notify,
-    reportPersistenceFailure,
     rememberPhoto: (photoId, dataUrl) => rememberPhoto(photoCacheRef, photoId, dataUrl),
     forgetPhoto: (photoId) => forgetPhoto(photoCacheRef, photoId),
   });
@@ -2785,30 +2794,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
    * and copy, so the queue/revision/outbox/reload order lives in `entityCrudController`.
    */
   const entityCrudPorts = useMemo<EntityCrudPorts>(
-    () => ({
-      snapshotRef,
-      fallbackSnapshot: () => snapshot,
-      enqueueStoreMutation,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-      deviceId,
-      allocateNextLogicalCounter,
-      nowIsoUtc: getAdjustedNowIsoUtc,
-      generateId: generateUuid,
-    }),
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    () => ({ ...sliceCorePorts, fallbackSnapshot: () => snapshot, generateId: generateUuid }),
+    [sliceCorePorts, snapshot]
   );
 
   const saveCage = useCallback(
@@ -2925,19 +2912,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     completeBreedingTaskWithOutcome,
     deleteBreeding,
   } = useBreeding({
+    ...sliceCorePorts,
     snapshot,
-    snapshotRef,
     activeSpeciesName,
-    enqueueStoreMutation,
     adapter: breedingAdapter,
-    deviceId,
-    nextEntityRev,
-    allocateNextLogicalCounter,
-    nowIsoUtc: getAdjustedNowIsoUtc,
-    recordOutboxOps,
-    reloadFromAdapter,
-    notify,
-    reportPersistenceFailure,
     isOnline: getEffectiveOnlineStatus,
     setPendingCalendarSync: (payload) => setPendingCalendarSync(payload),
   });
@@ -2946,100 +2924,55 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     async (
       taskDraft: Omit<BarnTask, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = taskDraft.id
-          ? currentSnapshot?.tasks.find((t) => t.id === taskDraft.id)
-          : undefined;
-        const taskId = taskDraft.id || generateUuid();
-        const taskRev = nextEntityRev(taskId, prev?._rev);
-        const task: BarnTask = {
-          ...taskDraft,
-          id: taskId,
-          title: taskDraft.title.trim(),
-          _rev: taskRev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveTask(task);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'task',
-              previous: prev,
-              next: task,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: taskRev,
-            })
-          );
-          await reloadFromAdapter();
-
-          let calendarNote = '';
-          if (!prev && task.dueDateIso) {
-            const calConfig = normalizeCalendarSyncSettings(
-              currentSnapshot?.settings.calendarSync
-            );
-            if (calConfig.autoAddNewTasks && calConfig.includeManualTasks) {
-              const isOnline = getEffectiveOnlineStatus();
-              if (calConfig.deliveryMode === 'google_calendar' && isOnline) {
-                setPendingCalendarSync({
-                  tasks: [task],
-                  filenameHint: formatSystemTaskTitle(
-                    task,
-                    calConfig,
-                    currentSnapshot ?? undefined
-                  ),
-                });
-                calendarNote = ' Ready to add to Google Calendar.';
-              } else {
-                const appBaseUrl =
-                  typeof window !== 'undefined'
-                    ? `${window.location.origin}${window.location.pathname}`
-                    : '';
-                const ics = buildIcsCalendarForTasks(
-                  [task],
-                  calConfig,
-                  currentSnapshot?.settings.barnName,
-                  undefined,
-                  {
-                    animals: currentSnapshot?.animals,
-                    breedings: currentSnapshot?.breedings,
-                    speciesProfiles: currentSnapshot?.speciesProfiles,
-                    appBaseUrl,
-                  }
-                );
-                if (ics) {
-                  await downloadTextFile(ics.filename, ics.icsContent, 'text/calendar');
-                  calendarNote =
-                    calConfig.deliveryMode === 'google_calendar' && !isOnline
-                      ? ' Offline — downloaded .ICS fallback.'
-                      : ' Exported to calendar (.ICS).';
-                }
-              }
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'task',
+          readRows: (snap) => snap?.tasks,
+          build: (task, base) => ({ ...task, ...base, title: task.title.trim() }),
+          persist: (task) => adapterRef.current!.saveTask(task),
+          describe: () => 'Barn chore saved.',
+          failureLabel: () => 'save barn chore',
+          afterSave: async ({ row: task, prev, snapshot: currentSnapshot }) => {
+            if (prev || !task.dueDateIso) return undefined;
+            const calConfig = normalizeCalendarSyncSettings(currentSnapshot?.settings.calendarSync);
+            if (!calConfig.autoAddNewTasks || !calConfig.includeManualTasks) return undefined;
+            const isOnline = getEffectiveOnlineStatus();
+            if (calConfig.deliveryMode === 'google_calendar' && isOnline) {
+              setPendingCalendarSync({
+                tasks: [task],
+                filenameHint: formatSystemTaskTitle(task, calConfig, currentSnapshot ?? undefined),
+              });
+              return 'Ready to add to Google Calendar.';
             }
-          }
-
-          notify(calendarNote ? `Barn chore saved.${calendarNote}` : 'Barn chore saved.');
-          return true;
-        } catch (err) {
-          reportPersistenceFailure('save barn chore', err);
-          return false;
-        }
-      });
+            const appBaseUrl =
+              typeof window !== 'undefined'
+                ? `${window.location.origin}${window.location.pathname}`
+                : '';
+            const ics = buildIcsCalendarForTasks(
+              [task],
+              calConfig,
+              currentSnapshot?.settings.barnName,
+              undefined,
+              {
+                animals: currentSnapshot?.animals,
+                breedings: currentSnapshot?.breedings,
+                speciesProfiles: currentSnapshot?.speciesProfiles,
+                appBaseUrl,
+              }
+            );
+            if (!ics) return undefined;
+            await downloadTextFile(ics.filename, ics.icsContent, 'text/calendar');
+            return calConfig.deliveryMode === 'google_calendar' && !isOnline
+              ? 'Offline — downloaded .ICS fallback.'
+              : 'Exported to calendar (.ICS).';
+          },
+        },
+        taskDraft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const downloadOfflineIcsForTasks = useCallback(
@@ -3449,32 +3382,18 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   );
 
   const deleteTask = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = currentSnapshot?.tasks.find((t) => t.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteTask(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'task',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-        } catch (err) {
-          reportPersistenceFailure('delete task', err);
-        }
-      });
-    },
-    [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, reportPersistenceFailure]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'task',
+          readRows: (snap) => snap?.tasks,
+          remove: (taskId) => adapterRef.current!.deleteTask(taskId),
+          failureLabel: 'delete task',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const addCareLog = useCallback(
@@ -3667,155 +3586,97 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, reportPersistenceFailure]
   );
 
+  /** Show results drive each entered animal's leg counter; save and delete share this cascade. */
+  const applyShowLegDeltas = useCallback(
+    async (
+      previousResults: ShowEvent['results'],
+      nextResults: ShowEvent['results'],
+      snapshotForLegs: BarnDatabaseSnapshot | null,
+      timestamp: string,
+      ops: SyncOperation[]
+    ) => {
+      const legDeltas = computeShowLegDeltas(previousResults, nextResults);
+      if (legDeltas.size === 0 || !snapshotForLegs) return;
+      for (const [animalId, delta] of legDeltas.entries()) {
+        const animal = snapshotForLegs.animals.find((a) => a.id === animalId);
+        if (!animal) continue;
+        const nextLegs = Math.max(0, (animal.legsCount || 0) + delta);
+        if (nextLegs === animal.legsCount) continue;
+        const animalRev = nextEntityRev(animal.id, animal._rev);
+        const nextAnimal: Animal = {
+          ...animal,
+          legsCount: nextLegs,
+          _rev: animalRev,
+          updatedAt: timestamp,
+        };
+        await adapterRef.current!.saveAnimal(nextAnimal);
+        ops.push(
+          ...diffEntityFieldsToOperations({
+            entityType: 'animal',
+            previous: animal,
+            next: nextAnimal,
+            deviceId,
+            nextCounter: allocateNextLogicalCounter,
+            timestamp,
+            recordRev: animalRev,
+          })
+        );
+      }
+    },
+    [deviceId, nextEntityRev]
+  );
+
   const saveShow = useCallback(
     async (
       draft: Omit<ShowEvent, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? currentSnapshot?.shows.find((s) => s.id === draft.id)
-          : undefined;
-        const showId = draft.id || generateUuid();
-        const rev = nextEntityRev(showId, prev?._rev);
-        const cleanResults = normalizeShowResults(draft.results ?? [], { dropEmpty: true });
-        const syncedEnteredIds = mergeEnteredAnimalIdsWithResults(
-          draft.enteredAnimalIds ?? [],
-          cleanResults
-        );
-        const show: ShowEvent = {
-          ...draft,
-          id: showId,
-          name: draft.name.trim(),
-          enteredAnimalIds: syncedEnteredIds,
-          results: cleanResults.length > 0 ? cleanResults : undefined,
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveShow(show);
-          const ops: SyncOperation[] = diffEntityFieldsToOperations({
-            entityType: 'show',
-            previous: prev,
-            next: show,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-
-          const legDeltas = computeShowLegDeltas(prev?.results, show.results);
-          if (legDeltas.size > 0 && currentSnapshot) {
-            for (const [animalId, delta] of legDeltas.entries()) {
-              const animal = currentSnapshot.animals.find((a) => a.id === animalId);
-              if (!animal) continue;
-              const nextLegs = Math.max(0, (animal.legsCount || 0) + delta);
-              if (nextLegs === animal.legsCount) continue;
-              const animalRev = nextEntityRev(animal.id, animal._rev);
-              const nextAnimal: Animal = {
-                ...animal,
-                legsCount: nextLegs,
-                _rev: animalRev,
-                updatedAt: ts,
-              };
-              await adapterRef.current!.saveAnimal(nextAnimal);
-              ops.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'animal',
-                  previous: animal,
-                  next: nextAnimal,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: animalRev,
-                })
-              );
-            }
-          }
-
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify(`Show "${show.name}" saved.`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save show "${show.name}"`, err);
-          return false;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'show',
+          readRows: (snap) => snap?.shows,
+          build: (show, base): ShowEvent => {
+            const cleanResults = normalizeShowResults(show.results ?? [], { dropEmpty: true });
+            return {
+              ...show,
+              ...base,
+              name: show.name.trim(),
+              enteredAnimalIds: mergeEnteredAnimalIdsWithResults(
+                show.enteredAnimalIds ?? [],
+                cleanResults
+              ),
+              results: cleanResults.length > 0 ? cleanResults : undefined,
+            };
+          },
+          persist: (show) => adapterRef.current!.saveShow(show),
+          describe: (show) => `Show "${show.name}" saved.`,
+          failureLabel: (show) => `save show "${show.name}"`,
+          cascade: ({ row: show, prev, snapshot: currentSnapshot, timestamp, ops }) =>
+            applyShowLegDeltas(prev?.results, show.results, currentSnapshot, timestamp, ops),
+        },
+        draft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts, applyShowLegDeltas]
   );
 
   const deleteShow = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = currentSnapshot?.shows.find((s) => s.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteShow(id);
-          const ops: SyncOperation[] = [
-            createOutboxOperation({
-              entityType: 'show',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ];
-
-          const legDeltas = computeShowLegDeltas(target?.results, undefined);
-          if (legDeltas.size > 0 && currentSnapshot) {
-            for (const [animalId, delta] of legDeltas.entries()) {
-              const animal = currentSnapshot.animals.find((a) => a.id === animalId);
-              if (!animal) continue;
-              const nextLegs = Math.max(0, (animal.legsCount || 0) + delta);
-              if (nextLegs === animal.legsCount) continue;
-              const animalRev = nextEntityRev(animal.id, animal._rev);
-              const nextAnimal: Animal = {
-                ...animal,
-                legsCount: nextLegs,
-                _rev: animalRev,
-                updatedAt: ts,
-              };
-              await adapterRef.current!.saveAnimal(nextAnimal);
-              ops.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'animal',
-                  previous: animal,
-                  next: nextAnimal,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: animalRev,
-                })
-              );
-            }
-          }
-
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify('Show removed.');
-        } catch (err) {
-          reportPersistenceFailure('delete show', err);
-        }
-      });
-    },
-    [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, notify, reportPersistenceFailure]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'show',
+          readRows: (snap) => snap?.shows,
+          remove: (showId) => adapterRef.current!.deleteShow(showId),
+          message: 'Show removed.',
+          failureLabel: 'delete show',
+          cascade: ({ target, snapshot: currentSnapshot, timestamp, ops }) =>
+            applyShowLegDeltas(target?.results, undefined, currentSnapshot, timestamp, ops),
+        },
+        id
+      ),
+    [entityCrudPorts, applyShowLegDeltas]
   );
 
   const saveFeedBatch = useCallback(
@@ -3860,60 +3721,39 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   );
 
   const deleteFeedBatch = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.feedBatches ?? []).find((b) => b.id === id);
-        const linkedAllocations = (currentSnapshot?.feedAllocations ?? []).filter(
-          (al) => al.feedBatchId === id
-        );
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteFeedBatch(id);
-          const ops: SyncOperation[] = [
-            createOutboxOperation({
-              entityType: 'feedBatch',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ];
-          for (const al of linkedAllocations) {
-            await adapterRef.current!.deleteFeedAllocation(al.id);
-            ops.push(
-              createOutboxOperation({
-                entityType: 'feedAllocation',
-                entityUuid: al.id,
-                deviceId,
-                logicalCounter: allocateNextLogicalCounter(),
-                fieldName: '__delete__',
-                newValue: true,
-                timestamp: ts,
-                recordRev: nextEntityRev(al.id, al._rev),
-              })
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'feedBatch',
+          readRows: (snap) => snap?.feedBatches,
+          remove: (batchId) => adapterRef.current!.deleteFeedBatch(batchId),
+          message: 'Feed batch and linked allocations removed.',
+          failureLabel: 'delete feed batch',
+          cascade: async ({ snapshot: currentSnapshot, timestamp, ops }) => {
+            const linkedAllocations = (currentSnapshot?.feedAllocations ?? []).filter(
+              (allocation) => allocation.feedBatchId === id
             );
-          }
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify('Feed batch and linked allocations removed.');
-        } catch (err) {
-          reportPersistenceFailure('delete feed batch', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+            for (const allocation of linkedAllocations) {
+              await adapterRef.current!.deleteFeedAllocation(allocation.id);
+              ops.push(
+                createOutboxOperation({
+                  entityType: 'feedAllocation',
+                  entityUuid: allocation.id,
+                  deviceId,
+                  logicalCounter: allocateNextLogicalCounter(),
+                  fieldName: '__delete__',
+                  newValue: true,
+                  timestamp,
+                  recordRev: nextEntityRev(allocation.id, allocation._rev),
+                })
+              );
+            }
+          },
+        },
+        id
+      ),
+    [entityCrudPorts, deviceId, nextEntityRev]
   );
 
   const logFeedAllocation = useCallback(
@@ -3921,161 +3761,123 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       allocationDraft: Omit<FeedAllocation, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
       options?: { syncLinkedCageFeed?: boolean }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current ?? snapshot;
-        if (!currentSnapshot) return false;
-        const batch = (currentSnapshot.feedBatches ?? []).find(
-          (b) => b.id === allocationDraft.feedBatchId
-        );
-        if (!batch) {
-          notify('Selected feed batch no longer exists.');
-          return false;
-        }
-        const ts = getAdjustedNowIsoUtc();
-        const allocId = allocationDraft.id || generateUuid();
-        const prevAlloc = allocationDraft.id
-          ? (currentSnapshot.feedAllocations ?? []).find((a) => a.id === allocationDraft.id)
-          : undefined;
-        const allocRev = nextEntityRev(allocId, prevAlloc?._rev);
-        const allocation: FeedAllocation = {
-          ...allocationDraft,
-          id: allocId,
-          quantity: Math.max(0, Number(allocationDraft.quantity) || 0),
-          unit: (allocationDraft.unit || '').trim() || batch.bagWeightUnit || 'lbs',
-          dateIso: allocationDraft.dateIso || todayDateIso(),
-          targetLabel: (allocationDraft.targetLabel || '').trim() || 'General Barn',
-          notes: (allocationDraft.notes || '').trim(),
-          _rev: allocRev,
-          createdAt: prevAlloc?.createdAt || ts,
-          updatedAt: ts,
-        };
-
-        try {
-          const ops: SyncOperation[] = [];
-          await adapterRef.current!.saveFeedAllocation(allocation);
-          ops.push(
-            ...diffEntityFieldsToOperations({
-              entityType: 'feedAllocation',
-              previous: prevAlloc,
-              next: allocation,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: allocRev,
-            })
-          );
-
-          if (!prevAlloc && allocation.quantity > 0) {
-            const { applyFeedAllocationToBatch } = await import('../domain/feedInventory');
-            const batchRev = nextEntityRev(batch.id, batch._rev);
-            const updatedBatch: FeedBatch = {
-              ...applyFeedAllocationToBatch(batch, allocation.quantity, ts),
-              _rev: batchRev,
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'feedAllocation',
+          readRows: (snap) => snap?.feedAllocations,
+          build: (allocation, base, snap): FeedAllocation | null => {
+            const batch = (snap?.feedBatches ?? []).find((b) => b.id === allocation.feedBatchId);
+            if (!batch) return null;
+            return {
+              ...allocation,
+              ...base,
+              quantity: Math.max(0, Number(allocation.quantity) || 0),
+              unit: (allocation.unit || '').trim() || batch.bagWeightUnit || 'lbs',
+              dateIso: allocation.dateIso || todayDateIso(),
+              targetLabel: (allocation.targetLabel || '').trim() || 'General Barn',
+              notes: (allocation.notes || '').trim(),
             };
-            await adapterRef.current!.saveFeedBatch(updatedBatch);
-            ops.push(
-              ...diffEntityFieldsToOperations({
-                entityType: 'feedBatch',
-                previous: batch,
-                next: updatedBatch,
-                deviceId,
-                nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
-                recordRev: batchRev,
-              })
+          },
+          onAborted: () => notify('Selected feed batch no longer exists.'),
+          persist: (allocation) => adapterRef.current!.saveFeedAllocation(allocation),
+          describe: (allocation) =>
+            `Logged ${allocation.quantity} ${allocation.unit} feed allocation to ${allocation.targetLabel}.`,
+          failureLabel: () => 'log feed allocation',
+          cascade: async ({ row: allocation, prev, snapshot: currentSnapshot, timestamp, ops }) => {
+            const batch = (currentSnapshot?.feedBatches ?? []).find(
+              (b) => b.id === allocation.feedBatchId
             );
-          }
-
-          if (
-            options?.syncLinkedCageFeed &&
-            allocation.targetType === 'cage' &&
-            allocation.targetId
-          ) {
-            const targetCage = currentSnapshot.cages.find((c) => c.id === allocation.targetId);
-            if (targetCage) {
-              const cageRev = nextEntityRev(targetCage.id, targetCage._rev);
-              const lotSummary = batch.lotNumber
-                ? `${batch.brand || batch.productName} (Lot ${batch.lotNumber})`
-                : `${batch.brand} ${batch.productName}`.trim();
-              const nextCageStock =
-                Math.round(
-                  ((Number(targetCage.feedStockRemaining) || 0) + allocation.quantity) * 100
-                ) / 100;
-              const updatedCage: CageLocation = {
-                ...targetCage,
-                feedLotName: lotSummary,
-                feedStockRemaining: nextCageStock,
-                feedStockUnit: allocation.unit,
-                _rev: cageRev,
-                updatedAt: ts,
+            if (!batch) return;
+            if (!prev && allocation.quantity > 0) {
+              const { applyFeedAllocationToBatch } = await import('../domain/feedInventory');
+              const batchRev = nextEntityRev(batch.id, batch._rev);
+              const updatedBatch: FeedBatch = {
+                ...applyFeedAllocationToBatch(batch, allocation.quantity, timestamp),
+                _rev: batchRev,
               };
-              await adapterRef.current!.saveCage(updatedCage);
+              await adapterRef.current!.saveFeedBatch(updatedBatch);
               ops.push(
                 ...diffEntityFieldsToOperations({
-                  entityType: 'cage',
-                  previous: targetCage,
-                  next: updatedCage,
+                  entityType: 'feedBatch',
+                  previous: batch,
+                  next: updatedBatch,
                   deviceId,
                   nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: cageRev,
+                  timestamp,
+                  recordRev: batchRev,
                 })
               );
             }
-          }
 
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify(`Logged ${allocation.quantity} ${allocation.unit} feed allocation to ${allocation.targetLabel}.`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure('log feed allocation', err);
-          return false;
-        }
-      });
+            if (
+              options?.syncLinkedCageFeed &&
+              allocation.targetType === 'cage' &&
+              allocation.targetId
+            ) {
+              const targetCage = currentSnapshot?.cages.find((c) => c.id === allocation.targetId);
+              if (targetCage) {
+                const cageRev = nextEntityRev(targetCage.id, targetCage._rev);
+                const lotSummary = batch.lotNumber
+                  ? `${batch.brand || batch.productName} (Lot ${batch.lotNumber})`
+                  : `${batch.brand} ${batch.productName}`.trim();
+                const nextCageStock =
+                  Math.round(
+                    ((Number(targetCage.feedStockRemaining) || 0) + allocation.quantity) * 100
+                  ) / 100;
+                const updatedCage: CageLocation = {
+                  ...targetCage,
+                  feedLotName: lotSummary,
+                  feedStockRemaining: nextCageStock,
+                  feedStockUnit: allocation.unit,
+                  _rev: cageRev,
+                  updatedAt: timestamp,
+                };
+                await adapterRef.current!.saveCage(updatedCage);
+                ops.push(
+                  ...diffEntityFieldsToOperations({
+                    entityType: 'cage',
+                    previous: targetCage,
+                    next: updatedCage,
+                    deviceId,
+                    nextCounter: allocateNextLogicalCounter,
+                    timestamp,
+                    recordRev: cageRev,
+                  })
+                );
+              }
+            }
+          },
+        },
+        allocationDraft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts, deviceId, nextEntityRev]
   );
 
   const deleteFeedAllocation = useCallback(
     async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.feedAllocations ?? []).find((a) => a.id === id);
-        if (!target) return;
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteFeedAllocation(id);
-          const ops: SyncOperation[] = [
-            createOutboxOperation({
-              entityType: 'feedAllocation',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target._rev),
-            }),
-          ];
-
-          const batch = (currentSnapshot?.feedBatches ?? []).find(
-            (b) => b.id === target.feedBatchId
-          );
-          if (batch && target.quantity > 0) {
+      const target = snapshotRef.current?.feedAllocations?.find((allocation) => allocation.id === id);
+      if (!target) return;
+      await deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'feedAllocation',
+          readRows: (snap) => snap?.feedAllocations,
+          remove: (allocationId) => adapterRef.current!.deleteFeedAllocation(allocationId),
+          message: 'Feed allocation removed and batch stock restored.',
+          failureLabel: 'delete feed allocation',
+          cascade: async ({ target: allocation, snapshot: currentSnapshot, timestamp, ops }) => {
+            if (!allocation || allocation.quantity <= 0) return;
+            const batch = (currentSnapshot?.feedBatches ?? []).find(
+              (b) => b.id === allocation.feedBatchId
+            );
+            if (!batch) return;
             const { reverseFeedAllocationFromBatch } = await import('../domain/feedInventory');
             const batchRev = nextEntityRev(batch.id, batch._rev);
             const restoredBatch: FeedBatch = {
-              ...reverseFeedAllocationFromBatch(batch, target.quantity, ts),
+              ...reverseFeedAllocationFromBatch(batch, allocation.quantity, timestamp),
               _rev: batchRev,
             };
             await adapterRef.current!.saveFeedBatch(restoredBatch);
@@ -4086,29 +3888,16 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
                 next: restoredBatch,
                 deviceId,
                 nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
+                timestamp,
                 recordRev: batchRev,
               })
             );
-          }
-
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify('Feed allocation removed and batch stock restored.');
-        } catch (err) {
-          reportPersistenceFailure('delete feed allocation', err);
-        }
-      });
+          },
+        },
+        id
+      );
     },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts, deviceId, nextEntityRev]
   );
 
   const runFeedTagBiosecurityAutoPurge = useCallback(
@@ -4533,135 +4322,122 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     async (
       draft: Omit<AnimalReservation, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.animalReservations ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const linkedClient = draft.clientId
-          ? (latestSnapshot?.clientContacts ?? []).find((c) => c.id === draft.clientId)
-          : undefined;
-        const speciesReservations = (latestSnapshot?.animalReservations ?? []).filter((r) =>
-          isSameSpecies(r.species, draft.species)
-        );
-        const { buildSuggestedAgreementNumber, evaluateReservationFinancials } =
-          await import('../domain/clientCrm');
-        const agreementNumber =
-          (draft.agreementNumber || '').trim() ||
-          prev?.agreementNumber ||
-          buildSuggestedAgreementNumber(speciesReservations);
-        const status = normalizeReservationStatus(draft.status, 'Pending Deposit');
-        const totalPriceCents = Math.max(0, Math.round(Number(draft.totalPriceCents) || 0));
-        const depositRequiredCents = Math.max(
-          0,
-          Math.round(Number(draft.depositRequiredCents) || 0)
-        );
-        const depositPaidCents = Math.max(0, Math.round(Number(draft.depositPaidCents) || 0));
-        const fin = evaluateReservationFinancials({
-          status,
-          totalPriceCents,
-          depositRequiredCents,
-          depositPaidCents,
-        });
-        const reservation: AnimalReservation = {
-          ...draft,
-          id,
-          agreementNumber,
-          clientName: linkedClient?.fullName || (draft.clientName || '').trim() || 'Buyer',
-          waitlistEntryId: draft.waitlistEntryId || undefined,
-          animalId: draft.animalId || undefined,
-          breedingId: draft.breedingId || undefined,
-          pickOrder:
-            draft.pickOrder !== undefined && Number(draft.pickOrder) > 0
-              ? Math.round(Number(draft.pickOrder))
-              : undefined,
-          itemLabel: (draft.itemLabel || '').trim() || 'Reserved Animal / Pick',
-          status: draft.id ? status : fin.suggestedStatus,
-          reservedDateIso: (draft.reservedDateIso || '').trim() || todayDateIso(),
-          holdExpiresDateIso: (draft.holdExpiresDateIso || '').trim(),
-          totalPriceCents,
-          depositRequiredCents,
-          depositPaidCents,
-          depositDueDateIso: (draft.depositDueDateIso || '').trim(),
-          depositPaidDateIso: (draft.depositPaidDateIso || '').trim(),
-          pickupScheduledDateIso: (draft.pickupScheduledDateIso || '').trim(),
-          completedDateIso: (draft.completedDateIso || '').trim(),
-          balanceReminderDateIso: (draft.balanceReminderDateIso || '').trim(),
-          paymentMethod: (draft.paymentMethod || '').trim(),
-          ledgerEntryId: draft.ledgerEntryId || undefined,
-          termsSummary: (draft.termsSummary || '').trim(),
-          healthGuaranteeNotes: (draft.healthGuaranteeNotes || '').trim(),
-          notes: (draft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveAnimalReservation(reservation);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'animalReservation',
-            previous: prev,
-            next: reservation,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          if (
-            reservation.waitlistEntryId &&
-            reservation.status !== 'Cancelled' &&
-            reservation.status !== 'Inquiry Hold'
-          ) {
-            const linkedWait = (latestSnapshot?.waitlistEntries ?? []).find(
-              (w) => w.id === reservation.waitlistEntryId
+      const isEdit = Boolean(draft.id);
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'animalReservation',
+          readRows: (snap) => snap?.animalReservations,
+          build: async (reservation, base, snap, prev): Promise<AnimalReservation> => {
+            const linkedClient = reservation.clientId
+              ? (snap?.clientContacts ?? []).find((c) => c.id === reservation.clientId)
+              : undefined;
+            const speciesReservations = (snap?.animalReservations ?? []).filter((r) =>
+              isSameSpecies(r.species, reservation.species)
             );
-            if (linkedWait && (linkedWait.status === 'Active' || linkedWait.status === 'Matched')) {
-              const nextWaitStatus =
-                reservation.status === 'Picked Up / Completed' ? 'Fulfilled' : 'Deposited';
-              const waitRev = nextEntityRev(linkedWait.id, linkedWait._rev);
-              const updatedWait: WaitlistEntry = {
-                ...linkedWait,
-                status: nextWaitStatus,
-                _rev: waitRev,
-                updatedAt: ts,
-              };
-              await adapterRef.current!.saveWaitlistEntry(updatedWait);
-              outboxOps.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'waitlistEntry',
-                  previous: linkedWait,
-                  next: updatedWait,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: waitRev,
-                })
-              );
+            const { buildSuggestedAgreementNumber, evaluateReservationFinancials } =
+              await import('../domain/clientCrm');
+            const agreementNumber =
+              (reservation.agreementNumber || '').trim() ||
+              prev?.agreementNumber ||
+              buildSuggestedAgreementNumber(speciesReservations);
+            const status = normalizeReservationStatus(reservation.status, 'Pending Deposit');
+            const totalPriceCents = Math.max(
+              0,
+              Math.round(Number(reservation.totalPriceCents) || 0)
+            );
+            const depositRequiredCents = Math.max(
+              0,
+              Math.round(Number(reservation.depositRequiredCents) || 0)
+            );
+            const depositPaidCents = Math.max(
+              0,
+              Math.round(Number(reservation.depositPaidCents) || 0)
+            );
+            const fin = evaluateReservationFinancials({
+              status,
+              totalPriceCents,
+              depositRequiredCents,
+              depositPaidCents,
+            });
+            return {
+              ...reservation,
+              ...base,
+              agreementNumber,
+              clientName:
+                linkedClient?.fullName || (reservation.clientName || '').trim() || 'Buyer',
+              waitlistEntryId: reservation.waitlistEntryId || undefined,
+              animalId: reservation.animalId || undefined,
+              breedingId: reservation.breedingId || undefined,
+              pickOrder:
+                reservation.pickOrder !== undefined && Number(reservation.pickOrder) > 0
+                  ? Math.round(Number(reservation.pickOrder))
+                  : undefined,
+              itemLabel: (reservation.itemLabel || '').trim() || 'Reserved Animal / Pick',
+              status: isEdit ? status : fin.suggestedStatus,
+              reservedDateIso: (reservation.reservedDateIso || '').trim() || todayDateIso(),
+              holdExpiresDateIso: (reservation.holdExpiresDateIso || '').trim(),
+              totalPriceCents,
+              depositRequiredCents,
+              depositPaidCents,
+              depositDueDateIso: (reservation.depositDueDateIso || '').trim(),
+              depositPaidDateIso: (reservation.depositPaidDateIso || '').trim(),
+              pickupScheduledDateIso: (reservation.pickupScheduledDateIso || '').trim(),
+              completedDateIso: (reservation.completedDateIso || '').trim(),
+              balanceReminderDateIso: (reservation.balanceReminderDateIso || '').trim(),
+              paymentMethod: (reservation.paymentMethod || '').trim(),
+              ledgerEntryId: reservation.ledgerEntryId || undefined,
+              termsSummary: (reservation.termsSummary || '').trim(),
+              healthGuaranteeNotes: (reservation.healthGuaranteeNotes || '').trim(),
+              notes: (reservation.notes || '').trim(),
+            };
+          },
+          persist: (reservation) => adapterRef.current!.saveAnimalReservation(reservation),
+          describe: (reservation) =>
+            `Saved reservation ${reservation.agreementNumber} (${reservation.clientName}).`,
+          failureLabel: (reservation) => `save reservation ${reservation.agreementNumber}`,
+          cascade: async ({ row: reservation, snapshot: currentSnapshot, timestamp, ops }) => {
+            if (
+              !reservation.waitlistEntryId ||
+              reservation.status === 'Cancelled' ||
+              reservation.status === 'Inquiry Hold'
+            ) {
+              return;
             }
-          }
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Saved reservation ${reservation.agreementNumber} (${reservation.clientName}).`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure(`save reservation ${reservation.agreementNumber}`, err);
-          return null;
-        }
-      });
+            const linkedWait = (currentSnapshot?.waitlistEntries ?? []).find(
+              (entry) => entry.id === reservation.waitlistEntryId
+            );
+            if (!linkedWait || (linkedWait.status !== 'Active' && linkedWait.status !== 'Matched')) {
+              return;
+            }
+            const nextWaitStatus: WaitlistEntry['status'] =
+              reservation.status === 'Picked Up / Completed' ? 'Fulfilled' : 'Deposited';
+            const waitRev = nextEntityRev(linkedWait.id, linkedWait._rev);
+            const updatedWait: WaitlistEntry = {
+              ...linkedWait,
+              status: nextWaitStatus,
+              _rev: waitRev,
+              updatedAt: timestamp,
+            };
+            await adapterRef.current!.saveWaitlistEntry(updatedWait);
+            ops.push(
+              ...diffEntityFieldsToOperations({
+                entityType: 'waitlistEntry',
+                previous: linkedWait,
+                next: updatedWait,
+                deviceId,
+                nextCounter: allocateNextLogicalCounter,
+                timestamp,
+                recordRev: waitRev,
+              })
+            );
+          },
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts, deviceId, nextEntityRev]
   );
 
   const deleteAnimalReservation = useCallback(
@@ -5759,25 +5535,18 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   );
 
   const { resolveSyncConflict } = useSyncConflictResolution({
-    enqueueStoreMutation,
-    snapshotRef,
+    ...sliceCorePorts,
     syncConflicts,
     setSyncConflicts,
     syncOperationsRef,
     syncOperationsHydratedRef,
     setSyncOperations,
-    deviceId,
-    allocateNextLogicalCounter,
     nextEntityRev: (entityUuid) => nextEntityRev(entityUuid),
-    nowIsoUtc: getAdjustedNowIsoUtc,
     loadSyncOperations: loadSyncOperationsFromIdbAndIndex,
     replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
     replaceSyncOperations: replaceSyncOperationsWithRetention,
     rebuildMaxRevIndex,
     saveConflict: saveSyncConflictInIdb,
-    reloadFromAdapter,
-    notify,
-    reportPersistenceFailure,
   });
 
   const { dismissSyncConflict } = useSyncConflictDismissal({
@@ -5916,18 +5685,14 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   }, []);
 
   const { restoreRollingBackupByKey, deleteRollingIdbBackupByKey } = useRollingBackupActions({
-    notify,
-    reportPersistenceFailure,
-    snapshotRef,
+    ...sliceCorePorts,
     wipedRecoveryDetected: Boolean(wipedRecoveryContext?.detected),
     saveSafetyRollingBackup,
     clearPhotoCache: () => clearPhotoCache(photoCacheRef),
     replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
     clearLocalSyncAndBackupReminderState,
     clearWipedRecoveryContext: () => setWipedRecoveryContext(null),
-    reloadFromAdapter,
     refreshVaultAndArchives,
-    enqueueStoreMutation,
     readCommittedSnapshot: () =>
       adapterRef.current!.loadSnapshot({ lightweightPhotos: true }),
   });
@@ -5939,10 +5704,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     restoreOpfsVaultBackup,
     restoreOpfsVaultBackupUnqueued,
   } = useOpfsVaultActions({
-    notify,
-    reportPersistenceFailure,
+    ...sliceCorePorts,
     snapshot,
-    snapshotRef,
     wipedRecoveryDetected: Boolean(wipedRecoveryContext?.detected),
     opfsVaultBackups,
     hydrateSnapshotForExport,
@@ -5953,11 +5716,9 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     clearLocalSyncAndBackupReminderState,
     clearWipedRecoveryContext: () => setWipedRecoveryContext(null),
     setActiveSpeciesName,
-    reloadFromAdapter,
     refreshVaultAndArchives,
     refreshStorageStatus,
     recordBackupExport,
-    enqueueStoreMutation,
     readCommittedSnapshot: () =>
       adapterRef.current!.loadSnapshot({ lightweightPhotos: true }),
   });
@@ -6023,9 +5784,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     offloadAnimalsToOpfsArchive,
     offloadAnimalsToOpfsArchiveInternal,
   } = useOpfsArchiveOffload({
-    notify,
-    reportPersistenceFailure,
-    snapshotRef,
+    ...sliceCorePorts,
     loadFreshSnapshot: () =>
       adapterRef.current
         ? adapterRef.current.loadSnapshot({ lightweightPhotos: true })
@@ -6037,8 +5796,6 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     pedigreeAnimalId,
     clearSelectedAnimal: () => setSelectedAnimalId(null),
     clearPedigreeAnimal: () => setPedigreeAnimalId(null),
-    reloadFromAdapter,
-    enqueueStoreMutation,
   });
   offloadAnimalsRef.current = offloadAnimalsToOpfsArchiveInternal;
 
