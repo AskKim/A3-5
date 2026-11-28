@@ -34,10 +34,12 @@ import {
 } from './storageProbes';
 
 export { isQuotaExceededError };
+/** Native container metadata re-exported for callers of this module. */
 export type NativeContainerInfo = PlatformContainerInfo;
 
 let activeStorageProtectionBridge: IPlatformBridge | null = null;
 
+/** Supplies the platform bridge used for persistent-storage and quota calls. */
 export function configureStorageProtectionBridge(bridge: IPlatformBridge | null): void {
   activeStorageProtectionBridge = bridge;
 }
@@ -89,6 +91,7 @@ function estimateSnapshotByteSize(snapshot: BarnDatabaseSnapshot): number {
   return bytes;
 }
 
+/** Current persistence, quota and backup state for diagnostics. */
 export interface StorageProtectionStatus {
   supported: boolean;
   persisted: boolean;
@@ -100,6 +103,7 @@ export interface StorageProtectionStatus {
   nativeContainerInfo: NativeContainerInfo | null;
 }
 
+/** Metadata for one rolling IndexedDB snapshot. */
 export interface RollingBackupMeta {
   key: string;
   savedAtIso: string;
@@ -113,6 +117,7 @@ interface StoredRollingBackup extends RollingBackupMeta {
   snapshot: BarnDatabaseSnapshot;
 }
 
+/** Asks the browser for persistent storage, then reports the result. */
 export async function requestPersistentStorage(): Promise<StorageProtectionStatus> {
   const checkedAtIso = getAdjustedNowIsoUtc();
   const isNativeWrapper = isWrappedNativeContainer();
@@ -176,6 +181,7 @@ export async function requestPersistentStorage(): Promise<StorageProtectionStatu
   };
 }
 
+/** Reads current persistence, usage, quota and rolling-backup state. */
 export async function checkStorageStatus(): Promise<StorageProtectionStatus> {
   const checkedAtIso = getAdjustedNowIsoUtc();
   const isNativeWrapper = isWrappedNativeContainer();
@@ -305,6 +311,7 @@ function openRollingIdb(): Promise<IDBDatabase> {
   });
 }
 
+/** Writes a rolling backup, optionally dehydrating photos, and prunes old ones. */
 export async function saveRollingSnapshotBackup(
   snapshot: BarnDatabaseSnapshot,
   options?: {
@@ -405,6 +412,7 @@ export async function saveRollingSnapshotBackup(
   }
 }
 
+/** Lists rolling backups, newest first. */
 export async function listRollingSnapshotBackups(): Promise<RollingBackupMeta[]> {
   if (!getSafeIndexedDb()) return [];
   try {
@@ -465,6 +473,7 @@ export async function listRollingSnapshotBackups(): Promise<RollingBackupMeta[]>
   }
 }
 
+/** Loads one rolling backup by key, or `null` when it is gone. */
 export async function loadRollingSnapshotBackup(
   key: string
 ): Promise<BarnDatabaseSnapshot | null> {
@@ -515,6 +524,7 @@ export async function loadRollingSnapshotBackup(
   }
 }
 
+/** Deletes one rolling backup; resolves false when absent. */
 export async function deleteRollingSnapshotBackup(key: string): Promise<boolean> {
   if (!getSafeIndexedDb()) return false;
   try {
@@ -554,14 +564,17 @@ export async function deleteRollingSnapshotBackup(key: string): Promise<boolean>
 // Manual Offline Mode Toggle & Timed Connectivity Probe
 const MANUAL_OFFLINE_STORAGE_KEY = 'pedigree_manual_offline_v1';
 const CLOCK_SKEW_STORAGE_KEY = 'pedigree_clock_skew_ms_v1';
+/** Skew above this is surfaced to the user as a clock warning. */
 export const CLOCK_DRIFT_WARNING_THRESHOLD_MS = 5 * 60_000; // 5 minutes
 
+/** Why the app considers itself online or offline. */
 export type ConnectivityReason =
   | 'online'
   | 'manual_offline'
   | 'navigator_offline'
   | 'captive_or_unreachable';
 
+/** Effective connectivity plus the reason and any probe detail. */
 export interface ConnectivityStatusSnapshot {
   navigatorOnline: boolean;
   manualOffline: boolean;
@@ -617,16 +630,19 @@ function computeConnectivityReason(
   return 'online';
 }
 
+/** Returns the recorded skew, or null when no server date has been seen. */
 export function getRecordedClockSkewMs(): number | null {
   return clockSkewMsState;
 }
 
+/** Current epoch ms adjusted for the recorded clock skew. */
 export function getAdjustedNowMs(): number {
   const skew = clockSkewMsState;
   if (skew === null || !Number.isFinite(skew)) return Date.now();
   return nowEpochMs();
 }
 
+/** Current time as ISO-8601 UTC, adjusted for clock skew. */
 export function getAdjustedNowIsoUtc(): string {
   if (clockSkewMsState !== getCoreClockSkewMs()) {
     setCoreClockSkewMs(clockSkewMsState);
@@ -634,6 +650,7 @@ export function getAdjustedNowIsoUtc(): string {
   return nowIsoUtc();
 }
 
+/** Human-readable skew such as `+2m 10s`. */
 export function formatClockSkewHuman(skewMs: number | null | undefined): string {
   if (skewMs === null || skewMs === undefined || !Number.isFinite(skewMs)) {
     return '0 min';
@@ -647,6 +664,7 @@ export function formatClockSkewHuman(skewMs: number | null | undefined): string 
   return `${Math.max(1, absMins)} min ${direction}`;
 }
 
+/** Records skew from an HTTP Date header and forwards it to the domain clock. */
 export function recordServerDateHeaderSkew(
   dateHeader: string | null | undefined,
   localNowMs: number = Date.now()
@@ -669,6 +687,7 @@ export function recordServerDateHeaderSkew(
   return skewMs;
 }
 
+/** Snapshot of effective connectivity, manual offline mode and probe state. */
 export function getConnectivitySnapshot(): ConnectivityStatusSnapshot {
   const navigatorOnline = typeof navigator !== 'undefined' ? navigator.onLine !== false : true;
   const reason = computeConnectivityReason(navigatorOnline, manualOfflineState, probeStatusState);
@@ -695,14 +714,17 @@ function notifyConnectivityListeners(): void {
   }
 }
 
+/** True when the user forced offline mode. */
 export function isManualOfflineMode(): boolean {
   return manualOfflineState;
 }
 
+/** Online only when the browser is online and manual offline mode is off. */
 export function getEffectiveOnlineStatus(): boolean {
   return getConnectivitySnapshot().isEffectivelyOnline;
 }
 
+/** Toggles manual offline mode for the session and notifies subscribers. */
 export function setManualOfflineMode(enabled: boolean): void {
   manualOfflineState = Boolean(enabled);
   try {
@@ -722,6 +744,7 @@ export function setManualOfflineMode(enabled: boolean): void {
   notifyConnectivityListeners();
 }
 
+/** Resets manual offline and probe state between tests. */
 export function resetConnectivityStateForTests(): void {
   manualOfflineState = false;
   probeStatusState = 'idle';
@@ -741,6 +764,7 @@ export function resetConnectivityStateForTests(): void {
   }
 }
 
+/** Actively probes connectivity with a bounded request, honouring manual offline. */
 export async function probeNetworkConnectivity(options?: {
   timeoutMs?: number;
   probeUrl?: string;
@@ -822,6 +846,7 @@ export async function probeNetworkConnectivity(options?: {
   return getConnectivitySnapshot();
 }
 
+/** React hook over the connectivity snapshot. */
 export function useConnectivityStatus(): ConnectivityStatusSnapshot & {
   setManualOffline: (enabled: boolean) => void;
   probeNow: (options?: { timeoutMs?: number }) => Promise<ConnectivityStatusSnapshot>;
@@ -871,6 +896,7 @@ export function useConnectivityStatus(): ConnectivityStatusSnapshot & {
   };
 }
 
+/** React hook returning effective online status. */
 export function useOnlineStatus(): boolean {
   return useConnectivityStatus().isEffectivelyOnline;
 }
@@ -880,6 +906,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+/** True for iOS/iPadOS browsers, including iPadOS masquerading as macOS. */
 export function isIosBrowser(): boolean {
   if (typeof navigator === 'undefined') return false;
   const hasMsStream =
@@ -897,6 +924,7 @@ export function isIosBrowser(): boolean {
   return isTraditionalIos || isIpadOsDesktopUa;
 }
 
+/** True when running as an installed standalone PWA. */
 export function isStandalonePwa(): boolean {
   if (typeof window === 'undefined') return false;
   const legacyStandalone =
@@ -912,6 +940,7 @@ export function isStandalonePwa(): boolean {
   return false;
 }
 
+/** Install prompt lifecycle for the PWA install button. */
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(isStandalonePwa);
@@ -994,6 +1023,7 @@ export function usePWAInstall() {
   };
 }
 
+/** Quota preflight result with the operation label and verdict. */
 export interface DiagnosticQuotaPreflightResult extends StorageQuotaEvaluationResult {
   statusSnapshot: StorageProtectionStatus;
 }

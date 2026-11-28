@@ -110,7 +110,7 @@ The application must execute reliably across diverse host environments:
 ### 5.3 Strict TypeScript Verification and Drift Invariants
 - **No Type Escapes:** Never silence TypeScript compiler errors with `as any`, `@ts-ignore`, or `@ts-expect-error`. Resolve root types cleanly.
 - **Automated Invariant Verification:** Every file modification must preserve existing invariants verified by `npm run verify:improvements` and layer checks (`npm run verify:layers`, `npm run verify:engine`, `npm run verify:extraction`).
-- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, `verify:improvements`, `verify:layers`, `verify:engine`, and `verify:extraction`) plus `npm run build` before declaring tasks complete.
+- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, the coverage floor, and `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`) plus `npm run build` before declaring tasks complete. Run `npm run verify:chunks` on the build output whenever imports changed; it is deliberately outside `verify` because it needs `dist/`.
 
 ---
 
@@ -199,6 +199,12 @@ lockfile is stale or a dependency change is intentional.
 | 9b | Chunk graph | `npm run verify:chunks` — must run after `npm run build`; fails on any new circular chunk import (ratchet in `scripts/chunk-cycle-allowlist.json`) |
 | 10 | Pages subpath build | `npm run build -- --base="/<repo-name>/"` then assert `dist/robots.txt`, `dist/sitemap.xml`, manifest `start_url`/`scope`/`id` of `./`, subpath asset + manifest references in `index.html`; re-run the root build afterwards to leave `dist/` in root form |
 | 10b | Site identity | `npm run verify:site-identity -- --base="/<repo-name>/"` — run on step 10's subpath build, before the root rebuild; fails when the canonical link, the `robots.txt` sitemap URL, the `sitemap.xml` `<loc>` or the `404.html` redirect (meta refresh, script redirect or fallback link) disagrees with `--base`. `deploy-pages.yml` runs the same gate under Bun: `bun scripts/verify-site-identity.ts --base="…"` |
+
+Every Phase 1 row reports one status, even when its tool is absent from this environment:
+`RAN <exit code>`, `FAILED <first failing line>`, or `BLOCKED <missing tool, permission or SDK> → <what unblocks it>`.
+Never omit a row because a tool is missing, never report `RAN` without running the command,
+and never report `BLOCKED` for a check whose tool is installed — verify the toolchain first,
+then report all statuses together.
 
 Guardrails to assert: `import/`, `export/`, `upload/`, `old/` exist with `.gitkeep`;
 `prompts/master_system_prompt.md` exists; no `from 'import/` or `from 'old/` in `src/`
@@ -311,5 +317,7 @@ When a check is blocked by something changeable, name the change instead of stop
 
 Format each as: check — blocker — exact change needed — what it unblocks.
 
-Known blocked checks: coverage (no `@vitest/coverage-*` provider installed) and the
-Android APK build (needs Gradle + Android SDK).
+Known blocked check: the Android APK build (needs Gradle + Android SDK; `verify:android` is
+its static stand-in). Keep this list short and current — a check whose tool is installed here
+is never blocked: coverage, for example, ships `@vitest/coverage-v8` and `verify:coverage`
+inside `npm run verify`, so it reports a real exit code instead of a block.

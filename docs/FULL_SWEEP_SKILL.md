@@ -61,6 +61,11 @@ never weaken a gate.
 1. VERIFY PHASE (in order, continue after a failure so one run reports everything)
    install -> typecheck -> lint -> unit tests -> extra invariant/verify gates -> build ->
    docs or generated-file drift checks. Capture exit codes. Keep installs lockfile-based.
+   Every check in this phase gets one status, whether or not its tool exists on this
+   machine: RAN (with exit code), FAILED (with the first failing line), or BLOCKED (missing
+   tool, permission or SDK -> what unblocks it). Never drop a check because a tool is
+   absent, never report RAN without running it, and never report BLOCKED for a check whose
+   tool is present.
 
 2. ENVIRONMENT PHASE
    git status and unpushed/uncommitted work; pending plan or handoff files; CI parity

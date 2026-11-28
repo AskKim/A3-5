@@ -35,6 +35,7 @@ export type SyncEntityType =
   | 'judgeAssignment'
   | 'judgeExpense';
 
+/** One field-level change to one entity, keyed by `op_id`. */
 export interface SyncOperation {
   op_id: string;
   entity_type: SyncEntityType;
@@ -140,6 +141,7 @@ const VALID_SYNC_ENTITY_TYPES = new Set<SyncEntityType>([
   'judgeExpense',
 ]);
 
+/** Per-entity allowlist of fields the sync merge may touch. */
 export const ALLOWED_SYNC_FIELDS_BY_ENTITY: Record<SyncEntityType, ReadonlySet<string>> = {
   animal: new Set([
     'tattoo',

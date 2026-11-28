@@ -71,10 +71,12 @@ export function probeOffscreenCanvas2dSupport(): boolean {
   }
 }
 
+/** True when the device is on a constrained canvas tier. */
 export function isConstrainedCanvasTier(): boolean {
   return detectCurrentDeviceCapability().shouldApplyLowMemoryHandling;
 }
 
+/** Device pixel ratio capped for the current tier. */
 export function getEffectiveCanvasDevicePixelRatio(
   isConstrained: boolean = isConstrainedCanvasTier()
 ): number {
@@ -85,6 +87,7 @@ export function getEffectiveCanvasDevicePixelRatio(
   return capCanvasDevicePixelRatio(rawDpr, isConstrained);
 }
 
+/** Clamps a canvas to the tier's area ceiling. */
 export function enforceCanvasDimensions(
   width: number,
   height: number,
@@ -429,12 +432,14 @@ export async function optimizeImageBytes(
   return optimizeImageBlob(blob, originalFileName, presetId);
 }
 
+/** Progress reported while optimising imported photos. */
 export interface BatchImportPhotoProgress {
   completed: number;
   total: number;
   savedBytesSoFar: number;
 }
 
+/** Result of optimising one imported photo. */
 export interface BatchImportPhotoResult {
   photos: AnimalPhoto[];
   totalOriginalBytes: number;

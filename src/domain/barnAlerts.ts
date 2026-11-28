@@ -27,6 +27,7 @@ import {
   todayDateIso,
 } from './models';
 
+/** Due-task alert state for one species. */
 export interface DueTaskAlertEvaluation {
   tasks: BarnTask[];
   overdueCount: number;
@@ -35,12 +36,14 @@ export interface DueTaskAlertEvaluation {
   shouldShow: boolean;
 }
 
+/** One litter expected soon. */
 export interface ArrivingBabiesItem {
   breeding: BreedingRecord;
   daysUntilDue: number;
   timingLabel: string;
 }
 
+/** Arriving-litter alert state for one species. */
 export interface ArrivingBabiesAlertEvaluation {
   items: ArrivingBabiesItem[];
   windowDays: number;
@@ -182,6 +185,7 @@ export function evaluateSpeciesArrivingBabiesAlert(
   };
 }
 
+/** Needs-attention alert state for one species. */
 export interface NeedsAttentionAlertEvaluation {
   animals: Animal[];
   shouldShow: boolean;
@@ -205,6 +209,7 @@ export function evaluateSpeciesNeedsAttentionAlert(
   };
 }
 
+/** Species memo reminder state. */
 export interface SpeciesMemoAlertEvaluation {
   hasMemo: boolean;
   signature: string;
@@ -292,6 +297,7 @@ export function evaluateSpeciesMemoReminderAlert(
 
 const ISO_CALENDAR_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** One care log with an active medication withdrawal. */
 export interface ActiveWithdrawalLogItem {
   log: CareLog;
   medicationLabel: string;
@@ -299,6 +305,7 @@ export interface ActiveWithdrawalLogItem {
   daysRemaining: number;
 }
 
+/** Withdrawal state for one animal. */
 export interface AnimalWithdrawalEvaluation {
   animalId: string;
   isActive: boolean;
@@ -310,16 +317,19 @@ export interface AnimalWithdrawalEvaluation {
   medicationSummary: string;
 }
 
+/** Animal listed in the species withdrawal alert. */
 export interface SpeciesWithdrawalAnimalItem {
   animal: Animal;
   evaluation: AnimalWithdrawalEvaluation;
 }
 
+/** Withdrawal alert state for one species. */
 export interface SpeciesWithdrawalAlertEvaluation {
   items: SpeciesWithdrawalAnimalItem[];
   shouldShow: boolean;
 }
 
+/** Warning shown when a disposition date ignores a withdrawal. */
 export interface WithdrawalDispositionWarning {
   animalName: string;
   clearDateIso: string;
@@ -330,11 +340,13 @@ export interface WithdrawalDispositionWarning {
   detail: string;
 }
 
+/** Show entry that clashes with a withdrawal period. */
 export interface ShowWithdrawalConflictItem {
   animal: Animal;
   evaluation: AnimalWithdrawalEvaluation;
 }
 
+/** Withdrawal-versus-show conflict state. */
 export interface ShowWithdrawalConflictEvaluation {
   showDateIso: string;
   conflicts: ShowWithdrawalConflictItem[];
@@ -637,8 +649,10 @@ export function evaluateShowWithdrawalConflicts(
 // Cage / Pen Occupancy & Welfare Capacity Alerts
 // ============================================================================
 
+/** Occupancy band for one cage. */
 export type CageOccupancyStatus = 'empty' | 'available' | 'full' | 'over_capacity';
 
+/** Occupancy state for one cage. */
 export interface CageOccupancyEvaluation {
   cage: CageLocation;
   capacity: number;
@@ -652,6 +666,7 @@ export interface CageOccupancyEvaluation {
   ratioLabel: string;
 }
 
+/** Occupancy counts and warnings for one species. */
 export interface SpeciesCagesOccupancySummary {
   evaluations: CageOccupancyEvaluation[];
   overCapacityCages: CageOccupancyEvaluation[];
@@ -662,6 +677,7 @@ export interface SpeciesCagesOccupancySummary {
   shouldShowOverCapacityAlert: boolean;
 }
 
+/** Warning raised when assigning into a full cage. */
 export interface CageAssignmentCapacityWarning {
   cage: CageLocation;
   capacity: number;

@@ -109,6 +109,7 @@ export function memoizeByCollectionRev<T extends RevRow, R>(
   return value;
 }
 
+/** Active-species animals, sorted by name. */
 export function selectSpeciesAnimals(
   rows: readonly Animal[] | undefined,
   speciesName: string
@@ -118,6 +119,7 @@ export function selectSpeciesAnimals(
   );
 }
 
+/** Active-species cages, in stored order. */
 export function selectSpeciesCages(
   rows: readonly CageLocation[] | undefined,
   speciesName: string
@@ -127,6 +129,7 @@ export function selectSpeciesCages(
   );
 }
 
+/** Active-species breedings, newest bred date first. */
 export function selectSpeciesBreedings(
   rows: readonly BreedingRecord[] | undefined,
   speciesName: string
@@ -138,6 +141,10 @@ export function selectSpeciesBreedings(
   );
 }
 
+/**
+ * Active-species tasks, incomplete before completed, then priority, then due date.
+ * Tasks linked to an archived animal are hidden unless already completed.
+ */
 export function selectSpeciesTasks(
   rows: readonly BarnTask[] | undefined,
   speciesName: string,
@@ -171,6 +178,7 @@ function taskPriorityRank(priority: string): number {
   return priority === 'High' ? 0 : priority === 'Normal' ? 1 : 2;
 }
 
+/** Active-species care logs, newest date first. */
 export function selectSpeciesCareLogs(
   rows: readonly CareLog[] | undefined,
   speciesName: string
@@ -182,6 +190,7 @@ export function selectSpeciesCareLogs(
   );
 }
 
+/** Active-species shows, earliest event date first. */
 export function selectSpeciesShows(
   rows: readonly ShowEvent[] | undefined,
   speciesName: string
@@ -193,6 +202,7 @@ export function selectSpeciesShows(
   );
 }
 
+/** Active-species feed batches, newest purchase date first. */
 export function selectSpeciesFeedBatches(
   rows: readonly FeedBatch[] | undefined,
   speciesName: string
@@ -208,6 +218,7 @@ export function selectSpeciesFeedBatches(
   );
 }
 
+/** Active-species feed allocations, newest date first. */
 export function selectSpeciesFeedAllocations(
   rows: readonly FeedAllocation[] | undefined,
   speciesName: string
@@ -222,6 +233,7 @@ export function selectSpeciesFeedAllocations(
   );
 }
 
+/** Active-species ledger entries, newest date first. */
 export function selectSpeciesLedgerEntries(
   rows: readonly LedgerEntry[] | undefined,
   speciesName: string
@@ -236,6 +248,7 @@ export function selectSpeciesLedgerEntries(
   );
 }
 
+/** Active-species processing logs, newest harvest or scheduled date first. */
 export function selectSpeciesProcessingLogs(
   rows: readonly ProcessingLog[] | undefined,
   speciesName: string
@@ -252,6 +265,7 @@ export function selectSpeciesProcessingLogs(
   );
 }
 
+/** Active-species youth project books, newest project year first. */
 export function selectSpeciesYouthProjectBooks(
   rows: readonly YouthProjectBook[] | undefined,
   speciesName: string
@@ -268,6 +282,7 @@ export function selectSpeciesYouthProjectBooks(
   );
 }
 
+/** Active-species client contacts, sorted by name. */
 export function selectSpeciesClientContacts(
   rows: readonly ClientContact[] | undefined,
   speciesName: string
@@ -279,6 +294,7 @@ export function selectSpeciesClientContacts(
   );
 }
 
+/** Active-species waitlist entries, priority rank first, then newest. */
 export function selectSpeciesWaitlistEntries(
   rows: readonly WaitlistEntry[] | undefined,
   speciesName: string
@@ -290,6 +306,7 @@ export function selectSpeciesWaitlistEntries(
   );
 }
 
+/** Active-species reservations, newest reserved date first. */
 export function selectSpeciesAnimalReservations(
   rows: readonly AnimalReservation[] | undefined,
   speciesName: string
@@ -305,6 +322,7 @@ export function selectSpeciesAnimalReservations(
   );
 }
 
+/** Active-species wool harvests, newest harvest date first. */
 export function selectSpeciesWoolHarvests(
   rows: readonly WoolHarvest[] | undefined,
   speciesName: string
@@ -320,6 +338,7 @@ export function selectSpeciesWoolHarvests(
   );
 }
 
+/** Active-species mileage logs, newest date first. */
 export function selectSpeciesMileageLogs(
   rows: readonly MileageLog[] | undefined,
   speciesName: string
@@ -334,6 +353,7 @@ export function selectSpeciesMileageLogs(
   );
 }
 
+/** Active-species journal entries, newest date first with pinned entries above unpinned. */
 export function selectSpeciesJournalEntries(
   rows: readonly BarnJournalEntry[] | undefined,
   speciesName: string
@@ -350,6 +370,7 @@ export function selectSpeciesJournalEntries(
   );
 }
 
+/** Active-species judge/club contacts, sorted by club name. */
 export function selectSpeciesJudgeClubs(
   rows: readonly JudgeClubContact[] | undefined,
   speciesName: string
@@ -361,6 +382,7 @@ export function selectSpeciesJudgeClubs(
   );
 }
 
+/** Active-species judge assignments, earliest show date first. */
 export function selectSpeciesJudgeAssignments(
   rows: readonly JudgeAssignment[] | undefined,
   speciesName: string
@@ -376,6 +398,7 @@ export function selectSpeciesJudgeAssignments(
   );
 }
 
+/** Active-species judge expenses, newest date first. */
 export function selectSpeciesJudgeExpenses(
   rows: readonly JudgeExpense[] | undefined,
   speciesName: string
@@ -390,12 +413,14 @@ export function selectSpeciesJudgeExpenses(
   );
 }
 
+/** Pre-grouped photo views so galleries and pedigree prints do not re-scan every photo. */
 export interface SpeciesPhotoIndex {
   animalPhotos: AnimalPhoto[];
   photosByAnimalId: Map<string, AnimalPhoto[]>;
   primaryPhotoByAnimalId: Map<string, AnimalPhoto>;
 }
 
+/** Active-species photos grouped by animal, each bucket primary-first, with a primary lookup. */
 export function selectSpeciesPhotoIndex(
   rows: readonly AnimalPhoto[] | undefined,
   speciesName: string

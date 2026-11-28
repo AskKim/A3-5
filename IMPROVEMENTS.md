@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (66 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (69 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (130)
+## Logged Improvements (133)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2721,3 +2721,48 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep `findLedgerOptInViolations` called from `scripts/verify-prompts.ts` and in its pass condition, not just imported.
 2. Log a prompt version with all three opt-in fields, or with none at all.
+
+## 2026-11-28 — Documentation Pass: Layer READMEs, Gate Map and Corrected Doc Paths
+Why:        After the Alpha 3 slice work, the docs no longer described the tree: README/CONTRIBUTING/CLAUDE listed a six-gate verification suite that had grown to ten, ARCHITECTURE still pointed at the pre-split registry path, the module folders with the most new structure (engine, features, storage, barn-store slices, scripts, improvements) had no README, and the registry part headers claimed 85 entries when part 05 alone held 59.
+Changed:    `README.md`, `CONTRIBUTING.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `AGENTS.md`, `EXTRACTION_INVENTORY.md`, `docs/README.md`, `docs/ARCHITECTURE_GUIDE.md`, `scripts/README.md`, `src/engine/README.md`, `src/features/README.md`, `src/storage/README.md`, `src/hooks/barnStore/README.md`, `src/domain/improvements/README.md`, `src/domain/improvements/registry-part-01.ts`, `src/domain/improvements/registry-part-02.ts`, `src/domain/improvements/registry-part-03.ts`, `src/domain/improvements/registry-part-04.ts`, `src/domain/improvements/registry-part-05.ts`, `src/hooks/barnStore/restoreOrchestrator.ts`, `src/hooks/barnStore/speciesSelectors.ts`, `src/hooks/barnStore/storePorts.ts`, `src/domain/models.ts`, `src/domain/inputSanitization.ts`, `src/domain/syncAndExports.ts`, `src/domain/syncOutbox.ts`, `src/domain/pedigreeCalculator.ts`, `src/domain/imageOptimizationSpec.ts`, `src/domain/backupVault.ts`, `src/domain/geneticsEngine.ts`, `src/domain/carrierGenetics.ts`, `src/domain/showResults.ts`, `src/domain/barnAlerts.ts`, `src/domain/deviceCapability.ts`, `src/domain/backupArchive.ts`, `src/storage/storageProtection.ts`, `src/storage/crashLogger.ts`, `src/storage/storageProbes.ts`, `src/storage/deviceCapabilityDetector.ts`, `src/storage/webImageOptimizer.ts`, `src/storage/offThreadWorkerClient.ts`, `src/utils/webFileActions.ts`, `src/utils/useAsyncSubmitLock.ts`, `src/utils/useAccessibleDialog.ts`, `ios-wrapper/README.md`, `.github/WORKFLOWS_GUIDE.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `README.md` must contain `npm run verify`, `docs/README.md`, `scripts/README.md` — *The front page is where a new contributor gets the command list; a stale list sends them to a subset of the gates.*
+- `docs/README.md` must contain `barn-store-contract.md`, `src/hooks/barnStore/README.md`, `regen:ledgers` — *The index is only useful if it reaches the contract, the module maps and the generated-file rule.*
+- `scripts/README.md` must contain `verify:chunks`, `verify:site-identity`, `regen:ledgers` — *The build-dependent gates and the one writing command are exactly the ones people forget.*
+- `src/hooks/barnStore/README.md` must contain `runDestructiveRestore`, `invalidateSpeciesSelectorCache`, `verify:contract` — *The two rules that cause data loss when forgotten, plus the gate that guards the key surface.*
+
+**Restoration Playbook if Overwritten:**
+1. When a gate or npm script changes, update `scripts/README.md` and the command blocks in README, CONTRIBUTING and CLAUDE in the same change.
+2. Keep generated files generated: edit the registry and run `npm run regen:ledgers`, never the ledger.
+3. If a folder gains a second concern or a new contract, add or update its README rather than growing the top-level one.
+
+## 2026-11-28 — Storage Adapters Exercised Through Their Failure Arms
+Why:        Branch coverage sat at 41% with the storage layer weakest (webSqliteAdapter 36%, sqliteIdbPersistence 32%, browserStorageAdapters 0%), and the untaken arms were exactly the offline failure paths: QuotaExceededError purge-and-retry, VersionError recovery, corrupt vault envelopes and a returning user whose IndexedDB was evicted.
+Changed:    `src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts`, `src/storage/__tests__/opfsVaultCorruption.test.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts` must contain `executeIdbWriteWithQuotaRecovery`, `onQuotaExceeded`, `resetOnVersionError` — *The quota-retry and VersionError-reset branches are the ones that silently regress when an adapter is refactored.*
+- `src/storage/__tests__/opfsVaultCorruption.test.ts` must contain `loadOpfsVaultBackup`, `detectReturningUserWipedStorage`, `dumpIndexedDbDatabaseToOpfs` — *A corrupt backup must fail loudly and an evicted user must still be recognised; both are data-loss paths if untested.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the adapters on hand-built fake IndexedDB/OPFS factories: no browser, no network, deterministic failure injection.
+2. When an adapter adds a retry or fallback arm, add the failing case to these files rather than a happy-path assertion.
+3. If a threshold in `vitest.config.ts` moves, re-measure first and raise the ratchet in the same change as the tests that earned it.
+
+## 2026-11-28 — Ledger Opt-In Gates for New Entries & Prompt Verification in CI
+Why:        Both ledger gates only rejected half-opted-in entries, so a brand-new prompt revision or improvement could still be logged in the old `### IMP-` / `### PRM-` shape simply by omitting every ledger field — and `verify:prompts` ran nowhere in CI, so prompt drift only failed on the author's machine.
+Changed:    `src/domain/promptRegistry.ts`, `src/domain/improvementRegistry.ts`, `scripts/verify-prompts.ts`, `scripts/verify-improvements.ts`, `.github/workflows/ci.yml`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/promptRegistry.ts` must contain `LEGACY_PROMPT_ENTRY_IDS`, `findLedgerPinViolations` — *A new prompt revision must not be able to render legacy by omission; only the pinned IDs may skip the opt-in, and a stale pin must fail.*
+- `src/domain/improvementRegistry.ts` must contain `LEGACY_IMPROVEMENT_ENTRY_IDS`, `findImprovementLedgerOptInViolations` — *The same hole existed for improvements: without the pinned list, a new entry with no `decidedOn` rendered a legacy block and passed.*
+- `.github/workflows/ci.yml` must contain `verify:prompts` — *A gate that only runs locally is advice; CI has to fail on prompt drift before a merge lands.*
+
+**Restoration Playbook if Overwritten:**
+1. Log a new improvement with `decidedOn` (plus `status`/`rejected` where they apply) and a new prompt revision with all three of `decidedOn`, `version`, `commitShaOrTag`.
+2. When an old entry opts into the contract, delete its ID from `LEGACY_*_ENTRY_IDS` — the pin gate fails until the list is pruned.
+3. Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.

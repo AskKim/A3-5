@@ -54,6 +54,7 @@ import {
   SpeciesBackupReason,
 } from './syncAndExports';
 
+/** Photo manifest row inside a backup archive. */
 export interface BackupPhotoManifestEntry {
   id: string;
   species: string;
@@ -75,6 +76,7 @@ export interface BackupPhotoManifestEntry {
   updatedAt: string;
 }
 
+/** Built archive plus the counts it wrote. */
 export interface BackupArchiveBuildResult {
   bytes: Uint8Array;
   photoCount: number;
@@ -83,6 +85,7 @@ export interface BackupArchiveBuildResult {
   totalImageBinaryBytes: number;
 }
 
+/** Summary of a streamed ZIP archive. */
 export interface StreamingZipArchiveSummary {
   totalZipBytes: number;
   photoCount: number;
@@ -91,6 +94,7 @@ export interface StreamingZipArchiveSummary {
   totalImageBinaryBytes: number;
 }
 
+/** Decoded backup archive: snapshot, photos and format. */
 export type ParsedBackupArchive =
   | {
       kind: 'full_snapshot';
@@ -483,6 +487,7 @@ export function buildCompleteBackupZipFiles(
   };
 }
 
+/** Builds the complete backup ZIP archive. */
 export function buildCompleteBackupZipArchive(
   snapshot: BarnDatabaseSnapshot,
   filterSpecies?: string,

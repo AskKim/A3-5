@@ -23,8 +23,10 @@
 
 import { Animal, BiologicalSex, GenotypeAllelePair } from './models';
 
+/** How a locus is inherited. */
 export type InheritanceMode = 'autosomal' | 'x_linked' | 'incomplete_dominant' | 'codominant';
 
+/** One coat-colour locus and the alleles it accepts. */
 export interface LocusDefinition {
   locus: string;
   name: string;
@@ -33,6 +35,7 @@ export interface LocusDefinition {
   description: string;
 }
 
+/** One selectable option inside a variety preset. */
 export interface VarietyPresetOption {
   locus: string;
   suggestedAlleles: string;
@@ -40,6 +43,7 @@ export interface VarietyPresetOption {
   explanation: string;
 }
 
+/** A named variety preset with its allele pattern. */
 export interface VarietyPresetDefinition {
   variety: string;
   conservativeGenotype: string;
@@ -47,6 +51,7 @@ export interface VarietyPresetDefinition {
   note?: string;
 }
 
+/** Genetic warning raised for a pairing. */
 export interface BreedingGeneticAlert {
   severity: 'danger' | 'warning' | 'info';
   title: string;
@@ -54,6 +59,7 @@ export interface BreedingGeneticAlert {
   locus?: string;
 }
 
+/** Genetics configuration for one species. */
 export interface SpeciesGeneticsSpec {
   speciesKey: string;
   displayName: string;
@@ -72,6 +78,7 @@ export interface SpeciesGeneticsSpec {
 
 // ─── 1. RABBIT (ARBA Coat Color Genetics) ──────────────────────────────────────
 
+/** ARBA rabbit coat-colour loci. */
 export const RABBIT_COLOR_LOCI: LocusDefinition[] = [
   {
     locus: 'A',
@@ -140,6 +147,7 @@ const WIDE_BAND_CONFIRM_OPTION: VarietyPresetOption = {
     'Many show Reds are Ww or WW with Rufus polygenes rather than true ww. Only check if Wide-Band (ww) is proven by pedigree or test breeding.',
 };
 
+/** Rabbit variety presets and their allele patterns. */
 export const RABBIT_VARIETY_PRESET_DEFS: VarietyPresetDefinition[] = [
   {
     variety: 'Red',
@@ -712,6 +720,7 @@ function classifyFerretPhenotype(loci: Record<string, string>): string {
 
 // ─── SPECIES REGISTRY ──────────────────────────────────────────────────────────
 
+/** Genetics specs for each built-in species. */
 export const SPECIES_GENETICS_SPECS: SpeciesGeneticsSpec[] = [
   {
     speciesKey: 'rabbit',
@@ -1241,6 +1250,7 @@ export function parseGenotypeString(raw: string, speciesName?: string): Genotype
   return result;
 }
 
+/** Explanation for one inferred allele. */
 export interface InferredGenotypeNote {
   locus: string;
   before: string;
@@ -1248,6 +1258,7 @@ export interface InferredGenotypeNote {
   reason: string;
 }
 
+/** Inferred genotype plus the notes that justify it. */
 export interface GenotypeInferenceResult {
   updatedPairs: GenotypeAllelePair[];
   formatted: string;
@@ -1528,8 +1539,10 @@ export function inferHiddenAlleles(
   };
 }
 
+/** Where an allele is believed to have come from. */
 export type AlleleProvenanceSource = 'sire' | 'dam' | 'offspring' | 'manual' | 'unknown';
 
+/** Allele paired with its provenance. */
 export interface AnnotatedAllele {
   allele: string;
   source: AlleleProvenanceSource;
@@ -1537,6 +1550,7 @@ export interface AnnotatedAllele {
   isInferredUncommitted?: boolean;
 }
 
+/** One locus with provenance for both alleles. */
 export interface AnnotatedLocusPair {
   locus: string;
   locusName: string;
@@ -1544,6 +1558,7 @@ export interface AnnotatedLocusPair {
   allele2: AnnotatedAllele;
 }
 
+/** Per-locus provenance for one animal. */
 export interface AnimalAlleleProvenanceResult {
   speciesName: string;
   isCustomSpeciesFallback: boolean;
@@ -2095,6 +2110,7 @@ export function analyzeAlleleProvenance(
   };
 }
 
+/** One genotype outcome at one locus. */
 export interface LocusOutcomeEntry {
   genotype: string;
   probabilityPercent: number;
@@ -2102,6 +2118,7 @@ export interface LocusOutcomeEntry {
   displayLabel?: string;
 }
 
+/** All outcomes at one locus, with probabilities. */
 export interface LocusPunnettOutcome {
   locus: string;
   locusName: string;
@@ -2116,6 +2133,7 @@ export interface LocusPunnettOutcome {
   uncertaintyNote?: string;
 }
 
+/** Predicted visual result and its share of the litter. */
 export interface PredictedPhenotypeRow {
   label: string;
   genotypeSummary: string;
@@ -2124,6 +2142,7 @@ export interface PredictedPhenotypeRow {
   sexGroup?: 'Male' | 'Female';
 }
 
+/** Full pairing simulation: locus outcomes and phenotype split. */
 export interface PunnettSimulationSummary {
   speciesName: string;
   isCustomSpeciesFallback: boolean;
@@ -2417,6 +2436,7 @@ export function simulatePairingGenetics(
   };
 }
 
+/** Carrier note produced by the genotype sandbox. */
 export interface SingleGenotypeCarrierNote {
   locus: string;
   locusName: string;
@@ -2425,6 +2445,7 @@ export interface SingleGenotypeCarrierNote {
   description: string;
 }
 
+/** Sandbox evaluation of one genotype. */
 export interface SingleGenotypeEvaluation {
   speciesName: string;
   isCustomSpeciesFallback: boolean;

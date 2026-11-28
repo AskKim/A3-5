@@ -992,4 +992,10 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'Pages keeps deploying from main and release with Bun and its SEO assertions, while the guard decides whether Actions may deploy at all.',
   'IMP-085#.github/workflows/security-audit.yml#1':
     'The audit must trigger on the lockfile this project actually uses; bun.lock does not exist here.',
+  'IMP-133#src/domain/promptRegistry.ts#1':
+    'The pinned legacy IDs are the only exemption from the opt-in; removing this check reopens silent legacy rendering for new prompt revisions.',
+  'IMP-133#src/domain/improvementRegistry.ts#1':
+    'Improvements need the same pinned exemption, otherwise a new entry logged without `decidedOn` passes as grandfathered.',
+  'IMP-133#.github/workflows/ci.yml#1':
+    'The prompt gate has to run where merges are decided; locally-only verification let prompt drift reach main.',
 };

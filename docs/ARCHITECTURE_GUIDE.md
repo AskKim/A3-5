@@ -28,7 +28,7 @@ Unlike modern apps that require you to create an account, log in with an email, 
   - `src/features/` — Self-contained tools for importing/exporting spreadsheets, printing documents, backups, OCR, and building calendar files.
   - `src/app/` — Settings and wiring that configure animal terminology (e.g. buck/doe vs sire/dam, litter vs kids) and connect the engine/features to the app.
   - `src/storage/` — Browser database adapters (SQLite WASM, IndexedDB, OPFS vaults, background workers, image optimization).
-  - `src/hooks/` & `src/utils/` — State management (`useBarnStore.ts`) and reusable UI helpers (accessibility, PDF helpers, ES2018 shims).
+  - `src/hooks/` & `src/utils/` — State management (`useBarnStore.ts`, split into the slices under `src/hooks/barnStore/` — see that folder's README) and reusable UI helpers (accessibility, PDF helpers, ES2018 shims).
   - `src/native/` — Bridge connecting the web app to native Android/iOS wrapper features.
 - `android-wrapper/` — A small native Android project that wraps the web app so it can be installed on Android phones and tablets via an `.apk`.
 - `apple-wrapper/` & `ios-wrapper/` — The architecture and bridge definitions for running as an installable app on iPhones, iPads, and Macs.
@@ -83,4 +83,5 @@ The codebase enforces strict structural decoupling across three layers:
 - **Zero Type Escapes:** No `as any`, `@ts-ignore`, or `@ts-expect-error`.
 - **Temporal Arithmetic:** Store pure calendar dates as `"YYYY-MM-DD"`. Perform date offsets using `Date.UTC(y, m, d + offset)`.
 - **Memory Safety:** Cap active pedigree trees at 2–3 generations; revoke object URLs immediately after compression; teardown all subscriptions and timers on component unmount.
-- **Drift & Boundary Protection:** Register significant changes in the registries (`src/domain/improvements/registry-part-*.ts`, `src/domain/promptRegistry.ts`); `IMPROVEMENTS.md` and `PROMPT_CHANGES.md` are generated from them by `npm run regen:ledgers` and are never edited by hand. Keep checks passing via `npm run verify:improvements`, `npm run verify:prompts`, `npm run verify:layers`, `npm run verify:engine`, `npm run verify:extraction`, `npm test`, and `npm run lint`.
+- **Drift & Boundary Protection:** Register significant changes in the registries (`src/domain/improvements/registry-part-*.ts`, `src/domain/promptRegistry.ts`); `IMPROVEMENTS.md` and `PROMPT_CHANGES.md` are generated from them by `npm run regen:ledgers` and are never edited by hand. Keep the gates passing with `npm run verify` (typecheck, tests, coverage floor, and the registry / prompt / module / layer / engine / extraction / Android / store-contract invariants), then `npm run build` and `npm run verify:chunks`. Every gate, allowlist and failure message is documented in [`scripts/README.md`](../scripts/README.md).
+- **Where to read next:** [`docs/README.md`](./README.md) indexes the contracts (`contracts/`), decision records (`decisions/`) and plans (`plans/`); [`EXTRACTION_INVENTORY.md`](../EXTRACTION_INVENTORY.md) classifies every source file.

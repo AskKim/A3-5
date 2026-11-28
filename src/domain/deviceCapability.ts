@@ -40,6 +40,7 @@ import {
   type UnavailableBrowserFeature,
 } from '@engine/primitives/deviceCapabilityCore';
 
+/** Capability types re-exported from the engine layer. */
 export type {
   BrowserCompatibilityAssessment,
   BrowserFeatureSignals,
@@ -53,6 +54,7 @@ export type {
   UnavailableBrowserFeature,
 };
 
+/** Hardware tier description and its limits. */
 export interface DeviceTierDefinition {
   tier: DeviceCapabilityTierNumber;
   slug:
@@ -77,18 +79,23 @@ export interface DeviceTierDefinition {
   canReopenInSettings: boolean;
 }
 
+/** Result of classifying the current device. */
 export type DeviceCapabilityAssessment =
   GenericDeviceCapabilityAssessment<DeviceTierDefinition>;
 
+/** Workload fit evaluation, re-exported for app callers. */
 export type BarnWorkloadEvaluation = GenericWorkloadEvaluation;
 
+/** Storage policy per hardware tier. */
 export const TIER_STORAGE_POLICIES: Record<DeviceCapabilityTierNumber, TierStoragePolicy> =
   GENERIC_TIER_STORAGE_POLICIES;
 
+/** Storage policy for one tier. */
 export function getTierStoragePolicy(tier: DeviceCapabilityTierNumber): TierStoragePolicy {
   return getGenericTierStoragePolicy(tier);
 }
 
+/** All hardware tiers keyed by tier number. */
 export const DEVICE_CAPABILITY_TIERS: Record<DeviceCapabilityTierNumber, DeviceTierDefinition> = {
   1: {
     tier: 1,
@@ -202,6 +209,7 @@ export const DEVICE_CAPABILITY_TIERS: Record<DeviceCapabilityTierNumber, DeviceT
   },
 };
 
+/** Hardware tiers in display order. */
 export const DEVICE_CAPABILITY_TIER_LIST: DeviceTierDefinition[] = [
   DEVICE_CAPABILITY_TIERS[1],
   DEVICE_CAPABILITY_TIERS[2],

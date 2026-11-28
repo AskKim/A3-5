@@ -185,6 +185,7 @@ export function formatClearedProofBadge(record: ClearedCarrierRecord): string {
   return 'Verified Clear';
 }
 
+/** Long label for a cleared-carrier proof. */
 export function getClearedProofLongLabel(record: ClearedCarrierRecord): string {
   const base = CLEARED_CARRIER_PROOF_LABELS[record.proofType] || 'Verified Clear';
   if (record.proofType === 'test_bred' && record.testBreedingCount && record.testBreedingCount > 0) {
@@ -194,6 +195,7 @@ export function getClearedProofLongLabel(record: ClearedCarrierRecord): string {
 }
 
 
+/** Carrier disclosure split into its display parts. */
 export interface CarrierDisclosureParts {
   confirmed: string[];
   suspected: string[];
@@ -519,6 +521,7 @@ function matchesTraitOrRule(traitA: string, traitB: string, speciesKey?: string)
 
 // ─── Independent Sire/Dam Branch Firewall Traversal ────────────────────────────
 
+/** Ancestor that can transmit a carrier trait. */
 export interface LineageSourceAncestor {
   id: string;
   name: string;
@@ -528,12 +531,14 @@ export interface LineageSourceAncestor {
   status: 'Confirmed' | 'Suspected';
 }
 
+/** A lineage path that could pass a trait down. */
 export interface LineagePotentialCarrierEntry {
   trait: string;
   viaBranches: Array<'Sire' | 'Dam'>;
   sourceAncestors: LineageSourceAncestor[];
 }
 
+/** A lineage branch known not to carry the trait. */
 export interface BlockedLineageBranchEntry {
   trait: string;
   branch: 'Sire' | 'Dam';
@@ -544,6 +549,7 @@ export interface BlockedLineageBranchEntry {
   generation: number;
 }
 
+/** Lineage carrier-risk analysis for one animal. */
 export interface AnimalCarrierLineageAnalysis {
   confirmed: string[];
   suspected: string[];
@@ -770,6 +776,7 @@ export function analyzeAnimalCarrierLineage(
 
 // ─── Breeding Pairing Shared Carrier Analysis ──────────────────────────────────
 
+/** Carrier risk for one trait in a pairing. */
 export interface PairingCarrierRisk {
   trait: string;
   severity: 'danger' | 'warning' | 'info';
@@ -885,6 +892,7 @@ export function analyzePairingCarrierRisks(
 
 // ─── Herd Carrier Filter / Finder Helper ───────────────────────────────────────
 
+/** Ways the herd can be filtered by carrier status. */
 export type HerdCarrierFilterMode =
   | 'all'
   | 'any_risk'
@@ -893,6 +901,7 @@ export type HerdCarrierFilterMode =
   | 'lineage_potential'
   | 'cleared';
 
+/** True when an animal matches the selected carrier filter. */
 export function doesAnimalMatchCarrierFilter(
   analysis: AnimalCarrierLineageAnalysis,
   mode: HerdCarrierFilterMode,
@@ -958,6 +967,7 @@ function shortenTraitForTightCell(label: string): string {
   return label.length > 26 ? `${label.slice(0, 24).trimEnd()}…` : label;
 }
 
+/** Options for the compact carrier disclosure line. */
 export interface CompactCarrierFormatOptions {
   /** Use ultra-short prefix (`Conf:` / `Susp:` vs `Confirmed:` / `Suspected:`) and trim long labels. */
   ultraCompact?: boolean;

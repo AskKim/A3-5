@@ -44,6 +44,7 @@ import {
   writeTempOpfsFileStreamed,
 } from './opfsTempStream';
 
+/** Zip build result type re-exported for callers. */
 export type { OpfsTempZipBuildResult };
 
 const WORKER_TIMEOUT_MS = 90_000;
@@ -300,6 +301,7 @@ async function runStreamedZipMainThreadFallback(
   };
 }
 
+/** Builds a complete backup ZIP into OPFS off the main thread. */
 export async function buildCompleteBackupZipToOpfsTmpOffThread(
   snapshot: BarnDatabaseSnapshot,
   filterSpecies?: string,
@@ -329,6 +331,7 @@ export async function buildCompleteBackupZipToOpfsTmpOffThread(
   );
 }
 
+/** Builds a photos-only ZIP into OPFS off the main thread. */
 export async function buildPhotosOnlyZipToOpfsTmpOffThread(
   snapshot: BarnDatabaseSnapshot,
   filterSpecies?: string
@@ -352,6 +355,7 @@ export async function buildPhotosOnlyZipToOpfsTmpOffThread(
   );
 }
 
+/** Builds a complete backup ZIP off the main thread. */
 export async function buildCompleteBackupZipOffThread(
   snapshot: BarnDatabaseSnapshot,
   filterSpecies?: string,
@@ -376,6 +380,7 @@ export async function buildCompleteBackupZipOffThread(
   return buildCompleteBackupZipArchive(snapshot, filterSpecies, extraMeta);
 }
 
+/** Builds a photos-only ZIP off the main thread. */
 export async function buildPhotosOnlyZipOffThread(
   snapshot: BarnDatabaseSnapshot,
   filterSpecies?: string
@@ -394,6 +399,7 @@ export async function buildPhotosOnlyZipOffThread(
   return buildPhotosOnlyZipArchive(snapshot, filterSpecies);
 }
 
+/** Parses an uploaded backup archive off the main thread. */
 export async function parseBackupArchiveOffThread(
   bytes: Uint8Array,
   fileName: string,
@@ -414,6 +420,7 @@ export async function parseBackupArchiveOffThread(
   return parseBackupArchiveInput(bytes, fileName, fallbackSettings);
 }
 
+/** Parses an external import off the main thread. */
 export async function parseExternalImportOffThread(
   platformId: string,
   inputs: RawArchiveInput[],
@@ -438,6 +445,7 @@ export async function parseExternalImportOffThread(
   return importer.parse(inputs, lightSnapshot, options);
 }
 
+/** Builds the diagnostic support bundle off the main thread. */
 export async function buildSupportBundleZipOffThread(
   params: SupportBundleBuildParams
 ): Promise<SupportBundleBuildResult> {
@@ -454,6 +462,7 @@ export async function buildSupportBundleZipOffThread(
   return buildSupportBundleZipArchive(params);
 }
 
+/** Inspects an archive's metadata off the main thread. */
 export async function inspectBackupArchiveOffThread(
   bytes: Uint8Array,
   fileName: string,
@@ -496,10 +505,12 @@ export async function inspectBackupArchiveOffThread(
   return { parsed, inspection };
 }
 
+/** True when the archive worker is unavailable and work falls back inline. */
 export function isArchiveWorkerDisabled(): boolean {
   return workerDisabled || typeof Worker === 'undefined';
 }
 
+/** Resets worker state between tests. */
 export function resetArchiveWorkerForTests(): void {
   workerDisabled = false;
   consecutiveWorkerFailures = 0;
