@@ -13,6 +13,7 @@
 import {
   clearAllDiagnosticLogs,
   dismissAsyncErrorToast,
+  emitAsyncErrorToast,
   getActiveAsyncErrorToasts,
   getDiagnosticConfig,
   getDiagnosticSummary,
@@ -61,6 +62,7 @@ export interface DiagnosticsPort {
   markCleanSessionExit: typeof markCleanSessionExit;
   getActiveAsyncErrorToasts: typeof getActiveAsyncErrorToasts;
   dismissAsyncErrorToast: typeof dismissAsyncErrorToast;
+  emitAsyncErrorToast: typeof emitAsyncErrorToast;
   subscribeAsyncErrorToasts: typeof subscribeAsyncErrorToasts;
   getPausedBackgroundJobs: typeof getPausedBackgroundJobs;
   resumePausedBackgroundJob: typeof resumePausedBackgroundJob;
@@ -71,6 +73,7 @@ export interface DiagnosticsPort {
 /** The browser implementation over the real offline log and freeze-coordinator stores. */
 export const browserDiagnosticsPort: DiagnosticsPort = {
   recordReactCrash,
+  emitAsyncErrorToast,
   logDiagnosticEvent,
   getDiagnosticConfig,
   updateDiagnosticConfig,

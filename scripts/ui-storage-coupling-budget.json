@@ -1,5 +1,4 @@
 [
-  "src/components/AnimalPhotoGallery.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
   "src/components/AnimalPhotoGallery.tsx -> src/storage/photoHydration [components must not import storage singletons; inject an @app port]",
   "src/components/BarnSchedulerGantt.tsx -> src/storage/p2pLanChannel [components must not import storage singletons; inject an @app port]",
   "src/components/BreedingCalendarPanel.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
@@ -8,7 +7,6 @@
   "src/components/CrashErrorBoundary.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/CrashErrorBoundary.tsx -> src/storage/webSqliteAdapter [components must not import storage singletons; inject an @app port]",
   "src/components/DevelopmentScreen.tsx -> src/storage/backgroundFreezeCoordinator [components must not import storage singletons; inject an @app port]",
-  "src/components/DevelopmentScreen.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
   "src/components/DevelopmentScreen.tsx -> src/storage/deviceCapabilityDetector [components must not import storage singletons; inject an @app port]",
   "src/components/DevelopmentScreen.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]",
   "src/components/DevelopmentScreen.tsx -> src/storage/offThreadWorkerClient [components must not import storage singletons; inject an @app port]",
@@ -22,7 +20,6 @@
   "src/components/HealthReferencePanel.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/HealthReferencePanel.tsx -> src/storage/vetDocsFolder [components must not import storage singletons; inject an @app port]",
   "src/components/ImportExportHubScreen.tsx -> src/storage/backgroundFreezeCoordinator [components must not import storage singletons; inject an @app port]",
-  "src/components/ImportExportHubScreen.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
   "src/components/ImportExportHubScreen.tsx -> src/storage/deviceCapabilityDetector [components must not import storage singletons; inject an @app port]",
   "src/components/ImportExportHubScreen.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]",
   "src/components/ImportExportHubScreen.tsx -> src/storage/offThreadWorkerClient [components must not import storage singletons; inject an @app port]",
@@ -30,7 +27,6 @@
   "src/components/ImportExportHubScreen.tsx -> src/storage/photoHydration [components must not import storage singletons; inject an @app port]",
   "src/components/ImportExportHubScreen.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/PedigreeOcrScannerPanel.tsx -> src/storage/pedigreeOcrScanner [components must not import storage singletons; inject an @app port]",
-  "src/components/PrintPreviewModal.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
   "src/components/SettingsAndSyncScreen.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/SpeciesDashboardScreen.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]",
   "src/components/UnifiedBackupVaultPanel.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]"

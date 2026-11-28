@@ -95,7 +95,7 @@ import {
   resumePausedBackgroundJob,
   subscribePausedBackgroundJobs,
 } from '../storage/backgroundFreezeCoordinator';
-import { logDiagnosticEvent } from '../storage/crashLogger';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
 import {
   detectCurrentBrowserCompatibility,
   DeviceCapabilityController,
@@ -508,7 +508,7 @@ export function DevelopmentScreen({
       return;
     }
     pwaUpdate.setPolicy(check.policy);
-    logDiagnosticEvent({
+    getDiagnosticsPort().logDiagnosticEvent({
       level: 'info',
       category: 'lifecycle',
       message: `PWA update policy changed to "${check.policy}" via Development`,
@@ -531,7 +531,7 @@ export function DevelopmentScreen({
       return;
     }
 
-    logDiagnosticEvent({
+    getDiagnosticsPort().logDiagnosticEvent({
       level: result.value.level,
       category: result.value.category,
       message: result.value.message,
@@ -615,7 +615,7 @@ export function DevelopmentScreen({
         await onClearLocalSyncAndReminderState();
         setSyncResetPhrase('');
         await refreshSyncCounters();
-        logDiagnosticEvent({
+        getDiagnosticsPort().logDiagnosticEvent({
           level: 'warn',
           category: 'storage',
           message: 'Developer manually cleared local sync outbox & backup reminder metadata',

@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (89 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (90 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (153)
+## Logged Improvements (154)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3055,3 +3055,16 @@ Status:     active
 1. A storage-backed capability goes into an @app port with its storage binding in the port file; the component only imports the port.
 2. Keep the module-level injectables (`get*Port` / `set*Port` / `reset*Port`) symmetric so tests can restore them in cleanup.
 3. Regenerate the coupling ledger with `--write-ui-budget` only after `audit-layers.ts` shows a smaller set, and never raise it.
+
+## 2026-11-28 — Move the Remaining Screen Crash-Logger Calls Onto the Diagnostics Port
+Why:        Four more screens still imported the crash logger directly: the developer console and the photo gallery for `logDiagnosticEvent`, the import hub for `emitAsyncErrorToast`, and the print preview for the dismiss/isMemory/log quartet.
+Changed:    `src/app/ports/diagnostics.ts`, `src/components/DevelopmentScreen.tsx`, `src/components/ImportExportHubScreen.tsx`, `src/components/PrintPreviewModal.tsx`, `src/components/AnimalPhotoGallery.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/ImportExportHubScreen.tsx` must contain `getDiagnosticsPort` — *The import hub raises async-error toasts; it must do so through the port rather than importing the log store.*
+- `src/components/PrintPreviewModal.tsx` must contain `getDiagnosticsPort` — *Print failures are logged and toasted through the port, which keeps the modal renderable in tests without the offline log store.*
+
+**Restoration Playbook if Overwritten:**
+1. Add the capability to the port first, then replace the call sites; never leave one component importing both the port and the storage module.
+2. Keep `browserDiagnosticsPort` complete: a missing binding is a compile error, which is the intended failure mode.

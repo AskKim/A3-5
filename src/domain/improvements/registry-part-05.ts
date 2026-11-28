@@ -3945,4 +3945,47 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Regenerate the coupling ledger with `--write-ui-budget` only after `audit-layers.ts` shows a smaller set, and never raise it.',
     ],
   },
+  {
+    id: 'IMP-155',
+    title: 'Move the Remaining Screen Crash-Logger Calls Onto the Diagnostics Port',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Four more screens still imported the crash logger directly: the developer console and the photo gallery for `logDiagnosticEvent`, the import hub for `emitAsyncErrorToast`, and the print preview for the dismiss/isMemory/log quartet.',
+    summary:
+      '`emitAsyncErrorToast` joined the diagnostics port, and `DevelopmentScreen`, `AnimalPhotoGallery`, `ImportExportHubScreen` and `PrintPreviewModal` now call every one of those functions through `getDiagnosticsPort()`. Component→storage coupling drops from 35 to 31 edges across 15 files, with the remaining edges concentrated in the two big hub screens and a set of single-capability stragglers.',
+    files: [
+      'src/app/ports/diagnostics.ts',
+      'src/components/DevelopmentScreen.tsx',
+      'src/components/ImportExportHubScreen.tsx',
+      'src/components/PrintPreviewModal.tsx',
+      'src/components/AnimalPhotoGallery.tsx',
+      'scripts/ui-storage-coupling-budget.json',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/ImportExportHubScreen.tsx',
+        requiredSubstrings: ['getDiagnosticsPort'],
+        rationale:
+          'The import hub raises async-error toasts; it must do so through the port rather than importing the log store.',
+      },
+      {
+        filePath: 'src/components/PrintPreviewModal.tsx',
+        requiredSubstrings: ['getDiagnosticsPort'],
+        rationale:
+          'Print failures are logged and toasted through the port, which keeps the modal renderable in tests without the offline log store.',
+      },
+    ],
+    restorePlaybook: [
+      'Add the capability to the port first, then replace the call sites; never leave one component importing both the port and the storage module.',
+      'Keep `browserDiagnosticsPort` complete: a missing binding is a compile error, which is the intended failure mode.',
+    ],
+  },
 ];

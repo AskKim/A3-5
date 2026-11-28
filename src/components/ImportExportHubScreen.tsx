@@ -101,7 +101,7 @@ import {
   clearPausedBackgroundJob,
   registerPausedBackgroundJob,
 } from '../storage/backgroundFreezeCoordinator';
-import { emitAsyncErrorToast } from '../storage/crashLogger';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
 import {
   detectCurrentBrowserCompatibility,
   DeviceCapabilityController,
@@ -1053,7 +1053,7 @@ export function ImportExportHubScreen({
             severityReason: reasonMsg,
             resumeHandler: () => executeResumeDirectorySync(true),
           });
-          emitAsyncErrorToast({
+          getDiagnosticsPort().emitAsyncErrorToast({
             title: 'Folder Sync Paused — Permission Needed',
             detail: reasonMsg,
             severity: 'error',
@@ -1086,7 +1086,7 @@ export function ImportExportHubScreen({
           severityReason: err.severityIssue ?? undefined,
           resumeHandler: () => executeResumeDirectorySync(Boolean(err.severityIssue)),
         });
-        emitAsyncErrorToast({
+        getDiagnosticsPort().emitAsyncErrorToast({
           title: 'Folder Sync Paused',
           detail: err.checkpointSummary || err.message,
           severity: err.severityIssue ? 'error' : 'warning',
@@ -1104,7 +1104,7 @@ export function ImportExportHubScreen({
           severityReason: msg,
           resumeHandler: () => executeResumeDirectorySync(false),
         });
-        emitAsyncErrorToast({
+        getDiagnosticsPort().emitAsyncErrorToast({
           title: 'Folder Sync Resume Failed',
           detail: msg,
           severity: 'error',
@@ -1170,7 +1170,7 @@ export function ImportExportHubScreen({
               ? err.message
               : 'Folder sync paused cleanly when app moved to background and will auto-resume when you return.'
           );
-          emitAsyncErrorToast({
+          getDiagnosticsPort().emitAsyncErrorToast({
             title: 'Folder Sync Paused',
             detail: err.checkpointSummary || err.message,
             severity: hasSeverity ? 'error' : 'warning',

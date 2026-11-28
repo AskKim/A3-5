@@ -34,7 +34,7 @@ import {
   validateUploadFileSize,
 } from '../domain/inputSanitization';
 import { Animal, AnimalPhoto } from '../domain/models';
-import { logDiagnosticEvent } from '../storage/crashLogger';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
 import { revokeBlobUrlIfNeeded } from '../storage/photoHydration';
 import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
@@ -181,7 +181,7 @@ export function AnimalPhotoGallery({
           return next;
         });
       } catch (err) {
-        logDiagnosticEvent({
+        getDiagnosticsPort().logDiagnosticEvent({
           level: 'warn',
           category: 'media',
           message: `Failed to load full-resolution photo "${targetId}"`,
