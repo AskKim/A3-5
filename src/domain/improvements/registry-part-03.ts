@@ -900,12 +900,12 @@ export const REGISTRY_PART_03: ImprovementEntry[] = [
         requiredSubstrings: ['herdboss-transfer-bundle', 'registry-worksheet-csv', 'binaryContent'],
       },
       {
-        filePath: 'src/components/PrintPreviewModal.tsx',
-        requiredSubstrings: [
-          'canShareHtmlDocument',
-          'extractScopedPrintCssFromRules',
-          'detectDocumentPrintOrientation',
-        ],
+        filePath: 'src/features/document-export/printStagePresenters.ts',
+        requiredSubstrings: ['extractScopedPrintCssFromRules', 'detectDocumentPrintOrientation'],
+      },
+      {
+        filePath: 'src/utils/webFileActions.ts',
+        requiredSubstrings: ['canShareHtmlDocument'],
       },
       {
         filePath: 'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PrintBridge.kt',

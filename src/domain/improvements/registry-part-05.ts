@@ -4358,4 +4358,52 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.',
     ],
   },
+  {
+    id: 'IMP-165',
+    title: 'Move the Print-Stage Presenters Into the Document-Export Feature',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The coupling milestone had one presenter extraction left unbuilt: ' +
+      '`PrintPreviewModal` (2,228 lines) carried the pure print-document composition rules itself, so any other printable surface had to import a React component to reuse them.',
+    summary:
+      'The print-stage presenters moved to ' +
+      '`src/features/document-export/printStagePresenters.ts` — zoom clamping, `#barn-print-stage` selector scoping, `@page`/`@media` extraction, orientation detection, executable-markup stripping and abort detection — because the feature already owns `buildPrintableHtmlDocument`. Two pieces deliberately stayed out: `canShareHtmlDocument` uses `navigator`/`File`, so it joined the file actions in `src/utils/webFileActions.ts`, and the failure wording stayed in the modal, where `document.pdf` would trip the framework DOM-purity gate. The isolated engine build also caught `trimStart` (ES2019) in the moved code, which the app tsconfig had masked; it is now an ES2018-safe regex. The IMP-011/IMP-043 invariants follow the symbols to their new homes.',
+    files: [
+      'src/features/document-export/printStagePresenters.ts',
+      'src/features/document-export/index.ts',
+      'src/utils/webFileActions.ts',
+      'src/components/PrintPreviewModal.tsx',
+      'src/components/__tests__/printPreviewHelpers.test.ts',
+      'src/components/__tests__/printPreviewFileActions.test.ts',
+      'src/domain/improvements/registry-part-03.ts',
+      'src/domain/improvements/registry-part-04.ts',
+      'EXTRACTION_INVENTORY.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/PrintPreviewModal.tsx',
+        requiredSubstrings: ['@features/document-export'],
+        rationale:
+          'The modal must keep consuming the feature presenters instead of re-inlining its own copy of the CSS scoping and sanitising rules.',
+      },
+      {
+        filePath: 'src/features/document-export/printStagePresenters.ts',
+        requiredSubstrings: ['export function clampPreviewZoom', 'sanitizePrintStageHtml'],
+        rationale:
+          'The presenters are the shared contract for printable surfaces; losing either symbol sends the UI back to a component-local copy.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep DOM-touching helpers out of `@features/*`: a capability probe like `canShareHtmlDocument` belongs in `src/utils/webFileActions.ts`, and user-facing error copy stays with the modal.',
+      'Run `npm run verify:extraction` after touching `src/features` or ' +
+      '`src/utils`: it compiles them against the ES2018 lib, which is stricter than the app tsconfig that allowed `trimStart`.',
+    ],
+  },
 ];

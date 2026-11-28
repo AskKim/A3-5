@@ -539,8 +539,10 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'Pre-restore dry-run inspection must count v3/v4 feed, ledger, processing, and youth records.',
   'IMP-047#src/domain/exporters/registry.ts#1':
     'HerdBoss Transfer Tables (.ZIP) and Breed Registry & Show Worksheets (.CSV) must stay active ready exporters.',
-  'IMP-047#src/components/PrintPreviewModal.tsx#1':
-    'PrintPreviewModal must enable Share .HTM on native wrappers, extract @media print rules, and forward orientation/HTML to native print.',
+  'IMP-047#src/features/document-export/printStagePresenters.ts#1':
+    'The print-stage presenters must keep extracting @media print rules and reporting the document orientation that native print consumes.',
+  'IMP-047#src/utils/webFileActions.ts#1':
+    'Share .HTM capability must stay detectable from the host, so a native wrapper can offer Share even when navigator.share is absent.',
   'IMP-047#android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PrintBridge.kt#1':
     'Android PrintBridge must render self-contained HTML in a hardened offscreen WebView with landscape/portrait PrintAttributes.',
   'IMP-048#AGENTS.md#1':
@@ -763,8 +765,8 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'Android WebView asset handler must serve status.json with Cache-Control: no-cache alongside version.json.',
   'IMP-062#src/storage/webSqliteAdapter.ts#1':
     'Primary IndexedDB writes must catch QuotaExceededError, purge OPFS /tmp and non-essential fallback caches, and retry once before failing.',
-  'IMP-062#src/components/PrintPreviewModal.tsx#1':
-    'Print stage DOM mounting must strip executable tags, inline event handlers, and dangerous URLs before inserting HTML into #barn-print-stage.',
+  'IMP-062#src/features/document-export/printStagePresenters.ts#1':
+    'Print stage mounting must strip executable tags, inline event handlers and dangerous URLs before any surface inserts printable HTML into the page.',
   'IMP-062#src/domain/backupVault.ts#1':
     'backupVault.ts must import binary encoding helpers directly from binaryEncoding.ts instead of pulling backupArchive.ts into the startup graph.',
   'IMP-062#src/components/DiagnosticsAndSupportPanel.tsx#1':
