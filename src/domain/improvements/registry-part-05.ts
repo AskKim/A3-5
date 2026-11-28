@@ -2666,4 +2666,49 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Call `resetSpeciesSelectorCache()` in a test that reuses ids and revisions with different content.',
     ],
   },
+  {
+    id: 'IMP-126',
+    title: 'Selector Cache Flushed on Dataset Replacement',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The rev-keyed selector cache keyed on row ids and revisions could not tell a restored or imported dataset from the one it replaced: a backup holding the same ids at the same revisions with different field values would have been served from the old cache.',
+    summary:
+      'Every selector cache key is now scoped to a dataset generation. `invalidateSpeciesSelectorCache()` bumps the generation and clears the cache, and it is called by `runDestructiveRestore` after the replace (and after a rollback replace) plus at every wholesale dataset entry point in the store: JSON backup import, archive import, delta import, archived-herd restore, platform import and SQLite import. Ordinary writes keep reusing the cache, because they do not replace the dataset. Three selector tests document the collision and prove the flush, and `restoreOrchestrator.test.ts` proves the restore path itself flushes before the replacement is observable.',
+    files: [
+      'src/hooks/barnStore/speciesSelectors.ts',
+      'src/hooks/barnStore/restoreOrchestrator.ts',
+      'src/hooks/useBarnStore.ts',
+      'src/hooks/__tests__/speciesSelectors.test.ts',
+      'src/hooks/__tests__/restoreOrchestrator.test.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/speciesSelectors.ts',
+        requiredSubstrings: ['invalidateSpeciesSelectorCache', 'datasetEpoch'],
+        rationale:
+          'The generation is the only guard between a restore and a stale list; losing it silently reintroduces the hazard.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/restoreOrchestrator.ts',
+        requiredSubstrings: ['invalidateSpeciesSelectorCache'],
+        rationale:
+          'All restores share this path, so the flush belongs here rather than in each caller.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['invalidateSpeciesSelectorCache'],
+        rationale:
+          'Imports bypass the restore orchestrator and need their own flush.',
+      },
+    ],
+    restorePlaybook: [
+      'Call `invalidateSpeciesSelectorCache()` in any new path that replaces the snapshot wholesale, before the replacement can render.',
+      'Never rely on revision signatures alone for cross-dataset identity — restores reuse ids and revisions.',
+      'Keep the generation bump ahead of the cache clear so in-flight entries cannot be re-keyed to the old dataset.',
+    ],
+  },
 ];

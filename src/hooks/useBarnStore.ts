@@ -103,6 +103,7 @@ import {
   YouthProjectBook,
 } from '../domain/models';
 import {
+  invalidateSpeciesSelectorCache,
   selectSpeciesAnimalReservations,
   selectSpeciesAnimals,
   selectSpeciesBreedings,
@@ -6072,6 +6073,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const currentSnapshot = snapshotRef.current;
         if (!currentSnapshot) return;
         try {
+          invalidateSpeciesSelectorCache();
           const { mergeBarnSnapshots, parseBarnBackupJson } = await import(
             '../domain/syncAndExports'
           );
@@ -6173,6 +6175,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const currentSnapshot = snapshotRef.current;
         if (!currentSnapshot) return;
         try {
+          invalidateSpeciesSelectorCache();
           const { parseBackupArchiveOffThread } = await import('../storage/offThreadWorkerClient');
           const parsed = await parseBackupArchiveOffThread(
             bytes,
@@ -6321,6 +6324,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const currentSnapshot = snapshotRef.current ?? snapshot;
         if (!currentSnapshot) return;
         try {
+          invalidateSpeciesSelectorCache();
           const baseOps = syncOperationsHydratedRef.current
             ? syncOperationsRef.current
             : await loadSyncOperationsFromIdbAndIndex();
@@ -6816,6 +6820,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           : snapshotRef.current;
         if (!freshBase) return;
         try {
+          invalidateSpeciesSelectorCache();
           const [loaded, { mergeRestoredArchiveIntoSnapshot }] = await Promise.all([
             loadOpfsHerdArchive(archiveKey, freshBase.settings),
             import('../domain/backupVault'),
@@ -6945,6 +6950,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         if (!currentSnapshot) return;
 
         try {
+          invalidateSpeciesSelectorCache();
           const { resolveAnimalsWithConflictChoices } =
             await import('../domain/importers/conflictResolver');
           const resolvedAnimals = resolveAnimalsWithConflictChoices(
@@ -7097,6 +7103,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       return enqueueStoreMutation(async () => {
         const currentSnapshot = snapshotRef.current;
         try {
+          invalidateSpeciesSelectorCache();
           if (currentSnapshot && currentSnapshot.animals.length > 0) {
             await saveSafetyRollingBackup(currentSnapshot, 'Pre-SQLite-import safety snapshot');
           }

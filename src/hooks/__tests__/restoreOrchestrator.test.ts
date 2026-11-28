@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { BarnDatabaseSnapshot } from '../../domain/models';
+import type { Animal, BarnDatabaseSnapshot } from '../../domain/models';
+import {
+  resetSpeciesSelectorCache,
+  selectSpeciesAnimals,
+} from '../barnStore/speciesSelectors';
 import {
   runDestructiveRestore,
   type DestructiveRestoreDeps,
@@ -142,6 +146,22 @@ describe('runDestructiveRestore', () => {
     expect(deps.notify).toHaveBeenCalledWith(expect.stringContaining('Your previous barn was put back.'));
     expect(deps.reportPersistenceFailure).toHaveBeenCalledWith('restore test backup', expect.any(Error));
     expect(calls).toContain('reload');
+  });
+
+  it('flushes the species selector cache so a restore cannot serve the replaced rows', async () => {
+    resetSpeciesSelectorCache();
+    const row = (name: string) => ({ id: 'a1', name, species: 'Rabbit', _rev: 1 }) as Animal;
+
+    const before = selectSpeciesAnimals([row('Ada')], 'Rabbit');
+    expect(before[0].name).toBe('Ada');
+
+    const { deps } = makeDeps();
+    await runDestructiveRestore(deps, plan, async () => ({ snapshot: snapshotOf(3) }));
+
+    // Same id and revision as the dataset the restore replaced: only the flush can tell them apart.
+    const after = selectSpeciesAnimals([row('Zed')], 'Rabbit');
+    expect(after[0].name).toBe('Zed');
+    expect(after).not.toBe(before);
   });
 
   it('reports a thrown write and rethrows it', async () => {

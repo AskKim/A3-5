@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (61 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (62 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (125)
+## Logged Improvements (126)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2649,3 +2649,18 @@ Status:     active
 1. Keep every selector a pure function of one collection and the species name — the cache key assumes it.
 2. Bump the entity `_rev` on every write; a silent field edit would serve a stale list until the next revision.
 3. Call `resetSpeciesSelectorCache()` in a test that reuses ids and revisions with different content.
+
+## 2026-11-28 — Selector Cache Flushed on Dataset Replacement
+Why:        The rev-keyed selector cache keyed on row ids and revisions could not tell a restored or imported dataset from the one it replaced: a backup holding the same ids at the same revisions with different field values would have been served from the old cache.
+Changed:    `src/hooks/barnStore/speciesSelectors.ts`, `src/hooks/barnStore/restoreOrchestrator.ts`, `src/hooks/useBarnStore.ts`, `src/hooks/__tests__/speciesSelectors.test.ts`, `src/hooks/__tests__/restoreOrchestrator.test.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/speciesSelectors.ts` must contain `invalidateSpeciesSelectorCache`, `datasetEpoch` — *The generation is the only guard between a restore and a stale list; losing it silently reintroduces the hazard.*
+- `src/hooks/barnStore/restoreOrchestrator.ts` must contain `invalidateSpeciesSelectorCache` — *All restores share this path, so the flush belongs here rather than in each caller.*
+- `src/hooks/useBarnStore.ts` must contain `invalidateSpeciesSelectorCache` — *Imports bypass the restore orchestrator and need their own flush.*
+
+**Restoration Playbook if Overwritten:**
+1. Call `invalidateSpeciesSelectorCache()` in any new path that replaces the snapshot wholesale, before the replacement can render.
+2. Never rely on revision signatures alone for cross-dataset identity — restores reuse ids and revisions.
+3. Keep the generation bump ahead of the cache clear so in-flight entries cannot be re-keyed to the old dataset.

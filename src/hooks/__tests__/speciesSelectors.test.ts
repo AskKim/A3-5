@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Animal, AnimalPhoto, BarnTask } from '../../domain/models';
 import {
   collectionRevKey,
+  invalidateSpeciesSelectorCache,
+  memoizeByCollectionRev,
   resetSpeciesSelectorCache,
   selectSpeciesAnimals,
   selectSpeciesPhotoIndex,
@@ -22,6 +24,36 @@ describe('collectionRevKey', () => {
 
   it('treats an absent collection as empty', () => {
     expect(collectionRevKey(undefined)).toBe(collectionRevKey([]));
+  });
+});
+
+describe('dataset replacement', () => {
+  beforeEach(() => resetSpeciesSelectorCache());
+
+  it('cannot tell two datasets apart from ids and revisions alone', () => {
+    const first = selectSpeciesAnimals([animal('a', 'Ada', 1)], 'Sheep');
+    // A restored backup can hold the same id at the same revision with a different name; without
+    // an invalidation this signature match is exactly the stale-row hazard.
+    const sameSignature = selectSpeciesAnimals([animal('a', 'Zed', 1)], 'Sheep');
+    expect(sameSignature).toBe(first);
+    expect(sameSignature[0].name).toBe('Ada');
+  });
+
+  it('serves the replacement after a restore or import invalidates the cache', () => {
+    const before = selectSpeciesAnimals([animal('a', 'Ada', 1)], 'Sheep');
+    invalidateSpeciesSelectorCache();
+    const after = selectSpeciesAnimals([animal('a', 'Zed', 1)], 'Sheep');
+    expect(after).not.toBe(before);
+    expect(after[0].name).toBe('Zed');
+  });
+
+  it('scopes the memo key to the dataset generation', () => {
+    const rows = [animal('a', 'Ada', 1)];
+    const before = memoizeByCollectionRev('probe', 'Sheep', rows, () => ({ generation: 1 }));
+    invalidateSpeciesSelectorCache();
+    const after = memoizeByCollectionRev('probe', 'Sheep', rows, () => ({ generation: 2 }));
+    expect(after).not.toBe(before);
+    expect(after.generation).toBe(2);
   });
 });
 

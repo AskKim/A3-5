@@ -11,7 +11,9 @@
  * both its result and the array identity downstream memos compare against.
  *
  * The signature is FNV-1a over `id:rev` in row order, so any write (revision bump, insert, delete)
- * changes it, and the bounded cache cannot grow with the session.
+ * changes it, and the bounded cache cannot grow with the session. Because a restore or import can
+ * put the same ids back at the same revisions with different content, every key is also scoped to
+ * a dataset epoch that those operations bump via `invalidateSpeciesSelectorCache()`.
  */
 import type {
   Animal,
@@ -44,9 +46,27 @@ type RevRow = { id: string; _rev?: number };
 const MAX_CACHE_ENTRIES = 64;
 const cache = new Map<string, unknown>();
 
+/**
+ * Bumped on every wholesale dataset replacement. Revision signatures alone cannot tell a restore
+ * apart from the dataset it replaced: a backup can hold the same row ids at the same revisions
+ * with different field values, so the signature must be scoped to the dataset generation too.
+ */
+let datasetEpoch = 0;
+
+/**
+ * Drops every memoised list and starts a new dataset generation. Call this after any operation
+ * that replaces the whole snapshot — backup/archive/SQLite restores, JSON and platform imports —
+ * before the replacement becomes visible. Restores and imports must never serve rows computed
+ * from the dataset they replaced.
+ */
+export function invalidateSpeciesSelectorCache(): void {
+  datasetEpoch += 1;
+  cache.clear();
+}
+
 /** Clears the memo cache; tests use it so cases cannot leak into each other. */
 export function resetSpeciesSelectorCache(): void {
-  cache.clear();
+  invalidateSpeciesSelectorCache();
 }
 
 /**
@@ -78,7 +98,7 @@ export function memoizeByCollectionRev<T extends RevRow, R>(
   extraKey = ''
 ): R {
   const list = rows ?? [];
-  const key = `${kind}|${speciesName}|${collectionRevKey(list)}|${extraKey}`;
+  const key = `${datasetEpoch}|${kind}|${speciesName}|${collectionRevKey(list)}|${extraKey}`;
   if (cache.has(key)) return cache.get(key) as R;
   const value = compute(list);
   if (cache.size >= MAX_CACHE_ENTRIES) {
