@@ -4558,9 +4558,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/domain/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the Gantt suite could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the Gantt suite could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
@@ -4634,9 +4634,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the pointer-coverage tests could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
@@ -4735,6 +4735,44 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-174',
+    title: 'Cover the Crash Logger Config, Toasts and Retention',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The crash logger only got exercised incidentally, yet it decides what survives a dying tab: which messages are kept, how long, what a breeder sees as a toast, and whether the next boot reports an unclean exit.',
+    summary:
+      'Adds `crashLogger.test.ts` with `fake-indexeddb` for the verbose store and real jsdom storage for the ring buffer: config defaults against missing/corrupt/invalid values, patches persisted with `supportEmail` forced empty, the Vite websocket noise filter, memory-fault classification for Errors and strings, heap sampling, toast emission with dedupe/dismiss/subscriber notification, verbose-off suppression with errors still recorded, quota reclassification to the memory category, React crash entries, base64 scrubbing and message truncation, newest-first listing with summary counts and clearing, subscriber notification, and the emergency trace compaction/dedupe/clear paths including a corrupt blob. Coverage 54.1% → 68.3%; storage rises to 57.9/44.7/51.9/59.8, so storage floors move to 56/43/50/58 and the global function floor to 49.',
+    files: [
+      'vitest.config.ts',
+      'src/storage/__tests__/crashLogger.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 49', 'lines: 64'],
+        rationale:
+          'This entry carries the current numeric floors; without them the crash-logger suite could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/storage/__tests__/crashLogger.test.ts',
+        requiredSubstrings: ["import 'fake-indexeddb/auto'", 'writeEmergencySessionTraceSync', 'QuotaExceededError'],
+        rationale:
+          'The IDB shim, the synchronous trace write and the quota reclassification are the three behaviours that only exist because a crash destroys the normal async path.',
+      },
+    ],
+    restorePlaybook: [
+      'Import `fake-indexeddb/auto` first: `listDiagnosticLogs`, pruning and clearing all open the verbose store, and without the shim the IDB branches silently fall back to the ring buffer.',
+      '`isMemoryLikeError` only classifies strings and `Error` instances — a plain object stringifies to "[object Object]", so pass a real `RangeError`.',
+      'The config storage key is private; seed it with `updateDiagnosticConfig(...)` and then find the `diagnostic`-named key instead of hard-coding it.',
+    ],
+  },
+  {
+    id: 'IMP-175',
     title: 'Carry Reminders and Shared Files Across the Android Boundary',
     category: 'workflow-polish',
     release: 'alpha-3',

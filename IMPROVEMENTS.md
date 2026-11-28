@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (109 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (110 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (173)
+## Logged Improvements (174)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3258,7 +3258,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.ren
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors; without them the Gantt suite could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/domain/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the Gantt suite could be deleted while the global gate still passed.*
 - `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `role="button"`, `Apply 1 Smart Escalation`, `getByLabelText('Paste peer delta JSON')` — *The bar role, the escalation banner button and the manual-delta input are the three interactive surfaces this suite exists to protect.*
 
 **Restoration Playbook if Overwritten:**
@@ -3284,7 +3284,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.ren
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the pointer-coverage tests could be deleted while the global gate still passed.*
 - `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `COLUMN_PX`, `pointerCancel`, `getByRole('separator')` — *The pixel-to-column constant, the cancel branch and the resize separator are the three pieces that make the drag tests exercise real commit logic instead of a click.*
 
 **Restoration Playbook if Overwritten:**
@@ -3318,6 +3318,20 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Do not move delivery into `@features/reminders` and do not import `@features` from `src/storage`: the app port is the permitted composition point.
 2. Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.
+
+## 2026-11-28 — Cover the Crash Logger Config, Toasts and Retention
+Why:        The crash logger only got exercised incidentally, yet it decides what survives a dying tab: which messages are kept, how long, what a breeder sees as a toast, and whether the next boot reports an unclean exit.
+Changed:    `vitest.config.ts`, `src/storage/__tests__/crashLogger.test.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 49`, `lines: 64` — *This entry carries the current numeric floors; without them the crash-logger suite could be deleted while the gate still passed at the old, lower numbers.*
+- `src/storage/__tests__/crashLogger.test.ts` must contain `import 'fake-indexeddb/auto'`, `writeEmergencySessionTraceSync`, `QuotaExceededError` — *The IDB shim, the synchronous trace write and the quota reclassification are the three behaviours that only exist because a crash destroys the normal async path.*
+
+**Restoration Playbook if Overwritten:**
+1. Import `fake-indexeddb/auto` first: `listDiagnosticLogs`, pruning and clearing all open the verbose store, and without the shim the IDB branches silently fall back to the ring buffer.
+2. `isMemoryLikeError` only classifies strings and `Error` instances — a plain object stringifies to "[object Object]", so pass a real `RangeError`.
+3. The config storage key is private; seed it with `updateDiagnosticConfig(...)` and then find the `diagnostic`-named key instead of hard-coding it.
 
 ## 2026-11-28 — Carry Reminders and Shared Files Across the Android Boundary
 Why:        The web half of reminders and file ingress only matters if the shell can actually act on it: a phone must wake up for a reminder with the app closed, and a .json backup shared from another app must reach the app instead of being ignored.

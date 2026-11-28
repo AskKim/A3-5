@@ -1,0 +1,50 @@
+goal: "Raise the Alpha 3 test suite to a covered, honest floor — every reachable branch that protects breeder data gets a real test, per-area thresholds ratchet upward as coverage is earned, and the numbers never rise on stubs, snapshots or skipped code"
+baseline:
+  repository: "AskKim/A3-5"
+  branch: "main"
+  commit: "f8dd26b (IMP-174, crash logger coverage)"
+  suites: "159 test files / 1,290 tests, all passing"
+  measured: "totals 64.02/53.67/50.24/65.63 (statements/branches/functions/lines) on the commit above"
+  floors: "global 62/52/49/64"
+  areas: "domain 85.7/71.1/85.6/88.2 · features 79.5/64.6/94.2/82.3 · app 76.2/67.5/76.0/76.3 · engine 73.2/63.1/80.0/75.9 · utils 67.6/56.8/76.9/68.4 · storage 58.4/45.3/52.7/60.2 · hooks 49.2/38.2/46.8/50.1 · components 38.6/30.7/25.9/39.9"
+  thresholds: "'src/domain/**' 84/69/84/86 · 'src/components/**' 37/29/24/38 · 'src/storage/**' 56/43/50/58 · 'src/hooks/**' 45/33/44/46 · 'src/engine/**' 72/62/79/74"
+status:
+  - [DONE] Storage failure paths, quota recovery and IDB adapters | Failure-path tests for the storage probes plus quota recovery, covered in the IMP-132 series
+  - [DONE] Components | Every component module that can mount in jsdom now has a render suite — species panels, health/settings, reports/journal/bench, photo gallery, home, migration modal, weather drawer, Gantt grid and Gantt LAN drawer, diagnostics, importers, CRM, print preview, screens smoke
+  - [DONE] src/storage/weatherForecast.ts | 6% to 96% — cache round-trip, freshness window, device/manual offline, geocoding normalisation, HTTP/timeout failures, payload parsing with clamping (IMP-164); the plain connection copy is pinned in the storage suite and again in the drawer render test (IMP-166, IMP-167)
+  - [DONE] src/engine/storage/lanWebRtcTransport.ts | 14% to 84% — fake peer connection and data channel for offer/answer/apply, wrong signal types, ICE timeout, chunked sends, out-of-order reassembly, channel failures (IMP-164)
+  - [DONE] src/components/BarnSchedulerGantt.tsx | 0% to 85.1% — grid, inspector, escalation banner, outbox conflicts, manual delta merge, drag/resize/keyboard rescheduling, LAN offer/answer/connect/push/folder merge with the p2p port mocked (IMP-169, IMP-171, IMP-172)
+  - [DONE] src/storage/crashLogger.ts | 54.1% to 68.3% — config clamp/persist, Vite noise filter, memory classification, toasts with dedupe, verbose-off suppression, quota reclassification, React crashes, base64 scrubbing, listing/summary/clear, emergency trace (IMP-174)
+  - [WIP] src/storage/crashLogger.ts | Remaining uncovered surface is the boot-time wiring — `installGlobalCrashHandlers` (window error and unhandledrejection listeners, duplicate-install guard), `handleUnhandledRejectionReason` (BackgroundPausedError ignored, memory-like reason escalated), `inspectPreviousSessionUncleanExit` and `markCleanSessionExit` heartbeat round-trip. jsdom can dispatch all of these; extend `src/storage/__tests__/crashLogger.test.ts` beside the existing tests, drive a heartbeat blob through `setCurrentDiagnosticRoute`, and assert the previous-session entry is reported once and not twice
+  - [TODO] src/domain/importers/herdBossImporter.ts | 52.2%, 354 uncovered statements — the XLSX worksheet branch. `fflate` is already a dependency; build a minimal single-sheet workbook in-memory (or reuse an existing fixture helper under `src/domain/__tests__`), then assert header-alias detection, per-sheet species detection, skipped empty rows and the conflict preview. The CSV half is already covered
+  - [TODO] src/components/ImportExportHubScreen.tsx | 23.3%, 435 uncovered — backup/restore is the highest-stakes untested screen left. Mount with the sample snapshot, walk JSON backup export, archive import preview, and the restore dialog confirm path with the file/zip helpers stubbed at the port layer
+  - [TODO] src/components/SpeciesDashboardScreen.tsx | 29.2%, 515 uncovered — species hub — block ordering, list/gantt toggle, the lazy Gantt boundary, chore completion shortcuts
+  - [TODO] src/components/PedigreeScreen.tsx | 39.2%, 469 uncovered — depth 3/4/5/6 selector, zoom controls, subject search, trail breadcrumbs, parent-assignment dialog open/search/close
+  - [TODO] src/components/HerdScreen.tsx | 37.3%, 456 uncovered — search, sort, For Sale filter, bulk archive/delete confirmation, care-log entry form
+  - [TODO] src/components/EconomicsLedgerScreen.tsx (20.9%), src/components/JudgeNotebookScreen.tsx (24.7%), src/components/FeedLedgerScreen.tsx (33.7%) | Ledger-style tables — add a row, edit, delete and totals with handlers spied
+  - [TODO] src/hooks/useBarnStore.ts | 30.8%, 1,775 uncovered — OWNED BY THE /engine AND USE-BARN CHATS. Do not edit the hook or write suites against it from this handoff; the modularity handoff carries it
+  - [TODO] src/App.tsx and src/main.tsx | Boot-locked by BOOT_ENTRY_LOCK_CHECKSUMS; they stay at 0% by design. Do not weaken the lock to chase the number, and do not raise a floor that assumes they are covered
+  - [TODO] Ratchet checkpoint | When src/components/** statements cross 42%, raise its floor to 40 in the same commit; when storage crosses 63%, raise it to 61. Never raise a floor in a commit that adds no test
+constraints:
+  - "Honest tests only — no snapshot-only suites, no always-true assertions, no skipping a module because its branch is awkward; if a branch cannot run in jsdom (raster OCR, real WebRTC media), leave it uncovered and say so in the commit"
+  - "No `as any` / `@ts-ignore` / `@ts-expect-error`; prefer a typed fixture over a cast, and delete a contrived test rather than casting around it"
+  - "Floors are measured minus about one point, set in the same commit that earns them, and only the newest registry entry pins the numbers; convert older numeric invariants to shape tokens so the next ratchet does not break them"
+  - "Per-area thresholds exist so one area never pays for another; keep every area's floor at or below its measured value"
+  - "Never hand-edit IMPROVEMENTS.md or PROMPT_CHANGES.md — add a registry entry in src/domain/improvements/registry-part-05.ts and run npm run regen:ledgers"
+  - "Protected — src/main.tsx, src/App.tsx, index.html (SHA-256 boot lock) and prompts/master_system_prompt.md"
+decisions: "Per-area thresholds plus a shared global floor, because the components bucket is the only large uncovered area and a single global number would let it hide behind domain coverage; coverage work stays on files no parallel chat is editing (components tests, storage tests, docs), and the boot-locked entry files are accepted as 0% rather than unlocked"
+recipes:
+  - "Add a slice — write the suite, run it, run npm run verify to measure, append a registry entry whose id is the remote max plus one, set floors to measured minus about one point where a whole point was earned, run npm run regen:ledgers and npm run verify:improvements, then the full gates, commit and push"
+  - "Gates — npm run verify && npm run build && npm run verify:chunks && npm run lint in one command, logs to /tmp, never piping a gate through head without keeping its exit status. verify:chunks needs dist/ from the build step"
+  - "Registry conflict on rebase — git checkout --ours -- src/domain/improvements/registry-part-05.ts IMPROVEMENTS.md, re-append the entry block with a fresh id (remote max plus one), run npm run regen:ledgers, git add -A, GIT_EDITOR=true git rebase --continue, then git commit --amend to fix the id in the message"
+  - "Stale floor pin — verify:improvements fails with a Missing expected token message naming vitest.config.ts when an older entry pins numbers that moved; convert that entry's invariant to the shape tokens, keeping one owner per number"
+  - "Push rejected — git fetch origin main, rebase, re-run the gates, push again; plain git push in the sandbox has no credentials, so push through the cloud Git integration. Never force"
+  - "Coverage report — coverage/coverage-summary.json after a verify run; rank modules by uncovered statement count to pick the next slice"
+environment:
+  - "The sandbox has no outbound internet (api.open-meteo.com times out); only the cloud browser reaches external APIs, so live-network checks are browser-only and everything else must be stubbed"
+  - "Vite runs with watch disabled, so a long-running dev server keeps serving the module graph it started with — restart it after editing source before checking a fix in the browser"
+  - "jsdom has no RTCPeerConnection, no PointerEvent constructor and a clientWidth of 0; the Gantt tests rely on the 560px track fallback and fire pointer events on window"
+  - "Dependencies are not restored with the workspace; run npm ci from the committed lockfile before any gate"
+  - "Report blockers as limitations, not passes — an unviewed UI change is not verified, and a gate that could not run is not green"
+verified: "tsc=pass | test=pass (1290) | build=pass | chunks=pass | improvements=pass (173 entries) | layers=0/0 | plans=pass | coverage=64.02/53.67/50.24/65.63"
+next_action: "Finish the WIP slice — add the boot-time crash-logger tests (global handlers, unhandled-rejection routing, unclean-exit heartbeat) to src/storage/__tests__/crashLogger.test.ts, measure, and ratchet storage only if a full point lands. Then take ImportExportHubScreen, because backup and restore is the highest-stakes screen still under 25%"

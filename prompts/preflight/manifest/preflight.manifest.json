@@ -70,7 +70,7 @@
       "phase": "A",
       "runners": ["ai-studio", "freebuff"],
       "track": "release",
-      "instruction": "read ONLY `<!-- PHASE_A_START -->` through `<!-- PHASE_A_END -->`",
+      "instruction": "read ONLY `<!-- RELEASE_CHECK_1_START -->` through `<!-- RELEASE_CHECK_1_END -->`",
       "description": "Phase-A release sanity check."
     },
     {
@@ -155,7 +155,7 @@
       "runners": ["antigravity", "freebuff"],
       "track": "release",
       "human_signoff": true,
-      "instruction": "read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`; its post-merge smoke is human-assisted",
+      "instruction": "read ONLY `<!-- RELEASE_CHECK_2_START -->` through `<!-- RELEASE_CHECK_2_END -->`; its post-merge smoke is human-assisted",
       "description": "Phase-B release sanity check."
     },
     {

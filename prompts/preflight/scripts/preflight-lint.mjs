@@ -134,10 +134,10 @@ const rcPath = join(runDir, 'release-check.md');
 if (existsSync(rcPath) && statSync(rcPath).size <= MAX_FILE_SIZE) {
   const rc = readFileSync(rcPath, 'utf8');
   for (const tag of [
-    '<!-- PHASE_A_START -->',
-    '<!-- PHASE_A_END -->',
-    '<!-- PHASE_B_START -->',
-    '<!-- PHASE_B_END -->',
+    '<!-- RELEASE_CHECK_1_START -->',
+    '<!-- RELEASE_CHECK_1_END -->',
+    '<!-- RELEASE_CHECK_2_START -->',
+    '<!-- RELEASE_CHECK_2_END -->',
   ]) {
     if (!rc.includes(tag)) errors.push(`Missing anchor ${tag} in release-check.md`);
   }
