@@ -13,6 +13,7 @@ import {
 } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { dirname } from 'node:path';
+import { sweepStatus } from './sweep-status.mjs';
 
 const args = process.argv.slice(2);
 const getArg = (flag) => {
@@ -82,18 +83,7 @@ function sweepGap() {
     const manifest = JSON.parse(
       readFileSync('prompts/preflight/manifest/preflight.manifest.json', 'utf8')
     );
-    const sweep = (manifest.steps ?? []).filter((s) => (s.track ?? 'preflight') === 'preflight');
-    const done = new Set(
-      (current.history ?? [])
-        .filter(
-          (h) =>
-            h.status === 'completed' &&
-            h.branch === current.active_branch &&
-            h.version === current.target_version
-        )
-        .map((h) => h.step_id)
-    );
-    return sweep.filter((s) => !done.has(s.id)).map((s) => s.id);
+    return sweepStatus(current, manifest.steps).missing;
   } catch (err) {
     return [`<state unreadable: ${err instanceof Error ? err.message : String(err)}>`];
   }
