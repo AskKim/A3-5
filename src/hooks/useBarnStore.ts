@@ -295,6 +295,7 @@ import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
 import { useAnimalsCrud, type AnimalsCrudAdapter } from './barnStore/useAnimalsCrud';
 import { usePhotoMutations, type PhotoMutationAdapter } from './barnStore/usePhotoMutations';
 import { useBreeding, type BreedingAdapter } from './barnStore/useBreeding';
+import { planSyncOperationRetention } from '../domain/syncRetention';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -492,6 +493,19 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   const maxRevIndexReadyRef = useRef<boolean>(false);
   const maxRevIndexPromiseRef = useRef<Promise<void> | null>(null);
   const syncOperationsHydratedRef = useRef<boolean>(false);
+
+  // Bound the sync outbox on every full rewrite; the storage layer stays policy-free.
+  const replaceSyncOperationsWithRetention = useCallback(async (operations: SyncOperation[]) => {
+    const { retained, dropped } = planSyncOperationRetention(operations);
+    if (dropped.length > 0) {
+      logDiagnosticEvent({
+        level: 'info',
+        category: 'storage',
+        message: `Sync outbox retention pruned ${dropped.length} expired operation(s), ${retained.length} retained.`,
+      });
+    }
+    await replaceSyncOperationsInIdb(retained);
+  }, []);
 
   const rebuildMaxRevIndex = useCallback((ops: SyncOperation[]) => {
     const map = new Map<string, number>();
@@ -6385,7 +6399,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             return;
           }
           await adapterRef.current!.replaceSnapshot(result.nextSnapshot);
-          await replaceSyncOperationsInIdb(result.mergedOperations);
+          await replaceSyncOperationsWithRetention(result.mergedOperations);
           rebuildMaxRevIndex(result.mergedOperations);
           if (syncOperationsHydratedRef.current) {
             syncOperationsRef.current = result.mergedOperations;
@@ -6450,7 +6464,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             if (result.appliedOpCount > 0) {
               await adapterRef.current!.replaceSnapshot(result.nextSnapshot);
             }
-            await replaceSyncOperationsInIdb(result.mergedOperations);
+            await replaceSyncOperationsWithRetention(result.mergedOperations);
             rebuildMaxRevIndex(result.mergedOperations);
             if (syncOperationsHydratedRef.current) {
               syncOperationsRef.current = result.mergedOperations;
@@ -6508,7 +6522,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     nowIsoUtc: getAdjustedNowIsoUtc,
     loadSyncOperations: loadSyncOperationsFromIdbAndIndex,
     replaceSnapshot: (snap) => adapterRef.current!.replaceSnapshot(snap),
-    replaceSyncOperations: replaceSyncOperationsInIdb,
+    replaceSyncOperations: replaceSyncOperationsWithRetention,
     rebuildMaxRevIndex,
     saveConflict: saveSyncConflictInIdb,
     reloadFromAdapter,

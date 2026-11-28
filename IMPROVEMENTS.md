@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (45 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (47 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (109)
+## Logged Improvements (111)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2358,3 +2358,37 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. A milestone closure is a checkpoint: register, verify, commit, then start the next milestone in the same run.
 2. Only an empty remaining list or an exhausted budget ends a handoff run; report budget stops as budget, with what landed.
+
+### IMP-110: Sync Outbox Retention (Age Window Plus Hard Cap)
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Stop the sync operation log from growing for the life of the install, which made every full rewrite pay for the entire history.
+- **Summary:** Milestone 3, first half: `src/domain/syncRetention.ts` decides what a bounded outbox keeps, and the store applies it in `replaceSyncOperationsWithRetention` on every full rewrite — the path all merges and conflict resolutions already go through. Retention stays out of the storage layer deliberately: importing the policy there pulled the domain module into the storage chunk and created a new chunk cycle. The policy is age-first and conservative: an operation is only expired once it is older than the retention window (120 days) because peers have had many chances to pull it, the hard ceiling (20,000) is a pathological-growth backstop that drops only the oldest, ordering is timestamp-then-logical-counter so a clock tie cannot invert age, and an unparseable timestamp is treated as recent rather than ancient. The common case — a log inside both limits — returns the operations untouched, so ordering cannot be perturbed. Pruning is reported as a storage diagnostic event rather than happening silently.
+- **Tracked Files:** `src/domain/syncRetention.ts`, `src/hooks/useBarnStore.ts`, `EXTRACTION_INVENTORY.md`, `src/hooks/__tests__/syncRetention.test.ts`
+
+**Automated Invariants Checked:**
+- `src/domain/syncRetention.ts` must contain `export function planSyncOperationRetention`, `DEFAULT_SYNC_RETENTION_POLICY` — *Retention is a policy decision, not a storage detail; it has to stay a pure, testable function.*
+- `src/hooks/useBarnStore.ts` must contain `planSyncOperationRetention`, `replaceSyncOperationsWithRetention` — *Without the prune on the rewrite path the outbox silently returns to unbounded growth, which is exactly the regression this entry exists to prevent — and the policy must stay in the store, not the storage chunk.*
+
+**Restoration Playbook if Overwritten:**
+1. Expire by age before cap, never the reverse: a young operation is never dropped merely because the log is large.
+2. Undated operations are kept; treat an unparseable timestamp as recent.
+
+### IMP-111: Bulk Sync-Conflict Resolution in One Merge
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Clearing a review queue of conflicts meant clicking through each one, and each click rewrote the snapshot and the whole operation log — twenty conflicts, twenty full merges.
+- **Summary:** Milestone 3, second half: `resolveAllSyncConflictsAction` builds one operation per open conflict, merges them together, writes the snapshot and op log once, then marks each conflict resolved. Returns how many were resolved; `resolveSyncConflict` keeps its per-item path. The slice still returns only `resolveSyncConflict` to the store, so the 200-key contract is untouched, and the batched action sits on the same deps seam (`engine`, hydrated-ref fast path) as the single resolver. Four tests cover the single merge, the chosen side, the nothing-open case and a failed merge.
+- **Tracked Files:** `src/hooks/barnStore/useSyncConflictResolution.ts`, `src/hooks/__tests__/syncConflictBulkResolve.test.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/useSyncConflictResolution.ts` must contain `export async function resolveAllSyncConflictsAction`, `resolve all sync conflicts` — *A bulk path that loops the single resolver would silently reintroduce one full merge per conflict.*
+- `src/hooks/__tests__/syncConflictBulkResolve.test.ts` must contain `merges every open conflict in a single pass` — *The single-merge property is the entire point of this action and is invisible from the outside.*
+
+**Restoration Playbook if Overwritten:**
+1. Bulk resolution builds all operations first, merges once, then marks conflicts resolved.
+2. Open conflicts are those with `resolved === false`; never re-resolve an already cleared one.

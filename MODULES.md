@@ -5,13 +5,13 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 254
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (22.8%)
+- **Total Non-Test Source Modules:** 255
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (22.7%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 10
-- **Content-Specific Modules:** 196 (77.2%)
-  - Domain Engines (`src/domain/`): 85
+- **Content-Specific Modules:** 197 (77.3%)
+  - Domain Engines (`src/domain/`): 86
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
@@ -109,9 +109,9 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (196)
+## 2. Content-Specific Modules (197)
 
-### Domain Engines & Compatibility Facades (`src/domain/`) (85)
+### Domain Engines & Compatibility Facades (`src/domain/`) (86)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -195,6 +195,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/supportBundle.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/syncAndExports.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/syncOutbox.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/syncRetention.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/taskMaster.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/techyStuffGuardrails.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/themePalette.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |

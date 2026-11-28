@@ -115,6 +115,78 @@ export async function resolveSyncConflictAction(
 
 export interface SyncConflictResolution {
   resolveSyncConflict: (conflictId: string, useSide: SyncConflictSide) => Promise<void>;
+  resolveAllSyncConflicts: (useSide: SyncConflictSide) => Promise<number>;
+}
+
+/**
+ * Apply the chosen side for every open conflict in one merge.
+ *
+ * Resolving conflicts one at a time rewrites the snapshot and the whole operation log once per
+ * conflict, so clearing a review queue of twenty is twenty full merges. This builds every operation
+ * first, merges once, then marks each conflict resolved. Returns how many were resolved.
+ */
+export async function resolveAllSyncConflictsAction(
+  deps: SyncConflictResolutionDeps,
+  useSide: SyncConflictSide
+): Promise<number> {
+  return deps.enqueueStoreMutation(async () => {
+    const currentSnapshot = deps.snapshotRef.current;
+    const open = deps.syncConflicts.filter((c) => !c.resolved);
+    if (!currentSnapshot || open.length === 0) {
+      deps.notify('No open sync conflicts to resolve.');
+      return 0;
+    }
+
+    try {
+      const engine = deps.engine ?? SYNC_RESOLUTION_ENGINE;
+      const ts = deps.nowIsoUtc();
+      const ops = open.map((conflict) =>
+        engine.createOperation({
+          entityType: conflict.entity_type,
+          entityUuid: conflict.entity_uuid,
+          deviceId: deps.deviceId,
+          logicalCounter: deps.allocateNextLogicalCounter(),
+          fieldName: conflict.field_name,
+          newValue: useSide === 'winning' ? conflict.winning_value : conflict.losing_value,
+          timestamp: ts,
+          recordRev: deps.nextEntityRev(conflict.entity_uuid),
+        })
+      );
+
+      const baseOps = deps.syncOperationsHydratedRef.current
+        ? deps.syncOperationsRef.current
+        : await deps.loadSyncOperations();
+      const applied = engine.mergeOperations(currentSnapshot, baseOps, ops, deps.deviceId);
+      await deps.replaceSnapshot(applied.nextSnapshot);
+      await deps.replaceSyncOperations(applied.mergedOperations);
+      deps.rebuildMaxRevIndex(applied.mergedOperations);
+      if (deps.syncOperationsHydratedRef.current) {
+        deps.syncOperationsRef.current = applied.mergedOperations;
+        deps.setSyncOperations(applied.mergedOperations);
+      }
+
+      const resolvedConflicts = open.map((conflict) => buildResolvedSyncConflict(conflict));
+      for (const resolvedConflict of resolvedConflicts) {
+        await deps.saveConflict(resolvedConflict);
+      }
+      deps.setSyncConflicts((prev) =>
+        resolvedConflicts.reduce(
+          (acc, resolvedConflict) => markSyncConflictResolved(acc, resolvedConflict),
+          prev
+        )
+      );
+      await deps.reloadFromAdapter();
+      deps.notify(
+        `Applied ${useSide} values for ${resolvedConflicts.length} sync conflict${
+          resolvedConflicts.length === 1 ? '' : 's'
+        }.`
+      );
+      return resolvedConflicts.length;
+    } catch (err) {
+      deps.reportPersistenceFailure('resolve all sync conflicts', err);
+      return 0;
+    }
+  });
 }
 
 export function useSyncConflictResolution(
@@ -195,5 +267,56 @@ export function useSyncConflictResolution(
     ]
   );
 
-  return { resolveSyncConflict };
+  const resolveAllSyncConflicts = useCallback(
+    (useSide: SyncConflictSide) =>
+      resolveAllSyncConflictsAction(
+        {
+          enqueueStoreMutation,
+          snapshotRef,
+          syncConflicts,
+          setSyncConflicts,
+          syncOperationsRef,
+          syncOperationsHydratedRef,
+          setSyncOperations,
+          deviceId,
+          allocateNextLogicalCounter,
+          nextEntityRev,
+          nowIsoUtc,
+          loadSyncOperations,
+          replaceSnapshot,
+          replaceSyncOperations,
+          rebuildMaxRevIndex,
+          saveConflict,
+          reloadFromAdapter,
+          notify,
+          reportPersistenceFailure,
+          engine,
+        },
+        useSide
+      ),
+    [
+      enqueueStoreMutation,
+      snapshotRef,
+      syncConflicts,
+      setSyncConflicts,
+      syncOperationsRef,
+      syncOperationsHydratedRef,
+      setSyncOperations,
+      deviceId,
+      allocateNextLogicalCounter,
+      nextEntityRev,
+      nowIsoUtc,
+      loadSyncOperations,
+      replaceSnapshot,
+      replaceSyncOperations,
+      rebuildMaxRevIndex,
+      saveConflict,
+      reloadFromAdapter,
+      notify,
+      reportPersistenceFailure,
+      engine,
+    ]
+  );
+
+  return { resolveSyncConflict, resolveAllSyncConflicts };
 }
