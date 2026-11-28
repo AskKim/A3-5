@@ -4197,4 +4197,36 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'A whole-panel toggle (Preferred Wiki Sources) carries its state in the button text (`Manage` / `Hide`); assert the flip instead of hunting a separate control.',
     ],
   },
+  {
+    id: 'IMP-161',
+    title: 'Load the SQLite WASM Build On First Storage Call, Not in the Boot Graph',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The 688,280-byte `sql-wasm.wasm` build sat on every cold start: `webSqliteAdapter.ts` imported `sql.js` and `sql-wasm.wasm?url` at module scope, so rolldown put the 58 KB `vendor-sql` chunk in the modulepreload graph and the WASM download began with the boot storage call, i.e. at first contentful paint rather than after it.',
+    summary:
+      '`webSqliteAdapter.ts` now reaches the SQLite runtime through two memoized dynamic imports (`import(\'sql.js\')` and `import(\'sql.js/dist/sql-wasm.wasm?url\')`) behind `createSqlJsStatic()`, which keeps the existing `Promise.all([...])` that compiles the WASM in parallel with the IndexedDB read. Both promises clear on rejection so a transient chunk or WASM fetch error retries on the next storage call. The build now emits `import("./vendor-sql-*.js")` from `storage-sqlite-*.js` instead of a static edge: the boot graph drops from 31 modulepreloaded files / 1,265,895 bytes to 30 / 1,207,858 bytes (-58,037 B, -56.7 KiB) and `vendor-sql` leaves the first-paint graph. In a production build the 688 KB `sql-wasm.wasm` is requested after FCP (1389 ms against FCP 924 ms, versus 1395 ms against FCP 1396 ms before), while boot and storage still round-trip: `window.__PEDIGREE_BOOT_OK__ === true`, the same 129 controls and 4,121 rendered characters, and the IndexedDB `sqlite_files` store intact across a reload.',
+    files: [
+      'src/storage/webSqliteAdapter.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/webSqliteAdapter.ts',
+        requiredSubstrings: ["import('sql.js')", "import('sql.js/dist/sql-wasm.wasm?url')", 'createSqlJsStatic()'],
+        forbiddenSubstrings: ["import initSqlJs from 'sql.js';", "import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';"],
+        rationale:
+          'A static import of sql.js or its WASM URL puts the 58 KB vendor-sql chunk back in the modulepreload graph and starts the WASM download with the boot shell; both must stay dynamic imports resolved on the first storage call.',
+      },
+    ],
+    restorePlaybook: [
+      'Load `sql.js` and `sql-wasm.wasm?url` with `import()` inside the adapter, never at module scope, and keep the memoized promises so repeated `initialize()`/`inspectRawSqliteBytes()` calls reuse one compile.',
+      'Keep the `Promise.all([sqlPromise, storeReadPromise])` shape: the WASM compile and the IndexedDB read must stay concurrent so laziness does not add a serial round trip.',
+      'Measure with `dist/index.html` modulepreload entries and `performance.getEntriesByType(\'paint\')` on a production build; the WASM request must land after first-contentful-paint.',
+    ],
+  },
 ];

@@ -13,8 +13,7 @@
  * to download or import the raw `.sqlite` file for Google Drive / OneDrive / SyncThing.
  */
 
-import initSqlJs, { Database, SqlJsStatic } from 'sql.js';
-import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
+import type { Database, SqlJsStatic } from 'sql.js';
 import {
   sanitizeSafeRasterImageDataUrl,
   validateSqliteFileHeader,
@@ -147,15 +146,52 @@ const purgePrimaryQuotaCaches = async (): Promise<void> => {
 
 const SQLITE_SCHEMA_VERSION = 9;
 
-type SqlJsInitConfig = NonNullable<Parameters<typeof initSqlJs>[0]> & {
+type InitSqlJs = (typeof import('sql.js'))['default'];
+
+type SqlJsInitConfig = NonNullable<Parameters<InitSqlJs>[0]> & {
   useOldExtensionFunctions: boolean;
 };
 
-function createSqlJsInitConfig(): SqlJsInitConfig {
-  return {
-    locateFile: () => sqlWasmUrl,
+// The SQLite WASM build (~670 KB) is loaded lazily on the first storage call instead of at
+// module import, so it stays out of the first-paint graph and only downloads when the app
+// actually opens its local database. Both promises are memoized and reset on failure so a
+// transient chunk/WASM fetch error can be retried by the next storage call.
+let sqlJsRuntimePromise: Promise<InitSqlJs> | null = null;
+let sqlWasmUrlPromise: Promise<string> | null = null;
+
+function loadSqlJsRuntime(): Promise<InitSqlJs> {
+  if (!sqlJsRuntimePromise) {
+    sqlJsRuntimePromise = import('sql.js')
+      .then((module) => module.default)
+      .catch((error: unknown) => {
+        sqlJsRuntimePromise = null;
+        throw error;
+      });
+  }
+  const pending = sqlJsRuntimePromise;
+  return pending;
+}
+
+function loadSqlWasmUrl(): Promise<string> {
+  if (!sqlWasmUrlPromise) {
+    sqlWasmUrlPromise = import('sql.js/dist/sql-wasm.wasm?url')
+      .then((mod) => mod.default)
+      .catch((error: unknown) => {
+        sqlWasmUrlPromise = null;
+        throw error;
+      });
+  }
+  const pending = sqlWasmUrlPromise;
+  return pending;
+}
+
+async function createSqlJsStatic(): Promise<SqlJsStatic> {
+  const [initSqlJs, wasmUrl] = await Promise.all([loadSqlJsRuntime(), loadSqlWasmUrl()]);
+  const config: SqlJsInitConfig = {
+    locateFile: () => wasmUrl,
     useOldExtensionFunctions: false,
   };
+  return initSqlJs(config);
 }
 
 // DDL schema and IndexedDB quota-safe persistence are imported from ./sqliteSchema and ./sqliteIdbPersistence.
@@ -594,7 +630,7 @@ export class WebSqliteAdapter implements StorageAdapter {
 
     try {
       if (!this.backingStore && !getSafeIndexedDb()) {
-        this.SQL = await initSqlJs(createSqlJsInitConfig());
+        this.SQL = await createSqlJsStatic();
         this.ephemeralMode = true;
         this.db = new this.SQL.Database();
         applySchemaMigrations(this.db);
@@ -611,7 +647,7 @@ export class WebSqliteAdapter implements StorageAdapter {
       }
 
       // Parallelize SQLite WASM download/compile with IndexedDB / native backing-store reads
-      const sqlPromise = initSqlJs(createSqlJsInitConfig());
+      const sqlPromise = createSqlJsStatic();
       const storeReadPromise = (async () => {
         if (this.backingStore) {
           await this.backingStore.initialize();
@@ -2250,7 +2286,7 @@ export class WebSqliteAdapter implements StorageAdapter {
       throw new Error(headerCheck.error);
     }
     if (!this.SQL) {
-      this.SQL = await initSqlJs(createSqlJsInitConfig());
+      this.SQL = await createSqlJsStatic();
     }
     if (!this.SQL) {
       throw new Error('SQLite WebAssembly engine is not available in this browser.');
@@ -2274,7 +2310,7 @@ export class WebSqliteAdapter implements StorageAdapter {
   ): Promise<BarnDatabaseSnapshot> {
     return withCrossTabLock(DB_WRITE_LOCK_NAME, async () => {
       if (!this.SQL) {
-        this.SQL = await initSqlJs(createSqlJsInitConfig());
+        this.SQL = await createSqlJsStatic();
       }
       if (!this.SQL) {
         throw new Error('SQLite WebAssembly engine is not available in this browser.');

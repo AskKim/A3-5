@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (95 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (96 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (159)
+## Logged Improvements (160)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3136,3 +3136,17 @@ Status:     active
 1. Settings renders every section collapsed except the top panel, so expand a section through its jump button before querying the fields inside it.
 2. The health panel filter tabs are labelled with their counts (`Rabbit & General (4)`), so assert the widened filter by comparing `Open Guide` counts rather than by a fixed number.
 3. A whole-panel toggle (Preferred Wiki Sources) carries its state in the button text (`Manage` / `Hide`); assert the flip instead of hunting a separate control.
+
+## 2026-11-28 — Load the SQLite WASM Build On First Storage Call, Not in the Boot Graph
+Why:        The 688,280-byte `sql-wasm.wasm` build sat on every cold start: `webSqliteAdapter.ts` imported `sql.js` and `sql-wasm.wasm?url` at module scope, so rolldown put the 58 KB `vendor-sql` chunk in the modulepreload graph and the WASM download began with the boot storage call, i.e. at first contentful paint rather than after it.
+Changed:    `src/storage/webSqliteAdapter.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/webSqliteAdapter.ts` must contain `import('sql.js')`, `import('sql.js/dist/sql-wasm.wasm?url')`, `createSqlJsStatic()` — *A static import of sql.js or its WASM URL puts the 58 KB vendor-sql chunk back in the modulepreload graph and starts the WASM download with the boot shell; both must stay dynamic imports resolved on the first storage call.*
+  - Forbidden regression: `import initSqlJs from 'sql.js';`, `import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';`
+
+**Restoration Playbook if Overwritten:**
+1. Load `sql.js` and `sql-wasm.wasm?url` with `import()` inside the adapter, never at module scope, and keep the memoized promises so repeated `initialize()`/`inspectRawSqliteBytes()` calls reuse one compile.
+2. Keep the `Promise.all([sqlPromise, storeReadPromise])` shape: the WASM compile and the IndexedDB read must stay concurrent so laziness does not add a serial round trip.
+3. Measure with `dist/index.html` modulepreload entries and `performance.getEntriesByType('paint')` on a production build; the WASM request must land after first-contentful-paint.
