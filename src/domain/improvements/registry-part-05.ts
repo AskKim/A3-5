@@ -3856,5 +3856,44 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).',
       'Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.',
     ],
-  }
+  },
+  {
+    id: 'IMP-153',
+    title: 'Fail the Verify Suite on a Finished Handoff or Plan File',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Finished plans and handoffs were meant to be deleted as they finished, but nothing enforced it: a completed handoff stayed in `docs/plans/` and came back on every startup as an `EXISTING INCOMPLETE:` notice, so the rule lived only in prose.',
+    summary:
+      '`npm run verify:plans` (`scripts/verify-plans.ts`) reads every `handoff-*.yaml` and `plan-*.yaml` in `docs/plans/`, treats a file with no `[WIP]`/`[TODO]` step as finished, and fails with the file name plus the one-line fix `git rm docs/plans/<file>`; files that are still open are listed in the PASS line. It is wired into `npm run verify` and into `ci.yml` as its own step, so a finished file can no longer linger silently.',
+    files: [
+      'scripts/verify-plans.ts',
+      'package.json',
+      '.github/workflows/ci.yml',
+      'AGENTS.md',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/verify-plans.ts',
+        requiredSubstrings: ['[WIP]', 'git rm docs/plans/', 'process.exit(1)'],
+        rationale:
+          'Removing the failure path or the printed fix would let a finished file pass silently again, which is exactly the state this entry exists to prevent.',
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['npm run verify:plans'],
+        rationale:
+          'The gate only protects the suite while it is inside `npm run verify`; a standalone script nobody calls catches nothing.',
+      },
+    ],
+    restorePlaybook: [
+      'A `handoff-*`/`plan-*` file with no `[WIP]`/`[TODO]` line is finished: delete it instead of leaving it for the next startup notice.',
+      'Keep the gate inside `npm run verify` and as its own CI step; on failure it reports the file name and the `git rm` fix.',
+    ],
+  },
 ];

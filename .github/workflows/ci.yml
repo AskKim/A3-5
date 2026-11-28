@@ -51,6 +51,9 @@ jobs:
       - name: Verify Prompt Registry & Changelog
         run: npm run verify:prompts
 
+      - name: Verify no finished handoff or plan files linger
+        run: npm run verify:plans
+
       - name: Verify layer boundaries and engine typecheck
         run: |
           npm run verify:layers
