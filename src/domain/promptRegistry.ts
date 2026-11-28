@@ -416,6 +416,39 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       'Restore `prompts/core_hygiene.md` and keep it registered in `CURATED_PROMPT_DESCRIPTIONS` in `src/domain/promptsCatalog.ts`.',
     ],
   },
+  {
+    id: 'PRM-009',
+    promptFile: 'prompts/start_new_backlog_prompt.md',
+    title: 'Start New Backlog Prompt — Open-Handoff Precheck Revision',
+    category: 'backlog-workflow',
+    lifecycle: 'active',
+    lastEdited: '2026-11-28',
+    intent:
+      'A new backlog item could start while an unfinished handoff was still open, so the workflow picked fresh work over work already in flight.',
+    changeSummary:
+      'The precheck now covers open handoffs as well as active plans: an unfinished `handoff-*.yaml` is continued before any new backlog item is started, and only when neither exists does the workflow pick an entry.',
+    trackedFiles: ['prompts/start_new_backlog_prompt.md'],
+    invariants: [
+      {
+        filePath: 'prompts/start_new_backlog_prompt.md',
+        requiredSubstrings: [
+          '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
+          'suggestions-backlog.md',
+          'resume_backlog_plan_prompt.md',
+          'handoff-*.yaml',
+        ],
+        rationale:
+          'Backlog starter prompt must stay protected and check for both active plans and open handoffs before starting a new item.',
+      },
+    ],
+    restorePlaybook: [
+      'Restore `prompts/start_new_backlog_prompt.md` with the open-handoff precheck and the redirect to `prompts/resume_backlog_plan_prompt.md`.',
+    ],
+    decidedOn: '2026-11-28',
+    version: '2026-11-28',
+    commitShaOrTag: '7a57c35',
+    status: 'active',
+  },
 ];
 
 /**

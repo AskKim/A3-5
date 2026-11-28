@@ -14,7 +14,7 @@ import {
 } from '../ledgerContract';
 import { IMPROVEMENTS_REGISTRY, formatImprovementsMarkdown } from '../improvementRegistry';
 import { INVARIANT_RATIONALES } from '../improvements/rationales';
-import { formatPromptChangelogMarkdown } from '../promptRegistry';
+import { formatPromptChangelogMarkdown, PROMPT_CHANGES_REGISTRY } from '../promptRegistry';
 import type { ImprovementEntry } from '../improvements/types';
 import type { PromptChangeEntry } from '../promptRegistry';
 
@@ -119,7 +119,11 @@ describe('ledgerContract — append-only header and entry shape', () => {
     const prompts = evaluateLedgerContract(readLedger('PROMPT_CHANGES.md'), 'prompt-changes');
     expect(prompts.violations).toEqual([]);
     expect(prompts.ok).toBe(true);
-    expect(prompts.totalEntries).toBe(8);
+    expect(prompts.totalEntries).toBe(PROMPT_CHANGES_REGISTRY.length);
+    expect(prompts.contractEntries).toBe(
+      PROMPT_CHANGES_REGISTRY.filter((e) => e.decidedOn && e.version && e.commitShaOrTag).length
+    );
+    expect(prompts.contractEntries).toBeGreaterThan(0);
   });
 
   it('keeps the on-disk header byte-identical to what the formatter emits', () => {

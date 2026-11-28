@@ -23,7 +23,7 @@ by `npm run verify:prompts`. Whenever a prompt in `/prompts/` is added, refined,
 accidentally overwritten, run the verifier to pinpoint any lost directives or protection flags
 and follow the restoration playbook below.
 
-- **Active Prompt Trackers:** 7
+- **Active Prompt Trackers:** 8
 - **Archived Snapshot Trackers:** 1
 
 ## Quick Verification Commands
@@ -38,7 +38,7 @@ npm run verify
 
 ---
 
-## Logged Prompt Revisions (8)
+## Logged Prompt Revisions (9)
 
 ### PRM-001: Active Master System Prompt Governance, Alignment & Registry Mandates
 
@@ -171,3 +171,15 @@ npm run verify
 
 **Recovery Playbook if Broken or Overwritten:**
 1. Restore `prompts/core_hygiene.md` and keep it registered in `CURATED_PROMPT_DESCRIPTIONS` in `src/domain/promptsCatalog.ts`.
+
+## start_new_backlog_prompt 2026-11-28 — Start New Backlog Prompt — Open-Handoff Precheck Revision
+Prompt:     prompts/start_new_backlog_prompt.md @ 7a57c35
+Why:        A new backlog item could start while an unfinished handoff was still open, so the workflow picked fresh work over work already in flight.
+Changed:    The precheck now covers open handoffs as well as active plans: an unfinished `handoff-*.yaml` is continued before any new backlog item is started, and only when neither exists does the workflow pick an entry.
+Status:     active
+
+**Protected Invariants:**
+- `prompts/start_new_backlog_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `suggestions-backlog.md`, `resume_backlog_plan_prompt.md`, `handoff-*.yaml` — *Backlog starter prompt must stay protected and check for both active plans and open handoffs before starting a new item.*
+
+**Recovery Playbook if Broken or Overwritten:**
+1. Restore `prompts/start_new_backlog_prompt.md` with the open-handoff precheck and the redirect to `prompts/resume_backlog_plan_prompt.md`.
