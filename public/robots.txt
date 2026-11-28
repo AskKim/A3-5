@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://askkim.github.io/Pedigree/sitemap.xml
+# %SITE_URL% is resolved at build time from package.json#homepage (see scripts/siteIdentity.ts).
+Sitemap: %SITE_URL%sitemap.xml

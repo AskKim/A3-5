@@ -83,3 +83,4 @@ jobs:
           grep -q '"id":"./"' dist/manifest.webmanifest
           grep -q "${SUBPATH}assets/" dist/index.html
           grep -q "${SUBPATH}manifest.webmanifest" dist/index.html
+          npm run verify:site-identity -- --base="$SUBPATH"

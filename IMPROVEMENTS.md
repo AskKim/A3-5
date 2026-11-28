@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (54 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (55 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (118)
+## Logged Improvements (119)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1426,22 +1426,22 @@ npm run lint && npm run build
 - **Category:** CI & Tooling (`ci-tooling`)
 - **Origin:** Session Improvement
 - **User Goal:** Optimize all GitHub Pages for utility, setup, social preview cards, and search engine discoverability.
-- **Summary:** Enhances GitHub Pages delivery and SEO discovery: configures GitHub repository description, homepage URL, and 16 topics; optimizes index.html with keyword-rich meta tags, canonical link, Open Graph preview tags, Twitter summary card, and Schema.org WebApplication structured data; creates public/robots.txt, public/sitemap.xml, and public/404.html SPA router fallback; updates deploy-pages.yml to trigger on both main and release branches while verifying robots.txt, sitemap.xml, and 404.html in distribution; and adds GitHub Pages status badges and direct web app launch links to README.md and package.json.
+- **Summary:** Enhances GitHub Pages delivery and SEO discovery: configures GitHub repository description, homepage URL, and 16 topics; optimizes index.html with keyword-rich meta tags, canonical link, Open Graph preview tags, Twitter summary card, and Schema.org WebApplication structured data resolved from `%SITE_URL%` tokens instead of a hardcoded path; creates public/robots.txt, public/sitemap.xml, and public/404.html SPA router fallback templates; updates deploy-pages.yml to trigger on both main and release branches while verifying robots.txt, sitemap.xml, and 404.html in distribution; and adds GitHub Pages status badges and direct web app launch links to README.md and package.json.
 - **Tracked Files:** `index.html`, `public/robots.txt`, `public/sitemap.xml`, `public/404.html`, `.github/workflows/deploy-pages.yml`, `README.md`, `package.json`
 
 **Automated Invariants Checked:**
-- `index.html` must contain `https://askkim.github.io/Pedigree/`, `application/ld+json`, `og:image`, `twitter:card`, `rel="canonical"` — *index.html must maintain canonical, OpenGraph, Twitter card, and Schema.org structured data for SEO.*
-- `public/robots.txt` must contain `User-agent: *`, `Sitemap: https://askkim.github.io/Pedigree/sitemap.xml` — *public/robots.txt must guide search crawlers to the sitemap.*
-- `public/sitemap.xml` must contain `<loc>https://askkim.github.io/Pedigree/</loc>` — *public/sitemap.xml must define the canonical GitHub Pages location.*
+- `index.html` must contain `%SITE_URL%`, `application/ld+json`, `og:image`, `twitter:card`, `rel="canonical"` — *index.html must maintain canonical, OpenGraph, Twitter card, and Schema.org structured data for SEO.*
+- `public/robots.txt` must contain `User-agent: *`, `Sitemap: %SITE_URL%sitemap.xml` — *public/robots.txt must guide search crawlers to the sitemap.*
+- `public/sitemap.xml` must contain `<loc>%SITE_URL%</loc>` — *public/sitemap.xml must define the canonical GitHub Pages location through the build-time site URL token.*
 - `public/404.html` must contain `Community Pedigree Project - GitHub Pages SPA Fallback` — *public/404.html must provide client-side route fallback for GitHub Pages.*
 - `.github/workflows/deploy-pages.yml` must contain `- main`, `- release`, `dist/robots.txt`, `dist/sitemap.xml` — *deploy-pages.yml must deploy from both main and release branches and verify SEO artifacts.*
 - `package.json` must contain `"homepage": "https://askkim.github.io/Pedigree/"` — *package.json must state the official GitHub Pages homepage URL.*
 
 **Restoration Playbook if Overwritten:**
-1. Preserve SEO meta tags, canonical link, Open Graph, and JSON-LD structured data in `index.html`.
-2. Keep `public/robots.txt`, `public/sitemap.xml`, and `public/404.html` in place.
+1. Preserve SEO meta tags, canonical link, Open Graph, and JSON-LD structured data in `index.html`, keeping the absolute URLs as `%SITE_URL%` tokens.
+2. Keep `public/robots.txt`, `public/sitemap.xml`, and `public/404.html` in place as `%SITE_URL%` / `%SITE_BASE%` templates; `scripts/siteIdentity.ts` fills them during the build.
 3. Ensure `.github/workflows/deploy-pages.yml` triggers on `main` and `release` and verifies `dist/robots.txt` and `dist/sitemap.xml`.
-4. Keep `"homepage": "https://askkim.github.io/Pedigree/"` in `package.json` and live links in `README.md`.
+4. Keep `"homepage"` in `package.json` as the one authored site URL and live links in `README.md`; every other URL is derived from it.
 
 ### IMP-065: Boot Stability & Stale-Chunk Recovery: 504 Outdated-Dep Auto-Reload, Pre-Boot Error Separation & Safe EOF Sourcemap Stripping
 
@@ -2512,3 +2512,26 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. The page is “Development”; the route key and component names stay `techyStuff` / `TechyStuffScreen`.
 2. Renaming user-visible copy in `src/App.tsx` requires regenerating its boot-entry checksum in the same commit.
+
+### IMP-119: Build-Time Site Identity: One Authored URL Instead of Hardcoded /Pedigree/ Paths
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Keep the app modular and reusable so the same source deploys from a differently named repository without hand-editing public URLs.
+- **Summary:** Moves every public URL the build emits behind one authored value, `package.json#homepage`. A new `scripts/siteIdentity.ts` resolves origin, deployment base path and sitemap date - explicit `--base` flag first, then `GITHUB_REPOSITORY` in CI, then the homepage path - into `%SITE_URL%` / `%SITE_BASE%` / `%SITE_LASTMOD%` tokens. `vite.config.ts` registers the `site-identity-tokens` plugin, which substitutes the canonical/OpenGraph/Twitter/JSON-LD tags during the HTML transform and rewrites `dist/robots.txt`, `dist/sitemap.xml` and `dist/404.html` after the public folder is copied, so a fork or a personal test repository needs no source edits to stop pointing at `/Pedigree/`. A `verify:site-identity` gate then fails any build in which the canonical link, the `robots.txt` sitemap URL, the `sitemap.xml` location or the `404.html` redirect disagrees with the `--base` it was built with.
+- **Tracked Files:** `scripts/siteIdentity.ts`, `scripts/verify-site-identity.ts`, `vite.config.ts`, `index.html`, `public/robots.txt`, `public/sitemap.xml`, `public/404.html`, `package.json`, `.github/workflows/ci.yml`, `.github/workflows/deploy-pages.yml`, `IMPROVEMENTS.md`
+
+**Automated Invariants Checked:**
+- `scripts/siteIdentity.ts` must contain `%SITE_URL%`, `resolveSiteIdentity`, `GITHUB_REPOSITORY`, `site-identity-tokens` — *Every emitted site URL, base path and sitemap date must be resolved from one authored homepage value plus the build base path rather than repository-specific literals.*
+- `vite.config.ts` must contain `siteIdentityPlugin` — *The site-identity plugin must stay registered in Vite so dev HTML and the built public assets share one URL source.*
+- `scripts/verify-site-identity.ts` must contain `rel="canonical"`, `Sitemap:`, `<loc>`, `404.html`, `--base` — *A gate must compare the emitted canonical, robots sitemap, sitemap location and 404 redirect against the build base instead of trusting the token substitution.*
+- `package.json` must contain `"verify:site-identity"` — *The site-identity gate needs a stable npm entry point for CI.*
+- `.github/workflows/ci.yml` must contain `npm run verify:site-identity -- --base=` — *CI must run the site-identity gate right after the subpath build, while that build is still in dist.*
+- `.github/workflows/deploy-pages.yml` must contain `bun scripts/verify-site-identity.ts --base=` — *The Pages deploy must gate on the real base_path it is publishing, not one inferred from source.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep both token passes in `site-identity-tokens`: `transformIndexHtml` (order `pre`) for `index.html` and `closeBundle` for the `public/` files Vite copies verbatim.
+2. Never re-introduce a hardcoded owner, repository or `/Pedigree/` path in `index.html`, `public/robots.txt`, `public/sitemap.xml` or `public/404.html`; author the URL once in `package.json#homepage`.
+3. Keep base-path precedence as explicit `--base` (including `/`, which must win over the homepage path for root and custom-domain deploys), then `GITHUB_REPOSITORY`, then the homepage path; reordering it silently breaks subpath or root deployments.
+4. Run `npm run verify:site-identity -- --base=<deployment base>` after every build; it is the only check that reads the emitted canonical, robots and sitemap URLs and the 404 redirect against the base actually used.

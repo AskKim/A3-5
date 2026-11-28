@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { siteIdentityPlugin } from './scripts/siteIdentity.ts';
 import { buildPromptsCatalogManifest } from './src/domain/promptsCatalog.ts';
 
 async function scanPromptsFolderOnDisk(rootDir: string) {
@@ -385,6 +386,7 @@ export default defineConfig(() => {
       oldFolderGuardPlugin(),
       devServiceWorkerCleanupPlugin(),
       promptsDirectoryPlugin(),
+      siteIdentityPlugin(),
       VitePWA({
         registerType: 'prompt',
         includeAssets: [

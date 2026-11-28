@@ -2328,4 +2328,65 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Renaming user-visible copy in `src/App.tsx` requires regenerating its boot-entry checksum in the same commit.',
     ],
   },
+  {
+    id: 'IMP-119',
+    title: 'Build-Time Site Identity: One Authored URL Instead of Hardcoded /Pedigree/ Paths',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Keep the app modular and reusable so the same source deploys from a differently named repository without hand-editing public URLs.',
+    summary:
+      'Moves every public URL the build emits behind one authored value, `package.json#homepage`. A new `scripts/siteIdentity.ts` resolves origin, deployment base path and sitemap date - explicit `--base` flag first, then `GITHUB_REPOSITORY` in CI, then the homepage path - into `%SITE_URL%` / `%SITE_BASE%` / `%SITE_LASTMOD%` tokens. `vite.config.ts` registers the `site-identity-tokens` plugin, which substitutes the canonical/OpenGraph/Twitter/JSON-LD tags during the HTML transform and rewrites `dist/robots.txt`, `dist/sitemap.xml` and `dist/404.html` after the public folder is copied, so a fork or a personal test repository needs no source edits to stop pointing at `/Pedigree/`. A `verify:site-identity` gate then fails any build in which the canonical link, the `robots.txt` sitemap URL, the `sitemap.xml` location or the `404.html` redirect disagrees with the `--base` it was built with.',
+    files: [
+      'scripts/siteIdentity.ts',
+      'scripts/verify-site-identity.ts',
+      'vite.config.ts',
+      'index.html',
+      'public/robots.txt',
+      'public/sitemap.xml',
+      'public/404.html',
+      'package.json',
+      '.github/workflows/ci.yml',
+      '.github/workflows/deploy-pages.yml',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/siteIdentity.ts',
+        requiredSubstrings: [
+          '%SITE_URL%',
+          'resolveSiteIdentity',
+          'GITHUB_REPOSITORY',
+          'site-identity-tokens',
+        ],
+      },
+      {
+        filePath: 'vite.config.ts',
+        requiredSubstrings: ['siteIdentityPlugin'],
+      },
+      {
+        filePath: 'scripts/verify-site-identity.ts',
+        requiredSubstrings: ['rel="canonical"', 'Sitemap:', '<loc>', '404.html', '--base'],
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['"verify:site-identity"'],
+      },
+      {
+        filePath: '.github/workflows/ci.yml',
+        requiredSubstrings: ['npm run verify:site-identity -- --base='],
+      },
+      {
+        filePath: '.github/workflows/deploy-pages.yml',
+        requiredSubstrings: ['bun scripts/verify-site-identity.ts --base='],
+      },
+    ],
+    restorePlaybook: [
+      'Keep both token passes in `site-identity-tokens`: `transformIndexHtml` (order `pre`) for `index.html` and `closeBundle` for the `public/` files Vite copies verbatim.',
+      'Never re-introduce a hardcoded owner, repository or `/Pedigree/` path in `index.html`, `public/robots.txt`, `public/sitemap.xml` or `public/404.html`; author the URL once in `package.json#homepage`.',
+      'Keep base-path precedence as explicit `--base` (including `/`, which must win over the homepage path for root and custom-domain deploys), then `GITHUB_REPOSITORY`, then the homepage path; reordering it silently breaks subpath or root deployments.',
+      'Run `npm run verify:site-identity -- --base=<deployment base>` after every build; it is the only check that reads the emitted canonical, robots and sitemap URLs and the 404 redirect against the base actually used.',
+    ],
+  },
 ];
