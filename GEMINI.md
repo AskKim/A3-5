@@ -5,6 +5,11 @@
 ## Token Discipline (Required)
 Edit existing files with targeted diffs (`str_replace` / patch), never whole-file rewrites. Report `git diff`, not full file contents. Read only the line window you need, batch independent tool calls, keep scratch files in `/tmp`, and never re-save an account skill just to test read-back. Full rules: `AGENTS.md` §6.
 
+## Live Hosting: Never Without A Request
+- `release` — and any other branch a live Pages site, app-store build or installer actually serves — is live infrastructure in active use, possibly in a different repo or dev copy. Never push to it, rebase it, force-push it, port fixes into it, or delete it.
+- The Pages/release deploy workflows (`deploy-pages.yml`, `release.yml`), the Pages source setting, the custom domain and the `404.html` / site-identity wiring are equally live: never delete, disable, rename, retarget or "tidy up" them to make a local check pass. Report a live-side problem instead of repairing it by editing the workflow.
+- Change any of this only when the current request names it ("update release", "change the Pages source", "edit deploy-pages.yml"). Working in a dev copy is not permission to clean up the live path. Development branches stay unrestricted, and a commit there is not live until the owner republishes the live branch.
+
 ## Startup Check: Incomplete Plan / Work Notice
 Whenever project rules (`GEMINI.md`, `AGENTS.md`, or `prompts/master_system_prompt.md`) are loaded for a coding task (omit on standalone make-handoff-only requests, read-only Q&A/inline completions, or import-only fast-boot checks) — emit this status **at most once per response** right after `ALIGNED` (never repeat it at the end):
 - Check `docs/plans/` (excluding `suggestions-backlog.md`) for `handoff-*.yaml`, `plan-*.yaml`, `handoff.yaml`, or an active `*.md` plan with `[WIP]`/`[TODO]` or uncompleted steps.

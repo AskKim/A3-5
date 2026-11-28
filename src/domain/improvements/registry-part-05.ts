@@ -4358,4 +4358,59 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.',
     ],
   },
+  {
+    id: 'IMP-165',
+    title: 'Protect Live Hosting From Any Dev Copy, Not Just This One',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The hosting rules named one repository and one branch, so an agent working in a different dev copy could read them as “not about this tree” and delete `deploy-pages.yml`, retarget the Pages workflow or push to `release` — all of which are live, in active use by real users, and reachable from any copy that carries this repository.',
+    summary:
+      'Replaces the single-repository `release` note in `AGENTS.md` with a portable rule (“Live hosting is off-limits unless the request says otherwise”) covering live-serving branches, the Pages/release deploy workflows, the Pages source, the custom domain and the `404.html` / site-identity wiring as shared production in any repo or branch, with an explicit-request gate for changing them and an instruction to report a live-side failure rather than repair it by editing the workflow. Mirrors it as a short `## Live Hosting: Never Without A Request` section in `GEMINI.md` and as a one-line non-negotiable in `CLAUDE.md`, `.cursor/rules/project.mdc`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules` and `.roorules`, so inline agents in every supported editor see it without loading the long files.',
+    files: [
+      'AGENTS.md',
+      'GEMINI.md',
+      'CLAUDE.md',
+      '.cursor/rules/project.mdc',
+      '.github/copilot-instructions.md',
+      '.windsurfrules',
+      '.clinerules',
+      '.roorules',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'AGENTS.md',
+        requiredSubstrings: [
+          'Live hosting is off-limits unless the request says otherwise',
+          'Hosting plumbing is live infrastructure',
+          'An explicit request is required',
+          'a failing live-side check is reported, not fixed',
+        ],
+        rationale:
+          'This is the only place the rule is stated in full; without the explicit-request clause an agent working in a dev copy treats the live deploy path as scaffolding and deletes or retargets it.',
+      },
+      {
+        filePath: 'GEMINI.md',
+        requiredSubstrings: ['## Live Hosting: Never Without A Request', 'not permission to clean up the live path'],
+        rationale:
+          'GEMINI.md is loaded alongside AGENTS.md on every task, so the short form must stay to catch agents that only read the handoff rules.',
+      },
+      {
+        filePath: 'CLAUDE.md',
+        requiredSubstrings: ['Live Hosting Off-Limits'],
+        rationale:
+          'The one-line non-negotiables are what inline editors load; dropping this bullet silently narrows the rule back to the long files they never read.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the rule repo-agnostic: name `release` only as the current example of a live branch, never as the whole rule, because the live copy can be another repository, branch or dev server.',
+      'Never phrase this so a live check can be “fixed” by editing the workflow, deleting `deploy-pages.yml` or changing the Pages source; the instruction is to report the setting mismatch instead.',
+      'If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.',
+    ],
+  },
 ];
