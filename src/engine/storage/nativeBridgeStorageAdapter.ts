@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Saves through storage owned by the phone app, which survives the browser clearing its data - the fix for iOS discarding it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Native Bridge Storage Adapter (`@engine/storage/nativeBridgeStorageAdapter.ts`).
  * Routes persistence through `IPlatformBridge.invokeStorageBridge(...)` so iOS WKWebView
  * and desktop native containers bypass evictable WebKit storage.

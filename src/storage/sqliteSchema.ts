@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The database table definitions, shared with the native phone versions of the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Canonical SQLite Schema DDL (`src/storage/sqliteSchema.ts`).
  *
  * Shared 1:1 with native `expo-sqlite` / Apple `WKWebView` / Android SQLite adapters.

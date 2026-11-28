@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The single path for a restore that replaces everything, whichever kind of backup it came from.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * One destructive-restore path for every backup source.
  *
  * OPFS vault restores, rolling IndexedDB restores and (eventually) JSON/archive imports all replace

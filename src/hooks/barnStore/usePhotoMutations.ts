@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The photo writes: add, choose the profile picture, reorder, and remove.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Animal photo mutations, extracted from `useBarnStore` as a sub-hook.
  *
  * Four writes over `animalPhotos`: add optimized payloads, change which photo is primary, retitle

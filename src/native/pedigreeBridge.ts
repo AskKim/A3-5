@@ -2,6 +2,9 @@
  * Community Pedigree — Native Wrapper Bridge
  * Copyright (C) 2026 Pedigree Contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * PART 1 — FOR HUMANS: The bridge the Android and iOS shells use to reach the app code.
+ * PART 2 — FOR AI / DEVELOPERS:
  */
 
 export type NativePlatform = 'android' | 'ios' | 'web';

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Wraps an export in password-protected encryption, so a backup can be moved around safely.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Encrypted Export Envelope Format & ZIP Wrapper (`src/domain/encryptedExport.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Builds many printable documents in one pass - pedigrees, cage cards - as files you can print or save as PDF.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Batch Print Engine (`src/domain/batchPrint.ts`).
  *
  * Generates single-pass, self-contained printable `.HTM` / Print-to-PDF documents from

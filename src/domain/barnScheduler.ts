@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Works out the barn timeline, and which jobs should be pushed up the queue.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Barn Scheduler Gantt Timeline & Smart Priority Escalation Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

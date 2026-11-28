@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The main hook: connects the screens to the stored data and keeps everything in step.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Portable React State & Offline Database Controller Hook (`useBarnStore`).
  *
  * Connects React components to the `StorageAdapter` while enforcing:

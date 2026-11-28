@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads the hardware and browser signals, remembers dismissals per device, and exposes them to the screens.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Browser Hardware & Feature Signal Collector, Per-Device Dismissal State & React Hook
  * (`src/storage/deviceCapabilityDetector.ts`).
  *

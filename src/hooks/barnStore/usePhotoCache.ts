@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A bounded cache of photo data, sized to the device, with the loaders that fill it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Bounded photo cache and its loaders, extracted from `useBarnStore`.
  *
  * The cache is a transient LRU of photo data URLs, sized from the device capability tier. The four

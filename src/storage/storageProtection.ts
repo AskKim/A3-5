@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Guards against running out of storage, keeps rolling local backups, and tracks the install state.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Browser Storage Protection, Quota Guardrails, Rolling Local Backups, & PWA Install State.
  */
 

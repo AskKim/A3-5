@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The coat colour maths: which genes an animal carries, and what a pairing could produce. Marked as still under development.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Multi-Species Coat Color Genetics, Allele Inference & Test-Breeding Punnett Engine.
  *
  * @status UNDER DEVELOPMENT / INCOMPLETE — All UI and export surfaces rendering coat color

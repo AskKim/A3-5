@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Keeps a show judge organised: assignments, club contacts, travel and expenses, bids, and printable forms.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Engine for The Judge's Notebook (`src/domain/judgeNotebook.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

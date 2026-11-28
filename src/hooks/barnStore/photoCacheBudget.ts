@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Decides how many photos can be held in memory at once, from what the device can manage.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Photo cache budget policy, split out of `useBarnStore`.
  *
  * This is the shape every later slice follows: pure, testable policy moves to

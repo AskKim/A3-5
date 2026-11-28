@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Encrypts and decrypts with a passphrase, using the cryptography built into the browser.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Web Crypto Passphrase Encryption & Decryption (PBKDF2-SHA256 + AES-256-GCM)
  * (`src/storage/passphraseCrypto.ts`).
  *

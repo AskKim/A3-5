@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The front door for the optional features, each one self-contained and safe to leave out.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Reusable Features Layer (`@features`).
  *
  * Boundary Invariant:

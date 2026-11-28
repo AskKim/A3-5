@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lists the reports the app can produce for each species, with a title and a description for each.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Planned Reports Catalog Builder.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

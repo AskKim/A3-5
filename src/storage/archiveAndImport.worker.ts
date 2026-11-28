@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A background worker that packs and unpacks archives and handles large imports away from the screen, so the app stays responsive.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Dedicated Web Worker for Off-Thread `.ZIP` Archive Compression/Extraction,
  * Large External Pedigree Parsing, and Diagnostic Support Bundle Packaging.
  *

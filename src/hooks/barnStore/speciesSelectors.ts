@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Picks out the records for one species, and reuses the last answer instead of redoing the work whenever the screen updates.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Rev-keyed species selectors — milestone 5 item 12.
  *
  * `baseSpeciesData` used to re-filter and re-sort every collection whenever the snapshot object

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The low-level spreadsheet reader: it handles quoted fields, different separators and messy values.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Schema-Agnostic Delimited Table Parser & Value Normalizers (`@features/csv-importer/csvParser.ts`).
  */
 

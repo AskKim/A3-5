@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Moves animals and their herd records from one species to another, keeping the linked data together.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Reusable Cross-Species Migration Modal (`src/components/SpeciesMigrationModal.tsx`).
  *
  * Supports:

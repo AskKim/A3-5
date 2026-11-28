@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Sends records directly between two devices on the same network, with no server in between.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Serverless LAN WebRTC DataChannel Transport
  * (`@engine/storage/lanWebRtcTransport.ts`).
  *

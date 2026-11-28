@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A month calendar of breeding dates with moon phases, holidays and seasonal markers - all offline - plus an optional short weather strip when you allow it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Interactive Monthly Breeding Calendar with Offline Moon Phases,
  * Holidays, Seasonal Markers & Opt-In 7-Day Online Weather Strip (`src/components/BreedingCalendarPanel.tsx`).
  */

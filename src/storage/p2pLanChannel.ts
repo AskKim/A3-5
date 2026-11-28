@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The direct device-to-device channel over a local network.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Serverless LAN / Peer-to-Peer WebRTC DataChannel & Folder Sync Bridge (`src/storage/p2pLanChannel.ts`).
  *
  * Thin Pedigree-wired facade delegating WebRTC transport (`iceServers: []`) and chunk

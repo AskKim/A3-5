@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Passes sync-conflict state down to the screens that need it, without threading it through every level.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Sync-conflict slice context.
  *
  * First step of the milestone 5 split. The store's single value is threaded through props to every

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Measures how much space photos take, and finds the ones no animal refers to any more so they can be removed.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Photo Storage Footprint Analyzer & Orphan/Full-Res Pruner (`src/domain/photoMaintenance.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

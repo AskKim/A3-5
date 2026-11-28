@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Exports tasks and breeding dates as a standard calendar file that any calendar app can open.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * RFC 5545 iCalendar (`.ics`) Task & Breeding Milestone Export Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

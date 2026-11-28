@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Runs the local database inside the browser, using the same tables as the phone versions.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Unencrypted Local SQLite Browser Adapter (`sql.js` WebAssembly + IndexedDB Persistence).
  *
  * Uses standard relational SQLite tables identical to what `expo-sqlite` executes on

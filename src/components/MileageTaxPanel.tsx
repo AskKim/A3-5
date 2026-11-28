@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Logs business mileage and produces an IRS-ready mileage report, living inside the economics ledger.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Business Mileage & Tax Report Log Panel (`src/components/MileageTaxPanel.tsx`).
  * Mounted inside EconomicsLedgerScreen for IRS-ready mileage deductions, show/vet/feed trip
  * tracking, CSV export, and printable annual tax reports.

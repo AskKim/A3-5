@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Draws the genetics of an animal in colour so you can see where each part came from, with the legend that explains the colours.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Reusable Color-Coded Allele Provenance Renderer & Legend.
  *
  * Visually distinguishes each allele's provenance using theme-aware tokens:

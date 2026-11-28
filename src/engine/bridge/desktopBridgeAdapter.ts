@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lets the app talk to a desktop window (Electron or Tauri) using the same calls it already uses on a phone.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Desktop Shell Bridge Adapter (Electron / Tauri)
  * (`@engine/bridge/desktopBridgeAdapter.ts`).
  *

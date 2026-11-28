@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Tests what storage a browser really offers, because private mode and older browsers claim a feature and then fail.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Restricted-Browser Storage Probes & Resource Registry
  * (`@engine/storage/browserProbes.ts`).
  *

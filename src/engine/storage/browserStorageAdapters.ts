@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The browser storage options - in memory, IndexedDB, and the newer file-system storage - behind one shared set of rules.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Browser Storage Adapters (`@engine/storage/browserStorageAdapters.ts`).
  * Implements Memory, IndexedDB, and OPFS adapters with zero domain coupling.
  */

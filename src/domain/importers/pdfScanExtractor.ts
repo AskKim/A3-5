@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The older entry point for reading a scanned pedigree, kept so existing code still works.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Alpha 2 Compatibility Facade: Offline PDF Scan & Vector Pedigree Extractor
  * (`src/domain/importers/pdfScanExtractor.ts`).
  *

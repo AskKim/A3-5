@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The pedigree explorer: browse three to six generations of ancestry for one species.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Interactive 3-, 4-, 5-, & 6-Generation Pedigree Tree Explorer (`Pedigree`).
  *
  * Strictly scoped to `activeData.speciesProfile.name`. Features:

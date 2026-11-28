@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads and tidies the idea backlog, and formats it for export.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Suggestion Backlog Parser, Idea Sanitizer & Export Formatter
  * (`src/domain/suggestionsBacklog.ts`).
  *

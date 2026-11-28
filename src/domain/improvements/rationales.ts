@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The longer explanation of why each recorded fix exists.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Why each invariant exists, keyed `${entryId}#${filePath}#${ordinalForThatFile}`.
  *
  * Documentation, not runtime logic: entries stay lean and this module loads only when the

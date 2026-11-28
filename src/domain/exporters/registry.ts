@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The list of available export formats, so a new one can be added without changing the screens.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Central Non-Native & Extensible External Exporter Registry (`src/domain/exporters/registry.ts`).
  *
  * Mirrors `src/domain/importers/registry.ts` so every non-native format or future external platform

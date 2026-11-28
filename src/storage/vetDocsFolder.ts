@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Points at a folder of vet PDFs on your device, and reminds you that those files are not inside the app backup.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Local Veterinary PDF Folder Pointer & External Backup Reminder Adapter (`src/storage/vetDocsFolder.ts`).
  *
  * Stores a device-local read-only `FileSystemDirectoryHandle` in IndexedDB (`sync_handles`

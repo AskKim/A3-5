@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Keeps only small previews in memory, and loads a full photo only when it is actually opened.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Bounded LRU Full-Resolution Photo Cache & On-Demand Snapshot Hydration Helpers.
  *
  * Keeps only lightweight `thumbnailDataUrl` previews inside the long-lived React

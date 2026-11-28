@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The cloud sync controls: saving settings, connecting an account, and disconnecting.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Cloud app-folder settings and PKCE actions, extracted from `useBarnStore` as a sub-hook.
  *
  * Four user-facing controls: persisting a settings patch, adopting an access token entered by

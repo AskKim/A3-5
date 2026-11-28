@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: One summary of every backup the app holds - automatic monthly ones, pre-upgrade ones, archived herds - with restore and export.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Unified Backup Vault & Archived Herds Summary Panel (`UnifiedBackupVaultPanel`).
  *
  * Consolidates OPFS `/backups` snapshots (monthly auto, pre-upgrade, pre-reset,

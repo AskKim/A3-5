@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Writes small standard text formats correctly, such as iCalendar entries and spreadsheet rows.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Shared Pure Text-Format Encoders (`@engine/codecs/textFormats`).
  *
  * Single source of truth for RFC-4180 CSV cell escaping and RFC-5545 iCalendar text/alarm

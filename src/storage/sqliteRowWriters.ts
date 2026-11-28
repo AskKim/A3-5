@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Writes app records back into database rows.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * SQLite Domain-to-Row Upsert Writers (`src/storage/sqliteRowWriters.ts`).
  */
 

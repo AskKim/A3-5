@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Turns stored images into JPEGs and downloads a PDF, in the browser.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Browser Raster-to-JPEG & Offline `.PDF` Download Adapter (`src/utils/webPdfActions.ts`).
  *
  * Converts locally stored WebP/PNG/JPEG raster data URLs into clean baseline JPEG bytes

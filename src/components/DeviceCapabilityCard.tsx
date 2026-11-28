@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Tells you what this device and browser can manage, and warns when storage or memory is limited.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Device Capability Detection & Memory Handling Banner/Section (`DeviceCapabilityCard`).
  *
  * Placement & Persistence Rules:

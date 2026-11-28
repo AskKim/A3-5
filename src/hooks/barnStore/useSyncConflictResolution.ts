@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Resolving a sync conflict: it records the chosen side and queues the change for the other device.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Sync-conflict resolution, extracted from `useBarnStore` as a sub-hook.
  *
  * Resolve is the loud sibling of dismiss: it turns the chosen side into an outbox operation, merges

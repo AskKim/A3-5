@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Charts weight gain and litter survival over time for one species.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Rate of Gain, Comparative Weight Charts & Litter Survival Curves Lab.
  *
  * Consumes pure domain math from `src/domain/growthAnalytics.ts` to chart:

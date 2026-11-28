@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Remembers the last successful export and any snooze, so the reminder does not nag.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Backup-reminder persistence policy, split out of `useBarnStore`.
  *
  * Two pieces of state survive a reload: the last successful export and the "snoozed until"

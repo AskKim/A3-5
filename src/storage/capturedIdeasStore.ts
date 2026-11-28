@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Saves captured ideas on the device, so a thought is not lost when the app closes.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Offline-First Persistence Store for Captured Suggestion Ideas
  * (`src/storage/capturedIdeasStore.ts`).
  *

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Trims the sync log so it does not grow forever.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Sync operation log retention.
  *
  * The outbox is append-only while it is being written, and the whole log is rewritten after every

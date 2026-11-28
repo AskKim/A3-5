@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Passes sync and backup state down to the screens that need it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Sync-state slice context — third step of the milestone 5 split.
  *
  * The Import/Export hub was handed the outbox, backup status, storage-protection status and the

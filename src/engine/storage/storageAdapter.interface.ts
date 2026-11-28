@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The rules every storage option must follow, so they can be swapped without touching the rest of the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Storage Adapter Interface (`@engine/storage/storageAdapter.interface.ts`).
  *
  * Architectural Invariant:

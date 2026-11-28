@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A private, date-organised journal for each species, kept on your device.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Personal Barn Journal Screen (`src/components/BarnJournalScreen.tsx`).
  *
  * Date-organized private journal featuring:

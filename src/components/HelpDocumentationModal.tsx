@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The in-app help: the basic workflow plus collapsible guides for each species.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * In-App Documentation & Species Guide Modal (`HelpDocumentationModal`).
  * Provides core offline-first workflow docs alongside collapsible/accordion guides
  * for every active and built-in livestock species.

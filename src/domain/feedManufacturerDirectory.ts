@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A directory of feed manufacturers kept on the device, for a recall or an emergency when you need contact details.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Offline-Ready Feed Manufacturer Emergency & Biosecurity Directory
  * (`src/domain/feedManufacturerDirectory.ts`).
  *

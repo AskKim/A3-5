@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The safety rules the developer screens have to follow.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript guardrails for the Development & Troubleshooting screen.
  *
  * Implements:

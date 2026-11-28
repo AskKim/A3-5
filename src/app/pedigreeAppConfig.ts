@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Holds the app name and identity settings in one small file, so a screen can read them without loading storage code.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Lightweight Application Configuration Constant (`@app/pedigreeAppConfig.ts`).
  * Kept separate from storage/archive wiring so hooks reading metadata never pull
  * ZIP or SQLite WASM engines into the initial boot chunk.

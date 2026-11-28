@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Connects the reusable parts together for this app - storage, the phone or desktop shell, and the feature modules.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Application Layer Wiring: Core Storage + Platform Bridge + Decoupled Feature Modules
  * (`@app/pedigreeAppWiring.ts`).
  */

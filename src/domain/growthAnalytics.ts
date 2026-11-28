@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Works out weight gain, comparative weights and litter survival from the records.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Growth, Rate of Gain, Comparative Weight & Litter Survival Analytics Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

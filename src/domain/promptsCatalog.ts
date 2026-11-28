@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads the prompts folder and lists what each prompt is for.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Prompt Directory Catalog & Parser (`src/domain/promptsCatalog.ts`).
  *
  * Maintenance Note:

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Edits the biological schedule of a species - gestation length, milestones - and its master task list.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Custom Livestock & Species Biological Schedule / Master Task List Milestone Editor Modal.
  *
  * Portable UI Note: Maps cleanly to React Native `Modal` + `ScrollView` + `TextInput` + `Pressable`.

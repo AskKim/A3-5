@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Defines exactly what an animal record contains and how it is written down when saved or shared.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Canonical Animal Profile Schema & Serialization (`@app/animalProfileSchema.ts`).
  */
 

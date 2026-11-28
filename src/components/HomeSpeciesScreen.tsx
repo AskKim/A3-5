@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The landing screen: name your barn on first use, then choose which species you are working in.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Multi-Species Barn Home Landing Screen (`Home`).
  *
  * Displays first-time Farm/Barn Name onboarding, optional condensed summary strip,

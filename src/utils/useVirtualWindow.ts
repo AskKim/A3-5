@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Draws only the rows of a long list that are on screen, so long lists stay smooth.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Zero-dependency ES2018-compatible scroll window virtualizer for large
  * lists and data tables.
  */

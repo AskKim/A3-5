@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Part of the list of fixes, continuing from the file before it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Improvement registry entries IMP-035 … IMP-051 (17 entries).
  *
  * Split out of `improvementRegistry.ts` so the registry stays reviewable as it grows. The public

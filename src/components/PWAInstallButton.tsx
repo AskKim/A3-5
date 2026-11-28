@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The button that offers to install the app on your device, and the banner that tells you when you are offline.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * In-App PWA Install Prompt (`PWAInstallButton`) & Offline Mode Banner (`OfflineIndicator`).
  */
 

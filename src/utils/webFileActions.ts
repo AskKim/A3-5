@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Downloading and uploading files in a browser, keeping the phone and desktop equivalents in mind.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Web Browser File Download & Upload Wrappers.
  *
  * CROSS-PLATFORM MIGRATION NOTE:

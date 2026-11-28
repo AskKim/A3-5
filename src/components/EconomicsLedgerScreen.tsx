@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Records what a project costs and earns, including meat and pelt yields and 4-H and FFA project books.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Local Economic Ledger, Meat/Pelt Processing Yields & 4-H/FFA Youth Project Books
  * (`src/components/EconomicsLedgerScreen.tsx`).
  *

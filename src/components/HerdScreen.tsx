@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The herd list for one species, and the full profile page for a single animal.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Herd Registry & Dedicated Single-Animal Profile Screen (`Herd`).
  *
  * Strictly displays ONLY animals where `animal.species === activeData.speciesProfile.name`.

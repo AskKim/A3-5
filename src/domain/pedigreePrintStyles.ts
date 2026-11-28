@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The colours, borders and layout presets used when a pedigree is printed.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Pedigree Print Styling, Color, Border & Layout Presets (`src/domain/pedigreePrintStyles.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

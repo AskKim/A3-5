@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Shows a small non-blocking message when a background job fails or pauses, instead of silently doing nothing.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Non-blocking Global Async Error & Background Pause Toast Host (`src/components/AsyncErrorToastHost.tsx`).
  *
  * Behavior:

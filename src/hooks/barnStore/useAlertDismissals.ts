@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The actions for dismissing an alert, and for clearing one again.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Alert-dismissal actions, extracted from `useBarnStore` as a sub-hook.
  *
  * Three settings-only mutations: permanently ignoring task ids, clearing one species' overdue-task

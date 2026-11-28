@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Decides when an app update is applied, and checks the published version file without any cache.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Manual Service Worker Update Governor (`auto` / `notify` / `pinned`),
  * Uncached `version.json` / `status.json` Upgrade Gate & controllerchange Single-Reload Handshake.
  *

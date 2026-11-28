@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Puts one animal side by side with several possible partners, so the trade-offs are visible before you commit.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Side-by-Side Multi-Candidate Pairing Comparison Matrix (`src/components/PairingComparisonMatrix.tsx`).
  *
  * Compares 1 anchor Dam against multiple candidate Sires (or 1 anchor Sire against multiple

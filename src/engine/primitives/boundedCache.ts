@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Remembers a limited number of items and forgets the oldest, so a long session does not slowly eat memory.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Bounded String LRU Cache & Object-URL Cleanup
  * (`@engine/primitives/boundedCache.ts`).
  *

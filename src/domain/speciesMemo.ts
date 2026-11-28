@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Keeps the scratch pad for each species tidy, and cleans up its formatting.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Per-Species Memo Pad Hygiene & Formatting Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

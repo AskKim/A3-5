@@ -32,6 +32,7 @@ When initializing or importing this repository into AI Studio (boot-to-ready wit
 - **Release & Branch Context:** Alpha 2 (`0.1.0-alpha.2`) is released; current development is active Alpha 3 (`0.1.0-alpha.3`) modularity on a dedicated Core Pedigree branch inside `ask-kim/pedigree`. Unrelated future apps live in separate repositories, and shared content-agnostic framework code (`@engine/*`, reusable `@features/*`) will be extracted into standalone `engine` (`/engine`) before any future transfer of `/pedigree`. Defer creating standalone `engine` (`/engine`) until full modularity is achieved across the codebase (so `engine` is equally modular, needs no subsequent rewrite, and stays distinct from the upcoming Core Pedigree release).
 - **Boot-Entry Lock Guardrail:** Boot and entry initialization files (`src/main.tsx`, `src/App.tsx`, `index.html`) are protected by SHA-256 `BOOT_ENTRY_LOCK_CHECKSUMS` in `src/domain/improvementRegistry.ts`. Do NOT alter active boot/entry initialization unless explicitly requested and safe.
 - **Architecture & Recovery Reference:** Consult `ARCHITECTURE.md`, `android-wrapper/README.md`, `ROADMAP.md`, and `IMPROVEMENTS.md` only when relevant to code-editing tasks (skip on initial AI Studio boot).
+- **Preflight Launch, Reset & Re-arm Runbook:** `prompts/preflight/pf-launcher-uni-readme.md` § *Resetting The Launcher (Agent Runbook)*. Any request to reset, re-arm, reopen a phase or start a repo fresh goes through that section's decision table, never by hand. Launcher step lines are generated from `prompts/preflight/manifest/preflight.manifest.json` (regenerate with `node prompts/preflight/scripts/gen-preflight.mjs --write`); `preflight-reset.mjs --full` deletes `docs/handoff-state.json` after copying it to `/tmp/pf-handoff-state.<ts>.json`; use `--reopen-phase A|B` to arm one phase again without discarding `history[]`.
 - **Token Discipline & Terse Execution:** Prioritize direct tool execution over conversational prose. Do not output verbose preambles, apologies, or speculative commentary.
 
 ---
@@ -192,7 +193,7 @@ lockfile is stale or a dependency change is intentional.
 | 2 | Typecheck (app) | `npm run lint` (`tsc --noEmit`) |
 | 3 | Typecheck (engine/features/utils) | `npm run verify:engine` |
 | 4 | Tests | `npm test` (`vitest run`, full suite) |
-| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android` |
+| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android`, `verify:dual-audience` |
 | 6 | Aggregate shortcut | `npm run verify` — equals steps 2–5; use it **instead of** them, never in addition |
 | 7 | Preflight | `npm run preflight:lint`; `node prompts/preflight/scripts/preflight-run-context.mjs --branch "$(git rev-parse --abbrev-ref HEAD)" --version "$(node -p "require('./package.json').version")" --dry-run` |
 | 8 | Release metadata | `package.json` version = `public/version.json` `appVersion` = `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts` = `versionName` in `android-wrapper/app/build.gradle.kts` |

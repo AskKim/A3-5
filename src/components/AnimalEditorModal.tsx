@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The form for adding or editing one animal, with sire and dam choices limited to the same species so a cross-species parent cannot be picked by accident.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Animal Registry Editor Modal.
  *
  * Strictly filters Sire and Dam candidates to the animal's exact `species` AND validates

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: An optional panel for syncing to a cloud app folder, with a visible stop switch for when the provider runs out of space or refuses access.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Optional Cloud App-Folder Sync Panel (`Google Drive AppFolder` / `OneDrive approot`)
  * & 403/507 Quota Circuit Breaker Status Controls (`CloudAppFolderSyncPanel.tsx`).
  */

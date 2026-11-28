@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The offline sync maths: queues of unsent changes, conflict ordering, and comparing two sets of records.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Outbox Sync, Conflict Ordering, P2P Wire Framing & Set Diff Primitives
  * (`@engine/primitives/genericSync.ts`).
  *

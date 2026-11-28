@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The master task list: when one chore is finished, it schedules the next one that depends on it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Automated Chore Cascading Engine (Master Task List).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

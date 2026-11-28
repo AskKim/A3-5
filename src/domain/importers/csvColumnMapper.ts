@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lets you match the columns in a spreadsheet to the fields the app uses.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Interactive CSV Column Mapper (`src/domain/importers/csvColumnMapper.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

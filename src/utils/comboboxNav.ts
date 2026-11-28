@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Keyboard navigation for type-ahead lists, following the accessibility standard.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure keyboard-navigation helpers for WAI-ARIA comboboxes & listboxes.
  */
 

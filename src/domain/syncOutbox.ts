@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Holds the queue of changes waiting to reach another device, and settles them field by field when two edits collide.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Field-Level Multi-Worker Sync & Conflict Resolution Engine (`src/domain/syncOutbox.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

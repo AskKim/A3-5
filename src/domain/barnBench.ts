@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The logic behind the fast entry screen: it queues the next animal so chores can be logged in a run down the cages.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript "Barn Bench" Fast Sequential Batch Entry Engine (`src/domain/barnBench.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

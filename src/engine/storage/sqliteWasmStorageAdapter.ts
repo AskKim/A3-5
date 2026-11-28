@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Runs a real SQL database inside the browser, kept in whichever storage option is available.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic SQLite WASM Storage Adapter (`@engine/storage/sqliteWasmStorageAdapter.ts`).
  * Wraps `sql.js` over a backing `IStorageAdapter` (IndexedDB, OPFS, Native Bridge, or Memory)
  * and supports raw `.sqlite` binary export and validated restore.

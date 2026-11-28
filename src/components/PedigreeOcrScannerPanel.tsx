@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads a paper pedigree from a photo or a scanned PDF, then queues the result for you to check before it is imported.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Offline Paper Pedigree OCR & Scanned PDF Review Queue Panel
  * (`src/components/PedigreeOcrScannerPanel.tsx`).
  *

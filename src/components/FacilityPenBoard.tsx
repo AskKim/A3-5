@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A board of your physical cages, hutches and pastures, grouped by barn row, showing what is in each one and how full it is.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Visual Hutch-by-Hutch / Cage Row & Pasture Board (`src/components/FacilityPenBoard.tsx`).
  *
  * Groups physical pens by barn section/row, displays live capacity warnings (`IMP-028`),

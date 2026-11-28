@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A searchable picker for choosing a parent, which also finds archived animals when you ask it to.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Searchable Parent Picker (`SearchableParentPicker`).
  *
  * Replaces a static `<select>` dropdown whenever "Include Archived" is enabled

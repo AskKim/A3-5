@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The device-to-device channels for syncing without any cloud account.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Zero-Cloud Local & Peer-to-Peer Sync Channels (`src/storage/localSyncChannels.ts`).
  *
  * Implements:

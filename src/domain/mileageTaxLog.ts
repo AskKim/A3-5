@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Adds up business mileage and lays it out as a tax-ready report.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Barn & Livestock Mileage & Tax Report Engine (`src/domain/mileageTaxLog.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

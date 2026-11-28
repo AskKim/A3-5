@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Adding, editing, archiving and deleting animals, all written through one queue.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Animal create/update/archive/delete, extracted from `useBarnStore` as a sub-hook.
  *
  * These four actions share one shape: serialise through `enqueueStoreMutation`, read the committed

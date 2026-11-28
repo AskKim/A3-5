@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A short inline note shown wherever colour genetics appear, so a readout is not mistaken for a certainty.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Compact inline notice displayed wherever color genetics / genotype readouts or inputs appear.
  */
 

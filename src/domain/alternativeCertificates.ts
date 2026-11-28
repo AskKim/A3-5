@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Produces printable certificates for cases the standard pedigree form does not cover.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Alternative Certificate Generators (`src/domain/alternativeCertificates.ts`).
  *
  * Produces printable self-contained `.HTM` documents for:

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Talks to the background worker, so large archives and imports do not freeze the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Client Bridge for Off-Thread `.ZIP` Archive Compression/Extraction & Large Imports.
  *
  * Uses `archiveAndImport.worker.ts` in capable browsers so multi-megabyte `.ZIP`

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Fetches a short weather forecast only when you opt in, and does nothing at all while you are offline.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Strictly Opt-In & Offline-Safe Weekly Weather Forecast Client (`src/storage/weatherForecast.ts`).
  *
  * - Honors Manual App Offline Mode & `navigator.onLine` via `getConnectivitySnapshot()`.

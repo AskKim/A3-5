@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The logic behind the buyer list: waitlists, reservations and sales agreements.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Client CRM, Buyer Waitlist, Reservations & Sales Agreements Engine (`src/domain/clientCrm.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

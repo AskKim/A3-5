@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Holds the health reading links, the pointer to your vet PDF folder, and the reminder to back those files up.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Curated Health Reference Wikis, Local Veterinary PDF Folder Metadata &
  * Periodic Document-Backup Reminder Engine (`src/domain/healthReference.ts`).
  *

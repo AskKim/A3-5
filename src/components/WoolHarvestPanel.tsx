@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Records wool and fibre harvests and scores them on the IAGARB scale, loaded only when the panel is opened.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Lazy-loaded Wool / Fiber Harvests & IAGARB 100-Point Judging Scorecard Panel.
  *
  * Strictly isolated from initial Herd Registry / Species Hub bundles and mounted ONLY

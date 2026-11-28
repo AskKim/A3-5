@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The list that decides which code is generic and which is animal-specific, used by the modularity checks.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Module Classification & Split Catalog (`src/domain/moduleCatalog.ts`).
  *
  * Purpose:

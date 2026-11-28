@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Stops two open tabs from writing over each other, and tells them when one of them has saved.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Cross-Tab Mutex & Commit Event Bus
  * (`@engine/storage/crossTabSync.ts`).
  *

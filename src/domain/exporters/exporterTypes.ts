@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The rules every export format has to follow.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Modular Non-Native & External Format Exporter Interfaces (`src/domain/exporters/exporterTypes.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

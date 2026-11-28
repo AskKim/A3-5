@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Writes calendar entries in the standard .ics format, so dates can be added to any calendar app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic RFC 5545 iCalendar (`.ics`) Builder (`@features/ics-calendar/icsBuilder.ts`).
  *
  * Zero domain terms, zero DOM dependencies, zero cross-feature imports.

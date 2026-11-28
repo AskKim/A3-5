@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The About window: what the app is, and a plain statement that your records stay on your own device.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * About Community Pedigree Modal (`AboutModal.tsx`).
  * Highlights offline-first architecture, local device data ownership,
  * zero-telemetry guarantee, license details, and system quick links.

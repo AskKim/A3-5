@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Turns the text read from a paper pedigree into records, and places them in a queue for you to check.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Paper Pedigree OCR Parser & Import Review Queue Bridge
  * (`src/domain/importers/pedigreeOcrParser.ts`).
  *

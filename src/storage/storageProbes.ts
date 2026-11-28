@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Checks what storage this browser really allows, on behalf of the reusable core.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Restricted-Browser Storage Probes & Lifecycle Resource Registry (`src/storage/storageProbes.ts`).
  *
  * Thin domain facade over `@engine/storage/browserProbes` supplying Community Pedigree

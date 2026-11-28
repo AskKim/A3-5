@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The general-purpose importer: handles pedigree pages and spreadsheets from several other systems.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Universal Pedigree, Evans `.HTM` & Multi-System Spreadsheet Importer
  * (`src/domain/importers/universalPedigreeImporter.ts`).
  *

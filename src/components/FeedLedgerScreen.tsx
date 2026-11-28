@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Tracks feed stock and lot numbers, reads a tag number from a photo, and clears out expired lots as a biosecurity step.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Feed Inventory Ledger, Pre-Compression Tag Lot-Number OCR & Biosecurity Auto-Purge
  * (`src/components/FeedLedgerScreen.tsx`).
  *

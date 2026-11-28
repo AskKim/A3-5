@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Packs the logs, and optionally a copy of your data, into one file you can send for support.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Support Bundle Exporter (.ZIP with Logs + Optional Copy of User Barn Data) & Email/Share Helper.
  *
  * Packages:

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Merges changes from several devices without losing any, and produces the export formats.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Multi-Device Conflict-Free Merge Engine & Open Export Serializers
  * (.json, .csv, Evans .HTM Pedigrees, Thermal Labels, and PDF-Ready Snapshots).
  *

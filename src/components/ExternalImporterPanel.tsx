@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Imports records from other apps - including the two-file HerdBoss export - by staging the files before anything is written.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * External Platform Importer & HerdBoss Two-ZIP Staging Panel (`ExternalImporterPanel`).
  *
  * Supports:

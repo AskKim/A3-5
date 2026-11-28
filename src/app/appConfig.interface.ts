@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Describes the settings this particular app must supply: its name, its record types, and its features.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Application and Domain Configuration Interface (`@app/appConfig.interface.ts`).
  *
  * Layer 3 Architectural Role:

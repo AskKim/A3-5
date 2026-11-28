@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Streams large files into and out of the browser private file system without loading them all at once.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Worker-Safe OPFS Scratchpad & Chunk Streamer
  * (`@engine/storage/opfsStream.ts`).
  *

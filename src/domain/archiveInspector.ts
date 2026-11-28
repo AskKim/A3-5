@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Looks inside a backup file before you restore it, so you can see what is there without replacing your current data.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Pre-Restore Archive Inspector (`src/domain/archiveInspector.ts`).
  *
  * Dry-run parses backup `.ZIP`, `.JSON`, or decoded `.SQLITE` snapshots BEFORE committing

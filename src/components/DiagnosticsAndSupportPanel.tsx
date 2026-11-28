@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Collects crash reports and memory information into one support file you can send when something goes wrong.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Crash Handling, Verbose Error & Memory Diagnostics Panel, and Support Bundle Exporter.
  *
  * Features:

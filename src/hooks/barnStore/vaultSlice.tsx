@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Passes the vault collections and actions to the screens that use them.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Vault slice context — second step of the milestone 5 split.
  *
  * The Import/Export hub was handed four vault collections and five vault actions as props it only

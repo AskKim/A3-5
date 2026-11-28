@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Converts database rows back into app records, tidying numbers and fixed choices on the way.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * SQLite Row-to-Domain Mappers & Numeric/Enum Sanitizers (`src/storage/sqliteRowMappers.ts`).
  */
 

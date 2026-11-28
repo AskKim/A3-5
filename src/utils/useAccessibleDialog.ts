@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Gives every dialog the same keyboard and screen-reader behaviour.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Accessible Modal Dialog Hook (`src/utils/useAccessibleDialog.ts`).
  *
  * Provides consistent keyboard & screen-reader dialog behavior across all modals:

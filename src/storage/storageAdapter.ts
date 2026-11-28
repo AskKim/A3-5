@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The storage rules the app is written against, so browser, phone and desktop storage can be swapped.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pluggable Cross-Platform Storage Adapter Interface.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

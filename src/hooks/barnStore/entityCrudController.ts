@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: One write path for every collection in the barn, so all records are saved the same way.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * One write path for the flat barn collections.
  *
  * Every entity the store keeps as a snapshot collection (cages, ledger entries, processing logs,

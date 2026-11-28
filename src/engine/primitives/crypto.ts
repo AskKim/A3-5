@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Hashing and password-based encryption, so a backup file can be locked with a passphrase.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Hashing & Encrypted Envelope Primitives
  * (`@engine/primitives/crypto.ts`).
  *

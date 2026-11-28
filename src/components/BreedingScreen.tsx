@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The breeding workspace: pick a sire and dam of the same species, see the possible coat colours, and log the pairing.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Breeding Simulator, Coat Color Punnett Lab & Master Task List Logger (`Breeding`).
  *
  * Strictly filters Sire (`Male`) and Dam (`Female`) candidates to `activeData.speciesProfile.name`.

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Picks readable text and background colours automatically, and checks them against accessibility contrast rules.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic WCAG Theme Color Math & CSS Variable Resolver
  * (`@engine/primitives/themeColor.ts`).
  *

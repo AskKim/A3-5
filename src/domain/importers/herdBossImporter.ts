@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads the files another pedigree program exports, and turns them into records here.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * HerdBoss Two-Zip / Multi-Archive Importer (`src/domain/importers/herdBossImporter.ts`).
  *
  * Unpacks 1, 2, or more HerdBoss `.zip` (or `.csv`/`.json`) export files simultaneously into a

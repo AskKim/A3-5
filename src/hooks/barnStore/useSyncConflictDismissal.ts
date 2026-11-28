@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Dismissing a sync conflict: it changes no data, it just stops asking.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Sync-conflict dismissal, extracted from `useBarnStore` as a sub-hook.
  *
  * "Dismiss" is deliberately the quiet sibling of "resolve": it changes no data, applies no delta

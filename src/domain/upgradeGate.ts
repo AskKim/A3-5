@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Checks the published version file, so the app knows when a newer release exists.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Uncached `version.json` / `status.json` Upgrade Gate & Pre-Flight Evaluator
  * (`src/domain/upgradeGate.ts`).
  *

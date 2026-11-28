@@ -92,6 +92,7 @@ jobs:
           npm test
           npm run verify:improvements
           npm run verify:prompts
+          npm run verify:dual-audience
           npm run lint
 
       - name: Build production PWA bundle (root path)

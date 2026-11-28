@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Part of the list of every deliberate fix made to the app, split so the file stays readable.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Improvement registry entries IMP-001 … IMP-017 (17 entries).
  *
  * Split out of `improvementRegistry.ts` so the registry stays reviewable as it grows. The public

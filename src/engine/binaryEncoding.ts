@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Small helpers that convert text and files to and from the encoded forms browsers and QR codes need.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Binary / Base64 / UTF-8 / Data-URL Encoding Helpers
  * (`src/engine/binaryEncoding.ts`).
  *

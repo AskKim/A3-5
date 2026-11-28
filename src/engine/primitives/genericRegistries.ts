@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lets an app plug in its own importers and exporters without the core knowing what they import.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Exporter & Importer Registry Contracts
  * (`@engine/primitives/genericRegistries.ts`).
  *

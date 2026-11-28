@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Small compatibility patches so older browsers can run the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Minimal zero-dependency ES2018 runtime shims.
  * Targets 2018-era browsers (Chrome 68+, Safari 12+, Firefox 63+, Edge 79+ — and older where possible)
  * without core-js bloat:

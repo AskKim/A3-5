@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Decides how much this device can be asked to hold, from what it reports about memory and storage.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Device Capability Tiers, Hardware Detection & Memory Handling Engine
  * (`src/domain/deviceCapability.ts`).
  *

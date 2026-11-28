@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: An optional workspace for show judges to record placements and remarks on the day.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Show Judge Workspace (`src/components/JudgeNotebookScreen.tsx`).
  *
  * Strictly optional module ("The Judge's Notebook") for show judges to manage:

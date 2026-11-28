@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Works out which alerts a species should show - overdue breedings, low feed, chores coming up.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Barn Alerts Engine (`src/domain/barnAlerts.ts`).
  *
  * Evaluates per-species:

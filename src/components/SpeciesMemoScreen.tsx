@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A permanent scratch pad, kept separately for each species.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Permanent Memo Pad (`SpeciesMemoScreen`).
  *
  * Provides each livestock species with its own permanent, user-alterable local scratch pad:

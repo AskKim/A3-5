@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lets any screen reach the phone or desktop shell without every screen being wired to it directly.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * React Context for `IPlatformBridge` Dependency Injection (`@app/PlatformBridgeContext.tsx`).
  *
  * Eliminates direct concrete `pedigreeBridge` singleton imports across UI screens

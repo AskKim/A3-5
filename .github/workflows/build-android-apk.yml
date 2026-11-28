@@ -67,6 +67,7 @@ jobs:
           npm run verify:layers
           npm run verify:engine
           npm run verify:extraction
+          npm run verify:dual-audience
           npm test
           npm run lint
 

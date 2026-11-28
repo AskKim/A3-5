@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Shrinks photos and makes thumbnails in the browser before anything is saved.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Web / PWA Image Compression & Thumbnail Pipeline (`src/storage/webImageOptimizer.ts`).
  *
  * Optimizes both:

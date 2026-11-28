@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads a spreadsheet of records into the app, matching columns by name and reporting what it could not read.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Schema-Agnostic CSV Importer Engine (`@features/csv-importer/csvImporter.ts`).
  */
 

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The actions behind the backup reminder: export, snooze and reset.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Backup-reminder actions, extracted from `useBarnStore` as a sub-hook.
  *
  * The hook keeps ownership of state and persistence wiring; this slice takes the two mutation

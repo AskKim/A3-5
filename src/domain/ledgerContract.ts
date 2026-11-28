@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The rule that the two engineering ledgers are only ever produced from their registers, never edited by hand.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Append-only engineering-ledger contract (`src/domain/ledgerContract.ts`).
  *
  * `IMPROVEMENTS.md` and `PROMPT_CHANGES.md` are produced from their registries, so the header

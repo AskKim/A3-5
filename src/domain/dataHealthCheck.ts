@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Examines the database for damage and repairs what it safely can, without destroying good records.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Self-Service Database Health Analyzer & Non-Destructive Auto-Repair Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

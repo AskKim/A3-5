@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Writes a stand-alone showcase page of your animals and any you have for sale, with no server involved.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Zero-Server Breeder Showcase & "For Sale" Catalog HTML Exporter
  * (`src/domain/breederShowcase.ts`).
  *

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A typeable multi-select for recording which genetic traits an animal is a suspected or confirmed carrier of.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Typeable Multi-Select Combobox for Genetic Carrier Disclosures
  * (`Suspected Carrier Of` & `Confirmed Carrier Of`).
  *

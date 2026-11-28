@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Loads each screen only when it is opened, so startup stays light.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Route-level code splitting helpers (`lazyNamedRoute`, `RouteLoadingFallback`,
  * and `RouteErrorBoundary`) to reduce startup JS parse/compile memory on mobile devices
  * while keeping chunk-fetch failures recoverable offline and online.

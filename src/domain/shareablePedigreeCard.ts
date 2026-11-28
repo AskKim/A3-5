@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Makes a small stand-alone pedigree card that can be shared as a single file.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Lightweight Standalone Shareable Pedigree HTML Card Generator
  * (`src/domain/shareablePedigreeCard.ts`).
  *

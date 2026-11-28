@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Decides when old sync conflicts are old enough to drop from the review log.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Expiry for the sync-conflict review log.
  *
  * The review log is an append-only history: every collision ever detected stays in IndexedDB, and

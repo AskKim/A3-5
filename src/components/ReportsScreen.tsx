@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The reports for one species, built from the records you already have.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Interactive Per-Species Reports Screen (`ReportsScreen`).
  *
  * Strictly scoped to livestock species added in `snapshot.speciesProfiles`.

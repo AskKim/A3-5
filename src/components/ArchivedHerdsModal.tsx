@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lists retired herds that were packed into archive files, so you can see what was set aside and restore one if you need it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Archived Herds Management Dialog (`ArchivedHerdsModal`).
  *
  * Lists compressed `.archive.zip` bundles stored in OPFS `/archives` for retired,

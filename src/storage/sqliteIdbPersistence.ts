@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Saves the in-browser database into browser storage, and recovers when the space runs low.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * IndexedDB Persistence, Quota Recovery & Browser Cache Cleanup for WebSqliteAdapter
  * (`src/storage/sqliteIdbPersistence.ts`).
  */

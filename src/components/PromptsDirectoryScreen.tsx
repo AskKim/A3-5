@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A developer screen listing the project prompts and what each one is for.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Developer Prompts Directory Screen (`src/components/PromptsDirectoryScreen.tsx`).
  *
  * Documentation & Maintenance Note:

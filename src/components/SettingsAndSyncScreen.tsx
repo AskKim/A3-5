@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Preferences, calendar setup, appearance, and the buttons that launch backups and tools.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Barn Preferences, Calendar Integration, Appearance Studio & Backup/Tool Launchers (`Settings`).
  * Logically organized with a default-open Top Navigation & Status Hub plus 6 collapsible subunits
  * (all defaulting to collapsed until expanded individually or via "Open All"):

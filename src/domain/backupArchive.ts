@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Packs the whole barn, photos included, into one zip or JSON file, and unpacks it again.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Image-Inclusive Archive Packager & Restorer (.ZIP + .JSON).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

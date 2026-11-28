@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The shape every optional feature has to fit, so features stay self-contained and are never wired to each other.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Feature Module Contract (`@features/featureModule.interface.ts`).
  *
  * Architectural Boundary Rules:

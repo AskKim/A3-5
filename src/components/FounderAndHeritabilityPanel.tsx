@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Shows how much of the ancestry of an animal traces back to the original founders, and how strongly a trait is passed on.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Founder Loss, Ancestor Genetic Contribution & Heritability (h²) Analytics Panel.
  *
  * Embedded in Pedigree Explorer (`mode="pedigree"`) and Breeding Lab (`mode="breeding"`).

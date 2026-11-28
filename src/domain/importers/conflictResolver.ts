@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: When an import matches an animal you already have, it works out whether the two records agree and asks before overwriting.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Preexisting Animal Match & Contradiction Resolution Engine
  * (`src/domain/importers/conflictResolver.ts`).
  *

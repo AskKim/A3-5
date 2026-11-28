@@ -1,0 +1,4 @@
+{
+  "_comment": "Modules that predate the dual-audience header and still lack it. The gate fails if a file gains its header but stays listed here, so this list only ever shrinks. Regenerate with `npx tsx scripts/verify-dual-audience.ts --write-allowlist`.",
+  "files": []
+}

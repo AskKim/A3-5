@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The at-a-glance home for one species: active pregnancies, today chores, and what needs attention.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Species-Isolated Barn Management Dashboard (`Dashboard`).
  *
  * Displays active gestations/litters, prioritized Master Task List barn chores,

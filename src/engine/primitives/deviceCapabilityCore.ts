@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Works out what this device can really do - storage, offline mode, sharing files - and how much data it will keep.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Device Capability Tiers, Storage Retention Policies & Browser Compatibility Engine
  * (`@engine/primitives/deviceCapabilityCore.ts`).
  *

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The shared helpers each part of the stored barn is handed, so every part gets the same set.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * The bundle every barn-store slice is wired with.
  *
  * Each `use*` slice under `src/hooks/barnStore/` declares its own deps interface, and the store was

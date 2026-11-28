@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Creates QR codes offline and builds the links inside them, for moving a record between phones.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript ISO/IEC 18004 QR Code Generator & Deep-Link Builder (`src/domain/qrCode.ts`).
  *
  * Generates 100% offline, zero-dependency scannable QR codes (Versions 1–14, Byte mode,

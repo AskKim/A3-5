@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Links to health reading, points at a folder of vet PDFs on your device, and reminds you to back those documents up separately.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Health Reference Wiki Links, Local Veterinary PDF Folder Pointer &
  * External Document-Folder Backup Reminder Panel (`HealthReferencePanel` & `HealthReferenceModal`).
  *

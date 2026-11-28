@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads common file formats with no extra dependencies: ZIP archives, spreadsheets (CSV and TSV), and their units.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Multi-ZIP Unpacker, RFC-4180 CSV/TSV Parser & Unit Normalizers.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

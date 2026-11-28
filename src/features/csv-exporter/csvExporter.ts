@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Writes records out as a spreadsheet, without knowing which columns or fields the app happens to use.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Schema-Agnostic CSV Exporter Engine (`@features/csv-exporter/csvExporter.ts`).
  *
  * Pure TypeScript RFC-4180 CSV serializer with UTF-8 BOM and formula-injection sanitization.

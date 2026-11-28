@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: One place for backups, imports, device-to-device sync and exports.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Consolidated Import/Export Hub Screen (`ImportExportHubScreen`).
  *
  * Unifies backup, import, multi-worker local sync, and non-native export workflows

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Catches an unexpected crash so the app shows a recovery screen with a support file instead of going blank.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * React Top-Level Crash Error Boundary & Emergency Recovery / Support Export UI.
  *
  * If an unexpected render crash happens, records full diagnostics & component stack

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Writes a real PDF file directly, with no outside library, so pedigrees print sharp and stay searchable.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript 100% Offline PDF 1.4 Generator (`src/domain/pdfExporter.ts`).
  *
  * Produces vector-sharp, searchable, standards-compliant PDF 1.4 binaries (`Uint8Array`)

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The record of every deliberate fix, with a check that notices if a later sync or overwrite quietly undoes one.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Improvement Registry & GitHub-Overwrite Drift Verifier (`src/domain/improvementRegistry.ts`).
  *
  * Purpose:

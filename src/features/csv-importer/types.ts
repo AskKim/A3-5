@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The shared shapes used by the spreadsheet import feature.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Schema-Agnostic CSV Importer Contracts (`@features/csv-importer/types.ts`).
  */
 

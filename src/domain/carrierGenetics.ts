@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Keeps track of which carrier traits an animal has, and passes that information down the pedigree.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Genetic Carrier Trait Presets, Normalization, Cleared Branch Firewall
  * & Pedigree Lineage Propagation Engine.
  *

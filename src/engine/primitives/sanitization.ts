@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Cleans up risky input - text, HTML, links, spreadsheet formulas - so opening a shared file cannot harm the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Text, HTML, URL, ZIP-Bomb, SQLite Header & CSV Formula Sanitization Primitives
  * (`@engine/primitives/sanitization.ts`).
  *

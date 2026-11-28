@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Contains faults inside the developer screens, so a problem there cannot take down the rest of the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Isolated Error Boundary for "Development" Developer & Troubleshooting Screen.
  *
  * Ensures any fault inside diagnostic inspection, memory dump tooling, or developer

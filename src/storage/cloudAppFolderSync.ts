@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The browser side of optional cloud sync, including holding sign-in tokens in memory only.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Browser Transport, Memory-Only OAuth Token Store & Sync Coordinator for
  * Optional Cloud App-Folder Sync (`src/storage/cloudAppFolderSync.ts`).
  *

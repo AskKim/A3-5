@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Spots clashes when importing - duplicate tattoos, contradictory records - and flags them for attention instead of quietly overwriting.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Animal Conflict Detection, Duplicate-Tattoo Override Guard &
  * Import Attention Engine (`src/domain/animalConflicts.ts`).
  *

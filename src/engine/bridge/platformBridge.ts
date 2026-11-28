@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The working platform layer: it picks the right device behaviour at runtime and degrades quietly when a feature is missing.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Platform Bridge & Capability Implementation (`@engine/bridge/platformBridge.ts`).
  */
 

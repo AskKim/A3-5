@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The breeding writes, which only succeed when the breeding record and its links agree.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Breeding lifecycle mutations, extracted from `useBarnStore` as a sub-hook.
  *
  * Five writes that all hinge on the same rule: a breeding record and its linked post-birth chores

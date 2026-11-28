@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A scratch area inside the browser file system for streaming large files in chunks.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Worker-Safe OPFS `/tmp` Scratchpad & Incremental Chunk Streamer (`src/storage/opfsTempStream.ts`).
  *
  * Thin compatibility facade delegating core OPFS handle/stream orchestration to

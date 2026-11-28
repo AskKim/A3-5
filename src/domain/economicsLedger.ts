@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Adds up the money side of a project: costs, income, meat and pelt yields, and 4-H record book figures.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Local Economic Ledger, Meat/Pelt Processing Yields &
  * 4-H/FFA Youth Project Record Book Analytics Engine (`src/domain/economicsLedger.ts`).
  *

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Fills a new barn with example animals, so the app can be tried out safely.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Multi-Species Sample Herd & Lineage Seeder.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

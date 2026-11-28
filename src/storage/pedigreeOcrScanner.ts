@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Processes a scanned paper pedigree on the device, then hands the result to the import queue.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Offline Paper Pedigree OCR & Scanned PDF Processing Pipeline
  * (`src/storage/pedigreeOcrScanner.ts`).
  *

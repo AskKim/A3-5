@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Lists the spreadsheet columns an animal record can use, and how each one maps to a field in the app.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Animal CSV Field Definitions & Schema Mapping Config (`@app/animalCsvConfig.ts`).
  */
 

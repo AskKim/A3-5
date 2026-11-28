@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Packs the whole database into one encrypted file you can keep, move to another device, or restore later.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Portable Backup Vault Feature (`@features/backup-vault/portableVault.ts`).
  *
  * Wraps `@engine/storage` portable bundles with SHA-256 checksum envelopes and optional

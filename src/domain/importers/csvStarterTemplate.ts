@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Generates a blank spreadsheet with the right headings, so an import has something correct to start from.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Starter CSV Template Generator (`src/domain/importers/csvStarterTemplate.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

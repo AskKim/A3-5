@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The optional cloud sync logic, including stopping politely when the provider says you are out of space.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Optional Cloud App-Folder Sync & Quota Circuit Breaker Engine
  * (`src/domain/cloudAppFolderSync.ts`).
  *

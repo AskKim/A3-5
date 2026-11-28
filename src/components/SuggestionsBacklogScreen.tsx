@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A place to jot down ideas and review them later, working offline.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Developer Suggestion Backlog Viewer & Offline Idea Capture Screen
  * (`src/components/SuggestionsBacklogScreen.tsx`).
  *

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Checks a pedigree for linebreeding, and whether it meets the breed registration rules.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Pedigree Linebred Convergence & ARBA Registration Readiness Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

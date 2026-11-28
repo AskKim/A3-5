@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Groups your cages, hutches and pastures by barn row, and works out what is in each one.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Facility Pen Board & Hutch-Row Domain Engine (`src/domain/facilityBoard.ts`).
  *
  * Groups physical housing units (`CageLocation`) by barn section / row / pasture,

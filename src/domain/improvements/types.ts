@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The shapes the list of fixes uses, kept in one place so each part can refer to them.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Shared registry types. These live apart from `improvementRegistry.ts` so the entry part modules
  * can be typed without importing the registry that assembles them — a type-only cycle is still a
  * cycle to the layer analyser, and this module breaks it for real.

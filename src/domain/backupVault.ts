@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The backup vault itself: keeps several generations of snapshots, upgrades older ones, and checks a backup is readable before trusting it.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Hybrid Backup Vault, `_schemaVersion` Migrator, Export Canary,
  * and Archived Herds Bundle Packager (`src/domain/backupVault.ts`).
  *

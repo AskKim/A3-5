@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The dialogs for sending barn tasks to Google Calendar, including the offline fallback for when you would rather not sign in.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Official "Sign in with Google" button + Explicit Confirmation & Offline Fallback
  * Modal for syncing barn tasks to Google Calendar or handing off to desktop/offline
  * calendar apps (.ICS).

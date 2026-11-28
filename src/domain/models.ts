@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The core shapes of the data: animals, litters, housing, health, and everything else a barn record holds.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Domain Models for the Community Pedigree Project (Package: Pedigree).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

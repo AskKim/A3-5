@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Keeps track of buyers, waitlists, reservations and deposits for each species, on your own device.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Client CRM, Buyer Waitlist, Reservations & Deposit Reminders (`src/components/ClientCrmScreen.tsx`).
  *
  * Strictly species-isolated local-first breeder CRM powered by `src/domain/clientCrm.ts`

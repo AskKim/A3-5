@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A short note beside the image quality choice, explaining what the setting costs you in storage.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Compact inline notice displayed alongside image compression level selectors.
  */
 

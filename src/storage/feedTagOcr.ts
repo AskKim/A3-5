@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Captures a feed tag photo and reads its lot number before the image is compressed.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pre-Compression Feed Tag OCR & Biosecurity Image Capture Pipeline (`src/storage/feedTagOcr.ts`).
  *
  * Strategy:

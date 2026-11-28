@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Records show results, awards and grand championship progress.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Show Results, Awards, Grand Championship Progress & E-Leg Vault Engine.
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

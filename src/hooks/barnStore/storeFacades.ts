@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Simpler, safer views of the stored barn, so a screen calls only the parts it needs.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Typed facades over the barn-store return object.
  *
  * The store still returns one flat object with its full public surface — that shape is a contract

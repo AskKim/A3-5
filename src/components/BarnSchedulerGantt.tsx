@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: A drag-and-drop timeline of upcoming barn work, with priority warnings and a panel for reconciling changes between devices.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Interactive Drag-and-Drop Barn Scheduler Gantt Timeline, Smart Priority Escalation,
  * and Local P2P / LAN Outbox Reconciliation Panel (`src/components/BarnSchedulerGantt.tsx`).
  */

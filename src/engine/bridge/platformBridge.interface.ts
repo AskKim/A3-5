@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The rules for talking to the device - printing, files, backups, the back button - without assuming which device it is.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic Platform Bridge & Capability Interface (`@engine/bridge/platformBridge.interface.ts`).
  *
  * Architectural Invariant:

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Turns a photographed document into usable fields by cleaning up the recognised text and picking out the useful parts.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Content-Agnostic OCR Line & Field Extraction Pipeline (`@features/ocr-parser/ocrTextPipeline.ts`).
  *
  * Groups raw OCR text or 2D word bounding boxes into ordered visual lines and extracts

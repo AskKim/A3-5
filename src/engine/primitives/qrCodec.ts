@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Creates QR codes and reads the links inside them, for moving a record between phones with no internet.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic ISO/IEC 18004 QR Code Generator & Query Deep-Link Codec
  * (`@engine/primitives/qrCodec.ts`).
  *

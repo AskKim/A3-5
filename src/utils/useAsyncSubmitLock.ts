@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Stops a double tap, or a slow tap, from submitting the same thing twice.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Synchronous + React Rapid-Tap / Double-Submit Race Guard (`src/utils/useAsyncSubmitLock.ts`).
  *
  * Guarantees:

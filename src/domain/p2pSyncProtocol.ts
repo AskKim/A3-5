@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The rules two devices follow when exchanging changes over a local network.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Local P2P / LAN Outbox Reconciliation Protocol (`src/domain/p2pSyncProtocol.ts`).
  *
  * CROSS-PLATFORM MIGRATION GUARDRAIL:

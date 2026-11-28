@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The fast entry screen for working down a row of cages: step through animals in order and log chores without leaving the screen.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * "Barn Bench" Fast Sequential Batch Entry Screen (`src/components/BarnBenchScreen.tsx`).
  *
  * Tap-friendly, cage-row-walkable chore sheet strictly isolated to the active species.

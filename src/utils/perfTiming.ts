@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Development timers for the operations that get slow as the stored data grows.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Development timing instrumentation.
  *
  * Restores, offloads and exports are the operations that get slow as the stored dataset grows, and

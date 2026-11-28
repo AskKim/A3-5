@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The list of import formats, so a new source can be added without touching the screens.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Central External Platform Importer Registry (`src/domain/importers/registry.ts`).
  *
  * Designed so every additional livestock/pedigree platform we add (Evans Software, Kintracs,

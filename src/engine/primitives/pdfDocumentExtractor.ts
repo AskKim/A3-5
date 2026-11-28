@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Pulls readable text and images out of a PDF without uploading it anywhere.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure Content-Agnostic Offline PDF Vector Text & Embedded JPEG Page Extractor
  * (`@engine/primitives/pdfDocumentExtractor.ts`).
  *

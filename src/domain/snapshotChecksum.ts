@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Fingerprints a snapshot so a restore can prove it brought back exactly what was saved.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Structural checksum for a barn snapshot — the checksum half of restore verification.
  *
  * Row counts catch a restore that dropped or duplicated records, but not one that landed the right

@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: Reads every table back out of the database and rebuilds the in-memory snapshot.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * SQLite Snapshot Row Readers (`src/storage/sqliteSnapshotReaders.ts`).
  *
  * Reads every barn table out of an in-memory `sql.js` database and rebuilds the
