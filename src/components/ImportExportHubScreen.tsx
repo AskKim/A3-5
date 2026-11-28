@@ -151,6 +151,7 @@ import {
   downloadTextFile,
 } from '../utils/webFileActions';
 import { useSyncConflictSlice } from '../hooks/barnStore/syncConflictSlice';
+import { useSyncStateSlice } from '../hooks/barnStore/syncStateSlice';
 import { useVaultSlice } from '../hooks/barnStore/vaultSlice';
 import { ArchivedHerdsModal } from './ArchivedHerdsModal';
 import { CloudAppFolderSyncPanel } from './CloudAppFolderSyncPanel';
@@ -168,8 +169,6 @@ interface ImportExportHubScreenProps {
   engineName: string;
   activeSpeciesName: string;
   deviceId: string;
-  backupStatus: BackupStatusEvaluation | null;
-  syncOperations: SyncOperation[];
   initialSection?: ImportExportHubSection;
   onConsumedInitialSection?: () => void;
   onOpenSettings: () => void;
@@ -211,23 +210,6 @@ interface ImportExportHubScreenProps {
   ) => Promise<void>;
   onDownloadArchivedHerdBundle?: (archiveKey: string) => Promise<void>;
   onDeleteArchivedHerdBundle?: (archiveKey: string) => Promise<void>;
-  backupSyncStatus?: BackupSyncStatus | null;
-  pruneSyncWarning?: OpfsPruneSyncWarning | null;
-  onConnectBackupSync?: () => Promise<unknown>;
-  onReauthorizeBackupSync?: () => Promise<unknown>;
-  onDisconnectBackupSync?: () => Promise<unknown>;
-  onSyncVaultToSyncNow?: () => Promise<unknown>;
-  onDismissPruneWarning?: () => void;
-  storageStatus?: StorageProtectionStatus | null;
-  cloudSyncState?: CloudSyncClientState | null;
-  cloudSyncBusy?: boolean;
-  onUpdateCloudSyncSettings?: (patch: Partial<CloudSyncSettings>) => void;
-  onConnectCloudSyncToken?: (provider: CloudSyncProvider, accessToken: string) => boolean;
-  onDisconnectCloudSync?: (provider?: CloudSyncProvider) => void;
-  onStartCloudSyncPkce?: (provider: CloudSyncProvider, clientId: string) => Promise<void>;
-  onRunManualCloudSyncNow?: () => Promise<RunCloudAppFolderSyncResult>;
-  onResetAndRetryCloudSync?: () => Promise<RunCloudAppFolderSyncResult>;
-  onDismissCloudCircuitBreakerWarning?: () => void;
 }
 
 function getExporterCategoryIcon(category: ExporterCategory) {
@@ -250,8 +232,6 @@ export function ImportExportHubScreen({
   engineName,
   activeSpeciesName,
   deviceId,
-  backupStatus,
-  syncOperations,
   initialSection = 'all',
   onConsumedInitialSection,
   onOpenSettings,
@@ -273,23 +253,6 @@ export function ImportExportHubScreen({
   onRestoreArchivedHerdBundle,
   onDownloadArchivedHerdBundle,
   onDeleteArchivedHerdBundle,
-  backupSyncStatus = null,
-  pruneSyncWarning = null,
-  onConnectBackupSync,
-  onReauthorizeBackupSync,
-  onDisconnectBackupSync,
-  onSyncVaultToSyncNow,
-  onDismissPruneWarning,
-  storageStatus = null,
-  cloudSyncState = null,
-  cloudSyncBusy = false,
-  onUpdateCloudSyncSettings,
-  onConnectCloudSyncToken,
-  onDisconnectCloudSync,
-  onStartCloudSyncPkce,
-  onRunManualCloudSyncNow,
-  onResetAndRetryCloudSync,
-  onDismissCloudCircuitBreakerWarning,
 }: ImportExportHubScreenProps) {
   const {
     syncConflicts: syncConflictsProp,
@@ -307,6 +270,27 @@ export function ImportExportHubScreen({
     onDeleteOpfsVaultBackup,
     onRestoreRollingBackup,
   } = useVaultSlice();
+  const {
+    backupStatus,
+    syncOperations,
+    backupSyncStatus,
+    pruneSyncWarning,
+    storageStatus,
+    cloudSyncState,
+    cloudSyncBusy,
+    onConnectBackupSync,
+    onReauthorizeBackupSync,
+    onDisconnectBackupSync,
+    onSyncVaultToSyncNow,
+    onDismissPruneWarning,
+    onUpdateCloudSyncSettings,
+    onConnectCloudSyncToken,
+    onDisconnectCloudSync,
+    onStartCloudSyncPkce,
+    onRunManualCloudSyncNow,
+    onResetAndRetryCloudSync,
+    onDismissCloudCircuitBreakerWarning,
+  } = useSyncStateSlice();
   const baseId = useId();
   const [sectionView, setSectionView] = useState<ImportExportHubSection>(initialSection);
 

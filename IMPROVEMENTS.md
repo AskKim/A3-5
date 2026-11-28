@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (59 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (60 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (123)
+## Logged Improvements (124)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2619,3 +2619,18 @@ Status:     active
 1. Wrap a consumer in `<VaultSliceProvider>` before calling `useVaultSlice()`; the hook throws outside one by design.
 2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
 3. Next slice on the same pattern: sync state (`syncOperations`, backup status), then drop the pass-through props.
+
+## 2026-11-28 — Sync State Moves to Its Own Slice
+Why:        The Import/Export hub accepted the outbox, backup status, storage-protection status and the whole backup-sync/cloud-sync action surface as nineteen props it only forwarded to the sync and backup panels, so any outbox or cloud-sync change re-rendered the hub.
+Changed:    `src/hooks/barnStore/syncStateSlice.tsx`, `src/hooks/__tests__/syncStateSlice.test.ts`, `src/components/ImportExportHubScreen.tsx`, `src/App.tsx`, `src/domain/improvementRegistry.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/syncStateSlice.tsx` must contain `SyncStateSliceProvider`, `useSyncStateSlice`, `pendingOperationCount` — *The slice is the only place the outbox count is derived; losing it hands the sync panel back its per-render length.*
+- `src/components/ImportExportHubScreen.tsx` must contain `useSyncStateSlice` — *The hub reads sync state from the slice; reinstating optional sync props restarts prop drilling.*
+  - Forbidden regression: `syncOperations?:`, `cloudSyncBusy?:`, `backupSyncStatus?:`
+
+**Restoration Playbook if Overwritten:**
+1. Wrap a consumer in `<SyncStateSliceProvider>` before calling `useSyncStateSlice()`; the hook throws outside one by design.
+2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
+3. Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.

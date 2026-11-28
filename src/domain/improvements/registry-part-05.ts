@@ -2583,4 +2583,44 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Next slice on the same pattern: sync state (`syncOperations`, backup status), then drop the pass-through props.',
     ],
   },
+  {
+    id: 'IMP-124',
+    title: 'Sync State Moves to Its Own Slice',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The Import/Export hub accepted the outbox, backup status, storage-protection status and the whole backup-sync/cloud-sync action surface as nineteen props it only forwarded to the sync and backup panels, so any outbox or cloud-sync change re-rendered the hub.',
+    summary:
+      'Third slice of the milestone 5 split: `hooks/barnStore/syncStateSlice.tsx` carries `backupStatus`, `syncOperations`, `backupSyncStatus`, `pruneSyncWarning`, `storageStatus`, `cloudSyncState`, `cloudSyncBusy`, their twelve backup-sync/cloud-sync actions and a memoised `pendingOperationCount`, and `SyncStateSliceProvider` wraps the hub inside the vault provider. The hub no longer declares any of those nineteen props; it reads them from `useSyncStateSlice()`, which throws outside the provider. `useBarnStore` still returns all 200 keys, so the contract snapshot is untouched. `selectPendingOperationCount` is pure and unit-tested.',
+    files: [
+      'src/hooks/barnStore/syncStateSlice.tsx',
+      'src/hooks/__tests__/syncStateSlice.test.ts',
+      'src/components/ImportExportHubScreen.tsx',
+      'src/App.tsx',
+      'src/domain/improvementRegistry.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/syncStateSlice.tsx',
+        requiredSubstrings: ['SyncStateSliceProvider', 'useSyncStateSlice', 'pendingOperationCount'],
+        rationale:
+          'The slice is the only place the outbox count is derived; losing it hands the sync panel back its per-render length.',
+      },
+      {
+        filePath: 'src/components/ImportExportHubScreen.tsx',
+        requiredSubstrings: ['useSyncStateSlice'],
+        forbiddenSubstrings: ['syncOperations?:', 'cloudSyncBusy?:', 'backupSyncStatus?:'],
+        rationale:
+          'The hub reads sync state from the slice; reinstating optional sync props restarts prop drilling.',
+      },
+    ],
+    restorePlaybook: [
+      'Wrap a consumer in `<SyncStateSliceProvider>` before calling `useSyncStateSlice()`; the hook throws outside one by design.',
+      'Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.',
+      'Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.',
+    ],
+  },
 ];

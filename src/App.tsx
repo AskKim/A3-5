@@ -18,6 +18,7 @@
  */
 
 import { SyncConflictSliceProvider } from './hooks/barnStore/syncConflictSlice';
+import { SyncStateSliceProvider } from './hooks/barnStore/syncStateSlice';
 import { VaultSliceProvider } from './hooks/barnStore/vaultSlice';
 import {
   AlertTriangle,
@@ -1835,13 +1836,32 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onDeleteOpfsVaultBackup={store.deleteOpfsVaultBackupByKey}
             onRestoreRollingBackup={store.restoreRollingBackupByKey}
           >
+          <SyncStateSliceProvider
+            backupStatus={store.backupStatus}
+            syncOperations={store.syncOperations}
+            backupSyncStatus={store.backupSyncStatus}
+            pruneSyncWarning={store.pruneSyncWarning}
+            storageStatus={store.storageStatus}
+            cloudSyncState={store.cloudSyncState}
+            cloudSyncBusy={store.cloudSyncBusy}
+            onConnectBackupSync={store.connectBackupSyncFolder}
+            onReauthorizeBackupSync={store.reauthorizeBackupSyncFolder}
+            onDisconnectBackupSync={store.disconnectBackupSyncFolder}
+            onSyncVaultToSyncNow={store.syncVaultBackupsToSyncNow}
+            onDismissPruneWarning={store.dismissPruneSyncWarning}
+            onUpdateCloudSyncSettings={store.updateCloudSyncSettings}
+            onConnectCloudSyncToken={store.connectCloudSyncAccessToken}
+            onDisconnectCloudSync={store.disconnectCloudSync}
+            onStartCloudSyncPkce={store.startCloudSyncPkce}
+            onRunManualCloudSyncNow={store.runManualCloudSyncNow}
+            onResetAndRetryCloudSync={store.resetAndRetryCloudSync}
+            onDismissCloudCircuitBreakerWarning={store.dismissCloudCircuitBreakerWarning}
+          >
           <ImportExportHubScreen
             snapshot={snapshot}
             engineName={store.engineName}
             activeSpeciesName={activeSpeciesName}
             deviceId={store.deviceId}
-            backupStatus={store.backupStatus}
-            syncOperations={store.syncOperations}
             initialSection={importExportInitialSection}
             onConsumedInitialSection={() => setImportExportInitialSection('all')}
             onOpenSettings={() => setRoute('settings')}
@@ -1865,24 +1885,8 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onRestoreArchivedHerdBundle={store.restoreArchivedHerdBundle}
             onDownloadArchivedHerdBundle={store.downloadArchivedHerdBundle}
             onDeleteArchivedHerdBundle={store.deleteArchivedHerdBundle}
-            backupSyncStatus={store.backupSyncStatus}
-            pruneSyncWarning={store.pruneSyncWarning}
-            onConnectBackupSync={store.connectBackupSyncFolder}
-            onReauthorizeBackupSync={store.reauthorizeBackupSyncFolder}
-            onDisconnectBackupSync={store.disconnectBackupSyncFolder}
-            onSyncVaultToSyncNow={store.syncVaultBackupsToSyncNow}
-            onDismissPruneWarning={store.dismissPruneSyncWarning}
-            storageStatus={store.storageStatus}
-            cloudSyncState={store.cloudSyncState}
-            cloudSyncBusy={store.cloudSyncBusy}
-            onUpdateCloudSyncSettings={store.updateCloudSyncSettings}
-            onConnectCloudSyncToken={store.connectCloudSyncAccessToken}
-            onDisconnectCloudSync={store.disconnectCloudSync}
-            onStartCloudSyncPkce={store.startCloudSyncPkce}
-            onRunManualCloudSyncNow={store.runManualCloudSyncNow}
-            onResetAndRetryCloudSync={store.resetAndRetryCloudSync}
-            onDismissCloudCircuitBreakerWarning={store.dismissCloudCircuitBreakerWarning}
           />
+          </SyncStateSliceProvider>
           </VaultSliceProvider>
           </SyncConflictSliceProvider>
         )}
