@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (67 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (68 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (131)
+## Logged Improvements (132)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2737,3 +2737,17 @@ Status:     active
 1. When a gate or npm script changes, update `scripts/README.md` and the command blocks in README, CONTRIBUTING and CLAUDE in the same change.
 2. Keep generated files generated: edit the registry and run `npm run regen:ledgers`, never the ledger.
 3. If a folder gains a second concern or a new contract, add or update its README rather than growing the top-level one.
+
+## 2026-11-28 — Storage Adapters Exercised Through Their Failure Arms
+Why:        Branch coverage sat at 41% with the storage layer weakest (webSqliteAdapter 36%, sqliteIdbPersistence 32%, browserStorageAdapters 0%), and the untaken arms were exactly the offline failure paths: QuotaExceededError purge-and-retry, VersionError recovery, corrupt vault envelopes and a returning user whose IndexedDB was evicted.
+Changed:    `src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts`, `src/storage/__tests__/opfsVaultCorruption.test.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts` must contain `executeIdbWriteWithQuotaRecovery`, `onQuotaExceeded`, `resetOnVersionError` — *The quota-retry and VersionError-reset branches are the ones that silently regress when an adapter is refactored.*
+- `src/storage/__tests__/opfsVaultCorruption.test.ts` must contain `loadOpfsVaultBackup`, `detectReturningUserWipedStorage`, `dumpIndexedDbDatabaseToOpfs` — *A corrupt backup must fail loudly and an evicted user must still be recognised; both are data-loss paths if untested.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the adapters on hand-built fake IndexedDB/OPFS factories: no browser, no network, deterministic failure injection.
+2. When an adapter adds a retry or fallback arm, add the failing case to these files rather than a happy-path assertion.
+3. If a threshold in `vitest.config.ts` moves, re-measure first and raise the ratchet in the same change as the tests that earned it.

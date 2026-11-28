@@ -2973,4 +2973,41 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'If a folder gains a second concern or a new contract, add or update its README rather than growing the top-level one.',
     ],
   },
+  {
+    id: 'IMP-132',
+    title: 'Storage Adapters Exercised Through Their Failure Arms',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Branch coverage sat at 41% with the storage layer weakest (webSqliteAdapter 36%, sqliteIdbPersistence 32%, browserStorageAdapters 0%), and the untaken arms were exactly the offline failure paths: QuotaExceededError purge-and-retry, VersionError recovery, corrupt vault envelopes and a returning user whose IndexedDB was evicted.',
+    summary:
+      'Adds `src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts` and `src/storage/__tests__/opfsVaultCorruption.test.ts` (23 tests). The first drives `executeIdbWriteWithQuotaRecovery` through success, non-quota rethrow, purge-then-succeed, quota-again (actionable message), non-quota retry failure and a throwing purge; exercises `OpfsStorageAdapter` purge-and-rewrite after QuotaExceededError, non-quota propagation, the unsupported-runtime throw, and `IndexedDbStorageAdapter` VersionError reset/no-reset plus batch quota retry with and without `onQuotaExceeded`, using deterministic hand-built fake IndexedDB/OPFS factories rather than the network or a browser. The second covers a structurally invalid vault envelope (rejects instead of importing partial data), empty and missing `/backups` namespaces, a corrupt `vault-index.json` that self-heals into a loadable backup, sentinel/backup/empty wiped-storage detection, and the `dumpIndexedDbDatabaseToOpfs` rescue dump written before a destructive reset.',
+    files: [
+      'src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts',
+      'src/storage/__tests__/opfsVaultCorruption.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/__tests__/quotaRecoveryAndIdbAdapters.test.ts',
+        requiredSubstrings: ['executeIdbWriteWithQuotaRecovery', 'onQuotaExceeded', 'resetOnVersionError'],
+        rationale:
+          'The quota-retry and VersionError-reset branches are the ones that silently regress when an adapter is refactored.',
+      },
+      {
+        filePath: 'src/storage/__tests__/opfsVaultCorruption.test.ts',
+        requiredSubstrings: ['loadOpfsVaultBackup', 'detectReturningUserWipedStorage', 'dumpIndexedDbDatabaseToOpfs'],
+        rationale:
+          'A corrupt backup must fail loudly and an evicted user must still be recognised; both are data-loss paths if untested.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the adapters on hand-built fake IndexedDB/OPFS factories: no browser, no network, deterministic failure injection.',
+      'When an adapter adds a retry or fallback arm, add the failing case to these files rather than a happy-path assertion.',
+      'If a threshold in `vitest.config.ts` moves, re-measure first and raise the ratchet in the same change as the tests that earned it.',
+    ],
+  },
 ];
