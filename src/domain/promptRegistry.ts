@@ -637,6 +637,48 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
     commitShaOrTag: 'cd72d34',
     status: 'active',
   },
+  {
+    id: 'PRM-013',
+    promptFile: 'prompts/preflight/pf-release-uni.md',
+    title: 'Preflight Release Runner — Release Tail Split From The Sweep',
+    category: 'architecture-audit',
+    lifecycle: 'active',
+    lastEdited: '2026-11-28',
+    intent:
+      'The sweep is run for any piece of work, but it ended in a version bump, an AGPL audit, the release checklist and a sign-off only a person can give, so every ordinary run stopped at work that did not apply to it - and one of those steps was once filed complete without its human-assisted smoke test ever running.',
+    changeSummary:
+      'Steps now carry a `track`: `preflight` (13 steps, 7 Phase A and 6 Phase B) renders into `pf-launcher-uni.md` and always reaches the end, while `release` (5 steps: `release-check-p1`, `attribution-audit`, `ver-update`, `release-check-p2`, `release-plan`) renders into the new `pf-release-uni.md` from the same manifest. The generator rejects `human_signoff` on a preflight step, and `preflight-log.mjs` records `awaiting_human` instead of `completed` for a gated step unless `--human-signoff "<who/how>"` is passed. A release step is additionally refused outright (`RELEASE_BLOCKED`) unless every sweep step has a `completed` entry for the same branch and version, so a release can never be filed on top of an unfinished or failed sweep.',
+    trackedFiles: [
+      'prompts/preflight/pf-release-uni.md',
+      'prompts/preflight/pf-launcher-uni.md',
+      'prompts/preflight/manifest/preflight.manifest.json',
+      'prompts/preflight/scripts/gen-preflight.mjs',
+      'prompts/preflight/scripts/preflight-log.mjs',
+      'prompts/preflight/handoff-state.schema.json',
+    ],
+    invariants: [
+      {
+        filePath: 'prompts/preflight/pf-release-uni.md',
+        requiredSubstrings: [
+          '# PreFlight Release Runner',
+          '## Precondition: A Finished Sweep',
+          'RELEASE_BLOCKED',
+          'HUMAN GATE',
+          '--human-signoff',
+        ],
+        rationale:
+          'The release runner is generated, so the precondition and the human-gate contract live on its face; losing either would let a release run without a finished sweep or let a gate be closed by the runner that did the machine work.',
+      },
+    ],
+    restorePlaybook: [
+      'Re-render both runners with `npm run preflight:gen -- --write`; never hand-edit `pf-launcher-uni.md` or `pf-release-uni.md`.',
+      'Keep `human_signoff` legal only on `release` steps and keep the `RELEASE_BLOCKED` precondition in `preflight-log.mjs`; both are what stop a false completion.',
+    ],
+    decidedOn: '2026-11-28',
+    version: '2026-11-28',
+    commitShaOrTag: '64db14b',
+    status: 'active',
+  },
 ];
 
 /**

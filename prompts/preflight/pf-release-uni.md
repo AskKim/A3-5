@@ -16,7 +16,22 @@
 - Only for a release: a version bump, a tag, an APK, or a Pages publish.
 - Never as part of ordinary work. `pf-launcher-uni.md` is the sweep for that, and it runs to the
   end without a human gate.
+- **After the sweep, never instead of it.** The precondition below is enforced by the logger.
 - 5 steps (3 needing no local environment, 2 needing one).
+
+## Precondition: A Finished Sweep
+
+This file runs only on top of a sweep that finished. Before any step here is accepted,
+`preflight-log.mjs` checks that every sweep step in the manifest carries a `completed` entry
+for the same branch and version, and refuses with `RELEASE_BLOCKED` plus the missing step ids
+if not. A release is not the place to discover an unfinished sweep, and a release step recorded
+over one is exactly the false completion this split exists to prevent.
+
+- Check it yourself: `node prompts/preflight/scripts/preflight-state.mjs` (exit 1 means do not
+  start), or read `history[]` in `docs/handoff-state.json` for this branch and version.
+- Recovery: run `pf-launcher-uni.md` to the end for this branch and version, then come back.
+- A sweep finished at an older commit still counts, but if `src/` changed since, run the sweep
+  again: the release is being cut from the new commit, not the one that was checked.
 
 ## Steps
 

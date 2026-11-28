@@ -22,7 +22,7 @@ The sweep now finishes on its own, every time. The release-only jobs - the versi
 
 1. **Hand the launcher to AI Studio.** It does Block A, then prints a line telling you where to go next.
 2. **Hand the same file to Anti-Gravity** for Block B. If you are using **Freebuff**, skip the hand-off entirely: it is named in both blocks, so it runs straight through without stopping in between.
-3. **When you are cutting a release,** open `pf-release-uni.md`. It carries the version bump, the licence audit, the release checks and the sign-off, and it stops for you exactly where a signature is required.
+3. **When you are cutting a release,** open `pf-release-uni.md`. It carries the version bump, the licence audit, the release checks and the sign-off, and it stops for you exactly where a signature is required. It will not start until the sweep has finished.
 4. **If a job did not finish,** do not edit the file yourself. Tell the AI *"re-arm the `<job-name>` step"*. It knows how, and the checklist stays honest.
 
 ### 3. Before You Copy This To Another Repo Or Branch
@@ -66,6 +66,8 @@ Each step is also sorted by the **minimum environment it needs** — never by co
 `pf-launcher-uni.md` is the sweep. It runs for any piece of work - a refactor, a docs change, an ordinary merge - and it always reaches the end, because nothing in it needs a decision only the owner can make.
 
 `pf-release-uni.md` is the release tail, rendered from the same manifest. It holds the five steps that only make sense when publishing: `release-check-p1`, `attribution-audit`, `ver-update`, `release-check-p2` and `release-plan`. Two of those declare `human_signoff`, so `preflight-log.mjs` records `awaiting_human` rather than `completed` unless a person passes `--human-signoff "<who/how>"`.
+
+It also will not accept a step at all until the sweep has finished for the same branch and version: the logger checks every sweep step for a `completed` entry and refuses with `RELEASE_BLOCKED`, naming the ones still missing.
 
 A `human_signoff` step in the sweep is a manifest validation error, not a style preference: that is exactly what used to stop every run for a signature.
 
