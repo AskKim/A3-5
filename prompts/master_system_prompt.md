@@ -24,7 +24,7 @@ AT THE START OF EVERY SESSION, READ AND LOAD `/GEMINI.md` AND `/AGENTS.md` IF NO
 - **Zero Invention:** Verify npm packages in `package.json` and APIs/types against the codebase. Never invent schemas or rabbitry/genetics rules (e.g., ARBA standards, allele logic, chore offsets); ask if missing.
 - **Circuit Breaker:** If a test, typecheck, or build fails twice on the same error, stop, report the trace, and await instruction.
 - **Zero Postmortems:** No completion summaries or change explanations unless requested. End tasks with *only* `Complete: [Task Name]` (only append `EXISTING INCOMPLETE: ...` if *other* pending files remain in `docs/plans/` per `GEMINI.md`; never repeat the startup `NO PENDING WORK` check).
-- **Plan Lifecycle (Delete on Wrap-Up):** Delete temporary active plan files in `docs/plans/` once all objectives and verification checks pass (never archive finished plans; keep `docs/plans/suggestions-backlog.md`).
+- **Plan Lifecycle (Delete on Wrap-Up):** Delete temporary active plan files in `docs/plans/` once all objectives and verification checks pass (never archive finished plans; keep `docs/plans/suggestions-backlog.md`). Deletion is the default: a finished `handoff-*`/`plan-*` file is deleted in the run that finishes it, and one found already finished at startup is deleted then rather than reported again. Keep a finished file only when the owner explicitly says to.
 - **Flag Uncertainty:** Mark unverified browser quirks/edge cases inline with `// UNVERIFIED: [reason]`.
 
 ## 2. Architecture & Type Safety

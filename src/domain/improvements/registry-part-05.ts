@@ -1984,7 +1984,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     summary:
       'The handoff now states its own execution policy: registering, verifying and committing a milestone is a checkpoint, not a turn boundary. After a checkpoint the run continues straight into the next milestone with no confirmation and no hand-back, and it ends only when the remaining list is empty or the run budget is exhausted — at which point the stop is reported as budget, with what landed and what remains. Missing tooling for a later milestone (coverage provider, jsdom harness, SDK) is added when needed and reported as a limitation instead of ending the run early. The resume prompt carries the same rule in an *Execution Continuity* section, and its “work remains ongoing” branch now says to continue rather than stop, with PRM-004 enforcing the phrase so the rule cannot be quietly dropped.',
     files: [
-      'docs/plans/handoff-barn-store-improvements.yaml',
+      'GEMINI.md',
       'prompts/resume_backlog_plan_prompt.md',
       'src/domain/promptRegistry.ts',
       'src/domain/promptsCatalog.ts',
@@ -2001,10 +2001,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
           'Without the continuity rule the resume workflow hands back after every verified milestone — the exact behaviour this entry exists to prevent.',
       },
       {
-        filePath: 'docs/plans/handoff-barn-store-improvements.yaml',
+        filePath: 'GEMINI.md',
         requiredSubstrings: ['execution_policy', 'checkpoint, not a turn boundary'],
         rationale:
-          'The rule has to live in the handoff the run is following, not only in a prompt someone may not reload.',
+          'The rule has to live in the always-loaded rules, not in a single handoff: a finished handoff is deleted, so a rule parked only in one disappears with it.',
       },
     ],
     restorePlaybook: [
