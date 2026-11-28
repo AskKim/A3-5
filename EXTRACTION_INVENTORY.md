@@ -128,6 +128,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/domain/improvements/registry-part-04.ts` — `pedigree-domain` — Registry entries IMP-052 … IMP-068.
 - `src/domain/improvements/registry-part-05.ts` — `pedigree-domain` — Registry entries IMP-069 … IMP-085.
 - `src/domain/judgeNotebook.ts` — `pedigree-domain` — Show judge comments and placement notebook engine.
+- `src/domain/ledgerContract.ts` — `pedigree-domain` — Append-only ledger header contract and new-entry shape validator shared by `IMPROVEMENTS.md` and `PROMPT_CHANGES.md`.
 - `src/domain/mileageTaxLog.ts` — `pedigree-domain` — Agricultural travel mileage and tax deduction calculator.
 - `src/domain/milestones.ts` — `pedigree-domain` — Youth 4-H/FFA and breeder milestone trackers.
 - `src/domain/models.ts` — `pedigree-domain` — Canonical livestock/pedigree TypeScript domain interfaces.

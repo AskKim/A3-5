@@ -132,9 +132,16 @@ Minimum tokens and minimum round trips are requirements here, not preferences. T
   build logs, no unchanged code, no restating the prompt, no postmortems.
 - **Scratch space:** Logs, drafts and throwaway scripts live in `/tmp`, never in the repo.
 - **Incremental docs:** Insert or replace only the affected section of a Markdown file. Do not
-  regenerate whole documents — including `MODULES.md`, `IMPROVEMENTS.md` and this file — when a
-  targeted edit is enough; where a generator is the source of truth, edit the source and regenerate
-  exactly once.
+  regenerate whole documents by hand — including `MODULES.md`, the ledgers (`IMPROVEMENTS.md`,
+  `PROMPT_CHANGES.md`) and this file — when a targeted edit is enough; where a generator is the
+  source of truth, edit the source and regenerate exactly once with its documented command:
+  `npx tsx scripts/list-modules.ts --write` for `MODULES.md`, `npm run regen:ledgers` for the ledgers.
+- **Append-only ledgers (`IMPROVEMENTS.md`, `PROMPT_CHANGES.md`):** Both ledgers are generated files
+  — their whole content is a render of their registry. To log work, add the registry entry —
+  `src/domain/improvements/registry-part-*.ts`, or `src/domain/promptRegistry.ts` for prompts — with
+  the ledger fields (`decidedOn`, `status`, and where they apply `rejected`, `supersededBy`,
+  `version`/`commitShaOrTag`/`supersedes`), then run `npm run regen:ledgers`. Never hand-edit a
+  ledger: `npm run verify` re-renders it from the registry and reports every line that drifts.
 - **Skill edits:** `cloud_manage_skills` has no patch API — every save rewrites the entire skill and
   needs approval, so each save produces another "replace skill?" prompt for the owner.
   **Therefore: never re-publish the account skill as part of ordinary repo work.** The canonical

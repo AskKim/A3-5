@@ -26,7 +26,8 @@
     "preflight:lint": "node prompts/preflight/scripts/preflight-lint.mjs",
     "verify:chunks": "tsx scripts/verify-chunk-graph.ts",
     "verify:contract": "tsx scripts/verify-contract-changelog.ts",
-    "verify:coverage": "vitest run --coverage"
+    "verify:coverage": "vitest run --coverage",
+    "regen:ledgers": "tsx scripts/regen-ledgers.ts --write"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

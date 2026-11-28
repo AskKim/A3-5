@@ -16,6 +16,7 @@
  */
 
 import { nowIsoUtc } from './models';
+import { formatLedgerHeader, type LedgerEntryStatus } from './ledgerContract';
 
 export type PromptChangeCategory =
   | 'system-governance'
@@ -50,6 +51,19 @@ export interface PromptChangeEntry {
   trackedFiles: string[];
   invariants: PromptInvariant[];
   restorePlaybook: string[];
+  /**
+   * Append-only ledger contract (`src/domain/ledgerContract.ts`). When `decidedOn`, `version`,
+   * `commitShaOrTag`, and `supersedes` are all set, the formatter emits the documented
+   * `## <prompt-name> <version> — summary` block instead of the legacy `### PRM-0NN:` block.
+   * Entries missing them stay legacy and are never rewritten.
+   */
+  decidedOn?: string;
+  version?: string;
+  commitShaOrTag?: string;
+  supersedes?: string;
+  status?: LedgerEntryStatus;
+  /** The alternative tried and why it lost; omit when there was none. */
+  rejected?: string;
 }
 
 export interface PromptDriftViolation {
@@ -416,6 +430,10 @@ export function evaluatePromptInvariants(
 
 /**
  * Generates the Markdown prompt changelog & recovery manual (`PROMPT_CHANGES.md`).
+ *
+ * Starts with the append-only ledger contract (`formatLedgerHeader`) so regenerating the manual
+ * cannot drop it, and renders entries that opt into the ledger fields in the documented
+ * Prompt/Why/Changed/Rejected/Supersedes/Status shape. Legacy entries keep their block untouched.
  */
 export function formatPromptChangelogMarkdown(
   entries: readonly PromptChangeEntry[] = PROMPT_CHANGES_REGISTRY
@@ -424,6 +442,8 @@ export function formatPromptChangelogMarkdown(
   const archivedCount = entries.filter((e) => e.lifecycle === 'archived').length;
 
   const lines: string[] = [
+    ...formatLedgerHeader('prompt-changes'),
+    '',
     '# Prompt Changes & Recovery Log',
     '',
     'This document is synchronized with `src/domain/promptRegistry.ts` and verified automatically',
@@ -451,6 +471,36 @@ export function formatPromptChangelogMarkdown(
   ];
 
   for (const entry of entries) {
+    if (entry.decidedOn && entry.version && entry.commitShaOrTag && entry.supersedes) {
+      const promptName = entry.promptFile.replace(/^.*\//, '').replace(/\.md$/, '');
+      lines.push(`## ${promptName} ${entry.version} — ${entry.title}`);
+      lines.push(`Prompt:     ${entry.promptFile} @ ${entry.commitShaOrTag}`);
+      lines.push(`Why:        ${entry.intent}`);
+      lines.push(`Changed:    ${entry.changeSummary}`);
+      if (entry.rejected) {
+        lines.push(`Rejected:   ${entry.rejected}`);
+      }
+      lines.push(`Supersedes: ${entry.supersedes}`);
+      lines.push(`Status:     ${entry.status ?? 'active'}`);
+      lines.push('');
+      lines.push('**Protected Invariants:**');
+      for (const inv of entry.invariants) {
+        const reqList = inv.requiredSubstrings.map((s) => `\`${s}\``).join(', ');
+        lines.push(`- \`${inv.filePath}\` must contain ${reqList} — *${inv.rationale}*`);
+        if (inv.forbiddenSubstrings && inv.forbiddenSubstrings.length > 0) {
+          const forbList = inv.forbiddenSubstrings.map((s) => `\`${s}\``).join(', ');
+          lines.push(`  - Forbidden regression: ${forbList}`);
+        }
+      }
+      lines.push('');
+      lines.push('**Recovery Playbook if Broken or Overwritten:**');
+      entry.restorePlaybook.forEach((step, idx) => {
+        lines.push(`${idx + 1}. ${step}`);
+      });
+      lines.push('');
+      continue;
+    }
+
     const catLabel = PROMPT_CATEGORY_LABELS[entry.category] ?? entry.category;
     lines.push(`### ${entry.id}: ${entry.title}`);
     lines.push('');

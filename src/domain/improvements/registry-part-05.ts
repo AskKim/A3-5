@@ -2246,4 +2246,69 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the sample ring bounded.',
     ],
   },
+  {
+    id: 'IMP-117',
+    title: 'Append-Only Ledgers Generated From Their Registries',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    rejected:
+      'Keeping a hand-appended ledger tail that regeneration carries over. It lost because two writers had already drifted ten lines in PRM-003/PRM-004, and once appends moved to the registry the region logic rendered the new contract entry and then cut it back out of the file.',
+    userIntent:
+      'IMPROVEMENTS.md and PROMPT_CHANGES.md were hand-maintained and generated at the same time, so the append-only header vanished on regeneration and their prose silently drifted from the registries.',
+    summary:
+      'Both ledgers open with a contract header emitted by `src/domain/ledgerContract.ts` (`formatLedgerHeader`), and their registries carry optional `decidedOn`/`status`/`rejected` ledger fields that render the documented `## YYYY-MM-DD — title` shape. `npm run regen:ledgers` writes each ledger from its registry, and `npm run verify:improvements` / `npm run verify:prompts` fail on a missing header, a malformed new entry, or any line that differs from a fresh registry render — so appending means a registry entry plus regeneration, never a hand edit.',
+    files: [
+      'IMPROVEMENTS.md',
+      'PROMPT_CHANGES.md',
+      'src/domain/ledgerContract.ts',
+      'src/domain/improvementRegistry.ts',
+      'src/domain/promptRegistry.ts',
+      'src/domain/improvements/types.ts',
+      'src/domain/__tests__/ledgerContract.test.ts',
+      'scripts/regen-ledgers.ts',
+      'scripts/verify-improvements.ts',
+      'scripts/verify-prompts.ts',
+      'package.json',
+      'AGENTS.md',
+      'GEMINI.md',
+      'CLAUDE.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/ledgerContract.ts',
+        requiredSubstrings: [
+          'export function formatLedgerHeader',
+          'export function evaluateLedgerContract',
+          'export function evaluateLedgerFreshness',
+        ],
+        rationale:
+          'The header, the entry-shape gate and the freshness comparison must stay in one module, or the two ledgers drift apart again.',
+      },
+      {
+        filePath: 'scripts/verify-improvements.ts',
+        requiredSubstrings: ['evaluateLedgerFreshness'],
+        rationale:
+          'A ledger checked only for its header still drifts; the improvement verifier must compare the file with the registry render.',
+      },
+      {
+        filePath: 'scripts/verify-prompts.ts',
+        requiredSubstrings: ['evaluateLedgerFreshness'],
+        rationale:
+          'The prompt changelog is generated too — stale prose there is exactly the drift this gate exists to catch.',
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['regen:ledgers'],
+        rationale:
+          'Appending means registry plus regeneration; without the command the documented workflow cannot be followed.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep `formatLedgerHeader` as the only source of the ledger header and run `npm run regen:ledgers` after every registry change.',
+      'Add the ledger fields (`decidedOn`, `status`, `rejected`) to new registry entries; never hand-edit the generated ledgers.',
+    ],
+  },
 ];

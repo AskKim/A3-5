@@ -1,3 +1,21 @@
+# append-only, oldest first. Never rewrite past entries.
+# Agents: read this before starting work; append an entry when you finish.
+# One entry per KEPT version; experiments go in SCRATCH.
+# Format updated 2026-11-28. Entries below predate Status/Rejected; do not backfill them.
+# New entries are generated from the registry — add the entry, then run `npm run regen:ledgers` —
+# and land at the bottom, after the last existing entry, in this shape:
+#
+#   ## <prompt-name> <version> — one-line summary
+#   Prompt:     path/to/prompt.md @ <commit-sha or tag>
+#   Why:        what was wrong with the previous version
+#   Changed:    what this edit did
+#   Rejected:   what else was tried and why it lost
+#   Supersedes: <previous version> — why it was replaced
+#   Status:     active | reverted | superseded
+#
+# Escalation: if Rejected needs more than two lines, promote that entry to
+#   docs/decisions/NNNN-slug.md (Context / Decision / Alternatives / Consequences)
+
 # Prompt Changes & Recovery Log
 
 This document is synchronized with `src/domain/promptRegistry.ts` and verified automatically
@@ -62,32 +80,32 @@ npm run verify
 - **Prompt File:** `prompts/start_new_backlog_prompt.md`
 - **Lifecycle:** `active`
 - **Category:** Backlog & Handoff Workflows (`backlog-workflow`)
-- **Last Edited:** 2026-11-24
-- **Intent:** Pick the top item from `docs/plans/suggestions-backlog.md` and drive end-to-end implementation without clobbering active plans.
-- **Change Summary:** Redirects immediately to `resume_backlog_plan_prompt.md` if an active plan already exists, enforces full audit/build verification, and marks completed suggestions cleanly.
+- **Last Edited:** 2026-11-28
+- **Intent:** Pick the top item from `docs/plans/suggestions-backlog.md` and drive end-to-end implementation without clobbering active plans or open handoffs.
+- **Change Summary:** Precheck now covers open handoffs as well as active plans: an unfinished `handoff-*.yaml` is continued before any new backlog item is started, and only when neither exists does the workflow pick an entry. Still redirects to `resume_backlog_plan_prompt.md` for active plans and enforces full audit/build verification.
 - **Tracked Files:** `prompts/start_new_backlog_prompt.md`
 
 **Protected Invariants:**
-- `prompts/start_new_backlog_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `suggestions-backlog.md`, `resume_backlog_plan_prompt.md` — *Backlog starter prompt must stay protected and check for active plans before starting a new item.*
+- `prompts/start_new_backlog_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `suggestions-backlog.md`, `resume_backlog_plan_prompt.md`, `handoff-*.yaml` — *Backlog starter prompt must stay protected and check for both active plans and open handoffs before starting a new item.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/start_new_backlog_prompt.md` with precheck redirect to `prompts/resume_backlog_plan_prompt.md`.
+1. Restore `prompts/start_new_backlog_prompt.md` with the open-handoff precheck and the redirect to `prompts/resume_backlog_plan_prompt.md`.
 
 ### PRM-004: Resume Active Backlog Plan Continuation Workflow
 
 - **Prompt File:** `prompts/resume_backlog_plan_prompt.md`
 - **Lifecycle:** `active`
 - **Category:** Backlog & Handoff Workflows (`backlog-workflow`)
-- **Last Edited:** 2026-11-24
-- **Intent:** Resume in-progress multi-step implementation plans safely after loading master governance.
-- **Change Summary:** Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, runs full verification, and removes finished temporary plan files.
+- **Last Edited:** 2026-11-28
+- **Intent:** Resume in-progress multi-step implementation plans or open handoffs safely after loading master governance.
+- **Change Summary:** Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, resumes an open `handoff-*.yaml` when no active plan exists, and treats a milestone closure as a checkpoint, not a turn boundary, so one run continues milestone-to-milestone until the list is empty or the budget runs out. Runs full verification and removes finished temporary plan files.
 - **Tracked Files:** `prompts/resume_backlog_plan_prompt.md`
 
 **Protected Invariants:**
-- `prompts/resume_backlog_plan_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `prompts/master_system_prompt.md` — *Resume prompt must stay protected and always load `prompts/master_system_prompt.md` first.*
+- `prompts/resume_backlog_plan_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `prompts/master_system_prompt.md`, `handoff-*.yaml`, `checkpoint, not a turn boundary` — *Resume prompt must stay protected, load `prompts/master_system_prompt.md` first, treat an open handoff as work to continue rather than work to replace, and keep the continuity rule that stops a green checkpoint from ending the run.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/resume_backlog_plan_prompt.md` with phase-by-phase plan continuation and delete-on-wrapup cleanup.
+1. Restore `prompts/resume_backlog_plan_prompt.md` with phase-by-phase plan continuation, open-handoff continuation and delete-on-wrapup cleanup.
 
 ### PRM-005: Automated Crash Diagnostic & Code Remediation Prompt
 
