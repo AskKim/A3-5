@@ -5,17 +5,17 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 257
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (23.0%)
+- **Total Non-Test Source Modules:** 258
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.9%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 198 (77.0%)
+- **Content-Specific Modules:** 199 (77.1%)
   - Domain Engines (`src/domain/`): 87
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
-  - State Store Hook (`src/hooks/`): 18
+  - State Store Hook (`src/hooks/`): 19
   - UI Screens & Modals (`src/components/`): 53
   - Root Entry & Styles (`src/`): 3
 
@@ -110,7 +110,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (198)
+## 2. Content-Specific Modules (199)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -256,7 +256,7 @@ npx tsx scripts/list-modules.ts --check
 | --- | --- |
 | `src/native/pedigreeBridge.ts` | Content-specific native Android/iOS WebView container bridge (`pedigreeNative`), consumed via `@engine/bridge` contracts. |
 
-### Content-Specific State Controller Hook (`src/hooks/`) (18)
+### Content-Specific State Controller Hook (`src/hooks/`) (19)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -265,6 +265,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/hooks/barnStore/restoreOrchestrator.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storeFacades.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storePorts.ts` | Content-specific application state hook. |
+| `src/hooks/barnStore/syncConflictSlice.tsx` | Content-specific application state hook. |
 | `src/hooks/barnStore/useAlertDismissals.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/useAnimalsCrud.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/useBackupReminderActions.ts` | Content-specific application state hook. |

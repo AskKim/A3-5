@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (56 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (57 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (120)
+## Logged Improvements (121)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2554,3 +2554,22 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. The page, its files and its route key are all “development”; only historical changelog prose may still name the old section.
 2. Any rename touching `src/App.tsx` must regenerate its boot-entry checksum in the same commit.
+
+### IMP-121: Sync-Conflict Slice Leaves Prop Drilling
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** The Import/Export hub was handed conflicts and their two actions as props it only forwarded to one panel, so every conflict change re-rendered the whole hub and the derived open-conflict list was rebuilt on every render.
+- **Summary:** First slice of the milestone 5 context split: `hooks/barnStore/syncConflictSlice.tsx` now carries `syncConflicts`, its two actions and a memoised `openConflicts` list on their own context, and `SyncConflictSliceProvider` wraps the hub in `App.tsx`. The hub no longer declares `syncConflicts`, `onResolveSyncConflict` or `onDismissSyncConflict`; it reads the slice, which also means the open list keeps one identity per conflict-array change instead of one per render. `useBarnStore` still returns the same keys, so the contract snapshot is untouched. `selectOpenConflicts` is pure and unit-tested.
+- **Tracked Files:** `src/hooks/barnStore/syncConflictSlice.tsx`, `src/hooks/__tests__/syncConflictSlice.test.ts`, `src/components/ImportExportHubScreen.tsx`, `src/App.tsx`, `src/domain/improvementRegistry.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/syncConflictSlice.tsx` must contain `selectOpenConflicts`, `SyncConflictSliceProvider`, `useSyncConflictSlice` — *The slice is the only place the open-conflict list is derived; losing it re-introduces per-render filtering.*
+- `src/components/ImportExportHubScreen.tsx` must contain `useSyncConflictSlice` — *The hub reads conflicts from the slice; re-adding the props restarts prop drilling for the next screen.*
+  - Forbidden regression: `onResolveSyncConflict`, `onDismissSyncConflict`
+
+**Restoration Playbook if Overwritten:**
+1. Wrap any consumer that needs conflicts in `<SyncConflictSliceProvider>`; it throws outside one, by design.
+2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
+3. Add the next slice the same way: provider at the route, derived lists memoised inside it.

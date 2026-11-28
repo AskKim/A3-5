@@ -2434,4 +2434,46 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Any rename touching `src/App.tsx` must regenerate its boot-entry checksum in the same commit.',
     ],
   },
+  {
+    id: 'IMP-121',
+    title: 'Sync-Conflict Slice Leaves Prop Drilling',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'The Import/Export hub was handed conflicts and their two actions as props it only forwarded to one panel, so every conflict change re-rendered the whole hub and the derived open-conflict list was rebuilt on every render.',
+    summary:
+      'First slice of the milestone 5 context split: `hooks/barnStore/syncConflictSlice.tsx` now carries `syncConflicts`, its two actions and a memoised `openConflicts` list on their own context, and `SyncConflictSliceProvider` wraps the hub in `App.tsx`. The hub no longer declares `syncConflicts`, `onResolveSyncConflict` or `onDismissSyncConflict`; it reads the slice, which also means the open list keeps one identity per conflict-array change instead of one per render. `useBarnStore` still returns the same keys, so the contract snapshot is untouched. `selectOpenConflicts` is pure and unit-tested.',
+    files: [
+      'src/hooks/barnStore/syncConflictSlice.tsx',
+      'src/hooks/__tests__/syncConflictSlice.test.ts',
+      'src/components/ImportExportHubScreen.tsx',
+      'src/App.tsx',
+      'src/domain/improvementRegistry.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/syncConflictSlice.tsx',
+        requiredSubstrings: [
+          'selectOpenConflicts',
+          'SyncConflictSliceProvider',
+          'useSyncConflictSlice',
+        ],
+        rationale:
+          'The slice is the only place the open-conflict list is derived; losing it re-introduces per-render filtering.',
+      },
+      {
+        filePath: 'src/components/ImportExportHubScreen.tsx',
+        requiredSubstrings: ['useSyncConflictSlice'],
+        forbiddenSubstrings: ['onResolveSyncConflict', 'onDismissSyncConflict'],
+        rationale:
+          'The hub reads conflicts from the slice; re-adding the props restarts prop drilling for the next screen.',
+      },
+    ],
+    restorePlaybook: [
+      'Wrap any consumer that needs conflicts in `<SyncConflictSliceProvider>`; it throws outside one, by design.',
+      'Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.',
+      'Add the next slice the same way: provider at the route, derived lists memoised inside it.',
+    ],
+  },
 ];

@@ -150,6 +150,7 @@ import {
   downloadTextChunks,
   downloadTextFile,
 } from '../utils/webFileActions';
+import { useSyncConflictSlice } from '../hooks/barnStore/syncConflictSlice';
 import { ArchivedHerdsModal } from './ArchivedHerdsModal';
 import { CloudAppFolderSyncPanel } from './CloudAppFolderSyncPanel';
 import { ExternalImporterPanel } from './ExternalImporterPanel';
@@ -168,7 +169,6 @@ interface ImportExportHubScreenProps {
   deviceId: string;
   backupStatus: BackupStatusEvaluation | null;
   syncOperations: SyncOperation[];
-  syncConflicts: SyncConflictEntry[];
   initialSection?: ImportExportHubSection;
   onConsumedInitialSection?: () => void;
   onOpenSettings: () => void;
@@ -190,11 +190,6 @@ interface ImportExportHubScreenProps {
     mode: 'merge' | 'replace'
   ) => Promise<void>;
   onImportDeltaOperations: (ops: SyncOperation[]) => Promise<void>;
-  onResolveSyncConflict: (
-    conflictId: string | readonly string[],
-    side: 'winning' | 'losing'
-  ) => Promise<void>;
-  onDismissSyncConflict: (conflictId: string) => Promise<void>;
   onBuildLocalDeltaJson: () => { filename: string; content: string };
   onRestoreRollingBackup: (key: string) => Promise<void>;
   onExportSqliteBytes: () => Promise<Uint8Array | null>;
@@ -269,7 +264,6 @@ export function ImportExportHubScreen({
   deviceId,
   backupStatus,
   syncOperations,
-  syncConflicts,
   initialSection = 'all',
   onConsumedInitialSection,
   onOpenSettings,
@@ -280,8 +274,6 @@ export function ImportExportHubScreen({
   onImportJson,
   onImportBackupArchive,
   onImportDeltaOperations,
-  onResolveSyncConflict,
-  onDismissSyncConflict,
   onBuildLocalDeltaJson,
   onRestoreRollingBackup,
   onExportSqliteBytes,
@@ -320,6 +312,11 @@ export function ImportExportHubScreen({
   onResetAndRetryCloudSync,
   onDismissCloudCircuitBreakerWarning,
 }: ImportExportHubScreenProps) {
+  const {
+    syncConflicts: syncConflictsProp,
+    resolveSyncConflict,
+    dismissSyncConflict,
+  } = useSyncConflictSlice();
   const baseId = useId();
   const [sectionView, setSectionView] = useState<ImportExportHubSection>(initialSection);
 
@@ -441,7 +438,7 @@ export function ImportExportHubScreen({
     !activeBrowserCompat.signals.wasmSupported || /json fallback/i.test(engineName);
   const dirPickerSupported = supportsDirectoryPicker();
   const webShareSupported = activeBrowserCompat.signals.webShareFilesSupported;
-  const unresolvedConflicts = syncConflicts.filter((c) => !c.resolved);
+  const unresolvedConflicts = syncConflictsProp.filter((c) => !c.resolved);
   const totalVaultEntries = opfsVaultBackups.length + rollingBackups.length;
 
   // Keep animal selector synced with exporter species scope
@@ -1683,7 +1680,7 @@ export function ImportExportHubScreen({
             </div>
           )}
 
-          {syncConflicts.length > 0 && (
+          {syncConflictsProp.length > 0 && (
             <div className="border-t border-[var(--barn-sage)]/25 pt-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-xs sm:text-sm font-semibold text-[var(--barn-ink)]">
@@ -1696,7 +1693,7 @@ export function ImportExportHubScreen({
                       disabled={conflictRowLock.isKeyLocked(BULK_RESOLVE_LOCK_KEY)}
                       onClick={() =>
                         void conflictRowLock.runKeyLocked(BULK_RESOLVE_LOCK_KEY, () =>
-                          onResolveSyncConflict(
+                          resolveSyncConflict(
                             unresolvedConflicts.map((c) => c.conflict_id),
                             'winning'
                           )
@@ -1711,7 +1708,7 @@ export function ImportExportHubScreen({
                       disabled={conflictRowLock.isKeyLocked(BULK_RESOLVE_LOCK_KEY)}
                       onClick={() =>
                         void conflictRowLock.runKeyLocked(BULK_RESOLVE_LOCK_KEY, () =>
-                          onResolveSyncConflict(
+                          resolveSyncConflict(
                             unresolvedConflicts.map((c) => c.conflict_id),
                             'losing'
                           )
@@ -1725,7 +1722,7 @@ export function ImportExportHubScreen({
                 )}
               </div>
               <div className="space-y-2.5 max-h-64 overflow-y-auto">
-                {syncConflicts.slice(0, 10).map((c) => (
+                {syncConflictsProp.slice(0, 10).map((c) => (
                   <div
                     key={c.conflict_id}
                     className="p-3.5 rounded-xl bg-[var(--barn-surface)] border border-[var(--barn-border)] space-y-2.5 text-xs"
@@ -1753,7 +1750,7 @@ export function ImportExportHubScreen({
                           disabled={conflictRowLock.isKeyLocked(c.conflict_id)}
                           onClick={() =>
                             void conflictRowLock.runKeyLocked(c.conflict_id, () =>
-                              onResolveSyncConflict(c.conflict_id, 'winning')
+                              resolveSyncConflict(c.conflict_id, 'winning')
                             )
                           }
                           className="min-h-[40px] sm:min-h-[36px] px-3 py-1.5 rounded-lg bg-[var(--barn-sage)] text-[var(--barn-on-sage)] text-xs font-semibold disabled:opacity-60"
@@ -1765,7 +1762,7 @@ export function ImportExportHubScreen({
                           disabled={conflictRowLock.isKeyLocked(c.conflict_id)}
                           onClick={() =>
                             void conflictRowLock.runKeyLocked(c.conflict_id, () =>
-                              onResolveSyncConflict(c.conflict_id, 'losing')
+                              resolveSyncConflict(c.conflict_id, 'losing')
                             )
                           }
                           className="min-h-[40px] sm:min-h-[36px] px-3 py-1.5 rounded-lg border border-[var(--barn-border)] bg-[var(--barn-canvas)] text-xs font-medium hover:bg-[var(--barn-subtle)] disabled:opacity-60"
@@ -1777,7 +1774,7 @@ export function ImportExportHubScreen({
                           disabled={conflictRowLock.isKeyLocked(c.conflict_id)}
                           onClick={() =>
                             void conflictRowLock.runKeyLocked(c.conflict_id, () =>
-                              onDismissSyncConflict(c.conflict_id)
+                              dismissSyncConflict(c.conflict_id)
                             )
                           }
                           className="min-h-[40px] sm:min-h-[36px] px-2.5 py-1.5 text-xs text-[var(--barn-muted)] underline disabled:opacity-60"

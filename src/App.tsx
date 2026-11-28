@@ -17,6 +17,7 @@
  * - Barn Preferences, PWA Storage Defense, Zero-Cloud Sync & Importers (`settings`)
  */
 
+import { SyncConflictSliceProvider } from './hooks/barnStore/syncConflictSlice';
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -1554,13 +1555,10 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onHydrateSnapshotForExport={store.hydrateSnapshotForExport}
             deviceId={store.deviceId}
             syncOperations={store.syncOperations}
-            syncConflicts={store.syncConflicts}
             backupSyncStatus={store.backupSyncStatus}
             onRescheduleTask={store.rescheduleTask}
             onApplySmartEscalations={store.applySmartTaskEscalations}
             onReconcileOutboxOps={store.reconcileP2pOutboxOps}
-            onResolveSyncConflict={store.resolveSyncConflict}
-            onDismissSyncConflict={store.dismissSyncConflict}
             onBuildLocalDeltaJson={store.buildLocalDeltaJsonPayload}
             onOpenHealthReference={(section) => setHealthReferenceSection(section || 'all')}
           />
@@ -1822,6 +1820,11 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
         )}
 
         {route === 'importExport' && (
+          <SyncConflictSliceProvider
+            syncConflicts={store.syncConflicts}
+            resolveSyncConflict={store.resolveSyncConflict}
+            dismissSyncConflict={store.dismissSyncConflict}
+          >
           <ImportExportHubScreen
             snapshot={snapshot}
             engineName={store.engineName}
@@ -1829,7 +1832,6 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             deviceId={store.deviceId}
             backupStatus={store.backupStatus}
             syncOperations={store.syncOperations}
-            syncConflicts={store.syncConflicts}
             initialSection={importExportInitialSection}
             onConsumedInitialSection={() => setImportExportInitialSection('all')}
             onOpenSettings={() => setRoute('settings')}
@@ -1842,8 +1844,6 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onImportJson={store.importJsonBackup}
             onImportBackupArchive={store.importBackupArchiveBytes}
             onImportDeltaOperations={store.importDeltaOperations}
-            onResolveSyncConflict={store.resolveSyncConflict}
-            onDismissSyncConflict={store.dismissSyncConflict}
             onBuildLocalDeltaJson={store.buildLocalDeltaJsonPayload}
             onRestoreRollingBackup={store.restoreRollingBackupByKey}
             onExportSqliteBytes={store.exportSqliteBytes}
@@ -1882,6 +1882,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onResetAndRetryCloudSync={store.resetAndRetryCloudSync}
             onDismissCloudCircuitBreakerWarning={store.dismissCloudCircuitBreakerWarning}
           />
+          </SyncConflictSliceProvider>
         )}
 
         {route === 'settings' && (
