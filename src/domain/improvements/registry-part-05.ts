@@ -4065,9 +4065,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 59', 'branches: 49', 'functions: 45', 'lines: 61'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/hooks/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, because without them the suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/speciesPanels.render.test.tsx',
@@ -4154,6 +4154,44 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     restorePlaybook: [
       'Keep UI tests in `src/components/__tests__`; a test that renders or asserts on a component is a UI test no matter which pure helper it covers.',
       'Run `npm run verify:extraction` after adding any file to `src/engine`, `src/features` or `src/utils`; it is the only gate that sees test-only imports inside the framework layers.',
+    ],
+  },
+  {
+    id: 'IMP-160',
+    title: 'Mount the Health Reference and Settings Screens',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The health reference library and the Settings & Sync screen were the two largest remaining modules with zero executable statements (~1,500 lines between them), even though settings is the screen every breeder visits at least once and the health library is what they open when an animal is sick.',
+    summary:
+      'Adds `healthAndSettingsPanels.render.test.tsx`: the health panel lists the species guide cards, widens the filter from four species guides to every species, opens and closes the preferred-source editor, and renders only the offline vet-PDF pointer for the pdfs section; Settings renders the storage/backup summary, expands the identity section and saves a renamed barn through `onUpdateSettings`, consumes an `openAddSpeciesOnMount` handoff, and expands the storage section from the jump list. Coverage rises to 61.37/51.42/47.29/62.89, so the global floors move to 60/50/46/61 and the component floors to 31/24/19/32.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/healthAndSettingsPanels.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 60', 'branches: 50', 'functions: 46', 'lines: 61'],
+        rationale:
+          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/healthAndSettingsPanels.render.test.tsx',
+        requiredSubstrings: ['All Species (16)', 'Barn / Farm / Rabbitry Name', 'openAddSpeciesOnMount: true'],
+        rationale:
+          'These assertions are the only proof that the guide filter widens, the identity field writes through and the add-species handoff is consumed; without them the suite would only count mounts.',
+      },
+    ],
+    restorePlaybook: [
+      'Settings renders every section collapsed except the top panel, so expand a section through its jump button before querying the fields inside it.',
+      'The health panel filter tabs are labelled with their counts (`Rabbit & General (4)`), so assert the widened filter by comparing `Open Guide` counts rather than by a fixed number.',
+      'A whole-panel toggle (Preferred Wiki Sources) carries its state in the button text (`Manage` / `Hide`); assert the flip instead of hunting a separate control.',
     ],
   },
 ];
