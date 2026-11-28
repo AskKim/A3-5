@@ -46,7 +46,6 @@ import { getDefaultPedigreeBridge } from '@app/pedigreeAppWiring';
 import { PlatformBridgeProvider } from '@app/PlatformBridgeContext';
 import type { IPlatformBridge } from '@engine/bridge';
 import { AsyncErrorToastHost } from './components/AsyncErrorToastHost';
-import { HomeSpeciesScreen } from './components/HomeSpeciesScreen';
 import { DevelopmentErrorBoundary } from './components/DevelopmentErrorBoundary';
 import { formatSystemTaskTitle } from './domain/calendarExport';
 import {
@@ -72,6 +71,10 @@ import { subscribeOpenDialogCount, useAccessibleDialog } from './utils/useAccess
 import { useAsyncSubmitLock } from './utils/useAsyncSubmitLock';
 
 import type { ImportExportHubSection } from './components/ImportExportHubScreen';
+
+const HomeSpeciesScreen = lazyNamedRoute<
+  ComponentProps<typeof import('./components/HomeSpeciesScreen')['HomeSpeciesScreen']>
+>(() => import('./components/HomeSpeciesScreen'), 'HomeSpeciesScreen', 'All Species');
 
 const SpeciesDashboardScreen = lazyNamedRoute<
   ComponentProps<typeof import('./components/SpeciesDashboardScreen')['SpeciesDashboardScreen']>
@@ -1417,6 +1420,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
 
         {/* Active Screen Viewport */}
         {route === 'home' && (
+          <Suspense fallback={<RouteLoadingFallback label={ROUTE_LABELS.home} />}>
           <HomeSpeciesScreen
             snapshot={snapshot}
             onOpenSpecies={store.selectSpeciesWorkspace}
@@ -1474,6 +1478,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onOpenSettings={() => setRoute('settings')}
             onOpenImportExportHub={openImportExportHub}
           />
+          </Suspense>
         )}
 
         {route !== 'home' && (

@@ -378,7 +378,7 @@ See `src/hooks/barnStore/README.md` for the map and the contract rules.
 and the layer READMEs in `src/engine/`, `src/features/`, `src/storage/`, `src/hooks/barnStore/`,
 `src/domain/improvements/` and `scripts/`.
 
-### 8.7 Extraction-readiness closure (IMP-156, IMP-158)
+### 8.7 Extraction-readiness closure (IMP-156, IMP-159)
 
 - `src/app/ports/` grew from 4 to 20 capability ports; every remaining component→storage runtime
   import moved behind one of them and `scripts/ui-storage-coupling-budget.json` is now `[]`.

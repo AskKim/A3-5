@@ -4084,6 +4084,45 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-158',
+    title: 'Lazy-Load the Home Species Screen Off the Boot Bundle',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Every workspace route was already code-split except the one every launch renders first: `HomeSpeciesScreen` was still a static import in the boot-locked shell, so its tables, cards and species summaries were parsed and compiled as part of the entry chunk on every cold start, including launches that jump straight to a species workspace.',
+    summary:
+      'The home view is now declared with the same `lazyNamedRoute` helper as the other 22 routes and rendered inside its own `Suspense` with the `All Species` skeleton, so `src/App.tsx` no longer imports it eagerly. The entry chunk drops from 395,880 to 350,131 bytes (-45,749, -11.6%) and `HomeSpeciesScreen` becomes its own 26,848-byte chunk that Workbox precaches like the rest. Every view module in the shell is now a dynamic import, so rolldown emits one chunk per view without any new grouping rule; the existing `codeSplitting.groups` still pin the vendors, the SQLite/sync storage modules and the domain/registry chunks, and no manual view group was added because grouped screen modules would drag their shared dependencies into a cycle the chunk ratchet rejects. Because the edit touched a boot-locked file at the owner\'s explicit request, `BOOT_ENTRY_LOCK_CHECKSUMS` was regenerated for `src/App.tsx` in the same commit.',
+    files: [
+      'src/App.tsx',
+      'src/domain/improvementRegistry.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/App.tsx',
+        requiredSubstrings: ['HomeSpeciesScreen = lazyNamedRoute', 'RouteLoadingFallback label={ROUTE_LABELS.home}'],
+        forbiddenSubstrings: ["import { HomeSpeciesScreen } from './components/HomeSpeciesScreen';"],
+        rationale:
+          'A static home import puts the largest remaining screen back in the entry chunk; the route must keep its lazy declaration and its own skeleton fallback.',
+      },
+      {
+        filePath: 'src/domain/improvementRegistry.ts',
+        requiredSubstrings: ["'src/App.tsx': '0906bc56"],
+        rationale:
+          'The boot-entry lock only protects the shell while its checksum matches the file; a shell edit that forgets to regenerate this line fails the boot-lock test.',
+      },
+    ],
+    restorePlaybook: [
+      'Declare a view with `lazyNamedRoute` and render it inside `RouteErrorBoundary` + `Suspense`, never with a static import in `src/App.tsx`.',
+      'Any sanctioned edit to `src/main.tsx`, `src/App.tsx` or `index.html` must regenerate its SHA-256 in `BOOT_ENTRY_LOCK_CHECKSUMS` in the same commit.',
+      'Measure the entry chunk before and after (`ls -l dist/assets/index-*.js`); do not add per-view `codeSplitting.groups` entries, because grouping a screen module pulls its shared dependencies into a chunk cycle.',
+    ],
+  },
+  {
+    id: 'IMP-159',
     title: 'Prove the Framework Layers Stand Alone Before Any /engine Extraction',
     category: 'ci-tooling',
     release: 'alpha-3',
