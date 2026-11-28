@@ -2350,6 +2350,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       '.github/workflows/ci.yml',
       '.github/workflows/deploy-pages.yml',
       'IMPROVEMENTS.md',
+      'AGENTS.md',
     ],
     invariants: [
       {
