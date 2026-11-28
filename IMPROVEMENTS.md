@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (80 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (81 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (144)
+## Logged Improvements (145)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2818,7 +2818,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/backupExportSurfaces.r
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `thresholds:`, `statements: 51`, `branches: 42`, `functions: 37`, `lines: 53` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.*
+- `vitest.config.ts` must contain `thresholds:`, `statements: 57`, `branches: 47`, `functions: 43`, `lines: 58` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance. These tokens track the latest ratchet, raised with IMP-146.*
 - `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `downloadTextFileMock`, `Herd Roster Spreadsheet`, `getByRole('status')` — *Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.*
 
 **Restoration Playbook if Overwritten:**
@@ -2928,3 +2928,18 @@ Status:     active
 1. A component that needs storage behaviour takes an `@app/ports/*` capability (context hook with a browser default plus a provider) or a narrow prop — never a direct `../storage/*` import.
 2. Type-only imports from storage are allowed: they are erased at compile time and create no runtime edge.
 3. After migrating a seam run `npx tsx scripts/audit-layers.ts --write-ui-budget` so the ledger records the smaller set; never edit the budget upward.
+
+## 2026-11-28 — Coverage Expansion: Domain Normalizers, Workspace Screens and Store Actions
+Why:        Only the model layer and a handful of render surfaces were tested while 76 files carried zero executable coverage, so the app's largest screens, the JSON sanitizer defaults and the store mutations could regress without a single failing test. The floors also allowed one area's gains to pay for another's gaps.
+Changed:    `vitest.config.ts`, `src/domain/__tests__/modelsNormalizers.test.ts`, `src/domain/__tests__/crmReportsAndBackupSanitization.test.ts`, `src/components/__tests__/clientCrm.render.test.tsx`, `src/components/__tests__/screensSmoke.render.test.tsx`, `src/components/__tests__/printPreview.render.test.tsx`, `src/hooks/__tests__/barnStoreActions.test.tsx`, `src/engine/storage/__tests__/lanWebRtcTransport.test.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 57`, `src/domain/**`, `src/components/**`, `src/hooks/**` — *Global floors plus per-area floors are what stop a new untested screen from riding on the tested domain layer; a missing area floor reopens that trade.*
+- `src/components/__tests__/screensSmoke.render.test.tsx` must contain `HerdScreen`, `SpeciesDashboardScreen`, `EconomicsLedgerScreen`, `BreedingScreen`, `PedigreeScreen` — *These five screens carried the bulk of the zero-coverage statements; a mount that silently disappears would take thousands of statements back to unexecuted.*
+
+**Restoration Playbook if Overwritten:**
+1. Measure with the json-summary reporter, rank files by missing statements, and spend the next batch on the area floor that is furthest below its measurement.
+2. For pure domain code, test the fallback and clamp arms the happy path never reaches; that is where the branch coverage sits.
+3. Mount large screens with real fixture data and at least one interaction, not a bare heading assertion, or statements rise while branches stay flat.
+4. Exercise store mutations through the injected memory adapter instead of extracting the hook; the adapter is the existing seam.
