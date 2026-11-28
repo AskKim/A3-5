@@ -58,5 +58,5 @@ The codebase enforces strict dependency direction and domain isolation across `s
    - `useBarnStore.ts` computes `activeSpeciesData` via case-insensitive `isSameSpecies(...)` filtering and resets selected animal IDs on species switch so records from one species never leak into another species' Herd, Breeding, or Pedigree screens.
 
 4. **Documentation, Invariants & Backlog (`docs/plans/`):**
-   - Automated anti-wipeout invariants are tracked in `src/domain/improvementRegistry.ts` + `IMPROVEMENTS.md` and verified via `npm run verify:improvements`.
+   - Automated anti-wipeout invariants are tracked in the registries (`src/domain/improvements/registry-part-*.ts`, `src/domain/promptRegistry.ts`) and their generated ledgers (`IMPROVEMENTS.md`, `PROMPT_CHANGES.md` — rewritten by `npm run regen:ledgers`, never by hand) and verified via `npm run verify:improvements` / `npm run verify:prompts`.
    - Open unimplemented suggestions are tracked in `docs/plans/suggestions-backlog.md` alongside `ARCHITECTURE.md`, `ROADMAP.md`, and `EXTRACTION_INVENTORY.md` so roadmap context persists across GitHub syncs and AI Studio reinstalls.

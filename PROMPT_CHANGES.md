@@ -45,9 +45,9 @@ npm run verify
 - **Prompt File:** `prompts/master_system_prompt.md`
 - **Lifecycle:** `active`
 - **Category:** Master Governance & Rules (`system-governance`)
-- **Last Edited:** 2026-11-27
+- **Last Edited:** 2026-11-28
 - **Intent:** Maintain one canonical, compact rulebook governing alignment checks, React PWA lock, three-layer boundaries, strict TypeScript, and mandatory improvement logging.
-- **Change Summary:** Evolved from v1/v2/v4 into the unified `prompts/master_system_prompt.md` aligned with `GEMINI.md` and `AGENTS.md`: adds `DO_NOT_REMOVE_WITHOUT_CONFIRMATION`, `ALIGNED` + single-line pending status output rules, three-layer isolation (`@engine/*`, `@features/*`, `@domain/*`, `@app/*`), plan cleanup, and mandatory `improvementRegistry.ts` logging.
+- **Change Summary:** Evolved from v1/v2/v4 into the unified `prompts/master_system_prompt.md` aligned with `GEMINI.md` and `AGENTS.md`: adds `DO_NOT_REMOVE_WITHOUT_CONFIRMATION`, `ALIGNED` + single-line pending status output rules, three-layer isolation (`@engine/*`, `@features/*`, `@domain/*`, `@app/*`), plan cleanup, and mandatory `improvementRegistry.ts` logging. The logging mandate now covers `src/domain/promptRegistry.ts` and `PROMPT_CHANGES.md` alongside the app registry, and states that both ledgers are generated (`npm run regen:ledgers`, never hand-edited) and gated by `verify:improvements` / `verify:prompts`.
 - **Tracked Files:** `prompts/master_system_prompt.md`, `GEMINI.md`, `AGENTS.md`
 
 **Protected Invariants:**
