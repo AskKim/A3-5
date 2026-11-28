@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // prompts/preflight/scripts/preflight-log.mjs — Atomic Schema v2 state writer with lockfile guard
-// Last Updated: 2026-11-27T08:32:00-08:00
+// Last Updated: 2026-11-28T09:50:00-08:00
 
 import {
   readFileSync,
@@ -22,19 +22,33 @@ const getArg = (flag) => {
 
 const stepId = getArg('--step');
 const status = getArg('--status') ?? 'completed';
-const platform = getArg('--platform') ?? 'antigravity';
+// No default: guessing the runner is how a Freebuff run used to be filed as `antigravity`.
+const PLATFORMS = ['ai-studio', 'antigravity', 'freebuff'];
+const platform = getArg('--platform');
 const filesCsv = getArg('--files') ?? '';
+// Gates this step could not run (no shell, no toolchain) are recorded, not forgotten: Phase B's
+// ci-guide reads them back out of history and runs them where a shell exists.
+const deferredCsv = getArg('--deferred-gates') ?? '';
 const errorMsg = getArg('--error');
 
 const cleanError = errorMsg
   ? errorMsg.replace(/(\/Users\/|\/home\/|[A-Za-z]:\\Users\\)[^\s"'`]+/g, '<local-path>')
   : null;
 const nextStep = getArg('--next');
-const phase = getArg('--phase') ?? (platform === 'ai-studio' ? 'A' : 'B');
+// Phase comes from the manifest, never from a platform guess: freebuff legitimately runs both.
+function manifestPhase(id) {
+  try {
+    const manifest = JSON.parse(readFileSync('prompts/preflight/manifest/preflight.manifest.json', 'utf8'));
+    return manifest.steps?.find((step) => step.id === id)?.phase ?? null;
+  } catch {
+    return null;
+  }
+}
+const phase = getArg('--phase') ?? manifestPhase(stepId);
 
-if (!stepId || !['completed', 'failed', 'skipped'].includes(status)) {
+if (!stepId || !['completed', 'failed', 'skipped'].includes(status) || !PLATFORMS.includes(platform)) {
   console.error(
-    'Usage: node prompts/preflight/scripts/preflight-log.mjs --step <id> --status completed|failed|skipped [--platform ai-studio|antigravity] [--files a,b] [--error "<msg>"] [--next <id>]'
+    'Usage: node prompts/preflight/scripts/preflight-log.mjs --step <id> --status completed|failed|skipped --platform ai-studio|antigravity|freebuff [--files a,b] [--error "<msg>"] [--next <id>] [--deferred-gates verify:layers,npm-test]'
   );
   process.exit(1);
 }
@@ -98,6 +112,12 @@ try {
   };
 
   if (cleanError) entry.error = cleanError;
+  if (deferredCsv) {
+    entry.deferred_gates = deferredCsv
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
 
   state.history = Array.isArray(state.history) ? state.history : [];
   state.history.push(entry);

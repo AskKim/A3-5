@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // prompts/preflight/scripts/preflight-lint.mjs — Zero-dependency preflight integrity, mate-link & prefix linter
-// Last Updated: 2026-11-27T08:32:00-08:00
+// Last Updated: 2026-11-28T00:00:00-08:00
 
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { RETIRED, renderAll } from './gen-preflight.mjs';
 
 const root = 'prompts/preflight';
 const runDir = join(root, 'run-uni');
@@ -22,6 +23,8 @@ const forbidden = [
   /run-uni\/wiring\.md/,
   /\[ONE-TIME-SETUP\]/,
   /\[PER-RELEASE SINGLE-USE\]/,
+  /\[PER-RELEASE\]/,
+  /PER_RELEASE/,
   /master_launcher_clean\.md/,
 ];
 
@@ -98,6 +101,35 @@ if (existsSync(runDir) && existsSync(readDir)) {
   }
 }
 
+// Dual-audience convention (`docs/ARCHITECTURE_GUIDE.md` pattern): every module prompt carries a
+// short human/AI header, and every readmate is split into a plain-English Part 1 and a technical
+// Part 2. The convention only ever existed by hand, so it decayed into single-audience files; it is
+// a gate now, and a new run-uni file missing either half fails here instead of quietly reverting.
+const PART1_PROMPT = /Part\s*1\s*[-\u2013\u2014]\s*For A Human/i;
+const PART2_PROMPT = /Part\s*2\s*[-\u2013\u2014]\s*For The AI/i;
+const PART1_README = '## Part 1: Plain-English Guide';
+const PART2_README = '## Part 2: Technical Reference';
+if (existsSync(runDir) && existsSync(readDir)) {
+  const at = (txt, pattern) => (pattern instanceof RegExp ? txt.search(pattern) : txt.indexOf(pattern));
+  const checkDualAudience = (path, first, second, label) => {
+    if (!existsSync(path) || statSync(path).size > MAX_FILE_SIZE) return;
+    const txt = readFileSync(path, 'utf8');
+    const a = at(txt, first);
+    const b = at(txt, second);
+    if (a === -1 || b === -1) {
+      errors.push(`${label} is missing its dual-audience block in ${path}: needs a Part 1 human block and a Part 2 AI block`);
+      return;
+    }
+    if (a > b) errors.push(`Dual-audience blocks are out of order in ${path}: Part 1 must come before Part 2`);
+  };
+  for (const f of readdirSync(runDir).filter((n) => n.endsWith('.md'))) {
+    checkDualAudience(join(runDir, f), PART1_PROMPT, PART2_PROMPT, 'Prompt');
+  }
+  for (const f of readdirSync(readDir).filter((n) => n.endsWith('-readme.md'))) {
+    checkDualAudience(join(readDir, f), PART1_README, PART2_README, 'Readmate');
+  }
+}
+
 const rcPath = join(runDir, 'release-check.md');
 if (existsSync(rcPath) && statSync(rcPath).size <= MAX_FILE_SIZE) {
   const rc = readFileSync(rcPath, 'utf8');
@@ -115,10 +147,10 @@ if (existsSync(cleanTemplate) && statSync(cleanTemplate).size <= MAX_FILE_SIZE) 
   const ct = readFileSync(cleanTemplate, 'utf8');
   // Only an applied marker (a step line already retired) belongs in the check; the marker format
   // itself appears in every launcher's static AGENT_EXCLUSION_PROTOCOL block, prefix-hashed and
-  // therefore required in the pristine template too.
-  const appliedRetirement = /^\s*-\s*\[SINGLE-USE-COMPLETED:/m;
-  if (appliedRetirement.test(ct)) {
-    errors.push('Pristine template contains retired SINGLE-USE-COMPLETED marker');
+  // therefore required in the pristine template too. RETIRED requires a real `step_id`, so the
+  // `<step_id>` placeholder in that example never counts as a retirement.
+  if (ct.split('\n').some((line) => RETIRED.test(line))) {
+    errors.push('Pristine template contains a retired SINGLE-USE-COMPLETED step line');
   }
 }
 
@@ -194,16 +226,23 @@ if (!existsSync(manifestPath)) {
   }
 }
 
-// The manifest is duplicated for the launcher's TOC generator; the two copies drifting apart (they
-// once differed only by soft hyphens) makes the wiring depend on which file a reader happened to
-// open, so they must stay byte-identical.
-const twinPath = join(root, 'preflight.manifest.json');
-if (existsSync(twinPath) && existsSync(manifestPath)) {
-  if (readFileSync(twinPath, 'utf8') !== readFileSync(manifestPath, 'utf8')) {
-    errors.push(
-      `${twinPath} and ${manifestPath} have drifted apart; keep both copies byte-identical`
-    );
+// The manifest used to exist twice, byte-identical, with this gate enforcing the duplication.
+// One copy plus a generator is the fix: every file below that lists steps is rendered from
+// `manifest/preflight.manifest.json`, so a hand edit that misses it is caught here instead of
+// silently disagreeing with the wiring table on the next run.
+try {
+  for (const [relPath, expected] of renderAll()) {
+    if (!existsSync(relPath)) {
+      errors.push(`Generated file is missing: ${relPath} (run \`npm run preflight:gen -- --write\`)`);
+      continue;
+    }
+    if (statSync(relPath).size > MAX_FILE_SIZE) continue;
+    if (readFileSync(relPath, 'utf8') !== expected) {
+      errors.push(`Generated file is stale: ${relPath} (run \`npm run preflight:gen -- --write\`)`);
+    }
   }
+} catch (err) {
+  errors.push(`Preflight generator failed: ${err instanceof Error ? err.message : String(err)}`);
 }
 
 // Static config must be filled in before a run: an angle-bracket placeholder is not a value.
@@ -249,5 +288,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  'PREFLIGHT_LINT_OK: lowercase names, 1-to-1 mate links, JSON schemas, anchors, and clean paths verified.'
+  'PREFLIGHT_LINT_OK: lowercase names, 1-to-1 mate links, dual-audience blocks, JSON schemas, anchors, and clean paths verified.'
 );

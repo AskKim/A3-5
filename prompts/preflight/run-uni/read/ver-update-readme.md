@@ -1,7 +1,24 @@
-# Version Update - Step Readme
+# Version Update
+
+This readme is **dual-audience**: **Part 1** explains the step in plain English for whoever is running the preflight; **Part 2** is the technical record for an AI agent or developer.
+
+---
+
+## Part 1: Plain-English Guide
+
+**In plain terms:** Bumps the version everywhere it is written down and rolls the changelog, so all four version files agree.
+
+- **You need this step when:** once per release, before any tag exists.
+- **How often:** every release.
+- **Which assistant runs it:** AI Studio (Phase A).
+- **How you know it worked:** `OK [ver-update] files=<count>` with the five recorded values.
+
+---
+
+## Part 2: Technical Reference
 
 - **Prompt:** `prompts/preflight/run-uni/ver-update.md`
-- **Step ID:** ver-update - **Type:** PER_RELEASE - **Phase:** A (ai-studio)
+- **Step ID:** ver-update - **Type:** REUSABLE (once per release via the duplicate guard) - **Phase:** A (ai-studio)
 - **Run it when:** once per release, before any tag exists.
 - **Reads:** `package.json`, `public/version.json`, `public/status.json`, `src/domain/upgradeGate.ts`, `android-wrapper/app/build.gradle.kts`, `android-wrapper/gradle.properties`, `fastlane/metadata/android/en-US/changelogs/`.
 - **Writes:** the five version strings, `CHANGELOG.md`, the Fastlane changelog for the new `versionCode`, and the `ROADMAP.md` release section.

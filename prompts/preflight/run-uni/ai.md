@@ -1,17 +1,21 @@
-# One-Time AI Studio Baseline
+# One-Time Environment Baseline
 
-**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase A (AI Studio) \[FIRST-TIME-SINGLE-USE\] in pf-launcher-uni.md; can also be read and run standalone.
+**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase B (Anti-Gravity / local CLI) \[FIRST-TIME-SINGLE-USE\] in pf-launcher-uni.md; can also be read and run standalone.
 
 - **Step ID:** ai-baseline
-- **Phase & Lifecycle:** Phase A (ai-studio) \[FIRST-TIME-SINGLE-USE\] (retires via AGENT\_SKIP\_LINE)
+- **Phase & Lifecycle:** Phase B (antigravity / freebuff) \[FIRST-TIME-SINGLE-USE\] (retires via AGENT\_SKIP\_LINE); moved out of Phase A because it runs `npm ci`, `tsc`, and a dev-server probe
 - **Allowed Diff Scope:** none - environment verification, `docs/handoff-state.json` logging only
 - **Companion Readme:** `prompts/preflight/run-uni/read/ai-readme.md`
-- **Log Entry:** `{ "step_id": "ai-baseline", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+- **Log Entry:** `{ "step_id": "ai-baseline", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Establish once what the AI Studio sandbox can and cannot do, so later steps route correctly instead of guessing.
+
+> **Part 1 — For A Human (plain English):** Records what this machine can actually do - which tools are installed and which are missing - so later steps know what can be verified here and what must wait for CI. *Repeats:* once, then it ticks itself off and never runs again. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
 
 # 1\. Platform Classification
 
-- Record whether local Git CLI, Node, and `npm` are available. Git + shell available means Phase B (`antigravity` / `local-cli`); otherwise Phase A (`ai-studio` / sandbox). Write the result to `docs/handoff-state.json`; never re-detect mid-run.
+- Record which runner you are (`ai-studio`, `antigravity` or `freebuff`) and whether local Git CLI, Node, and `npm` are actually available. The runner identity is a declaration; the shell check is the observable that decides whether this step's checks can run at all. Write both to `docs/handoff-state.json`; never re-detect mid-run.
 
 # 2\. Baseline Checks (read-only)
 

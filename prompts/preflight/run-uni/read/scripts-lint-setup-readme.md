@@ -1,4 +1,21 @@
-# Scripts And Lint Setup - Step Readme
+# Scripts And Lint Setup
+
+This readme is **dual-audience**: **Part 1** explains the step in plain English for whoever is running the preflight; **Part 2** is the technical record for an AI agent or developer.
+
+---
+
+## Part 1: Plain-English Guide
+
+**In plain terms:** Confirms the preflight helper scripts themselves run correctly on this machine, before you rely on them.
+
+- **You need this step when:** the first local-CLI run on a repository or branch.
+- **How often:** once, then it ticks itself off and never runs again.
+- **Which assistant runs it:** Anti-Gravity or Freebuff (Phase B).
+- **How you know it worked:** `OK [scripts-lint-setup] files=<count>`.
+
+---
+
+## Part 2: Technical Reference
 
 - **Prompt:** `prompts/preflight/run-uni/scripts-lint-setup.md`
 - **Step ID:** scripts-lint-setup - **Type:** FIRST_TIME - **Phase:** B (antigravity)

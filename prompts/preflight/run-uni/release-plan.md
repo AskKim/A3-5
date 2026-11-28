@@ -1,13 +1,17 @@
 # Per-Release Plan, Cut And Sign-Off
 
-**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase B (Anti-Gravity / local CLI) \[PER-RELEASE\] in pf-launcher-uni.md; runnable standalone.
+**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase B (Anti-Gravity / local CLI) \[REUSABLE\] in pf-launcher-uni.md; runnable standalone.
 
 - **Step ID:** release-plan
-- **Phase & Lifecycle:** Phase B (antigravity) \[PER-RELEASE\] (never retired by AGENT\_SKIP\_LINE)
+- **Phase & Lifecycle:** Phase B (antigravity) \[REUSABLE\] (never retired by AGENT\_SKIP\_LINE)
 - **Allowed Diff Scope:** `ROADMAP.md` (release section only), `CHANGELOG.md` (final wording only); everything else read-only
 - **Companion Readme:** `prompts/preflight/run-uni/read/release-plan-readme.md`
 - **Log Entry:** `{ "step_id": "release-plan", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Turn every prior step's evidence into one ordered cut plan, then hand the irreversible parts to the human.
+
+> **Part 1 — For A Human (plain English):** Turns everything the earlier steps proved into one ordered cut plan, then hands the irreversible parts - publishing, the live site, legal sign-off - to you. *Repeats:* every release. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
 
 # 1\. Preconditions For The Cut
 

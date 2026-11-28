@@ -2,6 +2,9 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
+ * PART 1 — FOR HUMANS: The changelog of prompt revisions, kept so an earlier version can be recovered.
+ * PART 2 — FOR AI / DEVELOPERS:
+ *
  * Pure TypeScript Prompt Changelog & Recovery Registry (`src/domain/promptRegistry.ts`).
  *
  * Purpose:
@@ -404,7 +407,7 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       'Added protected reusable `modularity-check.md` and refined Phase 2–4 to enforce comment/string-safe scanning, `hooks/` & `components/` coverage, shared type placement out of UI components, all-layer cycle detection, gate-honesty reporting (no silent skips), and final `Estimated Modularity` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.',
     trackedFiles: [
       'prompts/preflight/run-uni/modularity-check.md',
-      'prompts/preflight/preflight.manifest.json',
+      'prompts/preflight/manifest/preflight.manifest.json',
       'prompts/preflight/pf-launcher-uni.md',
     ],
     invariants: [
@@ -422,7 +425,7 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Restore `prompts/preflight/run-uni/modularity-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:`) and keep it wired as the `modularity-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.',
+      'Restore `prompts/preflight/run-uni/modularity-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:`) and keep it wired as the `modularity-check` `[REUSABLE]` step in `prompts/preflight/manifest/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.',
     ],
   },
   {
@@ -438,7 +441,7 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       'Added protected reusable `reusability-check.md` and hardened Phase 2–4 to require micro-utility consolidation onto an existing canonical owner without transitive heavy dependency leaks, singleton `reset*` hooks, non-default test fixtures proving reusability, measurable duplication counts, and final `Estimated Reusability` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.',
     trackedFiles: [
       'prompts/preflight/run-uni/reusability-check.md',
-      'prompts/preflight/preflight.manifest.json',
+      'prompts/preflight/manifest/preflight.manifest.json',
       'prompts/preflight/pf-launcher-uni.md',
     ],
     invariants: [
@@ -456,7 +459,7 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Restore `prompts/preflight/run-uni/reusability-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:`) and keep it wired as the `reusability-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.',
+      'Restore `prompts/preflight/run-uni/reusability-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:`) and keep it wired as the `reusability-check` `[REUSABLE]` step in `prompts/preflight/manifest/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.',
     ],
   },
   {
@@ -591,6 +594,47 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
     decidedOn: '2026-11-28',
     version: '2026-11-28',
     commitShaOrTag: '170a49d',
+    status: 'active',
+  },
+  {
+    id: 'PRM-012',
+    promptFile: 'prompts/preflight/pf-launcher-uni.md',
+    title: 'Preflight Launcher — Single Manifest, Generated Step Lists, Two Step Types',
+    category: 'architecture-audit',
+    lifecycle: 'active',
+    lastEdited: '2026-11-28',
+    intent:
+      'The preflight launcher had grown four hand-maintained copies of one step list (its own lines, a byte-identical second manifest, the wiring table and a module roster) plus a third step type that nothing enforced, so the copies disagreed and had to be re-synced by hand.',
+    changeSummary:
+      '`prompts/preflight/manifest/preflight.manifest.json` is now the only place a step is declared. `scripts/gen-preflight.mjs` renders the launcher step blocks (preserving retired `AGENT_SKIP_LINE` lines by `step_id`), the module summary, `pf-launcher-uni-wiring.md` and the pristine template, and `--check` plus `preflight-lint.mjs` fail on drift. Steps are sorted by the minimum environment they need: Phase A (10 steps) is file read/edit only, Phase B (8 steps) needs git, a shell, a build, CI or the device, and each step carries an ordered runner bracket such as `[ai-studio | freebuff]` or `[antigravity | freebuff]` where first listed is preferred. `modularity-check`, `reusability-check`, `ci-setup` and `attribution-audit` moved to Phase A with their gate tails deferred to `ci-guide`; `ai-baseline` and `crawl-guide` moved to Phase B because they run `npm` and the subpath build. The duplicate root manifest, the two Google Drive export scripts and the third step type are gone, `freebuff` is now a legal ledger platform, and `preflight-state.mjs` takes the resume phase from the manifest instead of a second hardcoded list.',
+    trackedFiles: [
+      'prompts/preflight/pf-launcher-uni.md',
+      'prompts/preflight/manifest/preflight.manifest.json',
+      'prompts/preflight/manifest/manifest.schema.json',
+      'prompts/preflight/scripts/gen-preflight.mjs',
+      'prompts/preflight/scripts/preflight-lint.mjs',
+    ],
+    invariants: [
+      {
+        filePath: 'prompts/preflight/pf-launcher-uni.md',
+        requiredSubstrings: [
+          'AGENT_SKIP_LINE',
+          '=== CONSTRAINTS ===',
+          '<!-- PHASE_A_STEPS_START -->',
+          '<!-- PHASE_B_STEPS_START -->',
+          'prompts/preflight/manifest/preflight.manifest.json',
+        ],
+        rationale:
+          'The launcher is generated around its two step blocks, so those markers and the pointer to the single manifest have to survive every regeneration; losing them would quietly stop the retirement machinery and let the launcher and manifest disagree again.',
+      },
+    ],
+    restorePlaybook: [
+      'Restore the launcher from the pristine template (`node prompts/preflight/scripts/preflight-reset.mjs --full`), then re-render it with `npm run preflight:gen -- --write`.',
+      'Restore `prompts/preflight/manifest/preflight.manifest.json` as the only step list; never reintroduce a second manifest copy or a third step type.',
+    ],
+    decidedOn: '2026-11-28',
+    version: '2026-11-28',
+    commitShaOrTag: 'cd72d34',
     status: 'active',
   },
 ];

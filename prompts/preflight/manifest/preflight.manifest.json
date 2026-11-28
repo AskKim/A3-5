@@ -1,22 +1,166 @@
 {
   "steps": [
-    {"id": "seed-handshake", "file": "run-uni/seed-handshake.md", "type": "FIRST_TIME", "description": "Initialize handoff state and basic repo files."},
-    {"id": "ai-baseline", "file": "run-uni/ai.md", "type": "FIRST_TIME", "description": "Baseline AI environment checks."},
-    {"id": "a11y-setup", "file": "run-uni/a11y.md", "type": "FIRST_TIME", "description": "One-time accessibility setup."},
-    {"id": "crawl-setup", "file": "run-uni/crawl-setup.md", "type": "FIRST_TIME", "description": "Setup crawling configuration."},
-    {"id": "a11y-check", "file": "run-uni/a11y-check.md", "type": "REUSABLE", "description": "Reusable UI/ARIA diff check."},
-    {"id": "crawl-guide", "file": "run-uni/crawl-guide.md", "type": "REUSABLE", "description": "Reusable crawl manifest guide."},
-    {"id": "release-check-p1", "file": "run-uni/release-check.md", "type": "REUSABLE", "description": "Phase-A release sanity check."},
-    {"id": "ver-update", "file": "run-uni/ver-update.md", "type": "PER_RELEASE", "description": "Version bump and changelog sync."},
-    {"id": "scripts-lint-setup", "file": "run-uni/scripts-lint-setup.md", "type": "FIRST_TIME", "description": "Validate preflight scripts linting."},
-    {"id": "backup-setup", "file": "run-uni/backup-setup.md", "type": "FIRST_TIME", "description": "Configure backup vault."},
-    {"id": "ci-setup", "file": "run-uni/ci-setup.md", "type": "FIRST_TIME", "description": "Configure CI pipeline."},
-    {"id": "backup-check", "file": "run-uni/backup-check.md", "type": "REUSABLE", "description": "Pre-merge backup verification."},
-    {"id": "ci-guide", "file": "run-uni/ci-guide.md", "type": "REUSABLE", "description": "CI health and smoke test guide."},
-    {"id": "modularity-check", "file": "run-uni/modularity-check.md", "type": "REUSABLE", "description": "Layer, cycle and boundary audit."},
-    {"id": "reusability-check", "file": "run-uni/reusability-check.md", "type": "REUSABLE", "description": "Duplication, parameterisation and portability audit."},
-    {"id": "release-check-p2", "file": "run-uni/release-check.md", "type": "REUSABLE", "description": "Phase-B release sanity check."},
-    {"id": "attribution-audit", "file": "run-uni/audit.md", "type": "PER_RELEASE", "description": "AGPL-3 attribution audit."},
-    {"id": "release-plan", "file": "run-uni/release-plan.md", "type": "PER_RELEASE", "description": "Final release plan and sign-off."}
+    {
+      "id": "seed-handshake",
+      "file": "run-uni/seed-handshake.md",
+      "type": "FIRST_TIME",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "Seed `docs/handoff-state.json` when missing, confirm `ALIGNED` + `GUARDED`, and verify `.nojekyll`, `LICENSE` (`AGPL-3.0`), and `THIRD_PARTY_NOTICES.md`",
+      "description": "Initialize handoff state and basic repo files."
+    },
+    {
+      "id": "a11y-setup",
+      "file": "run-uni/a11y.md",
+      "type": "FIRST_TIME",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "one-time accessibility structure, landmarks, focus and contrast",
+      "description": "One-time accessibility setup."
+    },
+    {
+      "id": "crawl-setup",
+      "file": "run-uni/crawl-setup.md",
+      "type": "FIRST_TIME",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "one-time crawl, manifest and share metadata",
+      "description": "Setup crawling configuration."
+    },
+    {
+      "id": "ci-setup",
+      "file": "run-uni/ci-setup.md",
+      "type": "FIRST_TIME",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "one-time CI workflow parity check against `npm run verify`; edits `.github/workflows/` only, runs no workflow",
+      "description": "Configure CI pipeline."
+    },
+    {
+      "id": "a11y-check",
+      "file": "run-uni/a11y-check.md",
+      "type": "REUSABLE",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "diff-scoped UI/ARIA check",
+      "description": "Reusable UI/ARIA diff check."
+    },
+    {
+      "id": "modularity-check",
+      "file": "run-uni/modularity-check.md",
+      "type": "REUSABLE",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "static layer/cycle/boundary audit; run the gates only if a shell exists, otherwise record `deferred_gates` (via `--deferred-gates`) for `ci-guide` to run",
+      "description": "Layer, cycle and boundary audit."
+    },
+    {
+      "id": "reusability-check",
+      "file": "run-uni/reusability-check.md",
+      "type": "REUSABLE",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "static duplication/parameterisation/portability audit; run the gates only if a shell exists, otherwise record `deferred_gates` (via `--deferred-gates`) for `ci-guide` to run",
+      "description": "Duplication, parameterisation and portability audit."
+    },
+    {
+      "id": "release-check-p1",
+      "file": "run-uni/release-check.md",
+      "type": "REUSABLE",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "read ONLY `<!-- PHASE_A_START -->` through `<!-- PHASE_A_END -->`",
+      "description": "Phase-A release sanity check."
+    },
+    {
+      "id": "attribution-audit",
+      "file": "run-uni/audit.md",
+      "type": "REUSABLE",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "AGPL-3.0 & `THIRD_PARTY_NOTICES.md` audit from `package-lock.json` (use `npm ls --json` only if a shell exists)",
+      "description": "AGPL-3 attribution audit."
+    },
+    {
+      "id": "ver-update",
+      "file": "run-uni/ver-update.md",
+      "type": "REUSABLE",
+      "phase": "A",
+      "runners": ["ai-studio", "freebuff"],
+      "instruction": "SemVer & changelog sync; the duplicate guard stops a repeat",
+      "description": "Version bump and changelog sync."
+    },
+    {
+      "id": "ai-baseline",
+      "file": "run-uni/ai.md",
+      "type": "FIRST_TIME",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "record the local environment baseline once: git, node, npm, `npm ci`, `tsc`, dev-server isolation",
+      "description": "Baseline environment checks."
+    },
+    {
+      "id": "scripts-lint-setup",
+      "file": "run-uni/scripts-lint-setup.md",
+      "type": "FIRST_TIME",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "Verify `prompts/preflight/scripts/*.mjs` exist locally and pass `node prompts/preflight/scripts/preflight-lint.mjs --check-prefix`",
+      "description": "Validate preflight scripts linting."
+    },
+    {
+      "id": "backup-setup",
+      "file": "run-uni/backup-setup.md",
+      "type": "FIRST_TIME",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "one-time `git bundle` snapshot and documented restore command",
+      "description": "Configure backup vault."
+    },
+    {
+      "id": "crawl-guide",
+      "file": "run-uni/crawl-guide.md",
+      "type": "REUSABLE",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "subpath build plus `dist/` crawl and manifest check",
+      "description": "Reusable crawl manifest guide."
+    },
+    {
+      "id": "backup-check",
+      "file": "run-uni/backup-check.md",
+      "type": "REUSABLE",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "pre-merge backup & scope check; on-device data round trips stay antigravity/human",
+      "description": "Pre-merge backup verification."
+    },
+    {
+      "id": "ci-guide",
+      "file": "run-uni/ci-guide.md",
+      "type": "REUSABLE",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "CI health & `dist/` smoke gate",
+      "description": "CI health and smoke test guide."
+    },
+    {
+      "id": "release-check-p2",
+      "file": "run-uni/release-check.md",
+      "type": "REUSABLE",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`",
+      "description": "Phase-B release sanity check."
+    },
+    {
+      "id": "release-plan",
+      "file": "run-uni/release-plan.md",
+      "type": "REUSABLE",
+      "phase": "B",
+      "runners": ["antigravity", "freebuff"],
+      "instruction": "release cut, post-deploy smoke test, human-only sign-off",
+      "description": "Final release plan and sign-off."
+    }
   ]
 }

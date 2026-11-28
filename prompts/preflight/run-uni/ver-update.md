@@ -1,13 +1,17 @@
 # Per-Release Version And Changelog Sync
 
-**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase A (AI Studio) \[PER-RELEASE\] in pf-launcher-uni.md; runnable standalone.
+**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase A (AI Studio) \[REUSABLE\] in pf-launcher-uni.md; runnable standalone.
 
 - **Step ID:** ver-update
-- **Phase & Lifecycle:** Phase A (ai-studio) \[PER-RELEASE\] (never retired by AGENT\_SKIP\_LINE)
+- **Phase & Lifecycle:** Phase A (ai-studio) \[REUSABLE\] (never retired; the state duplicate guard limits it to once per release)
 - **Allowed Diff Scope:** `package.json`, `public/version.json`, `src/domain/upgradeGate.ts`, `android-wrapper/app/build.gradle.kts`, `android-wrapper/gradle.properties`, `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`, `CHANGELOG.md`, `ROADMAP.md`
 - **Companion Readme:** `prompts/preflight/run-uni/read/ver-update-readme.md`
 - **Log Entry:** `{ "step_id": "ver-update", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Make every version-bearing file and the human-facing changelog agree on one version before the tag exists.
+
+> **Part 1 — For A Human (plain English):** Bumps the version everywhere it is written down and rolls the changelog, so all four version files agree. *Repeats:* every release. *Runs in:* AI Studio (Phase A).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
 
 # 1\. Version Alignment
 

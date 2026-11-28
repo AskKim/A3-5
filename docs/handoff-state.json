@@ -2,19 +2,12 @@
   "schema_version": 2,
   "active_branch": "freebuff/ae0e1ce3853e2d9932e8688e",
   "target_version": "0.1.0-alpha.3",
-  "resume_cursor": {
-    "phase": "B",
-    "next_step_id": "scripts-lint-setup"
-  },
-  "phase_a_scope_hash": "1487fa19d0ac261f8676f6cc0317d30d3280cc755412aff87ef4620dbdb70b82",
-  "ai_studio_status": "completed",
-  "ai_studio_completed_at": "2026-11-28T03:06:28Z",
-  "ai_studio_commit_sha": "069081422512554b3ffac780491487ef0a18e8d5",
-  "improvement_log_anchor": {
-    "file": "CHANGELOG.md",
-    "top_heading": "# Changelog",
-    "line_count": 26
-  },
+  "resume_cursor": null,
+  "phase_a_scope_hash": null,
+  "ai_studio_status": "pending",
+  "ai_studio_completed_at": null,
+  "ai_studio_commit_sha": null,
+  "improvement_log_anchor": null,
   "antigravity_status": "pending",
   "antigravity_completed_at": null,
   "history": [

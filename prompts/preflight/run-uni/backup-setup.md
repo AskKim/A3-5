@@ -9,6 +9,10 @@
 - **Log Entry:** `{ "step_id": "backup-setup", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Guarantee a restorable copy of the working tree exists before any release step is allowed to edit files.
 
+> **Part 1 — For A Human (plain English):** Sets up the backup habit: where snapshots are kept and how to take one before touching anything risky. *Repeats:* once, then it ticks itself off and never runs again. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Repository Snapshot
 
 - Record `git rev-parse HEAD`, the current branch, and `git status -s`. Unrelated uncommitted work is a hard stop: ask before continuing.

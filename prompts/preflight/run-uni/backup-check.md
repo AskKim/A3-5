@@ -9,6 +9,10 @@
 - **Log Entry:** `{ "step_id": "backup-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Prove that a breeder's data survives this release before the release is allowed to merge.
 
+> **Part 1 — For A Human (plain English):** Takes the pre-merge backup and proves it can be restored, before the risky part of a release rather than after it. *Repeats:* every release. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Repository Snapshot Freshness
 
 - A snapshot from `backup-setup` exists for the current `HEAD`, or a new one is created now; stale snapshots (a different `HEAD`) do not count.

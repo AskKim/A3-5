@@ -3,14 +3,18 @@
 
 **Last-Edited Timestamp:** 2026-11-28  
 **Prompt Reusability:** Reusable across projects & repositories (auto-discovers shared modules, conventions, and verification suites)  
-**Preflight Lifecycle:** `[REUSABLE]` — scheduled on every release in Phase B of `prompts/preflight/pf-launcher-uni.md`; never retired by `AGENT_SKIP_LINE`
+**Preflight Lifecycle:** `[REUSABLE]` — scheduled on every release in Phase A of `prompts/preflight/pf-launcher-uni.md`; never retired by `AGENT_SKIP_LINE`
 
 - **Step ID:** reusability-check
-- **Phase & Lifecycle:** Phase B (antigravity / local CLI) \[REUSABLE\]; also runnable standalone, and in Phase A when the audit needs no build
+- **Phase & Lifecycle:** Phase A (ai-studio / freebuff) \[REUSABLE\]; the audit is static and needs no shell, and its gate tail defers to Phase B
 - **Allowed Diff Scope:** shared modules and their callers, inventories/barrels, and the tests that prove the new seam
 - **Companion Readme:** `prompts/preflight/run-uni/read/reusability-check-readme.md`
-- **Log Entry:** `{ "step_id": "reusability-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+- **Log Entry:** `{ "step_id": "reusability-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Find where shared code is accidentally domain-, host-, or shape-locked, and generalise only what genuinely pays for itself.
+
+> **Part 1 — For A Human (plain English):** Checks that shared code is genuinely generic - no leftover livestock-specific words or one-off assumptions hiding inside the reusable parts. *Repeats:* every release. *Runs in:* AI Studio (Phase A).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
 
 > **Reusable Prompt Notice:**
 > This prompt is **project-agnostic and reusable** across any TypeScript/JavaScript or multi-module codebase. It dynamically inspects the target repository's structure, shared packages/layers, conventions, and verification scripts before evaluating and improving code reusability.
@@ -36,7 +40,7 @@ You are a senior software architect focused on code reuse, clean abstractions, a
 
 ### 1. Phase 1 — Discover Shared Surfaces & Project Baseline
 - Inspect `package.json`, `tsconfig*.json`, bundler config, and directory structure to identify shared/reusable layers (e.g., `src/engine/`, `src/features/`, `src/utils/`, `packages/*`, `lib/*`) versus app/domain layers (`src/domain/`, `src/app/`, `src/storage/`, `src/hooks/`, `src/components/`).
-- Run existing verification/test/build checks (e.g., `npm run lint`, `npm test`, `npm run verify`, or project equivalents) to confirm a clean baseline before refactoring.
+- **Only if a shell exists.** Run existing verification/test/build checks (e.g., `npm run lint`, `npm test`, `npm run verify`, or project equivalents) to confirm a clean baseline before refactoring. With no shell, record `deferred_gates` on the step log entry via `--deferred-gates <gate>` and proceed on static evidence.
 
 ### 2. Phase 2 — Evaluate Reusability Across Five Dimensions
 Audit shared, utility, feature, storage, and domain/UI modules for reusability blockers:
@@ -64,7 +68,7 @@ Audit shared, utility, feature, storage, and domain/UI modules for reusability b
     5. **Prove Reusability With Tests:** Add or update unit tests that exercise generalized modules and `configure*`/`reset*` hooks using **non-default, domain-agnostic test fixtures** (distinct schemas, prefixes, and mock adapters) to prove zero hidden domain assumptions remain.
 
 ### 4. Phase 4 — Verify & Report
-- Run the repository's full verification and build suite (e.g., `npm run verify` and `npm run build`, or all available typecheck, test, layer, isolated-engine/extraction, invariant, and build commands).
+- **Only if a shell exists.** Run the repository's full verification and build suite (e.g., `npm run verify` and `npm run build`, or all available typecheck, test, layer, isolated-engine/extraction, invariant, and build commands). With no shell, record `deferred_gates` on the step log entry via `--deferred-gates <gate>` and report the suite as not run here - never as a pass.
 - Update any required improvement/change registry (such as `src/domain/improvementRegistry.ts` and `IMPROVEMENTS.md`) if significant structural, storage, or memory/lifecycle changes were made, and remove temporary plan/handoff files once all checks pass.
 - Report concisely:
   1. **Reusability Scorecard:** Status of all verification, isolated-compile, test, and build checks.

@@ -23,7 +23,7 @@ by `npm run verify:prompts`. Whenever a prompt in `/prompts/` is added, refined,
 accidentally overwritten, run the verifier to pinpoint any lost directives or protection flags
 and follow the restoration playbook below.
 
-- **Active Prompt Trackers:** 10
+- **Active Prompt Trackers:** 11
 - **Archived Snapshot Trackers:** 1
 
 ## Quick Verification Commands
@@ -38,7 +38,7 @@ npm run verify
 
 ---
 
-## Logged Prompt Revisions (11)
+## Logged Prompt Revisions (12)
 
 ### PRM-001: Active Master System Prompt Governance, Alignment & Registry Mandates
 
@@ -132,13 +132,13 @@ npm run verify
 - **Last Edited:** 2026-11-28
 - **Intent:** Provide a concise, project-agnostic modularity evaluation and remediation prompt covering layer direction, shared types, sibling isolation, cycles, and inventory sync.
 - **Change Summary:** Added protected reusable `modularity-check.md` and refined Phase 2–4 to enforce comment/string-safe scanning, `hooks/` & `components/` coverage, shared type placement out of UI components, all-layer cycle detection, gate-honesty reporting (no silent skips), and final `Estimated Modularity` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.
-- **Tracked Files:** `prompts/preflight/run-uni/modularity-check.md`, `prompts/preflight/preflight.manifest.json`, `prompts/preflight/pf-launcher-uni.md`
+- **Tracked Files:** `prompts/preflight/run-uni/modularity-check.md`, `prompts/preflight/manifest/preflight.manifest.json`, `prompts/preflight/pf-launcher-uni.md`
 
 **Protected Invariants:**
 - `prompts/preflight/run-uni/modularity-check.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `# Modularity Check`, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:` — *Modularity prompt must stay protected, project-agnostic, include all-layer cycle/sibling isolation checks, and report Estimated Modularity percentage.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/preflight/run-uni/modularity-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:`) and keep it wired as the `modularity-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.
+1. Restore `prompts/preflight/run-uni/modularity-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:`) and keep it wired as the `modularity-check` `[REUSABLE]` step in `prompts/preflight/manifest/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.
 
 ### PRM-007: Reusable 4-Phase Reusability Check Prompt
 
@@ -148,13 +148,13 @@ npm run verify
 - **Last Edited:** 2026-11-28
 - **Intent:** Provide a concise, project-agnostic reusability evaluation and refactoring prompt covering domain leakage, duplicated micro-utilities, rigid signatures, singleton teardown, and lifecycle hygiene.
 - **Change Summary:** Added protected reusable `reusability-check.md` and hardened Phase 2–4 to require micro-utility consolidation onto an existing canonical owner without transitive heavy dependency leaks, singleton `reset*` hooks, non-default test fixtures proving reusability, measurable duplication counts, and final `Estimated Reusability` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.
-- **Tracked Files:** `prompts/preflight/run-uni/reusability-check.md`, `prompts/preflight/preflight.manifest.json`, `prompts/preflight/pf-launcher-uni.md`
+- **Tracked Files:** `prompts/preflight/run-uni/reusability-check.md`, `prompts/preflight/manifest/preflight.manifest.json`, `prompts/preflight/pf-launcher-uni.md`
 
 **Protected Invariants:**
 - `prompts/preflight/run-uni/reusability-check.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `# Reusability Check`, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:` — *Reusability prompt must stay protected, project-agnostic, guard against bundle bloat/singleton lock-in, and report Estimated Reusability percentage.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/preflight/run-uni/reusability-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:`) and keep it wired as the `reusability-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.
+1. Restore `prompts/preflight/run-uni/reusability-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:`) and keep it wired as the `reusability-check` `[REUSABLE]` step in `prompts/preflight/manifest/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.
 
 ### PRM-008: Core Hygiene & PII Check Prompt (Core Content-Free Naming + Human/Contact PII Scrub)
 
@@ -208,3 +208,16 @@ Status:     active
 
 **Recovery Playbook if Broken or Overwritten:**
 1. Restore the all-handoff precheck and the "finished file is not a finished directory" rule, then keep the redirect to the resume prompt for active plans.
+
+## pf-launcher-uni 2026-11-28 — Preflight Launcher — Single Manifest, Generated Step Lists, Two Step Types
+Prompt:     prompts/preflight/pf-launcher-uni.md @ cd72d34
+Why:        The preflight launcher had grown four hand-maintained copies of one step list (its own lines, a byte-identical second manifest, the wiring table and a module roster) plus a third step type that nothing enforced, so the copies disagreed and had to be re-synced by hand.
+Changed:    `prompts/preflight/manifest/preflight.manifest.json` is now the only place a step is declared. `scripts/gen-preflight.mjs` renders the launcher step blocks (preserving retired `AGENT_SKIP_LINE` lines by `step_id`), the module summary, `pf-launcher-uni-wiring.md` and the pristine template, and `--check` plus `preflight-lint.mjs` fail on drift. Steps are sorted by the minimum environment they need: Phase A (10 steps) is file read/edit only, Phase B (8 steps) needs git, a shell, a build, CI or the device, and each step carries an ordered runner bracket such as `[ai-studio | freebuff]` or `[antigravity | freebuff]` where first listed is preferred. `modularity-check`, `reusability-check`, `ci-setup` and `attribution-audit` moved to Phase A with their gate tails deferred to `ci-guide`; `ai-baseline` and `crawl-guide` moved to Phase B because they run `npm` and the subpath build. The duplicate root manifest, the two Google Drive export scripts and the third step type are gone, `freebuff` is now a legal ledger platform, and `preflight-state.mjs` takes the resume phase from the manifest instead of a second hardcoded list.
+Status:     active
+
+**Protected Invariants:**
+- `prompts/preflight/pf-launcher-uni.md` must contain `AGENT_SKIP_LINE`, `=== CONSTRAINTS ===`, `<!-- PHASE_A_STEPS_START -->`, `<!-- PHASE_B_STEPS_START -->`, `prompts/preflight/manifest/preflight.manifest.json` — *The launcher is generated around its two step blocks, so those markers and the pointer to the single manifest have to survive every regeneration; losing them would quietly stop the retirement machinery and let the launcher and manifest disagree again.*
+
+**Recovery Playbook if Broken or Overwritten:**
+1. Restore the launcher from the pristine template (`node prompts/preflight/scripts/preflight-reset.mjs --full`), then re-render it with `npm run preflight:gen -- --write`.
+2. Restore `prompts/preflight/manifest/preflight.manifest.json` as the only step list; never reintroduce a second manifest copy or a third step type.

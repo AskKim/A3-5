@@ -1,12 +1,16 @@
 # Reusable Crawl And Discoverability Check
 
-**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase A (AI Studio) \[REUSABLE\] in pf-launcher-uni.md; runnable standalone.
+**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase B (Anti-Gravity / local CLI) \[REUSABLE\] in pf-launcher-uni.md; runnable standalone.
 
 - **Step ID:** crawl-guide
-- **Phase & Lifecycle:** Phase A (ai-studio) \[REUSABLE\]
+- **Phase & Lifecycle:** Phase B (antigravity / freebuff) \[REUSABLE\]; moved out of Phase A because it runs the subpath build and inspects `dist/`
 - **Allowed Diff Scope:** None by default; fixes limited to `public/robots.txt`, `public/sitemap.xml`, `public/404.html` when a release would otherwise ship a broken pointer
 - **Companion Readme:** `prompts/preflight/run-uni/read/crawl-guide-readme.md`
-- **Log Entry:** `{ "step_id": "crawl-guide", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+- **Log Entry:** `{ "step_id": "crawl-guide", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+
+> **Part 1 — For A Human (plain English):** Re-checks the site is still discoverable: robots.txt, sitemap, canonical links, and that the 404 fallback still works. *Repeats:* every release. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
 
 # 1\. Build Output Check
 

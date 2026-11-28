@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // prompts/preflight/scripts/preflight-reset.mjs — Launcher & Schema v2 state reset helper
-// Last Updated: 2026-11-28T08:30:00-08:00
+// Last Updated: 2026-11-28T09:45:00-08:00
 //
 // Usage:
 //   node prompts/preflight/scripts/preflight-reset.mjs --full [--dry-run]
 //   node prompts/preflight/scripts/preflight-reset.mjs --init --branch <name> --version <tag>
 //   node prompts/preflight/scripts/preflight-reset.mjs --branch <name> --version <tag>
 //   node prompts/preflight/scripts/preflight-reset.mjs --clear-error
+//   node prompts/preflight/scripts/preflight-reset.mjs --reopen-phase A|B [--dry-run]
 //   node prompts/preflight/scripts/preflight-reset.mjs --rearm <step_id> [--dry-run]
 //
 // Branch-local resets preserve history[] and never edit the launcher's AGENT_SKIP_LINE markers.
@@ -112,16 +113,32 @@ function clearRollbackRecord() {
 
 if (args.includes('--full')) {
   if (!existsSync(TEMPLATE)) fail(`${TEMPLATE} is missing; cannot perform a full reset.`);
-  const backup = `/tmp/pf-launcher-uni.${new Date().toISOString().replace(/[:.]/g, '-')}.md`;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backup = `/tmp/pf-launcher-uni.${stamp}.md`;
+  // The state log is the only record of what has already run here, so it is copied aside before
+  // the delete: a full reset for a fresh environment should not also destroy this one's history.
+  const stateBackup = `/tmp/pf-handoff-state.${stamp}.json`;
+  const statePresent = existsSync(STATE_PATH);
   if (!dryRun) {
     if (existsSync(LAUNCHER)) copyFileSync(LAUNCHER, backup);
     copyFileSync(TEMPLATE, LAUNCHER);
-    if (existsSync(STATE_PATH)) unlinkSync(STATE_PATH);
+    if (statePresent) {
+      copyFileSync(STATE_PATH, stateBackup);
+      unlinkSync(STATE_PATH);
+    }
   }
   clearRollbackRecord();
   console.log(
     JSON.stringify(
-      { ok: true, mode: 'full', launcher_restored_from: TEMPLATE, launcher_backup: existsSync(backup) ? backup : null, state_removed: existsSync(STATE_PATH) ? 'pending' : true, dry_run: dryRun },
+      {
+        ok: true,
+        mode: 'full',
+        launcher_restored_from: TEMPLATE,
+        launcher_backup: existsSync(backup) ? backup : null,
+        state_backup: existsSync(stateBackup) ? stateBackup : null,
+        state_removed: statePresent && !dryRun,
+        dry_run: dryRun,
+      },
       null,
       2
     )
@@ -171,6 +188,43 @@ if (args.includes('--init')) {
 if (!stateExists) fail(`${STATE_PATH} is missing; run --init (or the seed-handshake step) first.`);
 const state = readJson(STATE_PATH);
 state.history = Array.isArray(state.history) ? state.history : [];
+
+// Reopen a phase without touching the branch or the launcher. This is the safe alternative to a
+// full reset: history[] is preserved, so the record of what already ran survives, while the phase
+// is armed to run again. Steps already retired in the launcher still tick themselves off.
+const reopenArg = getArg('--reopen-phase');
+if (reopenArg) {
+  const phase = reopenArg.trim().toUpperCase();
+  if (phase !== 'A' && phase !== 'B') fail(`--reopen-phase expects A or B, got "${reopenArg}".`);
+  const next = { ...state, resume_cursor: null, last_error: null };
+  if (phase === 'A') {
+    next.ai_studio_status = 'pending';
+    next.ai_studio_completed_at = null;
+    next.ai_studio_commit_sha = null;
+    next.phase_a_scope_hash = null;
+    next.improvement_log_anchor = null;
+  } else {
+    next.antigravity_status = 'pending';
+    next.antigravity_completed_at = null;
+  }
+  if (!dryRun) writeState(next);
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        mode: 'reopen-phase',
+        phase,
+        changed: true,
+        history_entries_preserved: next.history.length,
+        resume_cursor: null,
+        dry_run: dryRun,
+      },
+      null,
+      2
+    )
+  );
+  process.exit(0);
+}
 
 if (args.includes('--clear-error')) {
   if (!dryRun) writeState({ ...state, last_error: null });

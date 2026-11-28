@@ -9,6 +9,10 @@
 - **Log Entry:** `{ "step_id": "crawl-setup", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Make the deployed site discoverable and shareable exactly once per repository, so the per-release crawl check only has to confirm it.
 
+> **Part 1 — For A Human (plain English):** Creates the files search engines look for - robots.txt, sitemap.xml and the canonical site identity - so a new site can actually be found and indexed. *Repeats:* once, then it ticks itself off and never runs again. *Runs in:* AI Studio (Phase A).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Static Discoverability Files
 
 - `public/robots.txt`: allow crawling and point at `<live-url>sitemap.xml` with an absolute URL.

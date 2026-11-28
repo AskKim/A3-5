@@ -1,4 +1,21 @@
-# Release Check - Step Readme
+# Release Check
+
+This readme is **dual-audience**: **Part 1** explains the step in plain English for whoever is running the preflight; **Part 2** is the technical record for an AI agent or developer.
+
+---
+
+## Part 1: Plain-English Guide
+
+**In plain terms:** The release sanity pass: proves the version numbers, notices, docs and build all agree with each other before anything is published.
+
+- **You need this step when:** once per phase, on the exact commit you intend to tag.
+- **How often:** every release.
+- **Which assistant runs it:** either assistant (both phases).
+- **How you know it worked:** `OK [release-check-p1|release-check-p2] files=0` with a one-line verdict per bullet.
+
+---
+
+## Part 2: Technical Reference
 
 - **Prompt:** `prompts/preflight/run-uni/release-check.md`
 - **Step IDs:** release-check-p1 (Phase A), release-check-p2 (Phase B) - **Type:** REUSABLE

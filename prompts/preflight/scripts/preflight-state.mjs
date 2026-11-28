@@ -22,17 +22,6 @@ const DEFAULT_SCOPE = ['src/', 'public/', 'index.html', 'package.json', 'manifes
 const DEFAULT_STALE_HOURS = 24;
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
-const PHASE_A_STEPS = new Set([
-  'seed-handshake',
-  'ai-baseline',
-  'a11y-setup',
-  'crawl-setup',
-  'a11y-check',
-  'crawl-guide',
-  'release-check-p1',
-  'ver-update',
-]);
-
 const args = process.argv.slice(2);
 const getArg = (flag) => {
   const i = args.indexOf(flag);
@@ -227,7 +216,8 @@ const summary = {
   improvement_log_anchor: currentAnchor,
   resume_cursor: state.resume_cursor ?? null,
   resume_step_id: nextStep ? nextStep.id : null,
-  resume_phase: nextStep ? (PHASE_A_STEPS.has(nextStep.id) ? 'A' : 'B') : null,
+  // Phase comes from the manifest, never from a second hand-maintained list in this file.
+  resume_phase: nextStep ? (nextStep.phase ?? 'B') : null,
   last_error: state.last_error ?? null,
   validation_errors: validationErrors,
   blocked_reasons: reasons,

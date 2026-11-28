@@ -1,24 +1,41 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Preflight Manifest",
+  "description": "Single source of truth for prompts/preflight: which steps exist, the prompt file each runs, the phase that owns it, and whether it runs once or stays reusable. Every step list in the folder is rendered from this file by scripts/gen-preflight.mjs.",
   "type": "object",
+  "additionalProperties": false,
+  "required": ["steps"],
   "properties": {
     "steps": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "file", "type", "description"],
+        "additionalProperties": false,
+        "required": ["id", "file", "type", "phase", "runners", "instruction", "description"],
         "properties": {
-          "id": { "type": "string" },
-          "file": { "type": "string" },
-          "type": { "enum": ["FIRST_TIME", "REUSABLE", "PER_RELEASE"] },
-          "description": { "type": "string" },
-          "requiresEnv": { "type": "boolean" },
-          "runMode": { "enum": ["once", "always"] },
-          "sinceVersion": { "type": "string" }
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "file": { "type": "string", "pattern": "^run-uni/[a-z0-9-]+\\.md$" },
+          "type": {
+            "enum": ["FIRST_TIME", "REUSABLE"],
+            "description": "Exactly two types. FIRST_TIME retires after its first clean run; REUSABLE never retires, and once-per-release work is handled by the duplicate guard in docs/handoff-state.json."
+          },
+          "phase": {
+            "enum": ["A", "B"],
+            "description": "Decided by the minimum environment a step needs, not by cost. A = no environment access (file reads/edits only); B = needs git, npm, dist, CI, the native wrapper or the running app."
+          },
+          "runners": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "enum": ["ai-studio", "antigravity", "freebuff"] },
+            "description": "Ordered runner bracket, preferred first. The order is the front-loading rule: cheapest agent that can finish the step. freebuff appears in both phases because it has a shell (Phase B capable) at no marginal cost (Phase A acceptable)."
+          },
+          "instruction": {
+            "type": "string",
+            "description": "The parenthetical instruction rendered onto the launcher step line."
+          },
+          "description": { "type": "string" }
         }
       }
     }
-  },
-  "required": ["steps"]
+  }
 }

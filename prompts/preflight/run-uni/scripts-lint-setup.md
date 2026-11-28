@@ -9,6 +9,10 @@
 - **Log Entry:** `{ "step_id": "scripts-lint-setup", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Prove the launcher's own tooling is complete before trusting any step it schedules.
 
+> **Part 1 — For A Human (plain English):** Confirms the preflight helper scripts themselves run correctly on this machine, before you rely on them. *Repeats:* once, then it ticks itself off and never runs again. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Script Inventory
 
 - Every script the launcher names must exist in `prompts/preflight/scripts/`: `preflight-run-context.mjs`, `preflight-state.mjs`, `preflight-log.mjs`, `preflight-rollback.mjs`, `preflight-lint.mjs`, `preflight-reset.mjs`, plus `gen-preflight.mjs`.
@@ -16,7 +20,7 @@
 
 # 2\. Step Inventory
 
-- For every entry in `prompts/preflight/preflight.manifest.json`, the referenced prompt file must exist under `prompts/preflight/run-uni/` and have its `*-readme.md` mate in `prompts/preflight/run-uni/read/`.
+- For every entry in `prompts/preflight/manifest/preflight.manifest.json`, the referenced prompt file must exist under `prompts/preflight/run-uni/` and have its `*-readme.md` mate in `prompts/preflight/run-uni/read/`.
 - Run `npm run -s preflight:lint` (and `-- --check-prefix`) and require `PREFLIGHT_LINT_OK`. A silent skip is a failure: if `run-uni/read/` or `templates/pf-launcher-uni-clean.md` is missing, the linter checks nothing while still printing OK - report that as `STEP_BLOCKED`.
 
 # 3\. Config Sanity

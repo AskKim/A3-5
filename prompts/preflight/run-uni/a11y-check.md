@@ -8,6 +8,10 @@
 - **Companion Readme:** `prompts/preflight/run-uni/read/a11y-check-readme.md`  
 - **Log Entry:** `{ "step_id": "a11y-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 
+> **Part 1 — For A Human (plain English):** Re-runs the accessibility audit before a release and fixes only what genuinely regressed, so the app stays usable by keyboard and screen reader. *Repeats:* every release. *Runs in:* AI Studio (Phase A).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Pre-Flight & Pre-Release Accessibility Verification
 
 - **Document, Landmarks & Headings:** Verify `<html lang>`, route `<title>`, `<header>`/`<nav>`/`<main>`/`<footer>`, `#main-content` skip link, sequential `<h1>`–`<h6>` order, semantic lists (`<ul>`/`<ol>`), and `aria-labelledby` regions.  

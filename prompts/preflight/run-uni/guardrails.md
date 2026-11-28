@@ -8,6 +8,10 @@
 - **Companion Readme:** `prompts/preflight/run-uni/read/guardrails-readme.md`
 - **Purpose:** One hard-stop list the launcher hands to the executing model so a release run cannot quietly damage the Alpha 2 baseline, the storage engine, or a gate.
 
+> **Part 1 — For A Human (plain English):** The shared rules every step obeys. Read once at the start and it applies to every step afterwards. *Repeats:* every release. *Runs in:* either assistant (both phases).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Architecture Hard Stops
 
 - Core PWA stays **React + Vite + TypeScript**. Never convert, rewrite, or migrate `/src/`, `/index.html`, `/vite.config.ts`, or `/package.json` to Kotlin, Compose, or plain HTML/JS, and never move app logic into `android-wrapper/`.

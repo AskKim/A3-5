@@ -9,6 +9,10 @@
 - **Log Entry:** `{ "step_id": "ci-guide", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Replace "CI looks green" with the actual conclusion per workflow for the commit being released.
 
+> **Part 1 — For A Human (plain English):** Reads the CI results and does a build smoke test, so a green board is confirmed rather than assumed. *Repeats:* every release. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Remote Status For This Commit
 
 - For the exact commit being tagged, record each workflow's conclusion and the jobs that failed. `gh run list --commit <sha> --json name,conclusion,status,url` when `GH_TOKEN` is available.
@@ -26,6 +30,11 @@
 - `npm run verify:chunks` passes without new allowlist entries; report the chunk/edge/cycle counts it prints.
 - Compare `dist/` size and precache entry count against the previous release and flag jumps above ~10%.
 
-# 4\. Exit Contract
+# 4\. Deferred Gates From Phase A
+
+- Read `docs/handoff-state.json` and collect every `deferred_gates` entry recorded by a Phase A step for this branch and version. A Phase A sandbox often has no shell, so those gates were named and postponed rather than passed.
+- Run each one now, with the shell available here, and report its exact command and exit code. A gate that still cannot run is reported as deferred again - never as a pass.
+
+# 5\. Exit Contract
 
 - Emit `OK [ci-guide] files=0` with the per-workflow conclusion table, or `STEP_BLOCKED [ci-guide]: <1-2 line reason> | Reverted: <files> | Resume: fix issue and re-run launcher.`

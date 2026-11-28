@@ -3,14 +3,18 @@
 
 **Last-Edited Timestamp:** 2026-11-28  
 **Prompt Reusability:** Reusable across projects & repositories (auto-discovers local architecture, scripts, and guardrails)  
-**Preflight Lifecycle:** `[REUSABLE]` — scheduled on every release in Phase B of `prompts/preflight/pf-launcher-uni.md`; never retired by `AGENT_SKIP_LINE`
+**Preflight Lifecycle:** `[REUSABLE]` — scheduled on every release in Phase A of `prompts/preflight/pf-launcher-uni.md`; never retired by `AGENT_SKIP_LINE`
 
 - **Step ID:** modularity-check
-- **Phase & Lifecycle:** Phase B (antigravity / local CLI) \[REUSABLE\]; also runnable standalone, and in Phase A when the audit needs no build
+- **Phase & Lifecycle:** Phase A (ai-studio / freebuff) \[REUSABLE\]; the audit is static and needs no shell, and its gate tail defers to Phase B
 - **Allowed Diff Scope:** the minimum source, test, and inventory files needed to fix a confirmed boundary, cycle, or inventory violation
 - **Companion Readme:** `prompts/preflight/run-uni/read/modularity-check-readme.md`
-- **Log Entry:** `{ "step_id": "modularity-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+- **Log Entry:** `{ "step_id": "modularity-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Prove the target repository's layer contract still holds, then fix only the violations it actually found.
+
+> **Part 1 — For A Human (plain English):** Checks the code is still in clean layers with no tangled cross-imports, and fixes only what it can prove is broken. *Repeats:* every release. *Runs in:* AI Studio (Phase A).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
 
 > **Reusable Prompt Notice:**
 > This prompt is **project-agnostic and reusable** across any layered TypeScript/JavaScript or multi-module codebase. It dynamically discovers the target repository's architecture docs, layer rules, build/verification scripts, and protected-file policies before evaluating and fixing modularity issues.
@@ -46,7 +50,7 @@ You are a senior software architect. Upon reading or running this prompt, immedi
   6. **Composition Root, Hooks & UI** (e.g., `src/app/`, `@app/*`, `src/hooks/`, `src/components/`): app wiring, state stores, and presentation.
 
 ### 2. Phase 2 — Evaluate Current Modular State
-Run whichever verification, boundary-audit, and isolated-compile checks exist in `package.json` (plus targeted architecture tests) to establish an objective baseline before editing:
+**Only if a shell exists.** Run whichever verification, boundary-audit, and isolated-compile checks exist in `package.json` (plus targeted architecture tests) to establish an objective baseline before editing. With no shell (a Phase A sandbox), skip this block, record `deferred_gates` on the step log entry via `--deferred-gates <gate>`, and name `ci-guide` and `release-plan` as the gates that will prove the tree:
 - Layer/import audit scripts (e.g., `npm run verify:layers`)
 - Isolated core/engine TypeScript checks (e.g., `npm run verify:engine`, `npm run verify:extraction`)
 - Architecture/wiring unit tests and invariant checks (e.g., `npm run verify:improvements`, `npm run lint`, `npm test`)
@@ -72,7 +76,7 @@ Additionally audit source files statically for structural modularity gaps (using
     5. Add or update unit tests proving the repaired boundaries, import directions, cycle-free graphs, and contracts hold.
 
 ### 4. Phase 4 — Verify & Report
-- Run the repository's full verification and build pipeline (e.g., `npm run verify` and `npm run build`, or all available typecheck, test, layer, extraction, invariant, and build commands).
+- **Only if a shell exists.** Run the repository's full verification and build pipeline (e.g., `npm run verify` and `npm run build`, or all available typecheck, test, layer, extraction, invariant, and build commands). With no shell, record `deferred_gates` on the step log entry via `--deferred-gates <gate>` and report the suite as not run here - never as a pass.
 - Update any required improvement/change registry (such as `src/domain/improvementRegistry.ts` and `IMPROVEMENTS.md`) if significant structural or storage/bridge changes were made, and clean up temporary plan/handoff files once all checks pass.
 - Report concisely:
   1. **Modularity Scorecard:** Pass/fail status of all layer, isolated-compile, extraction, test, and build checks (plus remaining allowlist count).

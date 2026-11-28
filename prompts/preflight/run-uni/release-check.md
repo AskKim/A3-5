@@ -8,6 +8,10 @@
 - **Companion Readme:** `prompts/preflight/run-uni/read/release-check-readme.md`
 - **Log Entry:** `{ "step_id": "<release-check-p1|release-check-p2>", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "<ai-studio|antigravity>", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 
+> **Part 1 — For A Human (plain English):** The release sanity pass: proves the version numbers, notices, docs and build all agree with each other before anything is published. *Repeats:* every release. *Runs in:* either assistant (both phases).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 <!-- PHASE_A_START -->
 
 # Phase A: Sandbox-Safe Release Check
@@ -15,9 +19,9 @@
 - **Version alignment:** `package.json`, `public/version.json` `appVersion`, `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts`, `versionName` in `android-wrapper/app/build.gradle.kts`, and the Fastlane changelog file must agree. Report the five values verbatim.
 - **Release notes:** `public/version.json` `releaseNotes` describes this release (20-280 chars) and matches what you intend to publish.
 - **State:** `docs/handoff-state.json` validates against the schema, `last_error` is `null`, and the branch/version match this run.
-- **Scope:** list `git diff --stat` against the merge base and confirm every changed file belongs to this release; no scratch files, no `docs/plans/` edits made by the preflight run itself.
+- **Scope:** with git available, list `git diff --stat` against the merge base; with no git, list the changed files recorded in `docs/handoff-state.json` `touched_files[]`. Either way confirm every changed file belongs to this release; no scratch files, no `docs/plans/` edits made by the preflight run itself.
 - **Hygiene:** no local absolute paths (`/Users/`, `/home/`, `C:\\Users\\`) and no personal legal names in tracked files; no `as any` / `@ts-ignore` / `@ts-expect-error` added.
-- **Gates available in a sandbox:** `npm run -s preflight:lint` and `npm run -s verify:contract`. Anything requiring a build belongs to Phase B.
+- **Gates:** run `npm run -s preflight:lint` and `npm run -s verify:contract` only if a shell exists; with no shell, record `deferred_gates` on the step log entry via `--deferred-gates <gate>` for `release-check-p2`. Anything requiring a build always belongs to Phase B.
 
 <!-- PHASE_A_END -->
 

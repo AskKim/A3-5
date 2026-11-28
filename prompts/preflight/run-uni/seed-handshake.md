@@ -9,6 +9,10 @@
 - **Log Entry:** `{ "step_id": "seed-handshake", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "ai-studio", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Give the launcher a valid Schema v2 state file and the repo-level files every later step assumes already exist.
 
+> **Part 1 — For A Human (plain English):** Starts the paper trail: it creates the state file that tracks which jobs are done, plus the small repo files every later step assumes already exist. *Repeats:* once, then it ticks itself off and never runs again. *Runs in:* AI Studio (Phase A).
+> **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
+
+
 # 1\. Handshake
 
 - Confirm `prompts/master_system_prompt.md` returns `ALIGNED` and `prompts/preflight/run-uni/guardrails.md` returns `GUARDED`. Both are hard stops; do not proceed on a partial read.
