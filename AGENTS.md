@@ -138,10 +138,18 @@ Minimum tokens and minimum round trips are requirements here, not preferences. T
   `npx tsx scripts/list-modules.ts --write` for `MODULES.md`, `npm run regen:ledgers` for the ledgers.
 - **Append-only ledgers (`IMPROVEMENTS.md`, `PROMPT_CHANGES.md`):** Both ledgers are generated files
   — their whole content is a render of their registry. To log work, add the registry entry —
-  `src/domain/improvements/registry-part-*.ts`, or `src/domain/promptRegistry.ts` for prompts — with
-  the ledger fields (`decidedOn`, `status`, and where they apply `rejected`, `supersededBy`,
-  `version`/`commitShaOrTag`/`supersedes`), then run `npm run regen:ledgers`. Never hand-edit a
-  ledger: `npm run verify` re-renders it from the registry and reports every line that drifts.
+  `src/domain/improvements/registry-part-*.ts`, or `src/domain/promptRegistry.ts` for prompts — then
+  run `npm run regen:ledgers`. Never hand-edit a ledger: `npm run verify` re-renders it from the
+  registry and reports every line that drifts.
+  - **Improvements:** `decidedOn` opts the entry into the contract shape; `status` defaults to
+    `active`, and `rejected`, `supersededBy` and `commitSha` apply where relevant.
+  - **Prompts:** opt in with all three of `decidedOn`, `version` and `commitShaOrTag`. `supersedes`
+    is optional — omit it for a first kept version, which has nothing to replace — but
+    `status: superseded` requires `supersededBy`.
+  - **Gates:** `verify:improvements` and `verify:prompts` each check registry invariants, the ledger
+    header/entry contract and freshness against a fresh render. `verify:prompts` also rejects a
+    half-opted-in entry (some ledger fields without the three-field opt-in) and a `superseded`
+    entry with no `supersededBy`.
 - **Skill edits:** `cloud_manage_skills` has no patch API — every save rewrites the entire skill and
   needs approval, so each save produces another "replace skill?" prompt for the owner.
   **Therefore: never re-publish the account skill as part of ordinary repo work.** The canonical

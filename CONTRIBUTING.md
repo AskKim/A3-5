@@ -37,5 +37,5 @@ npm run build                # Production Vite PWA build
 - **React PWA Only:** The core app (`src/`) must always remain React + Vite + TypeScript; `android-wrapper/` is strictly a thin Kotlin WebView shell.
 - **Strict Types:** Do not suppress TypeScript errors with `as any`, `@ts-ignore`, or `@ts-expect-error`.
 - **Three-Layer Boundaries:** Keep `src/engine/` free of livestock/pedigree terms, avoid cross-feature sibling imports in `src/features/`, and never import from `/import/` or `/old/`.
-- **Improvement Logging:** Register significant functional, boot, storage, memory, or packaging changes in both `src/domain/improvementRegistry.ts` and `IMPROVEMENTS.md`.
+- **Improvement Logging:** Register significant functional, boot, storage, memory, or packaging changes in `src/domain/improvements/registry-part-*.ts`. `IMPROVEMENTS.md` and `PROMPT_CHANGES.md` are both generated from their registries — run `npm run regen:ledgers` instead of editing either by hand. Prompt revisions are logged in `src/domain/promptRegistry.ts` with `decidedOn`, `version` and `commitShaOrTag` (`supersedes` optional, `supersededBy` required when `status: superseded`) and gated by `npm run verify:prompts`, which rejects half-opted-in entries.
 - **Pull Requests:** Complete the contributor license checkbox in [`.github/pull_request_template.md`](./.github/pull_request_template.md).
