@@ -5,17 +5,17 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 258
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.9%)
+- **Total Non-Test Source Modules:** 259
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.8%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 199 (77.1%)
+- **Content-Specific Modules:** 200 (77.2%)
   - Domain Engines (`src/domain/`): 87
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
-  - State Store Hook (`src/hooks/`): 19
+  - State Store Hook (`src/hooks/`): 20
   - UI Screens & Modals (`src/components/`): 53
   - Root Entry & Styles (`src/`): 3
 
@@ -110,7 +110,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (199)
+## 2. Content-Specific Modules (200)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -256,7 +256,7 @@ npx tsx scripts/list-modules.ts --check
 | --- | --- |
 | `src/native/pedigreeBridge.ts` | Content-specific native Android/iOS WebView container bridge (`pedigreeNative`), consumed via `@engine/bridge` contracts. |
 
-### Content-Specific State Controller Hook (`src/hooks/`) (19)
+### Content-Specific State Controller Hook (`src/hooks/`) (20)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -278,6 +278,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/hooks/barnStore/useRollingBackupActions.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/useSyncConflictDismissal.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/useSyncConflictResolution.ts` | Content-specific application state hook. |
+| `src/hooks/barnStore/vaultSlice.tsx` | Content-specific application state hook. |
 | `src/hooks/useBarnStore.ts` | Content-specific Zustand/React barn state store orchestrating species isolation, breeding chore cascades, and persistence. |
 
 ### Content-Specific UI Screens & Modals (`src/components/`) (53)

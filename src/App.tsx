@@ -18,6 +18,7 @@
  */
 
 import { SyncConflictSliceProvider } from './hooks/barnStore/syncConflictSlice';
+import { VaultSliceProvider } from './hooks/barnStore/vaultSlice';
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -1612,8 +1613,6 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onConsumeWithdrawalFocus={() => setRequestedHerdWithdrawalNonce(0)}
             onLoadFullPhoto={store.loadAnimalPhotoDataUrl}
             onLoadFullPhotosBatch={store.loadAnimalPhotoDataUrlsBatch}
-            opfsSupported={store.opfsSupported}
-            archivedHerdBundles={store.archivedHerdBundles}
             onOffloadAnimalsToOpfsArchive={store.offloadAnimalsToOpfsArchive}
             onRestoreArchivedHerdBundle={store.restoreArchivedHerdBundle}
             onDownloadArchivedHerdBundle={store.downloadArchivedHerdBundle}
@@ -1825,6 +1824,17 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             resolveSyncConflict={store.resolveSyncConflict}
             dismissSyncConflict={store.dismissSyncConflict}
           >
+          <VaultSliceProvider
+            opfsSupported={store.opfsSupported}
+            opfsVaultBackups={store.opfsVaultBackups}
+            rollingBackups={store.rollingBackups}
+            archivedHerdBundles={store.archivedHerdBundles}
+            onSaveManualOpfsVaultBackup={store.saveManualOpfsVaultBackup}
+            onCreateVerifiedPreUpgradeBackup={store.createAndVerifyPreUpgradeBackup}
+            onRestoreOpfsVaultBackup={store.restoreOpfsVaultBackup}
+            onDeleteOpfsVaultBackup={store.deleteOpfsVaultBackupByKey}
+            onRestoreRollingBackup={store.restoreRollingBackupByKey}
+          >
           <ImportExportHubScreen
             snapshot={snapshot}
             engineName={store.engineName}
@@ -1845,21 +1855,12 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onImportBackupArchive={store.importBackupArchiveBytes}
             onImportDeltaOperations={store.importDeltaOperations}
             onBuildLocalDeltaJson={store.buildLocalDeltaJsonPayload}
-            onRestoreRollingBackup={store.restoreRollingBackupByKey}
             onExportSqliteBytes={store.exportSqliteBytes}
             onInspectSqliteRestoreBytes={store.inspectSqliteRestoreBytes}
             onImportSqliteBytes={store.importSqliteBytes}
             deviceCapability={deviceCapability}
             onHydrateSnapshotForExport={store.hydrateSnapshotForExport}
-            opfsSupported={store.opfsSupported}
-            opfsVaultBackups={store.opfsVaultBackups}
-            rollingBackups={store.rollingBackups}
-            archivedHerdBundles={store.archivedHerdBundles}
-            onSaveManualOpfsVaultBackup={store.saveManualOpfsVaultBackup}
-            onCreateVerifiedPreUpgradeBackup={store.createAndVerifyPreUpgradeBackup}
-            onRestoreOpfsVaultBackup={store.restoreOpfsVaultBackup}
             onDownloadOpfsVaultBackup={store.downloadOpfsVaultBackupByKey}
-            onDeleteOpfsVaultBackup={store.deleteOpfsVaultBackupByKey}
             onDeleteRollingBackup={store.deleteRollingIdbBackupByKey}
             onRestoreArchivedHerdBundle={store.restoreArchivedHerdBundle}
             onDownloadArchivedHerdBundle={store.downloadArchivedHerdBundle}
@@ -1882,6 +1883,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             onResetAndRetryCloudSync={store.resetAndRetryCloudSync}
             onDismissCloudCircuitBreakerWarning={store.dismissCloudCircuitBreakerWarning}
           />
+          </VaultSliceProvider>
           </SyncConflictSliceProvider>
         )}
 

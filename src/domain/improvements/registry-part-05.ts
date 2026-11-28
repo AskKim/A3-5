@@ -2477,4 +2477,41 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Add the next slice the same way: provider at the route, derived lists memoised inside it.',
     ],
   },
+  {
+    id: 'IMP-122',
+    title: 'Vault State Moves to Its Own Slice',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'The Import/Export hub accepted four vault collections and five vault actions as props and forwarded every one to a backup panel, so a single new vault snapshot re-rendered the whole hub.',
+    summary:
+      'Second slice of the milestone 5 split: `hooks/barnStore/vaultSlice.tsx` carries the vault collections, the five vault actions and memoised counts, and `VaultSliceProvider` wraps the hub inside the conflict provider. The hub no longer declares `opfsSupported`, `opfsVaultBackups`, `rollingBackups`, `archivedHerdBundles`, `onSaveManualOpfsVaultBackup`, `onCreateVerifiedPreUpgradeBackup`, `onRestoreOpfsVaultBackup`, `onDeleteOpfsVaultBackup` or `onRestoreRollingBackup`; it reads them from `useVaultSlice()`, which throws outside the provider. `useBarnStore` still returns all 200 keys, so the contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/vaultSlice.tsx',
+      'src/components/ImportExportHubScreen.tsx',
+      'src/App.tsx',
+      'src/domain/improvementRegistry.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/vaultSlice.tsx',
+        requiredSubstrings: ['VaultSliceProvider', 'useVaultSlice', 'vaultBackupCount'],
+        rationale:
+          'The slice is the only place the vault counts are derived; losing it hands the panels back their per-render filtering.',
+      },
+      {
+        filePath: 'src/components/ImportExportHubScreen.tsx',
+        requiredSubstrings: ['useVaultSlice'],
+        forbiddenSubstrings: ['onSaveManualOpfsVaultBackup?:', 'opfsVaultBackups?:'],
+        rationale:
+          'The hub reads vault state from the slice; reinstating optional vault props restarts prop drilling.',
+      },
+    ],
+    restorePlaybook: [
+      'Wrap a consumer in `<VaultSliceProvider>` before calling `useVaultSlice()`; the hook throws outside one by design.',
+      'Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.',
+      'Next slice on the same pattern: sync state (`syncOperations`, backup status), then drop the pass-through props.',
+    ],
+  },
 ];

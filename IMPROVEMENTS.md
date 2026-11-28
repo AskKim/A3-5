@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (57 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (58 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (121)
+## Logged Improvements (122)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2573,3 +2573,22 @@ npm run lint && npm run build
 1. Wrap any consumer that needs conflicts in `<SyncConflictSliceProvider>`; it throws outside one, by design.
 2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
 3. Add the next slice the same way: provider at the route, derived lists memoised inside it.
+
+### IMP-122: Vault State Moves to Its Own Slice
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** The Import/Export hub accepted four vault collections and five vault actions as props and forwarded every one to a backup panel, so a single new vault snapshot re-rendered the whole hub.
+- **Summary:** Second slice of the milestone 5 split: `hooks/barnStore/vaultSlice.tsx` carries the vault collections, the five vault actions and memoised counts, and `VaultSliceProvider` wraps the hub inside the conflict provider. The hub no longer declares `opfsSupported`, `opfsVaultBackups`, `rollingBackups`, `archivedHerdBundles`, `onSaveManualOpfsVaultBackup`, `onCreateVerifiedPreUpgradeBackup`, `onRestoreOpfsVaultBackup`, `onDeleteOpfsVaultBackup` or `onRestoreRollingBackup`; it reads them from `useVaultSlice()`, which throws outside the provider. `useBarnStore` still returns all 200 keys, so the contract snapshot is untouched.
+- **Tracked Files:** `src/hooks/barnStore/vaultSlice.tsx`, `src/components/ImportExportHubScreen.tsx`, `src/App.tsx`, `src/domain/improvementRegistry.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/vaultSlice.tsx` must contain `VaultSliceProvider`, `useVaultSlice`, `vaultBackupCount` — *The slice is the only place the vault counts are derived; losing it hands the panels back their per-render filtering.*
+- `src/components/ImportExportHubScreen.tsx` must contain `useVaultSlice` — *The hub reads vault state from the slice; reinstating optional vault props restarts prop drilling.*
+  - Forbidden regression: `onSaveManualOpfsVaultBackup?:`, `opfsVaultBackups?:`
+
+**Restoration Playbook if Overwritten:**
+1. Wrap a consumer in `<VaultSliceProvider>` before calling `useVaultSlice()`; the hook throws outside one by design.
+2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
+3. Next slice on the same pattern: sync state (`syncOperations`, backup status), then drop the pass-through props.
