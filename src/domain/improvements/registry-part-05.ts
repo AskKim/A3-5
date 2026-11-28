@@ -3417,4 +3417,54 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Update the inventory and any registry invariant that names the old path in the same change, or the ledger advertises a file that no longer exists.',
     ],
   },
+  {
+    id: 'IMP-143',
+    title: 'Measure Component→Storage Coupling and Move the Install Prompt Behind an @app Port',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The modularity handoff requires the layer checks to cover components and storage, but nothing measured how many UI files still load a storage module at runtime, so the UI decoupling milestone had no denominator and could regress silently. The install button and offline banner were also the simplest example of a presentational header component reaching into `src/storage/storageProtection` for the PWA prompt and connectivity.',
+    summary:
+      '`scripts/audit-layers.ts` now counts component→storage runtime imports (type-only imports are erased, so they are exempt) and checks them against `scripts/ui-storage-coupling-budget.json`, a burn-down ledger that may only shrink: a new edge fails the audit, and a cleared edge must be pruned. `scripts/layer-allowlist.json` stays empty, so no legacy exception list was introduced. The counted baseline is 50 edges across 24 component files, and `PWAInstallButton`/`OfflineIndicator` now read `useInstallPromptPort()` from `src/app/ports/installPrompt.tsx`, which owns the storage import and can be replaced through `InstallPromptPortProvider` in a test.',
+    files: [
+      'scripts/audit-layers.ts',
+      'scripts/ui-storage-coupling-budget.json',
+      'scripts/layer-allowlist.json',
+      'src/app/ports/installPrompt.tsx',
+      'src/components/PWAInstallButton.tsx',
+      'src/components/DeviceCapabilityCard.tsx',
+      'src/components/UnifiedBackupVaultPanel.tsx',
+      'src/components/BarnSchedulerGantt.tsx',
+      'src/components/CloudAppFolderSyncPanel.tsx',
+      'src/components/HealthReferencePanel.tsx',
+      'src/components/SettingsAndSyncScreen.tsx',
+      'src/components/WipedStorageRecoveryModal.tsx',
+      'src/components/__tests__/pwaInstallPort.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/audit-layers.ts',
+        requiredSubstrings: ['ui-storage-coupling-budget.json'],
+        rationale:
+          'The burn-down ledger must stay wired into the layer audit; unwiring it would let component coupling creep back unmeasured.',
+      },
+      {
+        filePath: 'src/components/PWAInstallButton.tsx',
+        requiredSubstrings: ['useInstallPromptPort'],
+        rationale:
+          'The install button must consume the @app port rather than importing the storage layer directly.',
+      },
+    ],
+    restorePlaybook: [
+      'A component that needs storage behaviour takes an `@app/ports/*` capability (context hook with a browser default plus a provider) or a narrow prop — never a direct `../storage/*` import.',
+      'Type-only imports from storage are allowed: they are erased at compile time and create no runtime edge.',
+      'After migrating a seam run `npx tsx scripts/audit-layers.ts --write-ui-budget` so the ledger records the smaller set; never edit the budget upward.',
+    ],
+  },
 ];

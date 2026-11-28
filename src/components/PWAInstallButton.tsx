@@ -7,7 +7,7 @@
 
 import { Download, Smartphone, WifiOff, X } from 'lucide-react';
 import { useState } from 'react';
-import { useOnlineStatus, usePWAInstall } from '../storage/storageProtection';
+import { useInstallPromptPort } from '../app/ports/installPrompt';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 
 export function PWAInstallButton({
@@ -15,7 +15,7 @@ export function PWAInstallButton({
 }: {
   variant?: 'header' | 'card';
 }) {
-  const { canPromptInstall, isInstalled, isIos, promptInstall } = usePWAInstall();
+  const { canPromptInstall, isInstalled, isIos, promptInstall } = useInstallPromptPort();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const iosDialogRef = useAccessibleDialog({
     isOpen: showIOSGuide,
@@ -115,7 +115,7 @@ export function PWAInstallButton({
 }
 
 export function OfflineIndicator() {
-  const isOnline = useOnlineStatus();
+  const { isOnline } = useInstallPromptPort();
 
   if (isOnline) return null;
 

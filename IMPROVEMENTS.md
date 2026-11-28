@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (77 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (78 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (141)
+## Logged Improvements (142)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2884,3 +2884,17 @@ Status:     active
 1. Import `@engine/binaryEncoding` and `@engine/codecs/archiveAndCsvUtils` directly; do not recreate a domain re-export.
 2. Before deleting a shim, codemod every caller (production and test) in one change; a partially migrated shim is worse than none.
 3. Update the inventory and any registry invariant that names the old path in the same change, or the ledger advertises a file that no longer exists.
+
+## 2026-11-28 — Measure Component→Storage Coupling and Move the Install Prompt Behind an @app Port
+Why:        The modularity handoff requires the layer checks to cover components and storage, but nothing measured how many UI files still load a storage module at runtime, so the UI decoupling milestone had no denominator and could regress silently. The install button and offline banner were also the simplest example of a presentational header component reaching into `src/storage/storageProtection` for the PWA prompt and connectivity.
+Changed:    `scripts/audit-layers.ts`, `scripts/ui-storage-coupling-budget.json`, `scripts/layer-allowlist.json`, `src/app/ports/installPrompt.tsx`, `src/components/PWAInstallButton.tsx`, `src/components/DeviceCapabilityCard.tsx`, `src/components/UnifiedBackupVaultPanel.tsx`, `src/components/BarnSchedulerGantt.tsx`, `src/components/CloudAppFolderSyncPanel.tsx`, `src/components/HealthReferencePanel.tsx`, `src/components/SettingsAndSyncScreen.tsx`, `src/components/WipedStorageRecoveryModal.tsx`, `src/components/__tests__/pwaInstallPort.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/audit-layers.ts` must contain `ui-storage-coupling-budget.json` — *The burn-down ledger must stay wired into the layer audit; unwiring it would let component coupling creep back unmeasured.*
+- `src/components/PWAInstallButton.tsx` must contain `useInstallPromptPort` — *The install button must consume the @app port rather than importing the storage layer directly.*
+
+**Restoration Playbook if Overwritten:**
+1. A component that needs storage behaviour takes an `@app/ports/*` capability (context hook with a browser default plus a provider) or a narrow prop — never a direct `../storage/*` import.
+2. Type-only imports from storage are allowed: they are erased at compile time and create no runtime edge.
+3. After migrating a seam run `npx tsx scripts/audit-layers.ts --write-ui-budget` so the ledger records the smaller set; never edit the budget upward.

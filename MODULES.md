@@ -5,14 +5,14 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 266
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.2%)
+- **Total Non-Test Source Modules:** 267
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.1%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 207 (77.8%)
+- **Content-Specific Modules:** 208 (77.9%)
   - Domain Engines (`src/domain/`): 87
-  - App Composition & Configs (`src/app/`): 9
+  - App Composition & Configs (`src/app/`): 10
   - Storage Adapters & Workers (`src/storage/`): 29
   - Native Bridge (`src/native/`): 1
   - State Store Hook (`src/hooks/`): 25
@@ -110,7 +110,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (207)
+## 2. Content-Specific Modules (208)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -204,7 +204,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/upgradeGate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/woolFiber.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 
-### Application Composition & Configs (`src/app/`, `@app/*`) (9)
+### Application Composition & Configs (`src/app/`, `@app/*`) (10)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -217,6 +217,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/app/pedigreeCalendarClient.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/pedigreePdfActions.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/PlatformBridgeContext.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/installPrompt.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 
 ### Content-Bound Storage Adapters & Workers (`src/storage/`) (29)
 

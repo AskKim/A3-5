@@ -50,7 +50,7 @@ import {
   parseP2pWireOrDeltaPayload,
 } from '../domain/p2pSyncProtocol';
 import { SyncConflictEntry, SyncOperation } from '../domain/syncOutbox';
-import { BackupSyncStatus } from '../storage/localSyncChannels';
+import type { BackupSyncStatus } from '../storage/localSyncChannels';
 import {
   createLanP2pSession,
   LanP2pSessionController,

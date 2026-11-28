@@ -52,7 +52,7 @@ import { formatByteSizePure } from '../domain/imageOptimizationSpec';
 import { validateUploadFileSize } from '../domain/inputSanitization';
 import { APP_LOCALE } from '../domain/models';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
-import { SyncFileHandleLike } from '../storage/localSyncChannels';
+import type { SyncFileHandleLike } from '../storage/localSyncChannels';
 import { useConnectivityStatus } from '../storage/storageProtection';
 import {
   addCustomPreferredWikiSource,
