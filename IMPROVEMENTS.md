@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (95 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (97 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (159)
+## Logged Improvements (161)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3129,10 +3129,38 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/healthAndSettingsPanel
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 60`, `branches: 50`, `functions: 46`, `lines: 61` — *This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/engine/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the two suites could be deleted while the global gate still passed.*
 - `src/components/__tests__/healthAndSettingsPanels.render.test.tsx` must contain `All Species (16)`, `Barn / Farm / Rabbitry Name`, `openAddSpeciesOnMount: true` — *These assertions are the only proof that the guide filter widens, the identity field writes through and the add-species handoff is consumed; without them the suite would only count mounts.*
 
 **Restoration Playbook if Overwritten:**
 1. Settings renders every section collapsed except the top panel, so expand a section through its jump button before querying the fields inside it.
 2. The health panel filter tabs are labelled with their counts (`Rabbit & General (4)`), so assert the widened filter by comparing `Open Guide` counts rather than by a fixed number.
 3. A whole-panel toggle (Preferred Wiki Sources) carries its state in the button text (`Manage` / `Hide`); assert the flip instead of hunting a separate control.
+
+## 2026-11-28 — Load the SQLite WASM Build On First Storage Call, Not in the Boot Graph
+Why:        The 688,280-byte `sql-wasm.wasm` build sat on every cold start: `webSqliteAdapter.ts` imported `sql.js` and `sql-wasm.wasm?url` at module scope, so rolldown put the 58 KB `vendor-sql` chunk in the modulepreload graph and the WASM download began with the boot storage call, i.e. at first contentful paint rather than after it.
+Changed:    `src/storage/webSqliteAdapter.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/webSqliteAdapter.ts` must contain `import('sql.js')`, `import('sql.js/dist/sql-wasm.wasm?url')`, `createSqlJsStatic()` — *A static import of sql.js or its WASM URL puts the 58 KB vendor-sql chunk back in the modulepreload graph and starts the WASM download with the boot shell; both must stay dynamic imports resolved on the first storage call.*
+  - Forbidden regression: `import initSqlJs from 'sql.js';`, `import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';`
+
+**Restoration Playbook if Overwritten:**
+1. Load `sql.js` and `sql-wasm.wasm?url` with `import()` inside the adapter, never at module scope, and keep the memoized promises so repeated `initialize()`/`inspectRawSqliteBytes()` calls reuse one compile.
+2. Keep the `Promise.all([sqlPromise, storeReadPromise])` shape: the WASM compile and the IndexedDB read must stay concurrent so laziness does not add a serial round trip.
+3. Measure with `dist/index.html` modulepreload entries and `performance.getEntriesByType('paint')` on a production build; the WASM request must land after first-contentful-paint.
+
+## 2026-11-28 — Mount the Reports, Journal and Bench Screens
+Why:        Three daily-use workspaces — the printable reports catalog, the personal barn journal and the fast sequential entry bench — still had zero executable statements, so their species switching, filter selects and cage-walk queue were only ever exercised by hand.
+Changed:    `vitest.config.ts`, `src/components/__tests__/reportsJournalBench.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 60`, `branches: 51`, `functions: 47`, `lines: 62` — *This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.*
+- `src/components/__tests__/reportsJournalBench.render.test.tsx` must contain `Goat Only`, `onCommitEntry`, `5★ Only` — *These three assertions are the only proof that the catalog really switches species, the bench writes through its commit callback and the journal filters actually run.*
+
+**Restoration Playbook if Overwritten:**
+1. The reports category filter is a labelled `<select>`; the header line (`Rabbit Only · N reports · Unit: …`) is split across spans, so assert it against `document.body.textContent`.
+2. The bench disables both save buttons until a draft exists, so a commit test must type a weight into the `Weight Check (…)` field first.
+3. Journal rating is a select (`5★ Only`), but colour categories are toggle buttons; query them by their pressed state rather than by role alone.
