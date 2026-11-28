@@ -138,7 +138,47 @@ describe('release track precondition', () => {
   });
 });
 
+describe('human gate survives a finished sweep', () => {
+  it('records a completed release step as awaiting_human without --human-signoff', () => {
+    const dir = fixture();
+    const res = run(dir, LOG, [
+      '--step',
+      'release-plan',
+      '--status',
+      'completed',
+      '--platform',
+      'freebuff',
+    ]);
+
+    expect(res.status).toBe(0);
+    const state = JSON.parse(readFileSync(join(dir, STATE_REL), 'utf8')) as {
+      history: { status: string; signed_off_by?: string }[];
+      resume_cursor: { next_step_id: string } | null;
+    };
+    const last = state.history[state.history.length - 1];
+    expect(last.status).toBe('awaiting_human');
+    expect(last.signed_off_by).toBeUndefined();
+    // The gate holds the cursor on the step instead of advancing past it.
+    expect(state.resume_cursor?.next_step_id).toBe('release-plan');
+  });
+});
+
 describe('preflight-state --require-sweep self-check', () => {
+  it('never resumes a finished sweep into the release tail', () => {
+    const dir = fixture();
+    const res = run(dir, STATE, ['--require-sweep']);
+
+    expect(res.status).toBe(0);
+    const summary = JSON.parse(res.stdout) as {
+      resume_step_id: string | null;
+      next_action: string;
+    };
+    // Release steps are not completed in this fixture, so an unscoped scan would answer
+    // `release-check-p1` here and point a runner at the tail.
+    expect(summary.resume_step_id).toBeNull();
+    expect(summary.next_action).toContain('pf-release-uni.md');
+  });
+
   it('exits 1 with sweep_incomplete when the sweep is unfinished', () => {
     const dir = fixture(['backup-check']);
     const res = run(dir, STATE, ['--require-sweep']);

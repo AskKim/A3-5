@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { sweepStatus } from './sweep-status.mjs';
+import { sweepStatus, trackOf } from './sweep-status.mjs';
 
 const STATE_PATH = 'docs/handoff-state.json';
 const CONFIG_PATH = 'prompts/preflight/preflight.config.json';
@@ -209,7 +209,12 @@ const completedForRun = new Set(
     .map((entry) => entry.step_id)
 );
 
-const nextStep = manifestSteps.find((step) => !completedForRun.has(step.id));
+// Resume belongs to the sweep, and only to the sweep. Scanning every manifest step handed a runner
+// `release-check-p1` as "next" the moment the sweep finished, which points it straight at work that
+// is opened deliberately from `pf-release-uni.md` and ends in a human gate. The HEAD-pinned
+// freshness rule above is unchanged; only the step set is scoped here.
+const sweepSteps = manifestSteps.filter((step) => trackOf(step) === 'preflight');
+const nextStep = sweepSteps.find((step) => !completedForRun.has(step.id));
 
 const summary = {
   ok: reasons.length === 0,
@@ -240,7 +245,7 @@ const summary = {
       : nextStep
         ? `Run step ${nextStep.id} (${nextStep.file}).`
         : reasons.length === 0
-          ? 'All manifest steps completed for this branch, version and HEAD; proceed to release-plan sign-off.'
+          ? 'Sweep complete for this branch, version and HEAD. The release tail is a separate runner: `prompts/preflight/pf-release-uni.md`, gated by this file with --require-sweep.'
           : 'Resolve blocked_reasons, run --write-hash after copying sandbox edits, then resume.',
 };
 
