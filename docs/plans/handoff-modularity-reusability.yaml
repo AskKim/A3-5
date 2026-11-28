@@ -22,7 +22,7 @@ status:
     - [DONE] slicePorts.ts | One SliceCorePorts bundle spread into all nine use* slices, with a compile-time test that no slice drifts from the shared shape (IMP-141)
   - [TODO] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
   - [DONE] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Both compatibility shims retired: every caller (4 importers, backupVault, backupArchive, 3 tests) imports @engine/* directly and the shim files are deleted (IMP-142)
-  - [TODO] src/domain/improvementRegistry.ts | Audit domain seed/test files for PII/contact hygiene via prompts/core_hygiene.md and expand layer/duplication checks across components & storage
+  - [WIP] src/domain/improvementRegistry.ts | PII/contact audit per prompts/core_hygiene.md ran clean on 2026-11-28: no personal emails in src/prompts/docs, no street addresses, and the only phone numbers are public feed-manufacturer hotlines in feedManufacturerDirectory.ts; test fixtures already use example.invalid/example.com. Remaining: expand the layer/duplication checks to cover components & storage rather than only the layer barrels.
   - [TODO] /engine & package.json | Extract verified content-agnostic @engine/*, @features/*, and @utils/* into standalone reusable package/repository once app coupling hits zero
   - [TODO] EXTRACTION_INVENTORY.md & src/domain/improvementRegistry.ts | Sync documentation, run npm run verify + npm run build, and register the final IMP entry
 constraints:
