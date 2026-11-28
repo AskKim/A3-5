@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useIdeasBacklogPort } from '../app/ports/ideasBacklog';
 import {
   BacklogSection,
   buildCapturedIdeasJsonExport,
@@ -40,12 +41,6 @@ import {
   SUGGESTIONS_BACKLOG_PATH,
 } from '../domain/suggestionsBacklog';
 import { formatTimestampedBackupSlug } from '../domain/syncAndExports';
-import {
-  clearCapturedIdeas,
-  deleteCapturedIdea,
-  loadCapturedIdeas,
-  saveCapturedIdea,
-} from '../storage/capturedIdeasStore';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import { copyTextWithFallback, downloadTextFile } from '../utils/webFileActions';
 
@@ -90,6 +85,7 @@ const IdeaCaptureComposer = memo(function IdeaCaptureComposer({
   const inputId = useId();
   const helpId = useId();
   const submitLock = useAsyncSubmitLock({ postSettleCooldownMs: 200 });
+  const ideasBacklog = useIdeasBacklogPort();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isMountedRef = useRef(true);
 
@@ -136,7 +132,7 @@ const IdeaCaptureComposer = memo(function IdeaCaptureComposer({
 
     await submitLock.runLocked(async () => {
       try {
-        const result = await saveCapturedIdea(draftText);
+        const result = await ideasBacklog.save(draftText);
         if (!isMountedRef.current) return;
         setDraftText('');
         setFormError(null);
@@ -349,6 +345,7 @@ const BacklogSectionsView = memo(function BacklogSectionsView({
 });
 
 export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBacklogScreenProps) {
+  const ideasBacklog = useIdeasBacklogPort();
   const searchId = useId();
   const exportLock = useAsyncSubmitLock({ postSettleCooldownMs: 250 });
   const feedbackTimerRef = useRef<number | null>(null);
@@ -383,8 +380,9 @@ export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBac
 
   useEffect(() => {
     isMountedRef.current = true;
-    void loadCapturedIdeas()
-      .then((ideas) => {
+    void ideasBacklog
+      .load()
+      .then((ideas: CapturedIdeaEntry[]) => {
         if (!isMountedRef.current) return;
         setCapturedIdeas(ideas);
         setIdeasLoaded(true);
@@ -404,7 +402,7 @@ export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBac
         feedbackTimerRef.current = null;
       }
     };
-  }, []);
+  }, [ideasBacklog]);
 
   const handleIdeaSaved = useCallback(
     (result: { entry: CapturedIdeaEntry; ideas: CapturedIdeaEntry[]; truncated: boolean }) => {
@@ -416,13 +414,13 @@ export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBac
           : 'Idea sanitized and saved to your offline Pending Ideas list.'
       );
     },
-    [showTransientFeedback]
+    [ideasBacklog, showTransientFeedback]
   );
 
   const handleDeleteIdea = useCallback(
     async (id: string) => {
       try {
-        const next = await deleteCapturedIdea(id);
+        const next = await ideasBacklog.remove(id);
         if (!isMountedRef.current) return;
         setCapturedIdeas(next);
         showTransientFeedback('Removed idea from offline pending list.');
@@ -437,7 +435,7 @@ export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBac
   const handleClearIdeas = useCallback(async () => {
     await exportLock.runLocked(async () => {
       try {
-        const next = await clearCapturedIdeas();
+        const next = await ideasBacklog.clear();
         if (!isMountedRef.current) return;
         setCapturedIdeas(next);
         showTransientFeedback('Cleared all pending captured ideas from offline storage.');
@@ -446,7 +444,7 @@ export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBac
         setIdeasError(err instanceof Error ? err.message : 'Could not clear ideas.');
       }
     });
-  }, [exportLock, showTransientFeedback]);
+  }, [exportLock, ideasBacklog, showTransientFeedback]);
 
   const handleCopyIdeas = useCallback(async () => {
     await exportLock.runLocked(async () => {

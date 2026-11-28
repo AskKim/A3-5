@@ -47,6 +47,5 @@
   "src/components/SettingsAndSyncScreen.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/SpeciesDashboardScreen.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]",
   "src/components/SpeciesDashboardScreen.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
-  "src/components/SuggestionsBacklogScreen.tsx -> src/storage/capturedIdeasStore [components must not import storage singletons; inject an @app port]",
   "src/components/UnifiedBackupVaultPanel.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]"
 ]

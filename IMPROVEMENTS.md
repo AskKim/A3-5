@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (80 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (81 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (144)
+## Logged Improvements (145)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2928,3 +2928,16 @@ Status:     active
 1. A component that needs storage behaviour takes an `@app/ports/*` capability (context hook with a browser default plus a provider) or a narrow prop — never a direct `../storage/*` import.
 2. Type-only imports from storage are allowed: they are erased at compile time and create no runtime edge.
 3. After migrating a seam run `npx tsx scripts/audit-layers.ts --write-ui-budget` so the ledger records the smaller set; never edit the budget upward.
+
+## 2026-11-28 — Move the Offline Ideas Backlog Behind an @app Port
+Why:        The suggestions screen is a developer screen with no persistence logic of its own, yet it imported `loadCapturedIdeas`, `saveCapturedIdea`, `deleteCapturedIdea` and `clearCapturedIdeas` straight out of `src/storage/capturedIdeasStore`. That was the largest single dependency a screen carried into the storage layer, and it could not be tested without the real offline stores.
+Changed:    `src/app/ports/ideasBacklog.tsx`, `src/components/SuggestionsBacklogScreen.tsx`, `src/components/__tests__/suggestionsIdeasPort.render.test.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/SuggestionsBacklogScreen.tsx` must contain `useIdeasBacklogPort` — *The screen must keep reading the offline idea list through the @app port rather than importing capturedIdeasStore directly.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the idea store behind `IdeasBacklogPort`; a new screen operation becomes a method on the port with the browser default, not a direct storage import.
+2. Check the burn-down ledger after the edit (`npx tsx scripts/audit-layers.ts`) and regenerate it with `--write-ui-budget` only when it shrank.
+3. Assert the screen contract through an injected port so the test does not depend on IndexedDB/OPFS being present.
