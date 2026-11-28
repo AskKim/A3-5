@@ -185,7 +185,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 3. `src/app/` File-by-File Inventory (30 Non-Test Files — All `pedigree-domain`)
+## 3. `src/app/` File-by-File Inventory (31 Non-Test Files — All `pedigree-domain`)
 
 - `src/app/index.ts` — `pedigree-domain` — Application layer barrel export.
 - `src/app/appConfig.interface.ts` — `pedigree-domain` — Multi-species registry and terminology contracts.
@@ -215,6 +215,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/app/ports/pedigreeOcrScanner.ts` — `pedigree-domain` — Pedigree OCR scanning capability port for the pedigree scanner panel (IMP-156).
 - `src/app/ports/passphraseCrypto.ts` — `pedigree-domain` — Backup passphrase encryption capability port for the import hub (IMP-156).
 - `src/app/ports/p2pLanChannel.ts` — `pedigree-domain` — Peer-to-peer LAN channel capability port for the barn scheduler Gantt (IMP-156).
+- `src/app/ports/incomingFile.tsx` — `pedigree-domain` — Incoming-file capability port: subscribes to the bridge's `OPEN_EXTERNAL_FILE` channel and decodes the shell payload, injectable with a provider (IMP-174).
 - `src/app/ports/reminders.tsx` — `pedigree-domain` — Reminders capability port: composes the `@features/reminders` schedule with `src/storage/reminderScheduler` delivery, injectable with a provider (IMP-173).
 - `src/app/ports/webSqliteMaintenance.ts` — `pedigree-domain` — Web SQLite cache-purge capability port for the crash boundary (IMP-156).
 

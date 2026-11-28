@@ -406,6 +406,9 @@ export default defineConfig(() => {
           theme_color: '#141814',
           background_color: '#141814',
           display: 'standalone',
+          // Installed Android/desktop launches reuse the running window instead of stacking duplicates.
+          display_override: ['standalone'],
+          launch_handler: { client_mode: 'navigate-existing' },
           orientation: 'any',
           scope: './',
           start_url: './',

@@ -72,6 +72,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fileAndExportBridge: FileAndExportBridge
     private lateinit var printBridge: PrintBridge
     private lateinit var externalNavigationBridge: ExternalNavigationBridge
+    private lateinit var reminderScheduleBridge: ReminderScheduleBridge
+    private lateinit var incomingFileBridge: IncomingFileBridge
     private lateinit var nativeBackupVault: NativeBackupVault
 
     private val diagnosticBuffer = DiagnosticRingBuffer()
@@ -130,6 +132,11 @@ class MainActivity : AppCompatActivity() {
             webViewProvider = { webView }
         )
         externalNavigationBridge = ExternalNavigationBridge(this, diagnosticBuffer)
+        reminderScheduleBridge = ReminderScheduleBridge(applicationContext, diagnosticBuffer)
+        incomingFileBridge = IncomingFileBridge(diagnosticBuffer) { raw -> deliverToPage(raw) }.apply {
+            streamOpener = { uri -> contentResolver.openInputStream(uri) }
+            displayNameResolver = { uri -> queryDisplayName(uri) }
+        }
         backNavigationBridge = BackNavigationBridge(
             activity = this,
             webViewProvider = { webView },
@@ -142,6 +149,8 @@ class MainActivity : AppCompatActivity() {
         mountWebView(savedInstanceState)
         if (savedInstanceState == null) {
             handleDiagnosticsShortcutIntent(intent)
+            // Cold launch from a link or share sheet: parked until the page posts its first message.
+            incomingFileBridge.handleIntent(intent)
         }
     }
 
@@ -150,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         setIntent(intent)
         externalNavigationBridge.onOAuthRedirectIntent(intent)
         handleDiagnosticsShortcutIntent(intent)
+        incomingFileBridge.handleIntent(intent)
     }
 
     override fun onResume() {
@@ -426,6 +436,8 @@ class MainActivity : AppCompatActivity() {
                 return@addWebMessageListener
             }
             currentReplyProxy = replyProxy
+            // The page is alive and can receive messages: release a parked incoming file.
+            incomingFileBridge.flushPending()
             when (message.type) {
                 WebMessageCompat.TYPE_STRING -> {
                     val raw = message.data ?: return@addWebMessageListener
@@ -458,6 +470,31 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    /** Posts a raw envelope to the page; false when no page is listening, so callers re-park it. */
+    private fun deliverToPage(raw: String): Boolean {
+        val proxy = currentReplyProxy ?: return false
+        return try {
+            proxy.postMessage(raw)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** Resolves a user-visible display name for a `content://` URI, or null when unavailable. */
+    private fun queryDisplayName(uri: Uri): String? {
+        return try {
+            contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { cursor ->
+                    if (!cursor.moveToFirst()) return null
+                    val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (index < 0) null else cursor.getString(index)
+                }
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -516,6 +553,11 @@ class MainActivity : AppCompatActivity() {
 
             "REQUEST_PRINT" -> {
                 printBridge.printFromBridge(payload)
+            }
+
+            "SCHEDULE_REMINDERS" -> {
+                // The schedule is computed in the PWA; Kotlin only turns entries into wake-ups.
+                reminderScheduleBridge.handleScheduleRequest(requestId, payload, replyProxy)
             }
 
             "OPEN_EXTERNAL_URL" -> {

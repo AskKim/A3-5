@@ -132,7 +132,7 @@ check('FileProvider is scoped to the application id', () =>
   containsIn(MANIFEST, 'android:authorities="${applicationId}.fileprovider"', 'authorities="${applicationId}.fileprovider"')
 );
 
-check('Manifest requests only the INTERNET permission', () => {
+check('Manifest requests only the documented permissions', () => {
   const manifest = read(MANIFEST);
   if (manifest === null) return `missing ${MANIFEST}`;
   const permissions = manifest.match(/<uses-permission[^>]*android:name="([^"]+)"/g) ?? [];
@@ -140,7 +140,13 @@ check('Manifest requests only the INTERNET permission', () => {
     .map((entry) => entry.match(/android:name="([^"]+)"/)?.[1])
     .filter((name): name is string => Boolean(name));
   if (names.length === 0) return 'no uses-permission declared (INTERNET is required for the virtual asset origin)';
-  const unexpected = names.filter((name) => name !== 'android.permission.INTERNET');
+  // INTERNET is required for the virtual asset origin; POST_NOTIFICATIONS only gates opt-in local
+  // reminders. Everything else must stay out: the wrapper keeps a minimal permission footprint.
+  const allowed = new Set([
+    'android.permission.INTERNET',
+    'android.permission.POST_NOTIFICATIONS',
+  ]);
+  const unexpected = names.filter((name) => !allowed.has(name));
   return unexpected.length === 0 ? null : `unexpected permissions: ${unexpected.join(', ')}`;
 });
 

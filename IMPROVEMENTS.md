@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (108 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (109 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (172)
+## Logged Improvements (173)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3318,3 +3318,19 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Do not move delivery into `@features/reminders` and do not import `@features` from `src/storage`: the app port is the permitted composition point.
 2. Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.
+
+## 2026-11-28 — Carry Reminders and Shared Files Across the Android Boundary
+Why:        The web half of reminders and file ingress only matters if the shell can actually act on it: a phone must wake up for a reminder with the app closed, and a .json backup shared from another app must reach the app instead of being ignored.
+Changed:    `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderNotifications.kt`, `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderWorker.kt`, `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderScheduleBridge.kt`, `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/IncomingFileBridge.kt`, `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/MainActivity.kt`, `android-wrapper/app/src/main/AndroidManifest.xml`, `android-wrapper/app/build.gradle.kts`, `scripts/verify-android.ts`, `src/native/pedigreeBridge.ts`, `src/app/ports/incomingFile.tsx`, `src/app/ports/__tests__/incomingFilePort.test.ts`, `docs/plans/handoff-platform-capabilities.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderScheduleBridge.kt` must contain `SCHEDULE_REMINDERS`, `enqueueUniqueWork` — *Unique work per reminder key is what keeps a re-sent schedule from stacking duplicate wake-ups; a plain enqueue would fire the same chore twice.*
+- `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/IncomingFileBridge.kt` must contain `OPEN_EXTERNAL_FILE`, `MAX_PAYLOAD_BYTES` — *The envelope type is the contract with the incoming-file port, and the size cap is what stops a shared multi-gigabyte file from being base64-ed into the bridge.*
+- `src/native/pedigreeBridge.ts` must contain `onIncomingFile`, `scheduleNativeReminders` — *Both halves of the new boundary live on the singleton bridge; losing either leaves the Kotlin side talking to nobody.*
+- `src/app/ports/incomingFile.tsx` must contain `readBytes`, `nativeIncomingFilePort` — *The port must keep decode logic out of components: file bytes arrive already parsed, once, through the injectable port.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep reminder biology out of Kotlin: the shell receives absolute fire instants, never lead-day rules.
+2. POST_NOTIFICATIONS is the only permission the wrapper may add; verify:android fails on anything else, deliberately.
+3. If incoming files ever need to exceed the 4 MiB base64 cap, add a same-origin staging route in PedigreeAssetPathHandler rather than raising the cap.

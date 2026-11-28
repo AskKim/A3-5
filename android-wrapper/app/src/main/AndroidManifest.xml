@@ -4,6 +4,9 @@
     <!-- Minimal permission footprint: INTERNET is required for virtual HTTPS asset origin, optional user-initiated links, and debug staging. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Opt-in local reminders. No other runtime permission is requested: see ReminderNotifications.kt. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Android 11+ (API 30+) package visibility for Custom Tabs, browsers, and mailto: -->
     <queries>
         <intent>

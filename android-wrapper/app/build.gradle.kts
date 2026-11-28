@@ -163,6 +163,8 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.8.0")
     implementation("androidx.webkit:webkit:1.15.0")
     implementation("androidx.browser:browser:1.10.0")
+    // Reminder wake-ups only. WorkManager persists jobs across process death and reboot.
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
 
 // --- Offline WebView asset staging ---------------------------------------------------

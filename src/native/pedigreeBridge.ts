@@ -57,6 +57,24 @@ export interface BackupSnapshotInput {
   metadata?: Record<string, unknown>;
 }
 
+export interface NativeReminderEntry {
+  key: string;
+  title: string;
+  detail?: string;
+  /** Absolute ISO-8601 instant at which the reminder should fire. */
+  fireAtIso: string;
+}
+
+export interface IncomingExternalFile {
+  filename: string;
+  mimeType: string;
+  /** How the shell received it: a tapped link (`view`) or a share sheet (`share`). */
+  source: 'view' | 'share';
+  sizeBytes?: number;
+  /** Payload as sent by the shell; empty when the shell could only stage a URI. */
+  base64Data?: string;
+}
+
 export interface BridgeDiagnosticEvent {
   timestamp: string;
   level: 'info' | 'warn' | 'error';
@@ -192,6 +210,7 @@ export class PedigreeBridge {
   private pendingContainerInfo = new Map<string, PendingRequest<NativeContainerInfo | null>>();
   private pendingBlobRevokes = new Map<ReturnType<typeof setTimeout>, string>();
   private diagnosticListeners = new Set<DiagnosticEventListener>();
+  private incomingFileListeners = new Set<(file: IncomingExternalFile) => void>();
   private recentDiagnostics: BridgeDiagnosticEvent[] = [];
   private listenerAttached = false;
   private boundAndroidObject: AndroidPedigreeNativeObject | null = null;
@@ -241,6 +260,53 @@ export class PedigreeBridge {
 
   public getDiagnosticEvents(): BridgeDiagnosticEvent[] {
     return this.recentDiagnostics.slice();
+  }
+
+  /**
+   * Subscribes to files the shell received from another app (`ACTION_VIEW` / `ACTION_SEND`).
+   * The shell only delivers files it accepted while the PWA was the launch target.
+   */
+  public onIncomingFile(listener: (file: IncomingExternalFile) => void): () => void {
+    this.ensureListenersAttached();
+    this.incomingFileListeners.add(listener);
+    return () => {
+      this.incomingFileListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Hands the already-computed reminder schedule to the native shell, which turns each entry into
+   * a persisted wake-up. Returns false on web or when the bridge refuses the message.
+   */
+  public scheduleNativeReminders(entries: readonly NativeReminderEntry[]): boolean {
+    this.ensureListenersAttached();
+    if (!this.isNativeWrapper()) {
+      return false;
+    }
+    const payloadEntries = entries
+      .filter(function (entry) {
+        return (
+          typeof entry.key === 'string' &&
+          entry.key.length > 0 &&
+          typeof entry.title === 'string' &&
+          entry.title.length > 0 &&
+          typeof entry.fireAtIso === 'string' &&
+          entry.fireAtIso.length > 0
+        );
+      })
+      .map(function (entry) {
+        return {
+          key: entry.key,
+          title: entry.title,
+          detail: entry.detail || '',
+          fireAtIso: entry.fireAtIso,
+        };
+      });
+    return this.postControlEnvelope({
+      type: 'SCHEDULE_REMINDERS',
+      requestId: createRequestId('rem'),
+      payload: { entries: payloadEntries },
+    });
   }
 
   public registerBackHandler(handler: BackHandler, priority = 0): () => void {
@@ -629,6 +695,34 @@ export class PedigreeBridge {
       return;
     }
 
+    if (envelope.type === 'OPEN_EXTERNAL_FILE') {
+      const file = this.normalizeIncomingFile(envelope.payload);
+      if (!file) {
+        this.recordDiagnostic('warn', 'INCOMING_FILE_REJECTED', 'Ignored an incomplete incoming file envelope');
+        return;
+      }
+      this.incomingFileListeners.forEach(function (listener) {
+        try {
+          listener(file);
+        } catch (_err) {
+          // Ignore listener errors: one consumer must not block the others.
+        }
+      });
+      return;
+    }
+
+    if (envelope.type === 'SCHEDULE_REMINDERS_RESULT') {
+      const payload = envelope.payload || {};
+      const scheduled = typeof payload.scheduled === 'number' ? payload.scheduled : 0;
+      const rejected = typeof payload.rejected === 'number' ? payload.rejected : 0;
+      this.recordDiagnostic(
+        rejected > 0 ? 'warn' : 'info',
+        'NATIVE_REMINDERS_SCHEDULED',
+        'Native reminders: ' + scheduled + ' scheduled, ' + rejected + ' rejected'
+      );
+      return;
+    }
+
     if (envelope.type === 'CONTAINER_INFO_RESULT' && envelope.requestId) {
       const pending = this.pendingContainerInfo.get(envelope.requestId);
       if (pending) {
@@ -657,6 +751,7 @@ export class PedigreeBridge {
       }
     });
     this.pendingBlobRevokes.clear();
+    this.incomingFileListeners.clear();
     this.backEntries = [];
     this.recentDiagnostics = [];
     this.diagnosticListeners.clear();
@@ -677,6 +772,26 @@ export class PedigreeBridge {
         payload: { handled: handled },
       });
     }
+  }
+
+  private normalizeIncomingFile(payload?: Record<string, unknown>): IncomingExternalFile | null {
+    const data = payload || {};
+    const filename = typeof data.filename === 'string' ? data.filename.trim() : '';
+    if (!filename) {
+      return null;
+    }
+    const file: IncomingExternalFile = {
+      filename: filename,
+      mimeType: typeof data.mimeType === 'string' && data.mimeType ? data.mimeType : 'application/octet-stream',
+      source: data.source === 'view' ? 'view' : 'share',
+    };
+    if (typeof data.sizeBytes === 'number' && data.sizeBytes >= 0) {
+      file.sizeBytes = data.sizeBytes;
+    }
+    if (typeof data.base64Data === 'string' && data.base64Data) {
+      file.base64Data = data.base64Data;
+    }
+    return file;
   }
 
   private normalizeContainerInfo(payload?: Record<string, unknown>): NativeContainerInfo {

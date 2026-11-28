@@ -4733,4 +4733,65 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.',
     ],
   },
+  {
+    id: 'IMP-174',
+    title: 'Carry Reminders and Shared Files Across the Android Boundary',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The web half of reminders and file ingress only matters if the shell can actually act on it: a phone must wake up for a reminder with the app closed, and a .json backup shared from another app must reach the app instead of being ignored.',
+    summary:
+      'Three small native pieces instead of one shell monolith. \`ReminderNotifications\` owns the lazily created channel and the API 33 permission gate; \`ReminderWorker\` is a one-shot WorkManager job that only displays the reminder the PWA already computed; \`ReminderScheduleBridge\` turns a SCHEDULE_REMINDERS envelope into \`enqueueUniqueWork(REPLACE)\` per key, so a re-sent schedule replaces work instead of duplicating it, and skips entries whose fire time already passed. \`IncomingFileBridge\` reads ACTION_VIEW/ACTION_SEND, parks the envelope until the page posts its first message, and emits OPEN_EXTERNAL_FILE with a 4 MiB base64 cap. On the JS side, \`scheduleNativeReminders\` and \`onIncomingFile\` were added to the existing bridge and a fourth app port (\`incomingFile\`) exposes them injectably. The only new Gradle dependency is work-runtime-ktx, and \`verify:android\`\'s permission allowlist now names POST_NOTIFICATIONS explicitly rather than forbidding every permission.',
+    files: [
+      'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderNotifications.kt',
+      'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderWorker.kt',
+      'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderScheduleBridge.kt',
+      'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/IncomingFileBridge.kt',
+      'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/MainActivity.kt',
+      'android-wrapper/app/src/main/AndroidManifest.xml',
+      'android-wrapper/app/build.gradle.kts',
+      'scripts/verify-android.ts',
+      'src/native/pedigreeBridge.ts',
+      'src/app/ports/incomingFile.tsx',
+      'src/app/ports/__tests__/incomingFilePort.test.ts',
+      'docs/plans/handoff-platform-capabilities.yaml',
+      'EXTRACTION_INVENTORY.md',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/ReminderScheduleBridge.kt',
+        requiredSubstrings: ['SCHEDULE_REMINDERS', 'enqueueUniqueWork'],
+        rationale:
+          'Unique work per reminder key is what keeps a re-sent schedule from stacking duplicate wake-ups; a plain enqueue would fire the same chore twice.',
+      },
+      {
+        filePath: 'android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/IncomingFileBridge.kt',
+        requiredSubstrings: ['OPEN_EXTERNAL_FILE', 'MAX_PAYLOAD_BYTES'],
+        rationale:
+          'The envelope type is the contract with the incoming-file port, and the size cap is what stops a shared multi-gigabyte file from being base64-ed into the bridge.',
+      },
+      {
+        filePath: 'src/native/pedigreeBridge.ts',
+        requiredSubstrings: ['onIncomingFile', 'scheduleNativeReminders'],
+        rationale:
+          'Both halves of the new boundary live on the singleton bridge; losing either leaves the Kotlin side talking to nobody.',
+      },
+      {
+        filePath: 'src/app/ports/incomingFile.tsx',
+        requiredSubstrings: ['readBytes', 'nativeIncomingFilePort'],
+        rationale:
+          'The port must keep decode logic out of components: file bytes arrive already parsed, once, through the injectable port.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep reminder biology out of Kotlin: the shell receives absolute fire instants, never lead-day rules.',
+      'POST_NOTIFICATIONS is the only permission the wrapper may add; verify:android fails on anything else, deliberately.',
+      'If incoming files ever need to exceed the 4 MiB base64 cap, add a same-origin staging route in PedigreeAssetPathHandler rather than raising the cap.',
+    ],
+  },
 ];

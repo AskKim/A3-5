@@ -5,14 +5,14 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 294
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 62 (21.1%)
+- **Total Non-Test Source Modules:** 295
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 62 (21.0%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 20
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 232 (78.9%)
+- **Content-Specific Modules:** 233 (79.0%)
   - Domain Engines (`src/domain/`): 87
-  - App Composition & Configs (`src/app/`): 30
+  - App Composition & Configs (`src/app/`): 31
   - Storage Adapters & Workers (`src/storage/`): 30
   - Native Bridge (`src/native/`): 1
   - State Store Hook (`src/hooks/`): 28
@@ -113,7 +113,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (232)
+## 2. Content-Specific Modules (233)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -207,7 +207,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/upgradeGate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/woolFiber.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 
-### Application Composition & Configs (`src/app/`, `@app/*`) (30)
+### Application Composition & Configs (`src/app/`, `@app/*`) (31)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -226,6 +226,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/app/ports/feedTagOcr.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/ideasBacklog.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/imageOptimizer.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/incomingFile.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/installPrompt.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/localSyncChannels.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/offThreadWorkerClient.ts` | Application-level species/domain configuration or dependency-injection wiring. |
