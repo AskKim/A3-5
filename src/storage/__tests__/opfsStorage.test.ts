@@ -379,7 +379,9 @@ describe('opfsStorage Backup Vault retention, monthly scheduling & recovery dump
     expect(await deleteOpfsVaultBackup(target.key)).toBe(true);
     const afterDelete = await listOpfsVaultBackups();
     expect(afterDelete.some((b) => b.key === target.key)).toBe(false);
-  });
+    // 17 backups serialise in-memory OPFS writes: ~2.5s uninstrumented, ~5.4s under the v8
+    // coverage provider, so it needs more than the 5s default (npm run verify:coverage).
+  }, 20_000);
 
   it('respects 30-day monthly backup cadence', async () => {
     installLocalStorageShim();
