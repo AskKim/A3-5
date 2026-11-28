@@ -248,7 +248,7 @@ branch is **not** the deploy path:
 | --- | --- |
 | `AskKim/Pedigree` → `release` | **Live presentation**: `https://askkim.github.io/Pedigree/` (HTTP 200). Pages is served by branch, not by Actions. |
 | `AskKim/Pedigree` → `main` | Original development trunk; AI Studio can only write here. |
-| `AskKim/A3-5` → `main` | Working copy used by this agent. **No Pages site exists** (`/A3-5/` → 404), so `deploy-pages.yml` cannot succeed here. |
+| Temporary working copy → any branch | Staging area for overhaul work that is merged into `AskKim/Pedigree` before a release. A working copy may have no Pages site configured, so `deploy-pages.yml` can fail there: that is a hosting setting, not a code defect. |
 | Personal/test branch (planned) | A second branch holding a copy for the owner's own setup and hands-on testing. |
 
 Consequences for a sweep:

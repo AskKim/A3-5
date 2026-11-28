@@ -54,6 +54,24 @@ The primary objective of Alpha 3 is to prepare the architecture for long-term sc
 
 ---
 
+## For This Version (v0.1.0-alpha.3)
+
+The scope being cut for this release. Everything here either ships in `v0.1.0-alpha.3` or is moved
+out of this section before the tag exists; finished items move up into the milestone history.
+
+- **Modularity pass:** engine, feature and domain layers separated, with layer, cycle, extraction and
+  Android gates enforcing the direction (see §2.1).
+- **Shared animal profile contract:** one profile shape across species instead of per-species types
+  (see §2.2).
+- **Universal CSV and tabular importer:** preview-and-map flow with per-column type inference
+  (see §2.3).
+- **Device-to-device QR exchange:** move a herd to a second device without a file transfer.
+- **Per-species printable exports and all-day calendar entries:** certificates and herd sheets use
+  each species' own terms, and a breeding, kindling or weaning date no longer shifts by timezone.
+
+Explicitly out of scope for this version: extracting a standalone `engine` package (§4) and any
+repository or branch split (§3).
+
 ## 3. Branching Strategy & Repository Boundaries
 
 ### 3.1 Core Pedigree Dedicated Branch

@@ -930,10 +930,10 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'package.json must expose unified npm run verify and zero-dependency preflight:lint across coding platforms.',
   'IMP-078#prompts/start_new_backlog_prompt.md#1':
     'Backlog prompts must point to src/domain/improvementRegistry.ts rather than removed src/core/.',
-  'IMP-079#prompts/modularity_check_prompt.md#1':
-    'modularity_check_prompt.md must remain protected, concisely titled, and marked as reusable across repositories.',
-  'IMP-079#prompts/reusability_check_prompt.md#1':
-    'reusability_check_prompt.md must remain protected, concisely titled, and marked as reusable across repositories.',
+  'IMP-079#prompts/preflight/run-uni/modularity-check.md#1':
+    'modularity-check.md must remain protected, concisely titled, and marked as reusable across repositories.',
+  'IMP-079#prompts/preflight/run-uni/reusability-check.md#1':
+    'reusability-check.md must remain protected, concisely titled, and marked as reusable across repositories.',
   'IMP-079#scripts/audit-layers.ts#1':
     'audit-layers.ts must audit hooks/ and components/ without false positives from comments or string literals.',
   'IMP-079#src/engine/primitives/crypto.ts#1':

@@ -113,7 +113,11 @@ if (existsSync(rcPath) && statSync(rcPath).size <= MAX_FILE_SIZE) {
 
 if (existsSync(cleanTemplate) && statSync(cleanTemplate).size <= MAX_FILE_SIZE) {
   const ct = readFileSync(cleanTemplate, 'utf8');
-  if (ct.includes('[SINGLE-USE-COMPLETED:')) {
+  // Only an applied marker (a step line already retired) belongs in the check; the marker format
+  // itself appears in every launcher's static AGENT_EXCLUSION_PROTOCOL block, prefix-hashed and
+  // therefore required in the pristine template too.
+  const appliedRetirement = /^\s*-\s*\[SINGLE-USE-COMPLETED:/m;
+  if (appliedRetirement.test(ct)) {
     errors.push('Pristine template contains retired SINGLE-USE-COMPLETED marker');
   }
 }
@@ -152,6 +156,89 @@ if (existsSync(handoffPath) && statSync(handoffPath).size <= MAX_FILE_SIZE) {
     }
   } catch (err) {
     errors.push(`Invalid JSON in ${handoffPath}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// Manifest integrity: every scheduled step must have a prompt file and a mate readme on disk.
+// These are hard failures on purpose - a manifest pointing at a file nobody has is exactly how
+// this scaffolding rotted silently before (14 of 16 steps had no prompt file while lint said OK).
+const manifestPath = join(root, 'manifest', 'preflight.manifest.json');
+if (!existsSync(manifestPath)) {
+  errors.push(`Missing ${manifestPath}`);
+} else if (statSync(manifestPath).size <= MAX_FILE_SIZE) {
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    const steps = Array.isArray(manifest.steps) ? manifest.steps : [];
+    if (steps.length === 0) errors.push(`No steps declared in ${manifestPath}`);
+    const seenIds = new Set();
+    for (const step of steps) {
+      if (!step || typeof step.id !== 'string' || typeof step.file !== 'string') {
+        errors.push(`Manifest entry without string id/file in ${manifestPath}: ${JSON.stringify(step)}`);
+        continue;
+      }
+      if (seenIds.has(step.id)) errors.push(`Duplicate manifest step id: ${step.id}`);
+      seenIds.add(step.id);
+      const stepPath = join(root, step.file);
+      if (!existsSync(stepPath)) {
+        errors.push(`Manifest step "${step.id}" points at missing prompt file ${stepPath}`);
+        continue;
+      }
+      const mateName = step.file.split('/').pop().replace(/\.md$/, '-readme.md');
+      const matePath = join(readDir, mateName);
+      if (!existsSync(matePath)) {
+        errors.push(`Manifest step "${step.id}" is missing mate readme ${matePath}`);
+      }
+    }
+  } catch (err) {
+    errors.push(`Invalid JSON in ${manifestPath}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// The manifest is duplicated for the launcher's TOC generator; the two copies drifting apart (they
+// once differed only by soft hyphens) makes the wiring depend on which file a reader happened to
+// open, so they must stay byte-identical.
+const twinPath = join(root, 'preflight.manifest.json');
+if (existsSync(twinPath) && existsSync(manifestPath)) {
+  if (readFileSync(twinPath, 'utf8') !== readFileSync(manifestPath, 'utf8')) {
+    errors.push(
+      `${twinPath} and ${manifestPath} have drifted apart; keep both copies byte-identical`
+    );
+  }
+}
+
+// Static config must be filled in before a run: an angle-bracket placeholder is not a value.
+const configPath = join(root, 'preflight.config.json');
+if (!existsSync(configPath)) {
+  errors.push(`Missing ${configPath}`);
+} else if (statSync(configPath).size <= MAX_FILE_SIZE) {
+  try {
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    const placeholders = [];
+    const scanValues = (value, keyPath) => {
+      if (typeof value === 'string') {
+        if (/<[A-Za-z][^<>]*>/.test(value)) placeholders.push(`${keyPath}=${value}`);
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((item, idx) => scanValues(item, `${keyPath}[${idx}]`));
+        return;
+      }
+      if (value && typeof value === 'object') {
+        for (const [key, inner] of Object.entries(value)) {
+          if (key === '_comment') continue;
+          scanValues(inner, `${keyPath}.${key}`);
+        }
+      }
+    };
+    for (const [key, value] of Object.entries(config)) {
+      if (key === '_comment') continue;
+      scanValues(value, key);
+    }
+    if (placeholders.length > 0) {
+      errors.push(`preflight.config.json still holds placeholder values: ${placeholders.join(', ')}`);
+    }
+  } catch (err) {
+    errors.push(`Invalid JSON in ${configPath}: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

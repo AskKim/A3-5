@@ -25,7 +25,7 @@ fun escapeBuildConfigString(value: String): String {
 }
 
 val wrapperApplicationId = wrapperProp("pedigree.wrapper.applicationId", "org.askkim.pedigree.wrapper")
-val wrapperVersionCode = wrapperProp("pedigree.wrapper.versionCode", "1").toIntOrNull() ?: 1
+val wrapperVersionCode = wrapperProp("pedigree.wrapper.versionCode", "2").toIntOrNull() ?: 1
 val wrapperVersionNameOverride = (project.findProperty("pedigree.wrapper.versionName") as String?)
     ?.trim()
     ?.takeIf { it.isNotEmpty() }

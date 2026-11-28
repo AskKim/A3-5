@@ -258,19 +258,23 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
   },
   {
     id: 'PRM-006',
-    promptFile: 'prompts/modularity_check_prompt.md',
+    promptFile: 'prompts/preflight/run-uni/modularity-check.md',
     title: 'Reusable 4-Phase Modularity Check Prompt',
     category: 'architecture-audit',
     lifecycle: 'active',
-    lastEdited: '2026-11-27',
+    lastEdited: '2026-11-28',
     intent:
       'Provide a concise, project-agnostic modularity evaluation and remediation prompt covering layer direction, shared types, sibling isolation, cycles, and inventory sync.',
     changeSummary:
-      'Added protected reusable `modularity_check_prompt.md` and refined Phase 2–4 to enforce comment/string-safe scanning, `hooks/` & `components/` coverage, shared type placement out of UI components, all-layer cycle detection, and final `Estimated Modularity` percentage reporting.',
-    trackedFiles: ['prompts/modularity_check_prompt.md', 'src/domain/promptsCatalog.ts'],
+      'Added protected reusable `modularity-check.md` and refined Phase 2–4 to enforce comment/string-safe scanning, `hooks/` & `components/` coverage, shared type placement out of UI components, all-layer cycle detection, gate-honesty reporting (no silent skips), and final `Estimated Modularity` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.',
+    trackedFiles: [
+      'prompts/preflight/run-uni/modularity-check.md',
+      'prompts/preflight/preflight.manifest.json',
+      'prompts/preflight/pf-launcher-uni.md',
+    ],
     invariants: [
       {
-        filePath: 'prompts/modularity_check_prompt.md',
+        filePath: 'prompts/preflight/run-uni/modularity-check.md',
         requiredSubstrings: [
           '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
           '# Modularity Check',
@@ -283,24 +287,28 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Restore `prompts/modularity_check_prompt.md` and verify its entry in `src/domain/promptsCatalog.ts`.',
+      'Restore `prompts/preflight/run-uni/modularity-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:`) and keep it wired as the `modularity-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.',
     ],
   },
   {
     id: 'PRM-007',
-    promptFile: 'prompts/reusability_check_prompt.md',
+    promptFile: 'prompts/preflight/run-uni/reusability-check.md',
     title: 'Reusable 4-Phase Reusability Check Prompt',
     category: 'architecture-audit',
     lifecycle: 'active',
-    lastEdited: '2026-11-27',
+    lastEdited: '2026-11-28',
     intent:
       'Provide a concise, project-agnostic reusability evaluation and refactoring prompt covering domain leakage, duplicated micro-utilities, rigid signatures, singleton teardown, and lifecycle hygiene.',
     changeSummary:
-      'Added protected reusable `reusability_check_prompt.md` and hardened Phase 2–4 to require micro-utility consolidation without transitive heavy dependency leaks, singleton `reset*` hooks, non-default test fixtures proving reusability, and final `Estimated Reusability` percentage reporting.',
-    trackedFiles: ['prompts/reusability_check_prompt.md', 'src/domain/promptsCatalog.ts'],
+      'Added protected reusable `reusability-check.md` and hardened Phase 2–4 to require micro-utility consolidation onto an existing canonical owner without transitive heavy dependency leaks, singleton `reset*` hooks, non-default test fixtures proving reusability, measurable duplication counts, and final `Estimated Reusability` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.',
+    trackedFiles: [
+      'prompts/preflight/run-uni/reusability-check.md',
+      'prompts/preflight/preflight.manifest.json',
+      'prompts/preflight/pf-launcher-uni.md',
+    ],
     invariants: [
       {
-        filePath: 'prompts/reusability_check_prompt.md',
+        filePath: 'prompts/preflight/run-uni/reusability-check.md',
         requiredSubstrings: [
           '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
           '# Reusability Check',
@@ -313,7 +321,7 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Restore `prompts/reusability_check_prompt.md` and verify its entry in `src/domain/promptsCatalog.ts`.',
+      'Restore `prompts/preflight/run-uni/reusability-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:`) and keep it wired as the `reusability-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.',
     ],
   },
   {

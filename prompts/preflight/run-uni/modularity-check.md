@@ -1,15 +1,23 @@
 <!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->
 # Modularity Check
 
-**Last-Edited Timestamp:** 2026-11-27  
-**Prompt Reusability:** Reusable across projects & repositories (auto-discovers local architecture, scripts, and guardrails)
+**Last-Edited Timestamp:** 2026-11-28  
+**Prompt Reusability:** Reusable across projects & repositories (auto-discovers local architecture, scripts, and guardrails)  
+**Preflight Lifecycle:** `[REUSABLE]` — scheduled on every release in Phase B of `prompts/preflight/pf-launcher-uni.md`; never retired by `AGENT_SKIP_LINE`
+
+- **Step ID:** modularity-check
+- **Phase & Lifecycle:** Phase B (antigravity / local CLI) \[REUSABLE\]; also runnable standalone, and in Phase A when the audit needs no build
+- **Allowed Diff Scope:** the minimum source, test, and inventory files needed to fix a confirmed boundary, cycle, or inventory violation
+- **Companion Readme:** `prompts/preflight/run-uni/read/modularity-check-readme.md`
+- **Log Entry:** `{ "step_id": "modularity-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+- **Purpose:** Prove the target repository's layer contract still holds, then fix only the violations it actually found.
 
 > **Reusable Prompt Notice:**
 > This prompt is **project-agnostic and reusable** across any layered TypeScript/JavaScript or multi-module codebase. It dynamically discovers the target repository's architecture docs, layer rules, build/verification scripts, and protected-file policies before evaluating and fixing modularity issues.
 >
 > **Protection & Execution Rule (`DO_NOT_REMOVE_WITHOUT_CONFIRMATION`):**
 > Whenever the user asks you to read, load, or run this file, **immediately execute this workflow once** from Phase 1 through Phase 4 without asking for confirmation (unless blocked by an unresolvable ambiguity or a required change to a protected/locked file).
-> **Do not delete, move, overwrite, or remove this file from `/prompts/` without explicit user confirmation.**
+> **Do not delete, move, overwrite, or remove this file from `prompts/` (currently `prompts/preflight/run-uni/modularity-check.md`) without explicit user confirmation.**
 
 ---
 
@@ -50,6 +58,7 @@ Additionally audit source files statically for structural modularity gaps (using
 - **Pure-Layer Purity:** Core primitives, pure features, and reusable utils contain zero app/domain terms and zero unexempted DOM/Node globals (`window`, `document`, `localStorage`, `sessionStorage`, `node:*`).
 - **Adapter & Bridge Seams:** UI, hooks, utils, and storage modules interact with native/host capabilities via abstract bridge/storage interfaces rather than concrete platform imports.
 - **Circular Dependencies, Alias Accuracy, Shims & Inventory Sync:** Cycle detection scans *all* source layers (including `engine/`/`core/` and `hooks/`) with path aliases (`@engine/*`, `@features/*`, `@app/*`) resolved accurately against `tsconfig.json`; module inventories/docs (such as `EXTRACTION_INVENTORY.md`) accurately classify all non-test source files; any legacy allowlist (`scripts/layer-allowlist.json`) or compatibility re-export shim is checked for safe burn-down/retirement.
+- **Gate Honesty (no silent skips):** For every audit you rely on, confirm it actually executed its checks. A check guarded by `existsSync` on a missing directory, template, or manifest silently passes and reports success; treat "the gate printed OK but verified nothing" as a finding, name the missing input, and fix the gate or supply the input. Report the exact command and exit code for each check instead of summarising intent.
 
 ### 3. Phase 3 — Remediate & Fix Modularity Issues
 - **If the evaluation finds zero violations, zero cycles, zero boundary leaks, zero allowlist debt, and synced inventories:** Report the clean modularity scorecard and stop without making speculative edits.
@@ -69,4 +78,9 @@ Additionally audit source files statically for structural modularity gaps (using
   1. **Modularity Scorecard:** Pass/fail status of all layer, isolated-compile, extraction, test, and build checks (plus remaining allowlist count).
   2. **Fixes Applied (or Confirmed Clean):** Specific violations, cycles, or boundary leaks resolved with file paths.
   3. **Deferred / Next Targets:** Any intentionally deferred migrations or architectural follow-ups.
-  4. **Estimated Modularity:** After completing all edits (if any), output `Estimated Modularity: <0-100>%` followed by a 1-line objective basis (layer compliance, cycle-free graph, bridge/adapter seams, inventory sync, and remaining monolithic or allowlist debt).
+  4. **Checks That Could Not Run:** Every gate you skipped or that could not execute here, with the missing toolchain or permission that blocked it - never presented as a pass.
+  5. **Estimated Modularity:** After completing all edits (if any), output `Estimated Modularity: <0-100>%` followed by a 1-line objective basis (layer compliance, cycle-free graph, bridge/adapter seams, inventory sync, and remaining monolithic or allowlist debt).
+
+## Exit Contract
+
+- Print `OK [modularity-check] files=<count>` with the scorecard when the audit finishes and the tree is clean, or `STEP_BLOCKED [modularity-check]: <1-2 line reason> | Reverted: <files> | Resume: fix issue and re-run launcher.` when a violation cannot be fixed safely in this run. Revert only the files this step touched.
