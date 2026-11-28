@@ -4595,7 +4595,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'src/features/reminders/reminderSchedule.ts',
       'src/features/reminders/index.ts',
       'src/features/reminders/__tests__/reminderSchedule.test.ts',
-      'docs/plans/handoff-platform-ingress.yaml',
+      'docs/plans/handoff-platform-capabilities.yaml',
       'EXTRACTION_INVENTORY.md',
       'IMPROVEMENTS.md',
       'MODULES.md',
@@ -4611,6 +4611,47 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     restorePlaybook: [
       'Keep biological rules out of `@features/reminders`: the caller passes species-adjusted offset days and titles, so the builder holds no gestation or species table.',
       'Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.',
+    ],
+  },
+  {
+    id: 'IMP-171',
+    title: 'Add the Web Reminder Delivery Port and Persisted Opt-In',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The schedule builder needs a channel: an opt-in that survives reloads, a permission handshake that never nags, and delivery that cannot double-fire when a tab is reopened — with the layering rule that `src/storage` may not import `@features`.',
+    summary:
+      'Two modules instead of one: `src/storage/reminderScheduler.ts` owns the persisted state (`pedigree.reminders.v1`), the OS permission mapping, snoozes and the delivered-key watermark, and shows notifications only when permission is granted, the user opted in, the document is visible and a service worker is ready; `src/app/ports/reminders.tsx` is the composition point that builds the `@features/reminders` schedule and hands the due entries to delivery, exposed as an injectable port with a provider. Delivery is a silent no-op in every failure mode and one failing notification cannot block the batch. 13 storage cases and 4 port cases cover persistence, permission, freeze, dedupe and composition.',
+    files: [
+      'src/storage/reminderScheduler.ts',
+      'src/storage/__tests__/reminderScheduler.test.ts',
+      'src/app/ports/reminders.tsx',
+      'src/app/ports/__tests__/remindersPort.test.ts',
+      'docs/plans/handoff-platform-capabilities.yaml',
+      'EXTRACTION_INVENTORY.md',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/reminderScheduler.ts',
+        requiredSubstrings: ['deliverDueReminders', 'pedigree.reminders.v1'],
+        rationale:
+          'Delivery must stay a single, watermark-guarded path: a second notifier or an uncapped key ring either double-fires or grows storage without bound.',
+      },
+      {
+        filePath: 'src/app/ports/reminders.tsx',
+        requiredSubstrings: ['buildReminderSchedule', 'deliverDueReminders'],
+        rationale:
+          'The app layer is the only place allowed to import both halves; losing either import means the schedule and its channel drifted apart.',
+      },
+    ],
+    restorePlaybook: [
+      'Do not move delivery into `@features/reminders` and do not import `@features` from `src/storage`: the app port is the permitted composition point.',
+      'Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.',
     ],
   },
 ];

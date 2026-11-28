@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (105 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (106 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (169)
+## Logged Improvements (170)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3268,7 +3268,7 @@ Status:     active
 
 ## 2026-11-28 — Add a Pure Reminder Schedule Builder for On-Device Delivery
 Why:        The app has no reminder implementation at all, and the first platform-ingress milestone needs the scheduling rules to exist before any delivery channel (service worker or WorkerManager) can transport them.
-Changed:    `src/features/reminders/reminderSchedule.ts`, `src/features/reminders/index.ts`, `src/features/reminders/__tests__/reminderSchedule.test.ts`, `docs/plans/handoff-platform-ingress.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
+Changed:    `src/features/reminders/reminderSchedule.ts`, `src/features/reminders/index.ts`, `src/features/reminders/__tests__/reminderSchedule.test.ts`, `docs/plans/handoff-platform-capabilities.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
 Status:     active
 
 **Automated Invariants Checked:**
@@ -3277,3 +3277,16 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep biological rules out of `@features/reminders`: the caller passes species-adjusted offset days and titles, so the builder holds no gestation or species table.
 2. Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.
+
+## 2026-11-28 — Add the Web Reminder Delivery Port and Persisted Opt-In
+Why:        The schedule builder needs a channel: an opt-in that survives reloads, a permission handshake that never nags, and delivery that cannot double-fire when a tab is reopened — with the layering rule that `src/storage` may not import `@features`.
+Changed:    `src/storage/reminderScheduler.ts`, `src/storage/__tests__/reminderScheduler.test.ts`, `src/app/ports/reminders.tsx`, `src/app/ports/__tests__/remindersPort.test.ts`, `docs/plans/handoff-platform-capabilities.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/reminderScheduler.ts` must contain `deliverDueReminders`, `pedigree.reminders.v1` — *Delivery must stay a single, watermark-guarded path: a second notifier or an uncapped key ring either double-fires or grows storage without bound.*
+- `src/app/ports/reminders.tsx` must contain `buildReminderSchedule`, `deliverDueReminders` — *The app layer is the only place allowed to import both halves; losing either import means the schedule and its channel drifted apart.*
+
+**Restoration Playbook if Overwritten:**
+1. Do not move delivery into `@features/reminders` and do not import `@features` from `src/storage`: the app port is the permitted composition point.
+2. Keep the tag equal to the reminder key — it is what makes a re-open replace, not duplicate, the same notification.

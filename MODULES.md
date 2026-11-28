@@ -5,15 +5,15 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 292
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 62 (21.2%)
+- **Total Non-Test Source Modules:** 294
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 62 (21.1%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 20
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 230 (78.8%)
+- **Content-Specific Modules:** 232 (78.9%)
   - Domain Engines (`src/domain/`): 87
-  - App Composition & Configs (`src/app/`): 29
-  - Storage Adapters & Workers (`src/storage/`): 29
+  - App Composition & Configs (`src/app/`): 30
+  - Storage Adapters & Workers (`src/storage/`): 30
   - Native Bridge (`src/native/`): 1
   - State Store Hook (`src/hooks/`): 28
   - UI Screens & Modals (`src/components/`): 53
@@ -113,7 +113,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (230)
+## 2. Content-Specific Modules (232)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -207,7 +207,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/upgradeGate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/woolFiber.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 
-### Application Composition & Configs (`src/app/`, `@app/*`) (29)
+### Application Composition & Configs (`src/app/`, `@app/*`) (30)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -235,13 +235,14 @@ npx tsx scripts/list-modules.ts --check
 | `src/app/ports/pedigreeOcrScanner.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/photoHydration.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/pwaUpdateManager.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/reminders.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/storageProbes.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/storageProtection.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/vetDocsFolder.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/weatherForecast.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/webSqliteMaintenance.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 
-### Content-Bound Storage Adapters & Workers (`src/storage/`) (29)
+### Content-Bound Storage Adapters & Workers (`src/storage/`) (30)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -261,6 +262,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/storage/pedigreeOcrScanner.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/photoHydration.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/pwaUpdateManager.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
+| `src/storage/reminderScheduler.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/sqliteIdbPersistence.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/sqliteMutationHelpers.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
 | `src/storage/sqliteRowMappers.ts` | Legacy Pedigree-bound browser storage, sync, OCR, or worker adapter (Phase 3 target). |
