@@ -2086,4 +2086,32 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Open conflicts are those with `resolved === false`; never re-resolve an already cleared one.',
     ],
   },
+  {
+    id: 'IMP-112',
+    title: 'Seeded Property Tests for `mergeDeltaOperations`',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Hand-picked merge fixtures prove one path each; nothing checked the properties multi-device sync actually depends on across many different divergences.',
+    summary:
+      'Milestone 4: `src/domain/__tests__/mergeDeltaProperties.test.ts` drives real `diffSnapshotsToSyncOperations` output through the merge engine across five seeds, asserting that merge order does not change the resulting operation set, that operation ids never duplicate, that replaying the same delta is idempotent, that local operations keep their order with unseen remote operations appended, and that repeated replay does not grow the log. The generator is a small LCG, so a failure names the seed and reproduces exactly — no new dependency and no randomised CI failures.',
+    files: ['src/domain/__tests__/mergeDeltaProperties.test.ts'],
+    invariants: [
+      {
+        filePath: 'src/domain/__tests__/mergeDeltaProperties.test.ts',
+        requiredSubstrings: [
+          'mergeDeltaOperations',
+          'diffSnapshotsToSyncOperations',
+          'SEEDS',
+        ],
+        rationale:
+          'The seeds must stay fixed: a random seed turns a reproducible failure into an intermittent one.',
+      },
+    ],
+    restorePlaybook: [
+      'Merge properties: order-independent op set, no duplicate ids, idempotent replay, stable local order, bounded log.',
+      'Keep the seed list literal so a failing case is reproducible.',
+    ],
+  },
 ];

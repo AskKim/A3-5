@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (47 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (48 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (111)
+## Logged Improvements (112)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2392,3 +2392,19 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Bulk resolution builds all operations first, merges once, then marks conflicts resolved.
 2. Open conflicts are those with `resolved === false`; never re-resolve an already cleared one.
+
+### IMP-112: Seeded Property Tests for `mergeDeltaOperations`
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Hand-picked merge fixtures prove one path each; nothing checked the properties multi-device sync actually depends on across many different divergences.
+- **Summary:** Milestone 4: `src/domain/__tests__/mergeDeltaProperties.test.ts` drives real `diffSnapshotsToSyncOperations` output through the merge engine across five seeds, asserting that merge order does not change the resulting operation set, that operation ids never duplicate, that replaying the same delta is idempotent, that local operations keep their order with unseen remote operations appended, and that repeated replay does not grow the log. The generator is a small LCG, so a failure names the seed and reproduces exactly — no new dependency and no randomised CI failures.
+- **Tracked Files:** `src/domain/__tests__/mergeDeltaProperties.test.ts`
+
+**Automated Invariants Checked:**
+- `src/domain/__tests__/mergeDeltaProperties.test.ts` must contain `mergeDeltaOperations`, `diffSnapshotsToSyncOperations`, `SEEDS` — *The seeds must stay fixed: a random seed turns a reproducible failure into an intermittent one.*
+
+**Restoration Playbook if Overwritten:**
+1. Merge properties: order-independent op set, no duplicate ids, idempotent replay, stable local order, bounded log.
+2. Keep the seed list literal so a failing case is reproducible.
