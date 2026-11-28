@@ -28,6 +28,26 @@ export const LEDGER_FORMAT_UPDATED = '2026-11-28';
 
 export const LEDGER_DECISIONS_DIR = 'docs/decisions';
 
+/**
+ * True only for a real calendar date written as `YYYY-MM-DD`.
+ *
+ * Both ledger gates render the entry heading straight from `decidedOn`, so a shape check alone
+ * (`\d{4}-\d{2}-\d{2}`) let `2026-13-45` through and the ledger then claimed a day that never
+ * existed. Round-tripping through UTC rejects an impossible month or day while accepting a real
+ * leap day.
+ */
+export function isRealCalendarDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return (
+    utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day
+  );
+}
+
 export interface LedgerContractViolation {
   /** Entry heading (or `header`) the violation belongs to. */
   heading: string;

@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (78 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (80 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (142)
+## Logged Improvements (144)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2884,6 +2884,36 @@ Status:     active
 1. Import `@engine/binaryEncoding` and `@engine/codecs/archiveAndCsvUtils` directly; do not recreate a domain re-export.
 2. Before deleting a shim, codemod every caller (production and test) in one change; a partially migrated shim is worse than none.
 3. Update the inventory and any registry invariant that names the old path in the same change, or the ledger advertises a file that no longer exists.
+
+## 2026-11-28 — Ledger Gates Reject Impossible Dates and Dangling Replacements
+Why:        The gates checked that the ledger fields were present but never what they said: `decidedOn: 2026-13-45` rendered an impossible heading and passed both verifiers, and a `supersededBy: PRM-999` typo was accepted even though no such entry exists, so the replacing entry could never be found.
+Changed:    `src/domain/ledgerContract.ts`, `src/domain/promptRegistry.ts`, `src/domain/improvementRegistry.ts`, `src/domain/__tests__/promptRegistry.test.ts`, `src/domain/__tests__/improvementRegistry.test.ts`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/ledgerContract.ts` must contain `isRealCalendarDate`, `Date.UTC` — *A regex-shaped date is not a real date; only a UTC round-trip rejects an impossible month or day while keeping leap days valid.*
+- `src/domain/promptRegistry.ts` must contain `isRealCalendarDate`, `knownIds` — *The prompt gate has to validate the value it renders into the heading and resolve `supersededBy`, or a typo becomes a permanent dangling reference.*
+- `src/domain/improvementRegistry.ts` must contain `isRealCalendarDate`, `knownIds` — *The improvement gate needs the same two checks; otherwise only one ledger rejects impossible dates and dangling replacements.*
+- `src/domain/__tests__/promptRegistry.test.ts` must contain `rejects an impossible decidedOn`, `real calendar date` — *The rejection has to be asserted, not assumed: the impossible month, the missing February day and the leap day pin the boundary.*
+- `src/domain/__tests__/improvementRegistry.test.ts` must contain `rejects an impossible decidedOn`, `real calendar date` — *Both gates are separate functions, so each needs its own value-validation test rather than one shared expectation.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `isRealCalendarDate` in `src/domain/ledgerContract.ts` and call it from both gates whenever `decidedOn` is set.
+2. Resolve `supersededBy` against the entries being validated; a replacement must be an entry in the same registry.
+3. Extend the boundary tests with any new date rule rather than deleting the impossible-month and missing-day cases.
+
+## 2026-11-28 — Diagnostics Panel Drops In-Flight Refreshes After Unmount
+Why:        CI kept failing the render tests with `ReferenceError: window is not defined` from a state update dispatched by `DiagnosticsAndSupportPanel`, so a suite that passes locally would go red on an unrelated commit — the failure looked like the ledger work and was not.
+Changed:    `src/components/DiagnosticsAndSupportPanel.tsx`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/DiagnosticsAndSupportPanel.tsx` must contain `isMountedRef`, `if (!isMountedRef.current) return` — *The awaits in `refreshDiagnostics` can resolve after unmount; without this guard the update is dispatched into a document that no longer exists.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the `isMountedRef` check after the awaits in `refreshDiagnostics`, before any `setState` call.
+2. Treat a post-teardown state update as a component bug, not a test-ordering problem: fix the guard instead of skipping, retrying or serialising the test.
+3. New async handlers that set state after an await need the same check if they can outlive the panel.
 
 ## 2026-11-28 — Measure Component→Storage Coupling and Move the Install Prompt Behind an @app Port
 Why:        The modularity handoff requires the layer checks to cover components and storage, but nothing measured how many UI files still load a storage module at runtime, so the UI decoupling milestone had no denominator and could regress silently. The install button and offline banner were also the simplest example of a presentational header component reaching into `src/storage/storageProtection` for the PWA prompt and connectivity.

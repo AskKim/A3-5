@@ -126,13 +126,13 @@ async function main() {
     console.error(
       `[verify:prompts] FAIL — ${optInViolations.length} prompt ledger opt-in violation${
         optInViolations.length === 1 ? '' : 's'
-      } (half-opted-in or unpinned legacy) in src/domain/promptRegistry.ts:`
+      } (half-opted-in, unpinned legacy, or an invalid ledger value) in src/domain/promptRegistry.ts:`
     );
     for (const v of optInViolations) {
       console.error(`  - [${v.entryId}] ${v.title}: ${v.issue}`);
     }
     console.error(
-      '    Fix: a new entry sets all of decidedOn, version and commitShaOrTag; only LEGACY_PROMPT_ENTRY_IDS may stay legacy.'
+      '    Fix: a new entry sets all of decidedOn, version and commitShaOrTag; only LEGACY_PROMPT_ENTRY_IDS may stay legacy. decidedOn must be a real YYYY-MM-DD calendar date, and supersededBy must name an existing entry.'
     );
   }
 

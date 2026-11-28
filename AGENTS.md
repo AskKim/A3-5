@@ -151,8 +151,9 @@ Minimum tokens and minimum round trips are requirements here, not preferences. T
     in every gating workflow (`ci`, `deploy-pages`, `release`, `build-android-apk`). Both also reject
     a half-opted-in entry (some ledger fields without the full opt-in), a `superseded` entry with no
     `supersededBy`, and any entry outside the pinned legacy ID lists (`LEGACY_IMPROVEMENT_ENTRY_IDS`,
-    `LEGACY_PROMPT_ENTRY_IDS`) that omits the ledger fields — so a new entry cannot be logged in the
-    old shape.
+    `LEGACY_PROMPT_ENTRY_IDS`) that omits the ledger fields, a `decidedOn` that is not a real
+    `YYYY-MM-DD` calendar date, and a `supersededBy` that names no registry entry — so a new entry
+    cannot be logged in the old shape.
 - **Skill edits:** `cloud_manage_skills` has no patch API — every save rewrites the entire skill and
   needs approval, so each save produces another "replace skill?" prompt for the owner.
   **Therefore: never re-publish the account skill as part of ordinary repo work.** The canonical

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-BASE=/home/antigravity/AskKim/Pedigree/prompts/preflight
+# Resolve the target from this script's own location so any clone works.
+BASE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 declare -A files=(
   # id   filename
@@ -68,35 +69,35 @@ export_file(){
 }
 
 # Export main files
-for id name in "${!files[@]}"; do
-  export_file "$id" "$BASE/$name"
+for id in "${!files[@]}"; do
+  export_file "$id" "$BASE/${files[$id]}"
 done
 
 # Export run-uni
 RUNUNI_DIR="$BASE/run-uni"
 mkdir -p "$RUNUNI_DIR"
-for id name in "${!rununi[@]}"; do
-  export_file "$id" "$RUNUNI_DIR/$name"
+for id in "${!rununi[@]}"; do
+  export_file "$id" "$RUNUNI_DIR/${rununi[$id]}"
 done
 
 # Export read folder
 READ_DIR="$RUNUNI_DIR/read"
 mkdir -p "$READ_DIR"
-for id name in "${!readfiles[@]}"; do
-  export_file "$id" "$READ_DIR/$name"
+for id in "${!readfiles[@]}"; do
+  export_file "$id" "$READ_DIR/${readfiles[$id]}"
 done
 
 # Export scripts
 SCRIPT_DIR="$BASE/scripts"
 mkdir -p "$SCRIPT_DIR"
-for id name in "${!scripts[@]}"; do
-  export_file "$id" "$SCRIPT_DIR/$name"
+for id in "${!scripts[@]}"; do
+  export_file "$id" "$SCRIPT_DIR/${scripts[$id]}"
 done
 
 # Export templates
 TEMPLATE_DIR="$BASE/templates"
 mkdir -p "$TEMPLATE_DIR"
-for id name in "${!templates[@]}"; do
-  export_file "$id" "$TEMPLATE_DIR/$name"
+for id in "${!templates[@]}"; do
+  export_file "$id" "$TEMPLATE_DIR/${templates[$id]}"
 done
 

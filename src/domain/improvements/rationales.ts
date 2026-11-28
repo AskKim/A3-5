@@ -1004,4 +1004,16 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'A frozen snapshot is what turns the pin list into a ratchet: appending a new PRM ID fails the suite instead of quietly bypassing the opt-in gate.',
   'IMP-139#src/domain/__tests__/improvementRegistry.test.ts#1':
     'Pinning a `decidedOn`-less entry must cost a deliberate snapshot edit, so the exemption cannot be widened as a shortcut.',
+  'IMP-143#src/domain/ledgerContract.ts#1':
+    'A shape-only date check accepts 2026-13-45; the UTC round-trip is what makes the heading a date that actually exists.',
+  'IMP-143#src/domain/promptRegistry.ts#1':
+    'Rendering a heading from an unchecked value is how an impossible date reached the ledger, and a supersededBy nobody can resolve loses the history it points at.',
+  'IMP-143#src/domain/improvementRegistry.ts#1':
+    'Both gates are separate functions, so the same two rules have to be present in each or the weaker ledger stays open.',
+  'IMP-143#src/domain/__tests__/promptRegistry.test.ts#1':
+    'The impossible month, the missing February day and the leap day are the boundary cases; deleting them lets a shape-only check return unnoticed.',
+  'IMP-143#src/domain/__tests__/improvementRegistry.test.ts#1':
+    'The improvement gate needs its own boundary test because it is a separate implementation from the prompt gate.',
+  'IMP-144#src/components/DiagnosticsAndSupportPanel.tsx#1':
+    'A diagnostics refresh that outlives the panel must not dispatch an update; otherwise the failure surfaces as an unrelated CI red on whichever commit happened to run next.',
 };
