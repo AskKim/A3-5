@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (99 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (103 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (163)
+## Logged Improvements (167)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1053,7 +1053,8 @@ npm run lint && npm run build
 - `src/domain/speciesMigration.ts` must contain `feedBatchesMigrated`, `feedAllocationsMigrated` — *Cross-species migrations must move linked feedBatches and feedAllocations.*
 - `src/domain/archiveInspector.ts` must contain `feedBatchCount`, `feedAllocationCount`, `ledgerEntryCount`, `processingLogCount`, `youthProjectBookCount` — *Pre-restore dry-run inspection must count v3/v4 feed, ledger, processing, and youth records.*
 - `src/domain/exporters/registry.ts` must contain `herdboss-transfer-bundle`, `registry-worksheet-csv`, `binaryContent` — *HerdBoss Transfer Tables (.ZIP) and Breed Registry & Show Worksheets (.CSV) must stay active ready exporters.*
-- `src/components/PrintPreviewModal.tsx` must contain `canShareHtmlDocument`, `extractScopedPrintCssFromRules`, `detectDocumentPrintOrientation` — *PrintPreviewModal must enable Share .HTM on native wrappers, extract @media print rules, and forward orientation/HTML to native print.*
+- `src/features/document-export/printStagePresenters.ts` must contain `extractScopedPrintCssFromRules`, `detectDocumentPrintOrientation` — *The print-stage presenters must keep extracting @media print rules and reporting the document orientation that native print consumes.*
+- `src/utils/webFileActions.ts` must contain `canShareHtmlDocument` — *Share .HTM capability must stay detectable from the host, so a native wrapper can offer Share even when navigator.share is absent.*
 - `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PrintBridge.kt` must contain `printFromBridge`, `printHtmlDocument`, `buildPrintAttributes` — *Android PrintBridge must render self-contained HTML in a hardened offscreen WebView with landscape/portrait PrintAttributes.*
 
 **Restoration Playbook if Overwritten:**
@@ -1406,14 +1407,14 @@ npm run lint && npm run build
 - `.github/workflows/build-android-apk.yml` must contain `Install PWA dependencies & run verification suite`, `Build production PWA bundle (root path)`, `NODE_ENV: production` — *Android APK CI must install devDependencies without NODE_ENV=production and apply NODE_ENV=production strictly to the Vite production build step.*
 - `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PedigreeAssetPathHandler.kt` must contain `resolvedPath == "status.json"` — *Android WebView asset handler must serve status.json with Cache-Control: no-cache alongside version.json.*
 - `src/storage/webSqliteAdapter.ts` must contain `executeIdbWriteWithQuotaRecovery`, `purgeOpfsTmp` — *Primary IndexedDB writes must catch QuotaExceededError, purge OPFS /tmp and non-essential fallback caches, and retry once before failing.*
-- `src/components/PrintPreviewModal.tsx` must contain `sanitizePrintStageHtml` — *Print stage DOM mounting must strip executable tags, inline event handlers, and dangerous URLs before inserting HTML into #barn-print-stage.*
+- `src/features/document-export/printStagePresenters.ts` must contain `sanitizePrintStageHtml` — *Print stage mounting must strip executable tags, inline event handlers and dangerous URLs before any surface inserts printable HTML into the page.*
 - `src/domain/backupVault.ts` must contain `from '@engine/binaryEncoding'` — *backupVault.ts must import binary encoding helpers directly from binaryEncoding.ts instead of pulling backupArchive.ts into the startup graph.*
 - `src/components/DiagnosticsAndSupportPanel.tsx` must contain `loadImprovementRegistryModule`, `import('../domain/improvementRegistry')` — *DiagnosticsAndSupportPanel must lazy-load the 200+ kB improvementRegistry manifest on demand instead of bloating DevelopmentScreen.*
 - `vite.config.ts` must contain `storage-sqlite`, `core-backups`, `improvement-registry`, `includeDependenciesRecursively: false` — *Rolldown codeSplitting must isolate app storage, backup, domain, and registry chunks with includeDependenciesRecursively: false so no chunk exceeds 500 kB.*
 
 **Restoration Playbook if Overwritten:**
 1. Keep `.env.example` clean, keep `NODE_ENV: production` scoped only to `npm run build` in `.github/workflows/build-android-apk.yml`, and preserve `resolvedPath == "status.json"` no-cache handling in `PedigreeAssetPathHandler.kt`.
-2. Preserve `executeIdbWriteWithQuotaRecovery` in `src/storage/webSqliteAdapter.ts` and `sanitizePrintStageHtml` in `src/components/PrintPreviewModal.tsx`.
+2. Preserve `executeIdbWriteWithQuotaRecovery` in `src/storage/webSqliteAdapter.ts` and `sanitizePrintStageHtml` in `src/features/document-export/printStagePresenters.ts`.
 3. Keep `backupVault.ts` importing from `./binaryEncoding`, keep dynamic imports of `geneticsEngine`, `syncAndExports`, and `weatherForecast` in `src/hooks/useBarnStore.ts`, keep lazy `loadImprovementRegistryModule` in `DiagnosticsAndSupportPanel.tsx`, and retain isolated Rolldown `codeSplitting` groups in `vite.config.ts`.
 
 ### IMP-063: Mobile Chrome Dev Preview Boot Memory Guard: Inline Sourcemap Stripping, Direct Lucide Icon ESM & Lazy Error-Boundary Export
@@ -3195,3 +3196,58 @@ Status:     active
 1. Stub `fetch` with a `{ ok, status, json }` object; do not use a real Response, because the client only reads those three members.
 2. The connectivity snapshot is module state: flip `navigator.onLine` for device-offline and `setManualOfflineMode` for the manual override, and reset both in `afterEach`.
 3. The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.
+
+## 2026-11-28 — Protect Live Hosting From Any Dev Copy, Not Just This One
+Why:        The hosting rules named one repository and one branch, so an agent working in a different dev copy could read them as “not about this tree” and delete `deploy-pages.yml`, retarget the Pages workflow or push to `release` — all of which are live, in active use by real users, and reachable from any copy that carries this repository.
+Changed:    `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `.cursor/rules/project.mdc`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules`, `.roorules`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `AGENTS.md` must contain `Live hosting is off-limits unless the request says otherwise`, `Hosting plumbing is live infrastructure`, `An explicit request is required`, `a failing live-side check is reported, not fixed` — *This is the only place the rule is stated in full; without the explicit-request clause an agent working in a dev copy treats the live deploy path as scaffolding and deletes or retargets it.*
+- `GEMINI.md` must contain `## Live Hosting: Never Without A Request`, `not permission to clean up the live path` — *GEMINI.md is loaded alongside AGENTS.md on every task, so the short form must stay to catch agents that only read the handoff rules.*
+- `CLAUDE.md` must contain `Live Hosting Off-Limits` — *The one-line non-negotiables are what inline editors load; dropping this bullet silently narrows the rule back to the long files they never read.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the rule repo-agnostic: name `release` only as the current example of a live branch, never as the whole rule, because the live copy can be another repository, branch or dev server.
+2. Never phrase this so a live check can be “fixed” by editing the workflow, deleting `deploy-pages.yml` or changing the Pages source; the instruction is to report the setting mismatch instead.
+3. If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.
+
+## 2026-11-28 — Say “Could Not Reach Open-Meteo” Instead of “Failed to Fetch”
+Why:        A browser-level network failure surfaced in the weather drawer as the raw `TypeError: Failed to fetch` for both Refresh and the city lookup, which reads like a bug in the app rather than a dropped connection.
+Changed:    `src/storage/weatherForecast.ts`, `src/storage/__tests__/weatherForecast.test.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/weatherForecast.ts` must contain `describeWeatherRequestFailure`, `Could not reach Open-Meteo — check your internet connection and try again.` — *Both catch blocks must keep routing through the helper; a direct `err.message` return would bring back the raw browser string the fix exists to remove.*
+- `src/storage/__tests__/weatherForecast.test.ts` must contain `CONNECTION_MESSAGE`, `new TypeError('Failed to fetch')` — *The tests pin the user-visible copy and the exact browser error shape that triggered the fix, so a message change is a deliberate test edit.*
+
+**Restoration Playbook if Overwritten:**
+1. Chrome rejects with `TypeError`, Firefox with `TypeError('NetworkError when attempting to fetch resource.')`, Safari with `TypeError('Load failed')` — the helper matches all three.
+2. Never let the connection message replace the timeout message: an `AbortError` means the request started, so the 6s timeout copy is the accurate one.
+3. Assert the cache timestamp is unchanged after a failed refresh; that is what keeps the offline strip truthful.
+
+## 2026-11-28 — Render the Weather Drawer's Failed Refresh
+Why:        IMP-166 fixed the copy in the storage layer and pinned it there, but nothing checked that the drawer actually renders that message or that the cached days survive the failure — a component change could have dropped either promise while the storage test still passed.
+Changed:    `src/components/__tests__/weatherDrawer.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/__tests__/weatherDrawer.render.test.tsx` must contain `Could not reach Open-Meteo — check your internet connection and try again.`, `new TypeError('Failed to fetch')`, `name: 'Refresh'` — *The mount test, the failing-refresh test and the exact Refresh control are the three things that make this a drawer test rather than a copy of the storage test.*
+
+**Restoration Playbook if Overwritten:**
+1. Seed `pedigree.weatherForecast.cache.v1` with a `fetchedAtIso` of now; that keeps the mount effect from fetching and makes the rendered days deterministic.
+2. Scope day assertions to the strip line (`Clear Sky · 0%`) — the selected-day details also print the label, so a bare label query matches twice.
+3. Build settings from `buildFullPredefinedSampleSnapshot().settings` and override only `weatherForecast`; BarnSettings has too many required fields to hand-write.
+
+## 2026-11-28 — Move the Print-Stage Presenters Into the Document-Export Feature
+Why:        The coupling milestone had one presenter extraction left unbuilt: `PrintPreviewModal` (2,228 lines) carried the pure print-document composition rules itself, so any other printable surface had to import a React component to reuse them.
+Changed:    `src/features/document-export/printStagePresenters.ts`, `src/features/document-export/index.ts`, `src/utils/webFileActions.ts`, `src/components/PrintPreviewModal.tsx`, `src/components/__tests__/printPreviewHelpers.test.ts`, `src/components/__tests__/printPreviewFileActions.test.ts`, `src/domain/improvements/registry-part-03.ts`, `src/domain/improvements/registry-part-04.ts`, `EXTRACTION_INVENTORY.md`, `docs/plans/handoff-modularity-reusability.yaml`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/PrintPreviewModal.tsx` must contain `@features/document-export` — *The modal must keep consuming the feature presenters instead of re-inlining its own copy of the CSS scoping and sanitising rules.*
+- `src/features/document-export/printStagePresenters.ts` must contain `export function clampPreviewZoom`, `sanitizePrintStageHtml` — *The presenters are the shared contract for printable surfaces; losing either symbol sends the UI back to a component-local copy.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep DOM-touching helpers out of `@features/*`: a capability probe like `canShareHtmlDocument` belongs in `src/utils/webFileActions.ts`, and user-facing error copy stays with the modal.
+2. Run `npm run verify:extraction` after touching `src/features` or `src/utils`: it compiles them against the ES2018 lib, which is stricter than the app tsconfig that allowed `trimStart`.

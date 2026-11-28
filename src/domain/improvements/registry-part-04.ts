@@ -870,7 +870,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
         requiredSubstrings: ['executeIdbWriteWithQuotaRecovery', 'purgeOpfsTmp'],
       },
       {
-        filePath: 'src/components/PrintPreviewModal.tsx',
+        filePath: 'src/features/document-export/printStagePresenters.ts',
         requiredSubstrings: ['sanitizePrintStageHtml'],
       },
       {
@@ -893,7 +893,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
     ],
     restorePlaybook: [
       'Keep `.env.example` clean, keep `NODE_ENV: production` scoped only to `npm run build` in `.github/workflows/build-android-apk.yml`, and preserve `resolvedPath == "status.json"` no-cache handling in `PedigreeAssetPathHandler.kt`.',
-      'Preserve `executeIdbWriteWithQuotaRecovery` in `src/storage/webSqliteAdapter.ts` and `sanitizePrintStageHtml` in `src/components/PrintPreviewModal.tsx`.',
+      'Preserve `executeIdbWriteWithQuotaRecovery` in `src/storage/webSqliteAdapter.ts` and `sanitizePrintStageHtml` in `src/features/document-export/printStagePresenters.ts`.',
       'Keep `backupVault.ts` importing from `./binaryEncoding`, keep dynamic imports of `geneticsEngine`, `syncAndExports`, and `weatherForecast` in `src/hooks/useBarnStore.ts`, keep lazy `loadImprovementRegistryModule` in `DiagnosticsAndSupportPanel.tsx`, and retain isolated Rolldown `codeSplitting` groups in `vite.config.ts`.',
     ],
   },

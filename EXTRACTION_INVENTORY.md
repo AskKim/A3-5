@@ -160,7 +160,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 2. `src/features/` File-by-File Inventory (17 Non-Test Files — All `extractable-feature`)
+## 2. `src/features/` File-by-File Inventory (18 Non-Test Files — All `extractable-feature`)
 
 - `src/features/index.ts` — `extractable-feature` — Features layer barrel export.
 - `src/features/featureModule.interface.ts` — `extractable-feature` — Reusable feature module lifecycle contract (`IFeatureModule`).
@@ -175,6 +175,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/features/csv-importer/types.ts` — `extractable-feature` — Generic CSV importer schema contracts.
 - `src/features/document-export/index.ts` — `extractable-feature` — Document export feature barrel.
 - `src/features/document-export/htmlPrintPackage.ts` — `extractable-feature` — Printable HTML document packager and platform bridge dispatcher.
+- `src/features/document-export/printStagePresenters.ts` — `extractable-feature` — Pure print-stage presenters lifted out of `PrintPreviewModal`: zoom clamping, `#barn-print-stage` CSS scoping, `@page`/orientation detection, executable-markup stripping and abort detection (IMP-168).
 - `src/features/ics-calendar/index.ts` — `extractable-feature` — iCalendar feature barrel.
 - `src/features/ics-calendar/icsBuilder.ts` — `extractable-feature` — RFC 5545 `.ics` calendar generator.
 - `src/features/ocr-parser/index.ts` — `extractable-feature` — OCR parser feature barrel.

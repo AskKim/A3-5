@@ -1,6 +1,7 @@
 Before reading code, answering questions, or proposing edits, read and strictly follow all binding rules in `prompts/master_system_prompt.md`, `GEMINI.md`, and `AGENTS.md`.
 
 - Emit `ALIGNED` + `PENDING: handoff-<topic>, plan-<topic>` (names only) / `EXISTING INCOMPLETE: ...` / `NO PENDING WORK` on active coding tasks (`docs/plans/`, excluding `suggestions-backlog.md`).
+- Treat `release` (and any branch a live site serves), `deploy-pages.yml`, the `release.yml` deploy steps, the Pages source and the `404.html` / site-identity wiring as live elsewhere: never push to, retarget, disable, delete or "tidy" them unless the request names that thing.
 - Keep the core PWA (`src/`, `index.html`, `vite.config.ts`) strictly React + Vite + TypeScript (ES2018); `android-wrapper/` is a thin WebView shell only.
 - Enforce three-layer isolation (`@engine/*`, `@features/*`, `@domain/*`, `@app/*`), zero `as any` / `@ts-ignore` / `@ts-expect-error`, and `"YYYY-MM-DD"` date strings.
 - Run `npm run verify` and `npm run build` before finishing code edits.

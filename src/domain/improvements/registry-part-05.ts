@@ -4358,4 +4358,183 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.',
     ],
   },
+  {
+    id: 'IMP-165',
+    title: 'Protect Live Hosting From Any Dev Copy, Not Just This One',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The hosting rules named one repository and one branch, so an agent working in a different dev copy could read them as “not about this tree” and delete `deploy-pages.yml`, retarget the Pages workflow or push to `release` — all of which are live, in active use by real users, and reachable from any copy that carries this repository.',
+    summary:
+      'Replaces the single-repository `release` note in `AGENTS.md` with a portable rule (“Live hosting is off-limits unless the request says otherwise”) covering live-serving branches, the Pages/release deploy workflows, the Pages source, the custom domain and the `404.html` / site-identity wiring as shared production in any repo or branch, with an explicit-request gate for changing them and an instruction to report a live-side failure rather than repair it by editing the workflow. Mirrors it as a short `## Live Hosting: Never Without A Request` section in `GEMINI.md` and as a one-line non-negotiable in `CLAUDE.md`, `.cursor/rules/project.mdc`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules` and `.roorules`, so inline agents in every supported editor see it without loading the long files.',
+    files: [
+      'AGENTS.md',
+      'GEMINI.md',
+      'CLAUDE.md',
+      '.cursor/rules/project.mdc',
+      '.github/copilot-instructions.md',
+      '.windsurfrules',
+      '.clinerules',
+      '.roorules',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'AGENTS.md',
+        requiredSubstrings: [
+          'Live hosting is off-limits unless the request says otherwise',
+          'Hosting plumbing is live infrastructure',
+          'An explicit request is required',
+          'a failing live-side check is reported, not fixed',
+        ],
+        rationale:
+          'This is the only place the rule is stated in full; without the explicit-request clause an agent working in a dev copy treats the live deploy path as scaffolding and deletes or retargets it.',
+      },
+      {
+        filePath: 'GEMINI.md',
+        requiredSubstrings: ['## Live Hosting: Never Without A Request', 'not permission to clean up the live path'],
+        rationale:
+          'GEMINI.md is loaded alongside AGENTS.md on every task, so the short form must stay to catch agents that only read the handoff rules.',
+      },
+      {
+        filePath: 'CLAUDE.md',
+        requiredSubstrings: ['Live Hosting Off-Limits'],
+        rationale:
+          'The one-line non-negotiables are what inline editors load; dropping this bullet silently narrows the rule back to the long files they never read.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the rule repo-agnostic: name `release` only as the current example of a live branch, never as the whole rule, because the live copy can be another repository, branch or dev server.',
+      'Never phrase this so a live check can be “fixed” by editing the workflow, deleting `deploy-pages.yml` or changing the Pages source; the instruction is to report the setting mismatch instead.',
+      'If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.',
+    ],
+  },
+  {
+    id: 'IMP-166',
+    title: 'Say “Could Not Reach Open-Meteo” Instead of “Failed to Fetch”',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'A browser-level network failure surfaced in the weather drawer as the raw `TypeError: Failed to fetch` for both Refresh and the city lookup, which reads like a bug in the app rather than a dropped connection.',
+    summary:
+      'Adds one `describeWeatherRequestFailure` helper in `src/storage/weatherForecast.ts`: aborts keep their existing timeout copy, `TypeError` or a `Failed to fetch` / `NetworkError` / `Load failed` / `Network request failed` message becomes “Could not reach Open-Meteo — check your internet connection and try again.”, and anything else keeps its own message. Both the geocoding search and the forecast fetch route through it, and the forecast error branch still returns the cached bundle so the last 7-day strip stays on screen. The weather suite pins the new copy through a `CONNECTION_MESSAGE` constant, asserting a `TypeError` rejection yields that message for search, and for the forecast yields `source: \'error\'` with the cached bundle intact and the stale cache not overwritten.',
+    files: [
+      'src/storage/weatherForecast.ts',
+      'src/storage/__tests__/weatherForecast.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/weatherForecast.ts',
+        requiredSubstrings: [
+          'describeWeatherRequestFailure',
+          'Could not reach Open-Meteo — check your internet connection and try again.',
+        ],
+        rationale:
+          'Both catch blocks must keep routing through the helper; a direct `err.message` return would bring back the raw browser string the fix exists to remove.',
+      },
+      {
+        filePath: 'src/storage/__tests__/weatherForecast.test.ts',
+        requiredSubstrings: ['CONNECTION_MESSAGE', "new TypeError('Failed to fetch')"],
+        rationale:
+          'The tests pin the user-visible copy and the exact browser error shape that triggered the fix, so a message change is a deliberate test edit.',
+      },
+    ],
+    restorePlaybook: [
+      'Chrome rejects with `TypeError`, Firefox with `TypeError(\'NetworkError when attempting to fetch resource.\')`, Safari with `TypeError(\'Load failed\')` — the helper matches all three.',
+      'Never let the connection message replace the timeout message: an `AbortError` means the request started, so the 6s timeout copy is the accurate one.',
+      'Assert the cache timestamp is unchanged after a failed refresh; that is what keeps the offline strip truthful.',
+    ],
+  },
+  {
+    id: 'IMP-167',
+    title: 'Render the Weather Drawer\'s Failed Refresh',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'IMP-166 fixed the copy in the storage layer and pinned it there, but nothing checked that the drawer actually renders that message or that the cached days survive the failure — a component change could have dropped either promise while the storage test still passed.',
+    summary:
+      'Adds `src/components/__tests__/weatherDrawer.render.test.tsx`, which mounts the real `BreedingCalendarPanel` with weather enabled at 44.5/-72.9 and a fresh cached bundle seeded in `localStorage`. One test proves the cached strip renders on mount (`Copper Creek`, `Clear Sky · 0%`, `Overcast · 99%`) with `fetch` never called; the other stubs `fetch` to reject with the browser `TypeError`, clicks Refresh, and asserts the plain connection copy appears, the raw `Failed to fetch` string does not, and both cached day lines are still on screen with unchanged text.',
+    files: [
+      'src/components/__tests__/weatherDrawer.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/__tests__/weatherDrawer.render.test.tsx',
+        requiredSubstrings: [
+          'Could not reach Open-Meteo — check your internet connection and try again.',
+          "new TypeError('Failed to fetch')",
+          "name: 'Refresh'",
+        ],
+        rationale:
+          'The mount test, the failing-refresh test and the exact Refresh control are the three things that make this a drawer test rather than a copy of the storage test.',
+      },
+    ],
+    restorePlaybook: [
+      'Seed `pedigree.weatherForecast.cache.v1` with a `fetchedAtIso` of now; that keeps the mount effect from fetching and makes the rendered days deterministic.',
+      'Scope day assertions to the strip line (`Clear Sky · 0%`) — the selected-day details also print the label, so a bare label query matches twice.',
+      'Build settings from `buildFullPredefinedSampleSnapshot().settings` and override only `weatherForecast`; BarnSettings has too many required fields to hand-write.',
+    ],
+  },
+  {
+    id: 'IMP-168',
+    title: 'Move the Print-Stage Presenters Into the Document-Export Feature',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The coupling milestone had one presenter extraction left unbuilt: ' +
+      '`PrintPreviewModal` (2,228 lines) carried the pure print-document composition rules itself, so any other printable surface had to import a React component to reuse them.',
+    summary:
+      'The print-stage presenters moved to ' +
+      '`src/features/document-export/printStagePresenters.ts` — zoom clamping, `#barn-print-stage` selector scoping, `@page`/`@media` extraction, orientation detection, executable-markup stripping and abort detection — because the feature already owns `buildPrintableHtmlDocument`. Two pieces deliberately stayed out: `canShareHtmlDocument` uses `navigator`/`File`, so it joined the file actions in `src/utils/webFileActions.ts`, and the failure wording stayed in the modal, where `document.pdf` would trip the framework DOM-purity gate. The isolated engine build also caught `trimStart` (ES2019) in the moved code, which the app tsconfig had masked; it is now an ES2018-safe regex. The IMP-011/IMP-043 invariants follow the symbols to their new homes.',
+    files: [
+      'src/features/document-export/printStagePresenters.ts',
+      'src/features/document-export/index.ts',
+      'src/utils/webFileActions.ts',
+      'src/components/PrintPreviewModal.tsx',
+      'src/components/__tests__/printPreviewHelpers.test.ts',
+      'src/components/__tests__/printPreviewFileActions.test.ts',
+      'src/domain/improvements/registry-part-03.ts',
+      'src/domain/improvements/registry-part-04.ts',
+      'EXTRACTION_INVENTORY.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/PrintPreviewModal.tsx',
+        requiredSubstrings: ['@features/document-export'],
+        rationale:
+          'The modal must keep consuming the feature presenters instead of re-inlining its own copy of the CSS scoping and sanitising rules.',
+      },
+      {
+        filePath: 'src/features/document-export/printStagePresenters.ts',
+        requiredSubstrings: ['export function clampPreviewZoom', 'sanitizePrintStageHtml'],
+        rationale:
+          'The presenters are the shared contract for printable surfaces; losing either symbol sends the UI back to a component-local copy.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep DOM-touching helpers out of `@features/*`: a capability probe like `canShareHtmlDocument` belongs in `src/utils/webFileActions.ts`, and user-facing error copy stays with the modal.',
+      'Run `npm run verify:extraction` after touching `src/features` or ' +
+      '`src/utils`: it compiles them against the ES2018 lib, which is stricter than the app tsconfig that allowed `trimStart`.',
+    ],
+  },
 ];

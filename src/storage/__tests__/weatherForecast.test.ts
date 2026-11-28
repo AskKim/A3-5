@@ -21,6 +21,9 @@ import { setManualOfflineMode } from '../storageProtection';
 import type { WeatherForecastBundle } from '../../domain/breedingCalendar';
 
 const CACHE_KEY = 'pedigree.weatherForecast.cache.v1';
+/** The plain copy a breeder sees when the browser cannot reach Open-Meteo at all. */
+const CONNECTION_MESSAGE =
+  'Could not reach Open-Meteo — check your internet connection and try again.';
 
 function bundle(overrides: Partial<WeatherForecastBundle> = {}): WeatherForecastBundle {
   return {
@@ -173,6 +176,13 @@ describe('searchWeatherLocations', () => {
     await expect(searchWeatherLocations('Willow')).resolves.toMatchObject({
       error: 'Location lookup timed out after 6 seconds.',
     });
+
+    // A transport failure must read as a connection problem, never as `Failed to fetch`.
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))));
+    await expect(searchWeatherLocations('Willow')).resolves.toMatchObject({
+      offline: false,
+      error: CONNECTION_MESSAGE,
+    });
   });
 });
 
@@ -308,5 +318,18 @@ describe('fetchWeeklyWeatherForecast', () => {
       forceRefresh: true,
     });
     expect(timedOut.message).toBe('Weather forecast request timed out after 6 seconds.');
+
+    // An unreachable network keeps the cached forecast and explains the connection problem plainly.
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))));
+    const unreachable = await fetchWeeklyWeatherForecast({
+      latitude: 44.5,
+      longitude: -72.9,
+      locationLabel: 'Copper Creek',
+      forceRefresh: true,
+    });
+    expect(unreachable.source).toBe('error');
+    expect(unreachable.message).toBe(CONNECTION_MESSAGE);
+    expect(unreachable.bundle?.locationLabel).toBe('Copper Creek');
+    expect(window.localStorage.getItem(CACHE_KEY)).toContain('2026-01-01T00:00:00.000Z');
   });
 });
