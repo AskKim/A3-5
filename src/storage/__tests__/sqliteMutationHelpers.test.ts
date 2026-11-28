@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Transaction & Batch Mutation Helper Tests (`src/storage/sqliteMutationHelpers.ts`, IMP-133).
+ * Transaction & Batch Mutation Helper Tests (`src/storage/sqliteMutationHelpers.ts`, IMP-136).
  */
 
 import path from 'node:path';

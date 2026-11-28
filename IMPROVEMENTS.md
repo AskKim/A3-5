@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (71 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (72 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (135)
+## Logged Improvements (136)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2767,6 +2767,21 @@ Status:     active
 1. Log a new improvement with `decidedOn` (plus `status`/`rejected` where they apply) and a new prompt revision with all three of `decidedOn`, `version`, `commitShaOrTag`.
 2. When an old entry opts into the contract, delete its ID from `LEGACY_*_ENTRY_IDS` — the pin gate fails until the list is pruned.
 3. Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.
+
+## 2026-11-28 — Tier A Screens and the Backup/Export Surfaces Render-Tested
+Why:        The suite had one render-level file against 53 components and 68k lines, so a selector, a dialog gate or a save-lock regression could reach the user with every gate green. The owner asked for the Tier A screens — the ones where a rendering bug looks like data loss — and then the backup/export surfaces to be tested the same way.
+Changed:    `src/components/__tests__/tierARecoveryAndEditor.render.test.tsx`, `src/components/__tests__/backupExportSurfaces.render.test.tsx`, `src/hooks/__tests__/speciesSwitch.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/__tests__/tierARecoveryAndEditor.render.test.tsx` must contain `WipedStorageRecoveryModal`, `Confirm Restore`, `Confirm Delete` — *A recovery or delete that fires without its confirm step is the most expensive rendering regression in the app.*
+- `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `SyncStateSliceProvider`, `VaultSliceProvider`, `BUILTIN_NON_NATIVE_EXPORTERS` — *The hub reads three slice contexts; dropping one provider breaks the screen for every caller, and the exporter list is the surface users export through.*
+- `src/hooks/__tests__/speciesSwitch.render.test.tsx` must contain `selectSpeciesWorkspace`, `selectedAnimalId` — *Species isolation is the domain invariant; a switch that keeps the old selection leaks one herd into another.*
+
+**Restoration Playbook if Overwritten:**
+1. Render screens through their real slice providers and callbacks; do not mock the component under test.
+2. Assert user-visible text, roles and the callback contract, plus surfaced alerts — never whole-DOM snapshots.
+3. Tier A tests belong in jsdom files named `*.render.test.tsx`; keep pure units out of them so the slow tier stays small.
 
 ## 2026-11-28 — SQLite Snapshot Readers and Mutation Helpers Split Out of the Adapter
 Why:        webSqliteAdapter.ts was still 2,609 lines and carried three unrelated jobs inside one class: connection lifecycle, reading every barn table back into a snapshot, and its own copies of the transaction envelope, batch-write and multi-row-delete loops. A new entity had to re-implement the transaction handling to add a batch save or a cascade delete.

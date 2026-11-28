@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Snapshot Reader Tests (`src/storage/sqliteSnapshotReaders.ts`, IMP-133).
+ * Snapshot Reader Tests (`src/storage/sqliteSnapshotReaders.ts`, IMP-136).
  */
 
 import path from 'node:path';
