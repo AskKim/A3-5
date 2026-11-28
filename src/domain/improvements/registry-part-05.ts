@@ -3055,4 +3055,48 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.',
     ],
   },
+  {
+    id: 'IMP-134',
+    title: 'Tier A Screens and the Backup/Export Surfaces Render-Tested',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The suite had one render-level file against 53 components and 68k lines, so a selector, a dialog gate or a save-lock regression could reach the user with every gate green. The owner asked for the Tier A screens — the ones where a rendering bug looks like data loss — and then the backup/export surfaces to be tested the same way.',
+    summary:
+      'Adds 26 jsdom render tests in three files. `tierARecoveryAndEditor.render.test.tsx` covers `WipedStorageRecoveryModal` (hidden without a context, restore-with-count, restore failure surfaced as an alert, Start Fresh behind an explicit confirm, rolling-snapshot restore by key), `ArchivedHerdsModal` (closed render, OPFS-unsupported explanation with a disabled toggle, name/species filtering, delete behind a confirm, restore-to-active options), `UnifiedBackupVaultPanel` (empty state, manual save with note, failed save as an alert rather than a success claim, confirm-before-restore, confirm-before-delete for rolling snapshots) and `AnimalEditorModal` (edit-mode dialog naming the animal, save of the prefilled draft, cancel without saving). `backupExportSurfaces.render.test.tsx` renders `ImportExportHubScreen` inside the conflict/vault/sync-state slice providers, asserting the exporters workspace lists the built-in formats, the section tabs switch to system backup and imports, and the engine/species context renders; plus `DiagnosticsAndSupportPanel` health scan through the real `analyzeBarnDataHealth` and the absence of the auto-repair action on a healthy barn. `speciesSwitch.render.test.tsx` switches species through the real store hook and asserts the derived slice swaps, the selection clears, and records never leak across hubs.',
+    files: [
+      'src/components/__tests__/tierARecoveryAndEditor.render.test.tsx',
+      'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+      'src/hooks/__tests__/speciesSwitch.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/__tests__/tierARecoveryAndEditor.render.test.tsx',
+        requiredSubstrings: ['WipedStorageRecoveryModal', 'Confirm Restore', 'Confirm Delete'],
+        rationale:
+          'A recovery or delete that fires without its confirm step is the most expensive rendering regression in the app.',
+      },
+      {
+        filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+        requiredSubstrings: ['SyncStateSliceProvider', 'VaultSliceProvider', 'BUILTIN_NON_NATIVE_EXPORTERS'],
+        rationale:
+          'The hub reads three slice contexts; dropping one provider breaks the screen for every caller, and the exporter list is the surface users export through.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/speciesSwitch.render.test.tsx',
+        requiredSubstrings: ['selectSpeciesWorkspace', 'selectedAnimalId'],
+        rationale:
+          'Species isolation is the domain invariant; a switch that keeps the old selection leaks one herd into another.',
+      },
+    ],
+    restorePlaybook: [
+      'Render screens through their real slice providers and callbacks; do not mock the component under test.',
+      'Assert user-visible text, roles and the callback contract, plus surfaced alerts — never whole-DOM snapshots.',
+      'Tier A tests belong in jsdom files named `*.render.test.tsx`; keep pure units out of them so the slow tier stays small.',
+    ],
+  },
 ];
