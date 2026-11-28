@@ -1888,4 +1888,89 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep sync operations metadata-only and keep exactly one primary per animal.',
     ],
   },
+  {
+    id: 'IMP-107',
+    title: 'Breeding Lifecycle Moved Into `useBreeding`',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Keep the rule that a breeding record and its post-birth chores agree about dates in one place, instead of five callbacks that each half-implement it.',
+    summary:
+      'Milestone 1 continued: `src/hooks/barnStore/useBreeding.ts` owns log, outcome, recalculation, chore check-off and delete. `BreedingTaskCheckoffAction` moved with them and is re-exported from the store, so callers are unchanged. The date coupling now lives in one module: logging cascades chores from the gestation profile, marking Missed clears pending cleanup chores, recording a birth shifts post-birth chores to the actual date (excluding the chore just completed), and deleting removes the linked chores in the same operation batch. The store passes a memoised adapter facade plus the calendar/online probes. `useBarnStore.ts` 8,531 → 7,718 lines; 13 new unit tests; 200-key contract snapshot untouched.',
+    files: [
+      'src/hooks/barnStore/useBreeding.ts',
+      'src/hooks/__tests__/breeding.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/useBreeding.ts',
+        requiredSubstrings: [
+          'export function useBreeding',
+          'getPendingBreedingCleanupTasks',
+          'recalculatePostBirthTasksForBreeding',
+        ],
+        rationale:
+          'A breeding write that forgets to clear or shift its chores leaves the barn showing work for a litter that will never arrive.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/useBreeding'"],
+        forbiddenSubstrings: ['const logBreedingWithCascade = useCallback('],
+        rationale:
+          'Re-inlining any one breeding callback would split the date coupling that this module exists to hold together.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/breeding.test.ts',
+        requiredSubstrings: [
+          'clears pending chores when the breeding is marked missed',
+          'refuses to run before a birth date is recorded',
+        ],
+        rationale:
+          'These two guard the cleanup and the precondition that keeps a wrong-date recalculation from silently moving chores.',
+      },
+    ],
+    restorePlaybook: [
+      'Breeding writes live in `barnStore/useBreeding.ts`; the store supplies the adapter facade, calendar queue and online probe.',
+      'Never save a breeding status change without reconciling its linked post-birth chores.',
+    ],
+  },
+  {
+    id: 'IMP-108',
+    title: 'React-Free Store Ports Factory (`createStorePorts`)',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Let backup import, reconciliation and tests drive the same mutation slices as the UI, without mounting a React component to get a write queue and revision allocator.',
+    summary:
+      'Milestone 1 complete: `src/hooks/barnStore/storePorts.ts` builds the shared deps bundle for the extracted slices — serial write queue that survives a rejected mutation, per-entity revision allocation that never goes backwards even when handed a stale rev, the persisted logical sync counter, a caller-owned snapshot ref and no-op defaults for the UI-only callbacks. Together with the exported action functions this makes the store logic reusable outside React.',
+    files: [
+      'src/hooks/barnStore/storePorts.ts',
+      'src/hooks/__tests__/storePorts.test.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/storePorts.ts',
+        requiredSubstrings: [
+          'export function createStorePorts',
+          'bumpRecordRevision',
+          'allocateNextLogicalCounter',
+        ],
+        rationale:
+          'A second revision allocator or counter source would let two writers mint the same revision for one entity.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/storePorts.test.ts',
+        requiredSubstrings: ['keeps going after a rejection'],
+        rationale:
+          'A rejected mutation that kills the queue silently freezes every later write in the session.',
+      },
+    ],
+    restorePlaybook: [
+      'Unmountable callers build deps with `createStorePorts({ deviceId, snapshotRef })` rather than hand-rolling a queue and rev counter.',
+      'One storage-backed sync counter; never a second in-memory counter.',
+    ],
+  },
 ];

@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (42 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (44 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (106)
+## Logged Improvements (108)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2305,3 +2305,39 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Photo writes live in `barnStore/usePhotoMutations.ts`; the store supplies the adapter facade, cache helpers and mutation queue.
 2. Keep sync operations metadata-only and keep exactly one primary per animal.
+
+### IMP-107: Breeding Lifecycle Moved Into `useBreeding`
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Keep the rule that a breeding record and its post-birth chores agree about dates in one place, instead of five callbacks that each half-implement it.
+- **Summary:** Milestone 1 continued: `src/hooks/barnStore/useBreeding.ts` owns log, outcome, recalculation, chore check-off and delete. `BreedingTaskCheckoffAction` moved with them and is re-exported from the store, so callers are unchanged. The date coupling now lives in one module: logging cascades chores from the gestation profile, marking Missed clears pending cleanup chores, recording a birth shifts post-birth chores to the actual date (excluding the chore just completed), and deleting removes the linked chores in the same operation batch. The store passes a memoised adapter facade plus the calendar/online probes. `useBarnStore.ts` 8,531 → 7,718 lines; 13 new unit tests; 200-key contract snapshot untouched.
+- **Tracked Files:** `src/hooks/barnStore/useBreeding.ts`, `src/hooks/__tests__/breeding.test.ts`, `src/hooks/useBarnStore.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/useBreeding.ts` must contain `export function useBreeding`, `getPendingBreedingCleanupTasks`, `recalculatePostBirthTasksForBreeding` — *A breeding write that forgets to clear or shift its chores leaves the barn showing work for a litter that will never arrive.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/useBreeding'` — *Re-inlining any one breeding callback would split the date coupling that this module exists to hold together.*
+  - Forbidden regression: `const logBreedingWithCascade = useCallback(`
+- `src/hooks/__tests__/breeding.test.ts` must contain `clears pending chores when the breeding is marked missed`, `refuses to run before a birth date is recorded` — *These two guard the cleanup and the precondition that keeps a wrong-date recalculation from silently moving chores.*
+
+**Restoration Playbook if Overwritten:**
+1. Breeding writes live in `barnStore/useBreeding.ts`; the store supplies the adapter facade, calendar queue and online probe.
+2. Never save a breeding status change without reconciling its linked post-birth chores.
+
+### IMP-108: React-Free Store Ports Factory (`createStorePorts`)
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Let backup import, reconciliation and tests drive the same mutation slices as the UI, without mounting a React component to get a write queue and revision allocator.
+- **Summary:** Milestone 1 complete: `src/hooks/barnStore/storePorts.ts` builds the shared deps bundle for the extracted slices — serial write queue that survives a rejected mutation, per-entity revision allocation that never goes backwards even when handed a stale rev, the persisted logical sync counter, a caller-owned snapshot ref and no-op defaults for the UI-only callbacks. Together with the exported action functions this makes the store logic reusable outside React.
+- **Tracked Files:** `src/hooks/barnStore/storePorts.ts`, `src/hooks/__tests__/storePorts.test.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/storePorts.ts` must contain `export function createStorePorts`, `bumpRecordRevision`, `allocateNextLogicalCounter` — *A second revision allocator or counter source would let two writers mint the same revision for one entity.*
+- `src/hooks/__tests__/storePorts.test.ts` must contain `keeps going after a rejection` — *A rejected mutation that kills the queue silently freezes every later write in the session.*
+
+**Restoration Playbook if Overwritten:**
+1. Unmountable callers build deps with `createStorePorts({ deviceId, snapshotRef })` rather than hand-rolling a queue and rev counter.
+2. One storage-backed sync counter; never a second in-memory counter.
