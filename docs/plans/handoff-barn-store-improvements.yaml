@@ -16,5 +16,11 @@ constraints:
   - src/App.tsx, src/main.tsx and index.html are boot-locked (BOOT_ENTRY_LOCK_CHECKSUMS) - no edits without explicit confirmation.
   - Registry invariants append at the end of an entry's list; mid-list insertion shifts rationale ordinals and fails verify:improvements.
 decisions: Scope is the 18 suggestions from the 2026-11-27 sweep, grouped into seven work milestones (1-3, 4-5, 6-8, 9-10, 11-13, 14-17, 18) plus registry/docs; the number in each clause is the suggestion id from that list.
+execution_policy:
+  - A milestone's closure (register, verify, commit) is a checkpoint, not a turn boundary.
+  - After each checkpoint, continue straight into the next milestone in the same run - no confirmation, no hand-back, no "next up is".
+  - The run ends only when this handoff's remaining list is empty, or when the run budget forces a stop.
+  - On a budget stop, report which milestones landed, which remain, and that budget - not a blocker - ended the run.
+  - Missing tooling (coverage provider, jsdom harness, SDK) is added when the milestone needs it and reported as a limitation at the end, never used to stop early.
 verified: tsc=pass | test=pass (663) | build=pass
-next_action: Milestone 1 is complete. Remaining work, in order: (a) milestone 3 remainder - op-log retention and bulk conflict resolution; (b) sync op-log retention and bulk conflict resolution; (c) mergeDeltaOperations property tests; (d) contract-change gate and coverage floor; (e) context split, memoised selectors, timing instrumentation; (f) render-level integration harness. Run npm run verify + the contract test after each step.
+next_action: Execution: continue milestone-to-milestone - a closure is a checkpoint, not a turn boundary. Milestone 1 is complete. Remaining work, in order: (a) milestone 3 remainder - op-log retention and bulk conflict resolution; (b) sync op-log retention and bulk conflict resolution; (c) mergeDeltaOperations property tests; (d) contract-change gate and coverage floor; (e) context split, memoised selectors, timing instrumentation; (f) render-level integration harness. Run npm run verify + the contract test after each step.

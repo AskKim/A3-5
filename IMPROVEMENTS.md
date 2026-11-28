@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (44 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (45 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (108)
+## Logged Improvements (109)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2341,3 +2341,20 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Unmountable callers build deps with `createStorePorts({ deviceId, snapshotRef })` rather than hand-rolling a queue and rev counter.
 2. One storage-backed sync counter; never a second in-memory counter.
+
+### IMP-109: Milestone Closure Is a Checkpoint, Not a Turn Boundary
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** A handoff run asked to go milestone to milestone stopped after each green verification instead of continuing, because the closure ritual read like the end of the work.
+- **Summary:** The handoff now states its own execution policy: registering, verifying and committing a milestone is a checkpoint, not a turn boundary. After a checkpoint the run continues straight into the next milestone with no confirmation and no hand-back, and it ends only when the remaining list is empty or the run budget is exhausted — at which point the stop is reported as budget, with what landed and what remains. Missing tooling for a later milestone (coverage provider, jsdom harness, SDK) is added when needed and reported as a limitation instead of ending the run early. The resume prompt carries the same rule in an *Execution Continuity* section, and its “work remains ongoing” branch now says to continue rather than stop, with PRM-004 enforcing the phrase so the rule cannot be quietly dropped.
+- **Tracked Files:** `docs/plans/handoff-barn-store-improvements.yaml`, `prompts/resume_backlog_plan_prompt.md`, `src/domain/promptRegistry.ts`, `src/domain/promptsCatalog.ts`
+
+**Automated Invariants Checked:**
+- `prompts/resume_backlog_plan_prompt.md` must contain `checkpoint, not a turn boundary`, `Execution Continuity`, `only acceptable reason to stop with work left` — *Without the continuity rule the resume workflow hands back after every verified milestone — the exact behaviour this entry exists to prevent.*
+- `docs/plans/handoff-barn-store-improvements.yaml` must contain `execution_policy`, `checkpoint, not a turn boundary` — *The rule has to live in the handoff the run is following, not only in a prompt someone may not reload.*
+
+**Restoration Playbook if Overwritten:**
+1. A milestone closure is a checkpoint: register, verify, commit, then start the next milestone in the same run.
+2. Only an empty remaining list or an exhausted budget ends a handoff run; report budget stops as budget, with what landed.

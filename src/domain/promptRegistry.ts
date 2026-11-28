@@ -194,7 +194,7 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
     intent:
       'Resume in-progress multi-step implementation plans or open handoffs safely after loading master governance.',
     changeSummary:
-      'Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, and now resumes an open `handoff-*.yaml` when no active plan exists instead of starting a new backlog item. Runs full verification and removes finished temporary plan files.',
+      'Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, resumes an open `handoff-*.yaml` when no active plan exists, and treats a milestone closure as a checkpoint, not a turn boundary, so one run continues milestone-to-milestone until the list is empty or the budget runs out. Runs full verification and removes finished temporary plan files.',
     trackedFiles: ['prompts/resume_backlog_plan_prompt.md'],
     invariants: [
       {
@@ -203,9 +203,10 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
           '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
           'prompts/master_system_prompt.md',
           'handoff-*.yaml',
+          'checkpoint, not a turn boundary',
         ],
         rationale:
-          'Resume prompt must stay protected, load `prompts/master_system_prompt.md` first, and treat an open handoff as work to continue rather than work to replace.',
+          'Resume prompt must stay protected, load `prompts/master_system_prompt.md` first, treat an open handoff as work to continue rather than work to replace, and keep the continuity rule that stops a green checkpoint from ending the run.',
       },
     ],
     restorePlaybook: [

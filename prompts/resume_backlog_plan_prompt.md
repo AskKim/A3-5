@@ -7,6 +7,15 @@
 
 ---
 
+## Execution Continuity (Milestone Runs)
+
+- A milestone closure — register the change, regenerate docs, run `npm run verify` + `npm run build` + `npm run verify:chunks`, commit, push — is a **checkpoint, not a turn boundary**.
+- After a checkpoint, start the next milestone in the same run. Do **not** ask whether to continue, do **not** summarise-and-hand-back, and do **not** stop merely because the milestone you just finished verified green.
+- The run ends only when the handoff's remaining list is empty, or when the run's own budget is exhausted. Budget is the only acceptable reason to stop with work left; when that happens, say plainly which milestones landed, which remain, and that budget — not a blocker — ended the run.
+- Known forward blockers (a missing dev dependency, a harness that needs jsdom, an unavailable SDK) are reported at the end as limitations, never used to end the run early. Add the dependency the milestone needs and note it.
+
+---
+
 ## Objectives
 
 1. **Load & Internalize Master System Prompt**
@@ -33,4 +42,4 @@
      - Remove the corresponding completed item(s) from `docs/plans/suggestions-backlog.md` (updating remaining counts/numbering cleanly).
      - End your response per `prompts/master_system_prompt.md` (`Complete: [Task Name]`).
    - **If work remains ongoing:**
-     - Update progress in the active implementation plan file in `docs/plans/` and output only a brief list of the remaining pending tasks.
+     - Update progress in the active implementation plan file in `docs/plans/` and then continue immediately with the next milestone — a checkpoint is not a turn boundary (see *Execution Continuity* above). Do not end the run there.

@@ -74,7 +74,7 @@ const CURATED_PROMPT_DESCRIPTIONS: Record<string, CuratedPromptDescription> = {
   'resume_backlog_plan_prompt.md': {
     title: 'Resume Backlog Plan Prompt',
     summary:
-      '4-phase continuation workflow that loads the active master system prompt, reads docs/plans/active-backlog-plan.md or an open handoff, executes the next pending task, runs tests/typechecks, and closes out the plan once all tasks pass.',
+      '4-phase continuation workflow that loads the active master system prompt, reads docs/plans/active-backlog-plan.md or an open handoff, executes the next pending task, runs tests/typechecks, and closes out the plan once all tasks pass. A milestone closure is a checkpoint, not a turn boundary: the run continues into the next milestone until the list is empty or the budget runs out.',
     whenToUse:
       'Run when resuming an in-progress implementation plan or open handoff in docs/plans/ across sessions.',
     preferredOrder: 3,
