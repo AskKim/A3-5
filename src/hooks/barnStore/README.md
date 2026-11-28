@@ -52,6 +52,8 @@ when the two disagree.
 | `usePhotoMutations.ts` | Add optimized photos, set primary, retitle, delete, and photo-storage maintenance. |
 | `useBreeding.ts` | Log breeding with chore cascade, outcomes, recalculations, deletion. |
 | `useSpeciesProfileActions.ts` | Save a species profile; a rename moves every species-addressed record in one snapshot replace. |
+| `useReservationSale.ts` | Complete a reservation sale: ledger, animal, waitlist and reservation in one slot. |
+| `storeNoticeActions.ts` | Clear/dismiss banner state and locate herd conflicts; the closures behind the return literal. |
 | `useAlertDismissals.ts` | Ignore task ids, clear one species' alert group, dismiss the species memo. |
 | `useCloudSyncActions.ts` | Cloud app-folder settings patch, token adoption, disconnect, PKCE start. |
 | `useOpfsVaultActions.ts` | Save, describe, download, delete, restore-by-key. |

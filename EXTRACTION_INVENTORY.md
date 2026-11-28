@@ -330,13 +330,13 @@ here so the inventory keeps matching the tree without rewriting the sections abo
 
 ### 8.3 `src/hooks/barnStore/` (new folder, `pedigree-domain`)
 
-Twenty-two modules split out of `useBarnStore.ts`: two pure policy modules (`photoCacheBudget`,
+Twenty-four modules split out of `useBarnStore.ts`: two pure policy modules (`photoCacheBudget`,
 `backupReminder`), the restore orchestrator, rev-keyed species selectors, the typed facades and
 React-free ports, three context slices (`syncConflictSlice`, `vaultSlice`, `syncStateSlice`) and
-thirteen mutation sub-hooks (`useAnimalsCrud`, `usePhotoMutations`, `useBreeding`, `useSpeciesProfileActions`,
-`useAlertDismissals`, `useCloudSyncActions`, `useOpfsVaultActions`, `useRollingBackupActions`,
+fifteen mutation sub-hooks (`useAnimalsCrud`, `usePhotoMutations`, `useBreeding`, `useSpeciesProfileActions`,
+`useReservationSale`, `useAlertDismissals`, `useCloudSyncActions`, `useOpfsVaultActions`, `useRollingBackupActions`,
 `useOpfsArchiveOffload`, `useSyncConflictResolution`, `useSyncConflictDismissal`, `usePhotoCache`,
-`useBackupReminderActions`).
+`useBackupReminderActions`), plus the `storeNoticeActions` factories behind the frozen return literal.
 See `src/hooks/barnStore/README.md` for the map and the contract rules.
 
 ### 8.4 `src/domain/` additions (`pedigree-domain`)

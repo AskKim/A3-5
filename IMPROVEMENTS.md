@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (84 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (85 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (148)
+## Logged Improvements (149)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2985,3 +2985,17 @@ Status:     active
 1. Keep `speciesProfileAction` React-free and pass adapter access as `getAdapter()`; the adapter ref is null during the first render.
 2. Do not move the `return {` literal out of `useBarnStore` in the same change as a slice move — `barnStoreContract.test.ts` locates it by text and would report a missing literal instead of a diff.
 3. Run the contract test and `npm run verify` after any species rename change; the cascade must still happen in one `replaceSnapshot`.
+
+## 2026-11-28 — Give useBarnStore Section Banners and Move the Inline Return Closures Out
+Why:        After the slice work, `useBarnStore` was still one unbroken 6.5k-line function: a reader had no way to see the seams while scrolling, and the frozen 200-key return literal still carried four closures (`clearStatusMessage`, `clearErrorMessage`, `dismissImportConflictAlert`, `locateConflictsInHerd`) instead of listing the keys a slice already built.
+Changed:    `src/hooks/useBarnStore.ts`, `src/hooks/barnStore/storeNoticeActions.ts`, `src/hooks/barnStore/useReservationSale.ts`, `src/hooks/__tests__/storeNoticeActions.test.ts`, `src/hooks/__tests__/reservationSale.test.ts`, `src/hooks/barnStore/README.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/useBarnStore.ts` must contain `createStoreNoticeActions`, `useReservationSale` — *The notice closures and the sale workflow must stay in their slices; recreating them inline would put the `return {` literal back in the business of building behaviour.*
+- `src/hooks/__tests__/barnStoreContract.keys.json` must contain `clearStatusMessage`, `locateConflictsInHerd`, `completeReservationSale` — *These keys survived a move of their implementation, which is exactly what the frozen snapshot is there to prove.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep section banners as `// ====` blocks directly above the first declaration of a section; they are parsing-neutral and the contract test ignores them.
+2. Notice actions are factories over the store setters, memoised on those setters, so the returned identities stay stable across renders.
+3. A sale completion must still collect every entity diff and call `recordOutboxOps` once, after all four writes.

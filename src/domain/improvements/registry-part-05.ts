@@ -3725,4 +3725,48 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Run the contract test and `npm run verify` after any species rename change; the cascade must still happen in one `replaceSnapshot`.',
     ],
   },
+  {
+    id: 'IMP-150',
+    title: 'Give useBarnStore Section Banners and Move the Inline Return Closures Out',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'After the slice work, `useBarnStore` was still one unbroken 6.5k-line function: a reader had no way to see the seams while scrolling, and the frozen 200-key return literal still carried four closures (`clearStatusMessage`, `clearErrorMessage`, `dismissImportConflictAlert`, `locateConflictsInHerd`) instead of listing the keys a slice already built.',
+    summary:
+      'Twenty-four banner headings now mark the hook body from the store shell through persistence, startup, calendar delivery, routing, species, animals, adapters, breeding, care logs, shows/feed, ledger, sync, restores, diagnostics and the public surface. The four inline arrows moved to `src/hooks/barnStore/storeNoticeActions.ts` as `createStoreNoticeActions` / `createLocateConflictsInHerd` factories memoised in the hook, so the return literal lists them as keys while `barnStoreContract.keys.json` stays byte-identical. `completeReservationSale` (160 lines, four entity writes in one queue slot) moved to `src/hooks/barnStore/useReservationSale.ts` with a React-free action and a `useReservationSale` wrapper; the hook is now 6,523 lines. Three notice tests and three sale tests pin the moved behaviour.',
+    files: [
+      'src/hooks/useBarnStore.ts',
+      'src/hooks/barnStore/storeNoticeActions.ts',
+      'src/hooks/barnStore/useReservationSale.ts',
+      'src/hooks/__tests__/storeNoticeActions.test.ts',
+      'src/hooks/__tests__/reservationSale.test.ts',
+      'src/hooks/barnStore/README.md',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['createStoreNoticeActions', 'useReservationSale'],
+        rationale:
+          'The notice closures and the sale workflow must stay in their slices; recreating them inline would put the `return {` literal back in the business of building behaviour.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/barnStoreContract.keys.json',
+        requiredSubstrings: ['clearStatusMessage', 'locateConflictsInHerd', 'completeReservationSale'],
+        rationale:
+          'These keys survived a move of their implementation, which is exactly what the frozen snapshot is there to prove.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep section banners as `// ====` blocks directly above the first declaration of a section; they are parsing-neutral and the contract test ignores them.',
+      'Notice actions are factories over the store setters, memoised on those setters, so the returned identities stay stable across renders.',
+      'A sale completion must still collect every entity diff and call `recordOutboxOps` once, after all four writes.',
+    ],
+  },
 ];
