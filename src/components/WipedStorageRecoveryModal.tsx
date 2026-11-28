@@ -24,8 +24,8 @@ import {
   validateUploadFileSize,
 } from '../domain/inputSanitization';
 import { ArchivedHerdIndexEntry, VAULT_KIND_LABELS } from '../domain/backupVault';
-import type { WipedStorageRecoveryContext } from '../storage/opfsStorage';
-import type { RollingBackupMeta } from '../storage/storageProtection';
+import type { WipedStorageRecoveryContext } from '../app/ports/opfsStorage';
+import type { RollingBackupMeta } from '../app/ports/storageProtection';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import { readBlobAsArrayBuffer, readBlobAsText } from '../utils/es2018Shims';
 

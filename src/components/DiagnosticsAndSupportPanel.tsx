@@ -74,7 +74,7 @@ import {
   isQuotaExceededError,
   StorageProtectionStatus,
   verifyStorageQuotaForDiagnosticAction,
-} from '../storage/storageProtection';
+} from '../app/ports/storageProtection';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import {
   copyTextWithFallback,
@@ -82,7 +82,7 @@ import {
   downloadTextFile,
   shareBinaryFileOrDownload,
 } from '../utils/webFileActions';
-import type { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
+import type { DeviceCapabilityController } from '../app/ports/deviceCapabilityDetector';
 
 interface DiagnosticsAndSupportPanelProps {
   snapshot: BarnDatabaseSnapshot;

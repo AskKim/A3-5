@@ -3988,4 +3988,60 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep `browserDiagnosticsPort` complete: a missing binding is a compile error, which is the intended failure mode.',
     ],
   },
+  {
+    id: 'IMP-156',
+    title: 'Close the Component→Storage Coupling Ledger at Zero',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The last 31 component→storage runtime edges still sat in the two hub screens and a handful of single-capability stragglers, so `scripts/ui-storage-coupling-budget.json` could never reach empty and the `/engine` extraction was blocked behind it.',
+    summary:
+      'Sixteen `@app/ports` re-export the storage capability each remaining screen needs — storage protection, local sync channels, the off-thread worker, OPFS, device capability detection, freeze coordination, PWA updates, storage probes, photo hydration, weather, vet documents, feed-tag OCR, pedigree OCR, passphrase crypto, the LAN channel and SQLite cache purging — and every component imports the port instead of the storage singleton. The coupling ledger is now `[]`, so the burn-down ratchet is closed rather than merely smaller.',
+    files: [
+      'src/app/ports/storageProtection.ts',
+      'src/app/ports/localSyncChannels.ts',
+      'src/app/ports/offThreadWorkerClient.ts',
+      'src/app/ports/opfsStorage.ts',
+      'src/app/ports/deviceCapabilityDetector.ts',
+      'src/app/ports/backgroundFreezeCoordinator.ts',
+      'src/app/ports/pwaUpdateManager.ts',
+      'src/app/ports/storageProbes.ts',
+      'src/app/ports/photoHydration.ts',
+      'src/app/ports/weatherForecast.ts',
+      'src/app/ports/vetDocsFolder.ts',
+      'src/app/ports/feedTagOcr.ts',
+      'src/app/ports/pedigreeOcrScanner.ts',
+      'src/app/ports/passphraseCrypto.ts',
+      'src/app/ports/p2pLanChannel.ts',
+      'src/app/ports/webSqliteMaintenance.ts',
+      'src/components/DevelopmentScreen.tsx',
+      'src/components/ImportExportHubScreen.tsx',
+      'scripts/ui-storage-coupling-budget.json',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/ui-storage-coupling-budget.json',
+        requiredSubstrings: ['[]'],
+        rationale:
+          'The ledger is a ratchet: an empty array is the finished state, and any new edge belongs in an @app port instead.',
+      },
+      {
+        filePath: 'src/components/DevelopmentScreen.tsx',
+        requiredSubstrings: ['../app/ports/'],
+        rationale:
+          'The developer console reads storage, OPFS, worker and PWA state through ports, so it renders in tests without the storage layer.',
+      },
+    ],
+    restorePlaybook: [
+      'Never import `src/storage/*` from `src/components/*` at runtime: add the capability to an `@app/ports` module and import that instead (type-only imports are already exempt).',
+      'Regenerate the ledger with `npx tsx scripts/audit-layers.ts --write-ui-budget` after a migration; an empty file is the goal, and `verify:layers` fails if the file is stale in either direction.',
+    ],
+  },
 ];

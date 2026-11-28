@@ -149,7 +149,7 @@ import {
 } from '../hooks/useBarnStore';
 import { P2pReconciliationSummary } from '../domain/p2pSyncProtocol';
 import { SyncConflictEntry, SyncOperation } from '../domain/syncOutbox';
-import { BackupSyncStatus } from '../storage/localSyncChannels';
+import { BackupSyncStatus } from '../app/ports/localSyncChannels';
 import { FacilityPenBoard } from './FacilityPenBoard';
 import { PrintPreviewModal } from './PrintPreviewModal';
 import { SpeciesEditorModal } from './SpeciesEditorModal';

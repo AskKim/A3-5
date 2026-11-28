@@ -52,8 +52,8 @@ import { formatByteSizePure } from '../domain/imageOptimizationSpec';
 import { validateUploadFileSize } from '../domain/inputSanitization';
 import { APP_LOCALE } from '../domain/models';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
-import type { SyncFileHandleLike } from '../storage/localSyncChannels';
-import { useConnectivityStatus } from '../storage/storageProtection';
+import type { SyncFileHandleLike } from '../app/ports/localSyncChannels';
+import { useConnectivityStatus } from '../app/ports/storageProtection';
 import {
   addCustomPreferredWikiSource,
   addCustomRestrictedWikiSource,
@@ -77,7 +77,7 @@ import {
   subscribeRestrictedWikiSourcesChange,
   subscribeVetDocsMetaChange,
   VetDocsFolderStatus,
-} from '../storage/vetDocsFolder';
+} from '../app/ports/vetDocsFolder';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import { downloadBlobDirect } from '../utils/webFileActions';

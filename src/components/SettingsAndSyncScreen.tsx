@@ -83,13 +83,13 @@ import {
 } from '../domain/themePalette';
 import { sanitizeSafeRasterImageDataUrl } from '../domain/inputSanitization';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
-import type { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
+import type { DeviceCapabilityController } from '../app/ports/deviceCapabilityDetector';
 import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import {
   RollingBackupMeta,
   StorageProtectionStatus,
   usePWAInstall,
-} from '../storage/storageProtection';
+} from '../app/ports/storageProtection';
 import type { GoogleCalendarOption } from '../utils/googleCalendarClient';
 import { DeviceCapabilityCard } from './DeviceCapabilityCard';
 import { ImageCompressionNotice } from './ImageCompressionNotice';

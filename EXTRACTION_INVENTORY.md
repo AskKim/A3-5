@@ -182,7 +182,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 3. `src/app/` File-by-File Inventory (13 Non-Test Files — All `pedigree-domain`)
+## 3. `src/app/` File-by-File Inventory (29 Non-Test Files — All `pedigree-domain`)
 
 - `src/app/index.ts` — `pedigree-domain` — Application layer barrel export.
 - `src/app/appConfig.interface.ts` — `pedigree-domain` — Multi-species registry and terminology contracts.
@@ -197,6 +197,22 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/app/ports/ideasBacklog.tsx` — `pedigree-domain` — Offline captured-ideas capability port: owns the `src/storage/capturedIdeasStore` import so `SuggestionsBacklogScreen` loads, saves, removes and clears ideas through an injected `IdeasBacklogPort` (IMP-147).
 - `src/app/ports/diagnostics.ts` — `pedigree-domain` — Crash/diagnostics capability port: owns the `crashLogger`, `backgroundFreezeCoordinator` and `offThreadWorkerClient` imports so `CrashErrorBoundary`, `DevelopmentErrorBoundary` and `AsyncErrorToastHost` log, summarise and dismiss through `getDiagnosticsPort()` (IMP-151).
 - `src/app/ports/imageOptimizer.ts` — `pedigree-domain` — Image-optimization capability port: owns the `webImageOptimizer` import so the animal editor, photo gallery, importer panel, print preview and three screens call `getImageOptimizerPort()` instead of compressing through a storage module (IMP-154).
+- `src/app/ports/storageProtection.ts` — `pedigree-domain` — Persistent-storage, connectivity and PWA install capability port; owns the `src/storage/storageProtection` edge for the settings, calendar, health, cloud-folder, crash and diagnostics surfaces (IMP-156).
+- `src/app/ports/localSyncChannels.ts` — `pedigree-domain` — Cross-tab/local sync channel capability port for the scheduler, species dashboard, backup vault and hub screens (IMP-156).
+- `src/app/ports/offThreadWorkerClient.ts` — `pedigree-domain` — Off-main-thread worker capability port for the developer console, import hub and external importer (IMP-156).
+- `src/app/ports/opfsStorage.ts` — `pedigree-domain` — OPFS archive/vault storage capability port for the developer console, import hub and backup vault (IMP-156).
+- `src/app/ports/deviceCapabilityDetector.ts` — `pedigree-domain` — Device capability detection capability port for the developer console, import hub and diagnostics panel (IMP-156).
+- `src/app/ports/backgroundFreezeCoordinator.ts` — `pedigree-domain` — Background job freeze/resume capability port for the developer console and import hub (IMP-156).
+- `src/app/ports/pwaUpdateManager.ts` — `pedigree-domain` — PWA update lifecycle capability port for the developer console (IMP-156).
+- `src/app/ports/storageProbes.ts` — `pedigree-domain` — Storage probe/quota measurement capability port for the developer console (IMP-156).
+- `src/app/ports/photoHydration.ts` — `pedigree-domain` — Photo blob hydration and data-url normalisation capability port for the photo gallery and import hub (IMP-156).
+- `src/app/ports/weatherForecast.ts` — `pedigree-domain` — Weather forecast lookup capability port for the breeding calendar (IMP-156).
+- `src/app/ports/vetDocsFolder.ts` — `pedigree-domain` — Veterinary document folder capability port for the health reference panel (IMP-156).
+- `src/app/ports/feedTagOcr.ts` — `pedigree-domain` — Feed-tag OCR capability port for the feed ledger (IMP-156).
+- `src/app/ports/pedigreeOcrScanner.ts` — `pedigree-domain` — Pedigree OCR scanning capability port for the pedigree scanner panel (IMP-156).
+- `src/app/ports/passphraseCrypto.ts` — `pedigree-domain` — Backup passphrase encryption capability port for the import hub (IMP-156).
+- `src/app/ports/p2pLanChannel.ts` — `pedigree-domain` — Peer-to-peer LAN channel capability port for the barn scheduler Gantt (IMP-156).
+- `src/app/ports/webSqliteMaintenance.ts` — `pedigree-domain` — Web SQLite cache-purge capability port for the crash boundary (IMP-156).
 
 ---
 

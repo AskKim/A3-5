@@ -76,7 +76,7 @@ import {
   getImageOptimizerPort,
   type BatchImportPhotoProgress,
 } from '../app/ports/imageOptimizer';
-import { parseExternalImportOffThread } from '../storage/offThreadWorkerClient';
+import { parseExternalImportOffThread } from '../app/ports/offThreadWorkerClient';
 import {
   formatReadableByteLimit,
   MAX_CSV_TEXT_BYTES,

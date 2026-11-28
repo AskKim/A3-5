@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (90 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (91 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (154)
+## Logged Improvements (155)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3068,3 +3068,16 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Add the capability to the port first, then replace the call sites; never leave one component importing both the port and the storage module.
 2. Keep `browserDiagnosticsPort` complete: a missing binding is a compile error, which is the intended failure mode.
+
+## 2026-11-28 — Close the Component→Storage Coupling Ledger at Zero
+Why:        The last 31 component→storage runtime edges still sat in the two hub screens and a handful of single-capability stragglers, so `scripts/ui-storage-coupling-budget.json` could never reach empty and the `/engine` extraction was blocked behind it.
+Changed:    `src/app/ports/storageProtection.ts`, `src/app/ports/localSyncChannels.ts`, `src/app/ports/offThreadWorkerClient.ts`, `src/app/ports/opfsStorage.ts`, `src/app/ports/deviceCapabilityDetector.ts`, `src/app/ports/backgroundFreezeCoordinator.ts`, `src/app/ports/pwaUpdateManager.ts`, `src/app/ports/storageProbes.ts`, `src/app/ports/photoHydration.ts`, `src/app/ports/weatherForecast.ts`, `src/app/ports/vetDocsFolder.ts`, `src/app/ports/feedTagOcr.ts`, `src/app/ports/pedigreeOcrScanner.ts`, `src/app/ports/passphraseCrypto.ts`, `src/app/ports/p2pLanChannel.ts`, `src/app/ports/webSqliteMaintenance.ts`, `src/components/DevelopmentScreen.tsx`, `src/components/ImportExportHubScreen.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/ui-storage-coupling-budget.json` must contain `[]` — *The ledger is a ratchet: an empty array is the finished state, and any new edge belongs in an @app port instead.*
+- `src/components/DevelopmentScreen.tsx` must contain `../app/ports/` — *The developer console reads storage, OPFS, worker and PWA state through ports, so it renders in tests without the storage layer.*
+
+**Restoration Playbook if Overwritten:**
+1. Never import `src/storage/*` from `src/components/*` at runtime: add the capability to an `@app/ports` module and import that instead (type-only imports are already exempt).
+2. Regenerate the ledger with `npx tsx scripts/audit-layers.ts --write-ui-budget` after a migration; an empty file is the goal, and `verify:layers` fails if the file is stale in either direction.

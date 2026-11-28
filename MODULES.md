@@ -5,14 +5,14 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 273
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (21.6%)
+- **Total Non-Test Source Modules:** 289
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (20.4%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 214 (78.4%)
+- **Content-Specific Modules:** 230 (79.6%)
   - Domain Engines (`src/domain/`): 87
-  - App Composition & Configs (`src/app/`): 13
+  - App Composition & Configs (`src/app/`): 29
   - Storage Adapters & Workers (`src/storage/`): 29
   - Native Bridge (`src/native/`): 1
   - State Store Hook (`src/hooks/`): 28
@@ -110,7 +110,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (214)
+## 2. Content-Specific Modules (230)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -204,7 +204,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/upgradeGate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/woolFiber.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 
-### Application Composition & Configs (`src/app/`, `@app/*`) (13)
+### Application Composition & Configs (`src/app/`, `@app/*`) (29)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -217,10 +217,26 @@ npx tsx scripts/list-modules.ts --check
 | `src/app/pedigreeCalendarClient.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/pedigreePdfActions.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/PlatformBridgeContext.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/backgroundFreezeCoordinator.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/deviceCapabilityDetector.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/diagnostics.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/feedTagOcr.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/ideasBacklog.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/imageOptimizer.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/installPrompt.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/localSyncChannels.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/offThreadWorkerClient.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/opfsStorage.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/p2pLanChannel.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/passphraseCrypto.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/pedigreeOcrScanner.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/photoHydration.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/pwaUpdateManager.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/storageProbes.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/storageProtection.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/vetDocsFolder.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/weatherForecast.ts` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/webSqliteMaintenance.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 
 ### Content-Bound Storage Adapters & Workers (`src/storage/`) (29)
 

@@ -41,14 +41,14 @@ import {
   todayDateIso,
   WeatherForecastSettings,
 } from '../domain/models';
-import { useConnectivityStatus } from '../storage/storageProtection';
+import { useConnectivityStatus } from '../app/ports/storageProtection';
 import {
   fetchWeeklyWeatherForecast,
   isWeatherCacheFresh,
   readCachedWeatherForecast,
   searchWeatherLocations,
   WeatherLocationSearchResult,
-} from '../storage/weatherForecast';
+} from '../app/ports/weatherForecast';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 
 export interface BreedingCalendarPanelProps {

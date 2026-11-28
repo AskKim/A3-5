@@ -35,7 +35,7 @@ import {
 } from '../domain/inputSanitization';
 import { Animal, AnimalPhoto } from '../domain/models';
 import { getDiagnosticsPort } from '../app/ports/diagnostics';
-import { revokeBlobUrlIfNeeded } from '../storage/photoHydration';
+import { revokeBlobUrlIfNeeded } from '../app/ports/photoHydration';
 import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 

@@ -28,9 +28,9 @@ import type { buildSupportMailtoHref as BuildSupportMailtoHrefFn } from '../doma
 import {
   listRollingSnapshotBackups,
   loadRollingSnapshotBackup,
-} from '../storage/storageProtection';
+} from '../app/ports/storageProtection';
 import { createPedigreeDomainStorageAdapter } from '@app/pedigreeAppWiring';
-import { purgeStaleBrowserCaches } from '../storage/webSqliteAdapter';
+import { purgeStaleBrowserCaches } from '../app/ports/webSqliteMaintenance';
 import {
   downloadTextFile,
   shareBinaryFileOrDownload,
