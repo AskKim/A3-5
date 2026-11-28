@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (75 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (76 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (139)
+## Logged Improvements (140)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2839,6 +2839,21 @@ Status:     active
 1. Keep both ratchet tests comparing `[...LEGACY_*_ENTRY_IDS]` to a frozen snapshot with `toEqual`, not a length-only assertion.
 2. To pin a genuinely old entry, change the snapshot and the list in one reviewable commit and state why that entry cannot opt in.
 3. Prefer opting an entry into the contract and pruning its pin over widening an exemption.
+
+## 2026-11-28 — Store Entity CRUD and Backup Import Controllers
+Why:        `src/hooks/useBarnStore.ts` was still 7,676 lines because every flat collection repeated the same write by hand: queue the mutation, look up the previous row, allocate a revision, persist, diff it into the outbox, reload, toast. Thirteen save/delete pairs differed only in their builder and copy, and both file imports (JSON backup and archive) carried their own copy of the same destructive install order, so a fix to one import did not reach the other.
+Changed:    `src/hooks/barnStore/entityCrudController.ts`, `src/hooks/barnStore/backupImportController.ts`, `src/hooks/__tests__/entityCrudController.test.ts`, `src/hooks/__tests__/backupImportController.test.ts`, `src/hooks/useBarnStore.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `docs/plans/handoff-modularity-reusability.yaml`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/entityCrudController.ts` must contain `saveEntityRecord`, `deleteEntityRecord`, `__delete__` — *Every flat collection must write through this one path; a collection that hand-rolls its own queue/revision/outbox order is how the copies drifted apart.*
+- `src/hooks/useBarnStore.ts` must contain `saveEntityRecord`, `deleteEntityRecord`, `installImportedSnapshot` — *The store must keep delegating to the controllers rather than re-growing inline CRUD bodies or a second import install order.*
+- `src/hooks/barnStore/backupImportController.ts` must contain `installImportedSnapshot`, `stripRestoredBackupBookkeeping`, `clearLocalSyncAndBackupReminderState` — *A destructive replace must always take the safety snapshot, strip backup bookkeeping and reset sync state; that order only stays correct while there is one implementation of it.*
+
+**Restoration Playbook if Overwritten:**
+1. A new flat collection gets a spec (`readRows`, `build`, `persist`, `describe`, `failureLabel`) and a `useCallback` pair over `entityCrudPorts`; do not copy the old inline body.
+2. Collections whose save touches other rows (show legs, feed-batch allocations, reservation occupancy) keep their own action until they get a controller that also owns the cascade.
+3. A new file format imports through `installImportedSnapshot`; decode it, then pass `mode` and the safety note, and word the toast in the caller.
 
 ## 2026-11-28 — Ledger Gates Reject Impossible Dates and Dangling Replacements
 Why:        The gates checked that the ledger fields were present but never what they said: `decidedOn: 2026-13-45` rendered an impossible heading and passed both verifiers, and a `supersededBy: PRM-999` typo was accepted even though no such entry exists, so the replacing entry could never be found.

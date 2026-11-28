@@ -324,6 +324,15 @@ import { useBreeding, type BreedingAdapter } from './barnStore/useBreeding';
 import { planSyncConflictRetention } from '../domain/syncConflictExpiry';
 import { planSyncOperationRetention } from '../domain/syncRetention';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
+import {
+  deleteEntityRecord,
+  saveEntityRecord,
+  type EntityCrudPorts,
+} from './barnStore/entityCrudController';
+import {
+  installImportedSnapshot,
+  type BackupImportPorts,
+} from './barnStore/backupImportController';
 
 export type WorkspaceRoute =
   | 'home'
@@ -2771,48 +2780,25 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     rememberPhoto: (photoId, dataUrl) => rememberPhoto(photoCacheRef, photoId, dataUrl),
     forgetPhoto: (photoId) => forgetPhoto(photoCacheRef, photoId),
   });
-  const saveCage = useCallback(
-    async (
-      cageDraft: Omit<CageLocation, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
-    ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = cageDraft.id
-          ? latestSnapshot?.cages.find((c) => c.id === cageDraft.id)
-          : undefined;
-        const cageId = cageDraft.id || generateUuid();
-        const rev = nextEntityRev(cageId, prev?._rev);
-        const cage: CageLocation = {
-          ...cageDraft,
-          id: cageId,
-          label: cageDraft.label.trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveCage(cage);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'cage',
-              previous: prev,
-              next: cage,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(`Location ${cage.label} saved.`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save location ${cage.label}`, err);
-          return false;
-        }
-      });
-    },
+  /**
+   * Shared entity write path: the collections below differ only in their builder, adapter method
+   * and copy, so the queue/revision/outbox/reload order lives in `entityCrudController`.
+   */
+  const entityCrudPorts = useMemo<EntityCrudPorts>(
+    () => ({
+      snapshotRef,
+      fallbackSnapshot: () => snapshot,
+      enqueueStoreMutation,
+      nextEntityRev,
+      recordOutboxOps,
+      reloadFromAdapter,
+      notify,
+      reportPersistenceFailure,
+      deviceId,
+      allocateNextLogicalCounter,
+      nowIsoUtc: getAdjustedNowIsoUtc,
+      generateId: generateUuid,
+    }),
     [
       snapshot,
       deviceId,
@@ -2825,34 +2811,41 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
-  const deleteCage = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = currentSnapshot?.cages.find((c) => c.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteCage(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'cage',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Cage/location removed.');
-        } catch (err) {
-          reportPersistenceFailure('delete cage location', err);
-        }
-      });
+  const saveCage = useCallback(
+    async (
+      cageDraft: Omit<CageLocation, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+    ): Promise<boolean> => {
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'cage',
+          readRows: (snap) => snap?.cages,
+          build: (draft, base) => ({ ...draft, ...base, label: draft.label.trim() }),
+          persist: (cage) => adapterRef.current!.saveCage(cage),
+          describe: (cage) => `Location ${cage.label} saved.`,
+          failureLabel: (cage) => `save location ${cage.label}`,
+        },
+        cageDraft
+      );
+      return saved !== null;
     },
-    [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, notify, reportPersistenceFailure]
+    [entityCrudPorts]
+  );
+
+  const deleteCage = useCallback(
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'cage',
+          readRows: (snap) => snap?.cages,
+          remove: (cageId) => adapterRef.current!.deleteCage(cageId),
+          message: 'Cage/location removed.',
+          failureLabel: 'delete cage location',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const assignAnimalToCage = useCallback(
@@ -3829,71 +3822,41 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     async (
       batchDraft: Omit<FeedBatch, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = batchDraft.id
-          ? (latestSnapshot?.feedBatches ?? []).find((b) => b.id === batchDraft.id)
-          : undefined;
-        const batchId = batchDraft.id || generateUuid();
-        const rev = nextEntityRev(batchId, prev?._rev);
-        const batch: FeedBatch = {
-          ...batchDraft,
-          id: batchId,
-          brand: batchDraft.brand.trim(),
-          productName: batchDraft.productName.trim(),
-          lotNumber: batchDraft.lotNumber.trim(),
-          millCode: (batchDraft.millCode || '').trim(),
-          manufactureDateIso: (batchDraft.manufactureDateIso || '').trim(),
-          purchaseDateIso: batchDraft.purchaseDateIso || todayDateIso(),
-          bagCount: Math.max(0, Number(batchDraft.bagCount) || 0),
-          bagWeightValue: Math.max(0, Number(batchDraft.bagWeightValue) || 0),
-          bagWeightUnit: (batchDraft.bagWeightUnit || '').trim() || 'lbs',
-          totalQuantity: Math.max(0, Number(batchDraft.totalQuantity) || 0),
-          remainingQuantity: Math.max(0, Number(batchDraft.remainingQuantity) || 0),
-          lowStockThreshold: Math.max(0, Number(batchDraft.lowStockThreshold) || 0),
-          supplierName: (batchDraft.supplierName || '').trim(),
-          notes: (batchDraft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveFeedBatch(batch);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'feedBatch',
-              previous: prev,
-              next: batch,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'feedBatch',
+          readRows: (snap) => snap?.feedBatches,
+          build: (batch, base) => ({
+            ...batch,
+            ...base,
+            brand: batch.brand.trim(),
+            productName: batch.productName.trim(),
+            lotNumber: batch.lotNumber.trim(),
+            millCode: (batch.millCode || '').trim(),
+            manufactureDateIso: (batch.manufactureDateIso || '').trim(),
+            purchaseDateIso: batch.purchaseDateIso || todayDateIso(),
+            bagCount: Math.max(0, Number(batch.bagCount) || 0),
+            bagWeightValue: Math.max(0, Number(batch.bagWeightValue) || 0),
+            bagWeightUnit: (batch.bagWeightUnit || '').trim() || 'lbs',
+            totalQuantity: Math.max(0, Number(batch.totalQuantity) || 0),
+            remainingQuantity: Math.max(0, Number(batch.remainingQuantity) || 0),
+            lowStockThreshold: Math.max(0, Number(batch.lowStockThreshold) || 0),
+            supplierName: (batch.supplierName || '').trim(),
+            notes: (batch.notes || '').trim(),
+          }),
+          persist: (batch) => adapterRef.current!.saveFeedBatch(batch),
+          describe: (batch) =>
             batch.lotNumber
               ? `Saved feed batch ${batch.brand || batch.productName} (Lot ${batch.lotNumber}).`
-              : `Saved feed batch ${batch.brand || batch.productName}.`
-          );
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save feed batch ${batch.brand || batch.productName}`, err);
-          return false;
-        }
-      });
+              : `Saved feed batch ${batch.brand || batch.productName}.`,
+          failureLabel: (batch) => `save feed batch ${batch.brand || batch.productName}`,
+        },
+        batchDraft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteFeedBatch = useCallback(
@@ -4269,545 +4232,301 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     async (
       draft: Omit<LedgerEntry, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.ledgerEntries ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const entry: LedgerEntry = {
-          ...draft,
-          id,
-          dateIso: (draft.dateIso || '').trim() || todayDateIso(),
-          entryType: normalizeLedgerEntryType(draft.entryType, 'expense'),
-          category: normalizeLedgerCategory(draft.category, 'other'),
-          amountCents: Math.max(0, Math.round(Number(draft.amountCents) || 0)),
-          title: (draft.title || '').trim() || 'Ledger Entry',
-          vendorOrParty: (draft.vendorOrParty || '').trim(),
-          notes: (draft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveLedgerEntry(entry);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'ledgerEntry',
-              previous: prev,
-              next: prev
-                ? entry
-                : { ...entry, receiptPhotoDataUrl: '', receiptPhotoThumbnailDataUrl: '' },
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              ignoreFields: ['receiptPhotoDataUrl', 'receiptPhotoThumbnailDataUrl'],
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(`Saved ${entry.entryType === 'income' ? 'income' : 'expense'}: ${entry.title}.`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save ledger entry ${entry.title}`, err);
-          return false;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'ledgerEntry',
+          readRows: (snap) => snap?.ledgerEntries,
+          build: (entry, base) => ({
+            ...entry,
+            ...base,
+            dateIso: (entry.dateIso || '').trim() || todayDateIso(),
+            entryType: normalizeLedgerEntryType(entry.entryType, 'expense'),
+            category: normalizeLedgerCategory(entry.category, 'other'),
+            amountCents: Math.max(0, Math.round(Number(entry.amountCents) || 0)),
+            title: (entry.title || '').trim() || 'Ledger Entry',
+            vendorOrParty: (entry.vendorOrParty || '').trim(),
+            notes: (entry.notes || '').trim(),
+          }),
+          persist: (entry) => adapterRef.current!.saveLedgerEntry(entry),
+          describe: (entry) =>
+            `Saved ${entry.entryType === 'income' ? 'income' : 'expense'}: ${entry.title}.`,
+          failureLabel: (entry) => `save ledger entry ${entry.title}`,
+          ignoreFields: ['receiptPhotoDataUrl', 'receiptPhotoThumbnailDataUrl'],
+          outboxRow: (entry) => ({
+            ...entry,
+            receiptPhotoDataUrl: '',
+            receiptPhotoThumbnailDataUrl: '',
+          }),
+        },
+        draft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteLedgerEntry = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.ledgerEntries ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteLedgerEntry(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'ledgerEntry',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Ledger entry deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete ledger entry', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'ledgerEntry',
+          readRows: (snap) => snap?.ledgerEntries,
+          remove: (entryId) => adapterRef.current!.deleteLedgerEntry(entryId),
+          message: 'Ledger entry deleted.',
+          failureLabel: 'delete ledger entry',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveProcessingLog = useCallback(
     async (
       draft: Omit<ProcessingLog, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.processingLogs ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const liveGrams = Math.max(0, Math.round(Number(draft.liveWeightGrams) || 0));
-        const dressedGrams = Math.max(0, Math.round(Number(draft.dressedWeightGrams) || 0));
-        const { calculateDressOutPercent } = await import('../domain/economicsLedger');
-        const computedDressPct = calculateDressOutPercent(liveGrams, dressedGrams);
-        const log: ProcessingLog = {
-          ...draft,
-          id,
-          title: (draft.title || '').trim() || 'Processing Batch',
-          scheduledDateIso: (draft.scheduledDateIso || '').trim(),
-          harvestDateIso: (draft.harvestDateIso || '').trim(),
-          status: normalizeProcessingStatus(draft.status, 'Processed'),
-          animalCount: Math.max(1, Math.round(Number(draft.animalCount) || 1)),
-          liveWeightGrams: liveGrams,
-          dressedWeightGrams: dressedGrams,
-          ...(computedDressPct !== undefined
-            ? { dressOutPercent: computedDressPct }
-            : typeof draft.dressOutPercent === 'number' && draft.dressOutPercent > 0
-            ? { dressOutPercent: draft.dressOutPercent }
-            : {}),
-          peltCount: Math.max(0, Math.round(Number(draft.peltCount) || 0)),
-          peltGrade: normalizePeltGrade(draft.peltGrade),
-          peltColorNotes: (draft.peltColorNotes || '').trim(),
-          notes: (draft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveProcessingLog(log);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'processingLog',
-              previous: prev,
-              next: log,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(`Saved processing log: ${log.title} (${log.status}).`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save processing log ${log.title}`, err);
-          return false;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'processingLog',
+          readRows: (snap) => snap?.processingLogs,
+          build: async (log, base) => {
+            const liveGrams = Math.max(0, Math.round(Number(log.liveWeightGrams) || 0));
+            const dressedGrams = Math.max(0, Math.round(Number(log.dressedWeightGrams) || 0));
+            const { calculateDressOutPercent } = await import('../domain/economicsLedger');
+            const computedDressPct = calculateDressOutPercent(liveGrams, dressedGrams);
+            return {
+              ...log,
+              ...base,
+              title: (log.title || '').trim() || 'Processing Batch',
+              scheduledDateIso: (log.scheduledDateIso || '').trim(),
+              harvestDateIso: (log.harvestDateIso || '').trim(),
+              status: normalizeProcessingStatus(log.status, 'Processed'),
+              animalCount: Math.max(1, Math.round(Number(log.animalCount) || 1)),
+              liveWeightGrams: liveGrams,
+              dressedWeightGrams: dressedGrams,
+              ...(computedDressPct !== undefined
+                ? { dressOutPercent: computedDressPct }
+                : typeof log.dressOutPercent === 'number' && log.dressOutPercent > 0
+                ? { dressOutPercent: log.dressOutPercent }
+                : {}),
+              peltCount: Math.max(0, Math.round(Number(log.peltCount) || 0)),
+              peltGrade: normalizePeltGrade(log.peltGrade),
+              peltColorNotes: (log.peltColorNotes || '').trim(),
+              notes: (log.notes || '').trim(),
+            };
+          },
+          persist: (log) => adapterRef.current!.saveProcessingLog(log),
+          describe: (log) => `Saved processing log: ${log.title} (${log.status}).`,
+          failureLabel: (log) => `save processing log ${log.title}`,
+        },
+        draft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteProcessingLog = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.processingLogs ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteProcessingLog(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'processingLog',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Processing log deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete processing log', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'processingLog',
+          readRows: (snap) => snap?.processingLogs,
+          remove: (logId) => adapterRef.current!.deleteProcessingLog(logId),
+          message: 'Processing log deleted.',
+          failureLabel: 'delete processing log',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveYouthProjectBook = useCallback(
     async (
       draft: Omit<YouthProjectBook, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.youthProjectBooks ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const project: YouthProjectBook = {
-          ...draft,
-          id,
-          organization: normalizeYouthOrgType(draft.organization, '4-H'),
-          projectTitle: (draft.projectTitle || '').trim() || 'Youth Livestock Project',
-          memberName: (draft.memberName || '').trim(),
-          clubOrChapter: (draft.clubOrChapter || '').trim(),
-          leaderOrAdvisor: (draft.leaderOrAdvisor || '').trim(),
-          projectYear: (draft.projectYear || '').trim() || todayDateIso().slice(0, 4),
-          startDateIso: (draft.startDateIso || '').trim() || todayDateIso(),
-          endDateIso: (draft.endDateIso || '').trim(),
-          status: draft.status === 'Completed' ? 'Completed' : 'Active',
-          linkedAnimalIds: Array.isArray(draft.linkedAnimalIds) ? draft.linkedAnimalIds : [],
-          linkedBreedingIds: Array.isArray(draft.linkedBreedingIds) ? draft.linkedBreedingIds : [],
-          startingInventoryValueCents: Math.max(
-            0,
-            Math.round(Number(draft.startingInventoryValueCents) || 0)
-          ),
-          endingInventoryValueCents: Math.max(
-            0,
-            Math.round(Number(draft.endingInventoryValueCents) || 0)
-          ),
-          feedLogs: normalizeYouthProjectFeedLogs(draft.feedLogs),
-          goalsAndReflection: (draft.goalsAndReflection || '').trim(),
-          showAndCommunityNotes: (draft.showAndCommunityNotes || '').trim(),
-          notes: (draft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveYouthProjectBook(project);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'youthProjectBook',
-              previous: prev,
-              next: project,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(`Saved ${project.organization} project book: ${project.projectTitle}.`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save youth project book ${project.projectTitle}`, err);
-          return false;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'youthProjectBook',
+          readRows: (snap) => snap?.youthProjectBooks,
+          build: (project, base): YouthProjectBook => ({
+            ...project,
+            ...base,
+            organization: normalizeYouthOrgType(project.organization, '4-H'),
+            projectTitle: (project.projectTitle || '').trim() || 'Youth Livestock Project',
+            memberName: (project.memberName || '').trim(),
+            clubOrChapter: (project.clubOrChapter || '').trim(),
+            leaderOrAdvisor: (project.leaderOrAdvisor || '').trim(),
+            projectYear: (project.projectYear || '').trim() || todayDateIso().slice(0, 4),
+            startDateIso: (project.startDateIso || '').trim() || todayDateIso(),
+            endDateIso: (project.endDateIso || '').trim(),
+            status: project.status === 'Completed' ? 'Completed' : 'Active',
+            linkedAnimalIds: Array.isArray(project.linkedAnimalIds) ? project.linkedAnimalIds : [],
+            linkedBreedingIds: Array.isArray(project.linkedBreedingIds)
+              ? project.linkedBreedingIds
+              : [],
+            startingInventoryValueCents: Math.max(
+              0,
+              Math.round(Number(project.startingInventoryValueCents) || 0)
+            ),
+            endingInventoryValueCents: Math.max(
+              0,
+              Math.round(Number(project.endingInventoryValueCents) || 0)
+            ),
+            feedLogs: normalizeYouthProjectFeedLogs(project.feedLogs),
+            goalsAndReflection: (project.goalsAndReflection || '').trim(),
+            showAndCommunityNotes: (project.showAndCommunityNotes || '').trim(),
+            notes: (project.notes || '').trim(),
+          }),
+          persist: (project) => adapterRef.current!.saveYouthProjectBook(project),
+          describe: (project) =>
+            `Saved ${project.organization} project book: ${project.projectTitle}.`,
+          failureLabel: (project) => `save youth project book ${project.projectTitle}`,
+        },
+        draft
+      );
+      return saved !== null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteYouthProjectBook = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.youthProjectBooks ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteYouthProjectBook(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'youthProjectBook',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Youth project record book deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete youth project book', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'youthProjectBook',
+          readRows: (snap) => snap?.youthProjectBooks,
+          remove: (projectId) => adapterRef.current!.deleteYouthProjectBook(projectId),
+          message: 'Youth project record book deleted.',
+          failureLabel: 'delete youth project book',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveClientContact = useCallback(
     async (
       draft: Omit<ClientContact, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.clientContacts ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const cleanTags = Array.isArray(draft.tags)
-          ? Array.from(new Set(draft.tags.map((t) => t.trim()).filter(Boolean)))
-          : [];
-        const contact: ClientContact = {
-          ...draft,
-          id,
-          fullName: (draft.fullName || '').trim() || 'Buyer',
-          ranchOrHerdName: (draft.ranchOrHerdName || '').trim(),
-          email: (draft.email || '').trim(),
-          phone: (draft.phone || '').trim(),
-          preferredContact: normalizePreferredContactMethod(draft.preferredContact, 'sms'),
-          clientKind: normalizeClientKind(draft.clientKind, 'pet_buyer'),
-          cityState: (draft.cityState || '').trim(),
-          shippingAddress: (draft.shippingAddress || '').trim(),
-          tags: cleanTags,
-          notes: (draft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveClientContact(contact);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'clientContact',
-              previous: prev,
-              next: contact,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(`Saved client contact: ${contact.fullName}.`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure(`save client contact ${contact.fullName}`, err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'clientContact',
+          readRows: (snap) => snap?.clientContacts,
+          build: (contact, base) => ({
+            ...contact,
+            ...base,
+            fullName: (contact.fullName || '').trim() || 'Buyer',
+            ranchOrHerdName: (contact.ranchOrHerdName || '').trim(),
+            email: (contact.email || '').trim(),
+            phone: (contact.phone || '').trim(),
+            preferredContact: normalizePreferredContactMethod(contact.preferredContact, 'sms'),
+            clientKind: normalizeClientKind(contact.clientKind, 'pet_buyer'),
+            cityState: (contact.cityState || '').trim(),
+            shippingAddress: (contact.shippingAddress || '').trim(),
+            tags: Array.isArray(contact.tags)
+              ? Array.from(new Set(contact.tags.map((t) => t.trim()).filter(Boolean)))
+              : [],
+            notes: (contact.notes || '').trim(),
+          }),
+          persist: (contact) => adapterRef.current!.saveClientContact(contact),
+          describe: (contact) => `Saved client contact: ${contact.fullName}.`,
+          failureLabel: (contact) => `save client contact ${contact.fullName}`,
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteClientContact = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.clientContacts ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteClientContact(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'clientContact',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Client contact deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete client contact', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'clientContact',
+          readRows: (snap) => snap?.clientContacts,
+          remove: (contactId) => adapterRef.current!.deleteClientContact(contactId),
+          message: 'Client contact deleted.',
+          failureLabel: 'delete client contact',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveWaitlistEntry = useCallback(
     async (
       draft: Omit<WaitlistEntry, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.waitlistEntries ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const linkedClient = draft.clientId
-          ? (latestSnapshot?.clientContacts ?? []).find((c) => c.id === draft.clientId)
-          : undefined;
-        const maxBudgetNum =
-          draft.maxBudgetCents !== undefined && Number.isFinite(Number(draft.maxBudgetCents))
-            ? Math.max(0, Math.round(Number(draft.maxBudgetCents)))
-            : undefined;
-        const entry: WaitlistEntry = {
-          ...draft,
-          id,
-          clientName: linkedClient?.fullName || (draft.clientName || '').trim() || 'Buyer',
-          priorityRank: Math.max(1, Math.round(Number(draft.priorityRank) || 1)),
-          status: normalizeWaitlistStatus(draft.status, 'Active'),
-          intent: normalizeWaitlistIntent(draft.intent, 'Show / Breeding'),
-          desiredBreed: (draft.desiredBreed || '').trim(),
-          desiredVariety: (draft.desiredVariety || '').trim(),
-          preferredSex:
-            draft.preferredSex === 'Male' || draft.preferredSex === 'Female'
-              ? draft.preferredSex
-              : 'Any',
-          preferredBreedingId: draft.preferredBreedingId || undefined,
-          requestedByDateIso: (draft.requestedByDateIso || '').trim(),
-          inquiryDateIso: (draft.inquiryDateIso || '').trim() || todayDateIso(),
-          followUpDateIso: (draft.followUpDateIso || '').trim(),
-          lastContactedDateIso: (draft.lastContactedDateIso || '').trim(),
-          maxBudgetCents: maxBudgetNum && maxBudgetNum > 0 ? maxBudgetNum : undefined,
-          notes: (draft.notes || '').trim(),
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveWaitlistEntry(entry);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'waitlistEntry',
-              previous: prev,
-              next: entry,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: rev,
-            })
-          );
-          await reloadFromAdapter();
-          notify(`Saved waitlist entry #${entry.priorityRank} for ${entry.clientName}.`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure(`save waitlist entry for ${entry.clientName}`, err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'waitlistEntry',
+          readRows: (snap) => snap?.waitlistEntries,
+          build: (entry, base, snap): WaitlistEntry => {
+            const linkedClient = entry.clientId
+              ? (snap?.clientContacts ?? []).find((c) => c.id === entry.clientId)
+              : undefined;
+            const maxBudgetNum =
+              entry.maxBudgetCents !== undefined && Number.isFinite(Number(entry.maxBudgetCents))
+                ? Math.max(0, Math.round(Number(entry.maxBudgetCents)))
+                : undefined;
+            return {
+              ...entry,
+              ...base,
+              clientName: linkedClient?.fullName || (entry.clientName || '').trim() || 'Buyer',
+              priorityRank: Math.max(1, Math.round(Number(entry.priorityRank) || 1)),
+              status: normalizeWaitlistStatus(entry.status, 'Active'),
+              intent: normalizeWaitlistIntent(entry.intent, 'Show / Breeding'),
+              desiredBreed: (entry.desiredBreed || '').trim(),
+              desiredVariety: (entry.desiredVariety || '').trim(),
+              preferredSex:
+                entry.preferredSex === 'Male' || entry.preferredSex === 'Female'
+                  ? entry.preferredSex
+                  : 'Any',
+              preferredBreedingId: entry.preferredBreedingId || undefined,
+              requestedByDateIso: (entry.requestedByDateIso || '').trim(),
+              inquiryDateIso: (entry.inquiryDateIso || '').trim() || todayDateIso(),
+              followUpDateIso: (entry.followUpDateIso || '').trim(),
+              lastContactedDateIso: (entry.lastContactedDateIso || '').trim(),
+              maxBudgetCents: maxBudgetNum && maxBudgetNum > 0 ? maxBudgetNum : undefined,
+              notes: (entry.notes || '').trim(),
+            };
+          },
+          persist: (entry) => adapterRef.current!.saveWaitlistEntry(entry),
+          describe: (entry) =>
+            `Saved waitlist entry #${entry.priorityRank} for ${entry.clientName}.`,
+          failureLabel: (entry) => `save waitlist entry for ${entry.clientName}`,
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteWaitlistEntry = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.waitlistEntries ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteWaitlistEntry(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'waitlistEntry',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Waitlist entry deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete waitlist entry', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'waitlistEntry',
+          readRows: (snap) => snap?.waitlistEntries,
+          remove: (entryId) => adapterRef.current!.deleteWaitlistEntry(entryId),
+          message: 'Waitlist entry deleted.',
+          failureLabel: 'delete waitlist entry',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveAnimalReservation = useCallback(
@@ -4987,555 +4706,257 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     async (
       draft: Omit<WoolHarvest, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.woolHarvests ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const normalized = normalizeWoolHarvest(
-          {
-            ...draft,
-            id,
-            _rev: rev,
-            createdAt: prev?.createdAt || ts,
-            updatedAt: ts,
-          },
-          draft.species || activeSpeciesNameRef.current || 'Rabbit'
-        );
-        if (!normalized) return null;
-        try {
-          await adapterRef.current!.saveWoolHarvest(normalized);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'woolHarvest',
-            previous: prev,
-            next: normalized,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          const totalG = normalized.primeWeightGrams + normalized.gradeWeightGrams;
-          notify(`Saved wool harvest (${totalG} g on ${normalized.harvestDateIso}).`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure('save wool harvest', err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'woolHarvest',
+          readRows: (snap) => snap?.woolHarvests,
+          build: (harvest, base) =>
+            normalizeWoolHarvest(
+              {
+                ...harvest,
+                ...base,
+              },
+              harvest.species || activeSpeciesNameRef.current || 'Rabbit'
+            ),
+          persist: (harvest) => adapterRef.current!.saveWoolHarvest(harvest),
+          describe: (harvest) =>
+            `Saved wool harvest (${
+              harvest.primeWeightGrams + harvest.gradeWeightGrams
+            } g on ${harvest.harvestDateIso}).`,
+          failureLabel: () => 'save wool harvest',
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteWoolHarvest = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.woolHarvests ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteWoolHarvest(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'woolHarvest',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Wool harvest record deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete wool harvest', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'woolHarvest',
+          readRows: (snap) => snap?.woolHarvests,
+          remove: (harvestId) => adapterRef.current!.deleteWoolHarvest(harvestId),
+          message: 'Wool harvest record deleted.',
+          failureLabel: 'delete wool harvest',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveMileageLog = useCallback(
     async (
       draft: Omit<MileageLog, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.mileageLogs ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const normalized = normalizeMileageLog({
-          ...draft,
-          id,
-          species: draft.species || activeSpeciesNameRef.current || 'Rabbit',
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        });
-        if (!normalized) return null;
-        try {
-          await adapterRef.current!.saveMileageLog(normalized);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'mileageLog',
-            previous: prev,
-            next: normalized,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Saved mileage trip (${normalized.miles.toFixed(1)} mi on ${normalized.dateIso}).`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure('save mileage trip', err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'mileageLog',
+          readRows: (snap) => snap?.mileageLogs,
+          build: (trip, base) =>
+            normalizeMileageLog({
+              ...trip,
+              ...base,
+              species: trip.species || activeSpeciesNameRef.current || 'Rabbit',
+            }),
+          persist: (trip) => adapterRef.current!.saveMileageLog(trip),
+          describe: (trip) => `Saved mileage trip (${trip.miles.toFixed(1)} mi on ${trip.dateIso}).`,
+          failureLabel: () => 'save mileage trip',
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteMileageLog = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.mileageLogs ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteMileageLog(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'mileageLog',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Mileage trip deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete mileage trip', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'mileageLog',
+          readRows: (snap) => snap?.mileageLogs,
+          remove: (tripId) => adapterRef.current!.deleteMileageLog(tripId),
+          message: 'Mileage trip deleted.',
+          failureLabel: 'delete mileage trip',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveJournalEntry = useCallback(
     async (
       draft: Omit<BarnJournalEntry, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.journalEntries ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const normalized = normalizeBarnJournalEntry({
-          ...draft,
-          id,
-          species: draft.species || activeSpeciesNameRef.current || 'Rabbit',
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        });
-        if (!normalized) return null;
-        try {
-          await adapterRef.current!.saveJournalEntry(normalized);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'journalEntry',
-            previous: prev,
-            next: normalized,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Saved journal entry "${normalized.title}".`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure('save journal entry', err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'journalEntry',
+          readRows: (snap) => snap?.journalEntries,
+          build: (entry, base) =>
+            normalizeBarnJournalEntry({
+              ...entry,
+              ...base,
+              species: entry.species || activeSpeciesNameRef.current || 'Rabbit',
+            }),
+          persist: (entry) => adapterRef.current!.saveJournalEntry(entry),
+          describe: (entry) => `Saved journal entry "${entry.title}".`,
+          failureLabel: () => 'save journal entry',
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteJournalEntry = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.journalEntries ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteJournalEntry(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'journalEntry',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Journal entry deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete journal entry', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'journalEntry',
+          readRows: (snap) => snap?.journalEntries,
+          remove: (entryId) => adapterRef.current!.deleteJournalEntry(entryId),
+          message: 'Journal entry deleted.',
+          failureLabel: 'delete journal entry',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveJudgeClub = useCallback(
     async (
       draft: Omit<JudgeClubContact, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.judgeClubs ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const normalized = normalizeJudgeClubContact({
-          ...draft,
-          id,
-          species: draft.species || activeSpeciesNameRef.current || 'Rabbit',
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        });
-        if (!normalized) return null;
-        try {
-          await adapterRef.current!.saveJudgeClub(normalized);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'judgeClub',
-            previous: prev,
-            next: normalized,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Saved club contact "${normalized.clubName}".`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure('save club contact', err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'judgeClub',
+          readRows: (snap) => snap?.judgeClubs,
+          build: (club, base) =>
+            normalizeJudgeClubContact({
+              ...club,
+              ...base,
+              species: club.species || activeSpeciesNameRef.current || 'Rabbit',
+            }),
+          persist: (club) => adapterRef.current!.saveJudgeClub(club),
+          describe: (club) => `Saved club contact "${club.clubName}".`,
+          failureLabel: () => 'save club contact',
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteJudgeClub = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.judgeClubs ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteJudgeClub(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'judgeClub',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Club contact deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete club contact', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'judgeClub',
+          readRows: (snap) => snap?.judgeClubs,
+          remove: (clubId) => adapterRef.current!.deleteJudgeClub(clubId),
+          message: 'Club contact deleted.',
+          failureLabel: 'delete club contact',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveJudgeAssignment = useCallback(
     async (
       draft: Omit<JudgeAssignment, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.judgeAssignments ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const normalized = normalizeJudgeAssignment({
-          ...draft,
-          id,
-          species: draft.species || activeSpeciesNameRef.current || 'Rabbit',
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        });
-        if (!normalized) return null;
-        try {
-          await adapterRef.current!.saveJudgeAssignment(normalized);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'judgeAssignment',
-            previous: prev,
-            next: normalized,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Saved show assignment "${normalized.showName}".`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure('save show assignment', err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'judgeAssignment',
+          readRows: (snap) => snap?.judgeAssignments,
+          build: (assignment, base) =>
+            normalizeJudgeAssignment({
+              ...assignment,
+              ...base,
+              species: assignment.species || activeSpeciesNameRef.current || 'Rabbit',
+            }),
+          persist: (assignment) => adapterRef.current!.saveJudgeAssignment(assignment),
+          describe: (assignment) => `Saved show assignment "${assignment.showName}".`,
+          failureLabel: () => 'save show assignment',
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteJudgeAssignment = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.judgeAssignments ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteJudgeAssignment(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'judgeAssignment',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Show assignment deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete show assignment', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'judgeAssignment',
+          readRows: (snap) => snap?.judgeAssignments,
+          remove: (assignmentId) => adapterRef.current!.deleteJudgeAssignment(assignmentId),
+          message: 'Show assignment deleted.',
+          failureLabel: 'delete show assignment',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const saveJudgeExpense = useCallback(
     async (
       draft: Omit<JudgeExpense, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
     ): Promise<string | null> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        const ts = getAdjustedNowIsoUtc();
-        const prev = draft.id
-          ? (latestSnapshot?.judgeExpenses ?? []).find((x) => x.id === draft.id)
-          : undefined;
-        const id = draft.id || generateUuid();
-        const rev = nextEntityRev(id, prev?._rev);
-        const normalized = normalizeJudgeExpense({
-          ...draft,
-          id,
-          species: draft.species || activeSpeciesNameRef.current || 'Rabbit',
-          _rev: rev,
-          createdAt: prev?.createdAt || ts,
-          updatedAt: ts,
-        });
-        if (!normalized) return null;
-        try {
-          await adapterRef.current!.saveJudgeExpense(normalized);
-          const outboxOps = diffEntityFieldsToOperations({
-            entityType: 'judgeExpense',
-            previous: prev,
-            next: normalized,
-            deviceId,
-            nextCounter: allocateNextLogicalCounter,
-            timestamp: ts,
-            recordRev: rev,
-          });
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Saved judging expense "${normalized.description}".`);
-          return id;
-        } catch (err) {
-          reportPersistenceFailure('save judging expense', err);
-          return null;
-        }
-      });
+      const saved = await saveEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'judgeExpense',
+          readRows: (snap) => snap?.judgeExpenses,
+          build: (expense, base) =>
+            normalizeJudgeExpense({
+              ...expense,
+              ...base,
+              species: expense.species || activeSpeciesNameRef.current || 'Rabbit',
+            }),
+          persist: (expense) => adapterRef.current!.saveJudgeExpense(expense),
+          describe: (expense) => `Saved judging expense "${expense.description}".`,
+          failureLabel: () => 'save judging expense',
+        },
+        draft
+      );
+      return saved ? saved.id : null;
     },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [entityCrudPorts]
   );
 
   const deleteJudgeExpense = useCallback(
-    async (id: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const target = (currentSnapshot?.judgeExpenses ?? []).find((x) => x.id === id);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteJudgeExpense(id);
-          await recordOutboxOps([
-            createOutboxOperation({
-              entityType: 'judgeExpense',
-              entityUuid: id,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(id, target?._rev),
-            }),
-          ]);
-          await reloadFromAdapter();
-          notify('Judging expense deleted.');
-        } catch (err) {
-          reportPersistenceFailure('delete judging expense', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    async (id: string) =>
+      deleteEntityRecord(
+        entityCrudPorts,
+        {
+          entityType: 'judgeExpense',
+          readRows: (snap) => snap?.judgeExpenses,
+          remove: (expenseId) => adapterRef.current!.deleteJudgeExpense(expenseId),
+          message: 'Judging expense deleted.',
+          failureLabel: 'delete judging expense',
+        },
+        id
+      ),
+    [entityCrudPorts]
   );
 
   const completeReservationSale = useCallback(
@@ -6067,6 +5488,21 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     reportPersistenceFailure,
   ]);
 
+  const backupImportPorts = useMemo<BackupImportPorts>(
+    () => ({
+      snapshotRef,
+      saveSafetyRollingBackup,
+      clearPhotoCache: () => clearPhotoCache(photoCacheRef),
+      replaceSnapshot: (next) => adapterRef.current!.replaceSnapshot(next),
+      clearLocalSyncAndBackupReminderState,
+      clearWipedRecoveryContext: () => setWipedRecoveryContext(null),
+      reloadFromAdapter,
+      setImportConflictAlert,
+      logDiagnosticEvent,
+    }),
+    [saveSafetyRollingBackup, clearLocalSyncAndBackupReminderState, reloadFromAdapter]
+  );
+
   const importJsonBackup = useCallback(
     async (jsonText: string, mode: 'merge' | 'replace') => {
       return enqueueStoreMutation(async () => {
@@ -6074,83 +5510,24 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         if (!currentSnapshot) return;
         try {
           invalidateSpeciesSelectorCache();
-          const { mergeBarnSnapshots, parseBarnBackupJson } = await import(
-            '../domain/syncAndExports'
-          );
+          const { parseBarnBackupJson } = await import('../domain/syncAndExports');
           const incoming = parseBarnBackupJson(jsonText, currentSnapshot.settings);
+          const installed = await installImportedSnapshot(backupImportPorts, {
+            mode,
+            incoming,
+            safetyNote: 'Pre-JSON-replace safety snapshot',
+          });
+          if (!installed) return;
+          const alertSuffix = installed.alertMessage ? ` ${installed.alertMessage}` : '';
           if (mode === 'replace') {
-            if (currentSnapshot.animals.length > 0) {
-              await saveSafetyRollingBackup(currentSnapshot, 'Pre-JSON-replace safety snapshot');
-            }
-            clearPhotoCache(photoCacheRef);
-            const flagRes = applyImportConflictAttentionFlags(incoming.animals);
-            const nextSnap: BarnDatabaseSnapshot = {
-              ...incoming,
-              settings: {
-                ...incoming.settings,
-                lastBackupMeta: undefined,
-                backupReminderSnoozedUntilMs: undefined,
-              },
-              animals: flagRes.animals,
-            };
-            await adapterRef.current!.replaceSnapshot(nextSnap);
-            await clearLocalSyncAndBackupReminderState();
-            setWipedRecoveryContext(null);
-            await reloadFromAdapter();
-            if (flagRes.alertMessage) {
-              const spNames = Array.from(
-                new Set(
-                  flagRes.animals
-                    .filter((a) => flagRes.conflictedAnimalIds.includes(a.id))
-                    .map((a) => a.species)
-                )
-              );
-              setImportConflictAlert({
-                message: flagRes.alertMessage,
-                speciesNames: spNames,
-                conflictedCount: flagRes.conflictedAnimalIds.length,
-              });
-              logDiagnosticEvent({
-                level: 'warn',
-                category: 'storage',
-                message: flagRes.alertMessage,
-              });
-            }
             notify(
-              `Restored ${incoming.animals.length} animals & ${incoming.animalPhotos.length} photos from JSON backup.${
-                flagRes.alertMessage ? ` ${flagRes.alertMessage}` : ''
-              }`
+              `Restored ${incoming.animals.length} animals & ${incoming.animalPhotos.length} photos from JSON backup.${alertSuffix}`
             );
           } else {
-            const merged = mergeBarnSnapshots(currentSnapshot, incoming);
-            const importedIds = new Set(incoming.animals.map((a) => a.id));
-            const flagRes = applyImportConflictAttentionFlags(merged.snapshot.animals, importedIds);
-            const nextSnap: BarnDatabaseSnapshot = { ...merged.snapshot, animals: flagRes.animals };
-            await adapterRef.current!.replaceSnapshot(nextSnap);
-            await reloadFromAdapter();
-            if (flagRes.alertMessage) {
-              const spNames = Array.from(
-                new Set(
-                  flagRes.animals
-                    .filter((a) => flagRes.conflictedAnimalIds.includes(a.id))
-                    .map((a) => a.species)
-                )
-              );
-              setImportConflictAlert({
-                message: flagRes.alertMessage,
-                speciesNames: spNames,
-                conflictedCount: flagRes.conflictedAnimalIds.length,
-              });
-              logDiagnosticEvent({
-                level: 'warn',
-                category: 'storage',
-                message: flagRes.alertMessage,
-              });
-            }
             notify(
-              `UUID/Timestamp sync complete: +${merged.animalsAdded} added, ${merged.animalsUpdated} updated, ${merged.photosMerged} photos merged.${
-                flagRes.alertMessage ? ` ${flagRes.alertMessage}` : ''
-              }`
+              `UUID/Timestamp sync complete: +${installed.merged?.animalsAdded ?? 0} added, ${
+                installed.merged?.animalsUpdated ?? 0
+              } updated, ${installed.merged?.photosMerged ?? 0} photos merged.${alertSuffix}`
             );
           }
         } catch (err) {
@@ -6159,14 +5536,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         }
       });
     },
-    [
-      enqueueStoreMutation,
-      saveSafetyRollingBackup,
-      clearLocalSyncAndBackupReminderState,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
+    [enqueueStoreMutation, backupImportPorts, notify, reportPersistenceFailure]
   );
 
   const importBackupArchiveBytes = useCallback(
@@ -6212,92 +5582,38 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
             return;
           }
 
+          const installed = await installImportedSnapshot(backupImportPorts, {
+            mode,
+            incoming: parsed.snapshot,
+            safetyNote: 'Pre-archive-replace safety snapshot',
+          });
+          if (!installed) return;
+          const alertSuffix = installed.alertMessage ? ` ${installed.alertMessage}` : '';
+
           if (mode === 'replace') {
-            if (currentSnapshot.animals.length > 0) {
-              await saveSafetyRollingBackup(currentSnapshot, 'Pre-archive-replace safety snapshot');
-            }
-            clearPhotoCache(photoCacheRef);
-            const flagRes = applyImportConflictAttentionFlags(parsed.snapshot.animals);
-            const nextSnap: BarnDatabaseSnapshot = {
-              ...parsed.snapshot,
-              settings: {
-                ...parsed.snapshot.settings,
-                lastBackupMeta: undefined,
-                backupReminderSnoozedUntilMs: undefined,
-              },
-              animals: flagRes.animals,
-            };
-            await adapterRef.current!.replaceSnapshot(nextSnap);
-            await clearLocalSyncAndBackupReminderState();
-            setWipedRecoveryContext(null);
-            await reloadFromAdapter();
-            if (flagRes.alertMessage) {
-              const spNames = Array.from(
-                new Set(
-                  flagRes.animals
-                    .filter((a) => flagRes.conflictedAnimalIds.includes(a.id))
-                    .map((a) => a.species)
-                )
-              );
-              setImportConflictAlert({
-                message: flagRes.alertMessage,
-                speciesNames: spNames,
-                conflictedCount: flagRes.conflictedAnimalIds.length,
-              });
-              logDiagnosticEvent({
-                level: 'warn',
-                category: 'storage',
-                message: flagRes.alertMessage,
-              });
-            }
             logDiagnosticEvent({
               level: 'info',
               category: 'storage',
               message: `Restored full archive "${fileName}" (${parsed.snapshot.animals.length} animals, ${parsed.photosReconstructed} photos)`,
             });
             notify(
-              `Restored ${parsed.snapshot.animals.length} animals & ${parsed.photosReconstructed} photos from ${parsed.sourceFormat.toUpperCase()} backup.${
-                flagRes.alertMessage ? ` ${flagRes.alertMessage}` : ''
-              }`
+              `Restored ${parsed.snapshot.animals.length} animals & ${parsed.photosReconstructed} photos from ${parsed.sourceFormat.toUpperCase()} backup.${alertSuffix}`
             );
           } else {
-            const { mergeBarnSnapshots } = await import('../domain/syncAndExports');
-            const merged = mergeBarnSnapshots(currentSnapshot, parsed.snapshot);
-            const importedIds = new Set(parsed.snapshot.animals.map((a) => a.id));
-            const flagRes = applyImportConflictAttentionFlags(merged.snapshot.animals, importedIds);
-            const nextSnap: BarnDatabaseSnapshot = { ...merged.snapshot, animals: flagRes.animals };
-            await adapterRef.current!.replaceSnapshot(nextSnap);
-            await reloadFromAdapter();
-            if (flagRes.alertMessage) {
-              const spNames = Array.from(
-                new Set(
-                  flagRes.animals
-                    .filter((a) => flagRes.conflictedAnimalIds.includes(a.id))
-                    .map((a) => a.species)
-                )
-              );
-              setImportConflictAlert({
-                message: flagRes.alertMessage,
-                speciesNames: spNames,
-                conflictedCount: flagRes.conflictedAnimalIds.length,
-              });
-              logDiagnosticEvent({
-                level: 'warn',
-                category: 'storage',
-                message: flagRes.alertMessage,
-              });
-            }
             logDiagnosticEvent({
               level: 'info',
               category: 'storage',
-              message: `Merged archive "${fileName}" (+${merged.animalsAdded} added, ${merged.photosMerged} photos merged)`,
+              message: `Merged archive "${fileName}" (+${
+                installed.merged?.animalsAdded ?? 0
+              } added, ${installed.merged?.photosMerged ?? 0} photos merged)`,
             });
             notify(
-              `Merge complete: +${merged.animalsAdded} added, ${merged.animalsUpdated} updated, ${merged.photosMerged} photos merged.${
-                flagRes.alertMessage ? ` ${flagRes.alertMessage}` : ''
-              }`
+              `Merge complete: +${installed.merged?.animalsAdded ?? 0} added, ${
+                installed.merged?.animalsUpdated ?? 0
+              } updated, ${installed.merged?.photosMerged ?? 0} photos merged.${alertSuffix}`
             );
           }
+
         } catch (err) {
           logDiagnosticEvent({
             level: 'error',
@@ -6309,13 +5625,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         }
       });
     },
-    [
-      enqueueStoreMutation,
-      saveSafetyRollingBackup,
-      clearLocalSyncAndBackupReminderState,
-      reloadFromAdapter,
-      notify,
-    ]
+    [enqueueStoreMutation, backupImportPorts, notify]
   );
 
   const importDeltaOperations = useCallback(
