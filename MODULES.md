@@ -5,17 +5,17 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 261
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.6%)
+- **Total Non-Test Source Modules:** 262
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.5%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 202 (77.4%)
+- **Content-Specific Modules:** 203 (77.5%)
   - Domain Engines (`src/domain/`): 88
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
-  - State Store Hook (`src/hooks/`): 21
+  - State Store Hook (`src/hooks/`): 22
   - UI Screens & Modals (`src/components/`): 53
   - Root Entry & Styles (`src/`): 3
 
@@ -110,7 +110,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (202)
+## 2. Content-Specific Modules (203)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (88)
 
@@ -257,13 +257,14 @@ npx tsx scripts/list-modules.ts --check
 | --- | --- |
 | `src/native/pedigreeBridge.ts` | Content-specific native Android/iOS WebView container bridge (`pedigreeNative`), consumed via `@engine/bridge` contracts. |
 
-### Content-Specific State Controller Hook (`src/hooks/`) (21)
+### Content-Specific State Controller Hook (`src/hooks/`) (22)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
 | `src/hooks/barnStore/backupReminder.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/photoCacheBudget.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/restoreOrchestrator.ts` | Content-specific application state hook. |
+| `src/hooks/barnStore/speciesSelectors.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storeFacades.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storePorts.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/syncConflictSlice.tsx` | Content-specific application state hook. |

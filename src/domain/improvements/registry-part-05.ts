@@ -2625,6 +2625,131 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-125',
+    title: 'Rev-Keyed Memoised Species Selectors',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      '`baseSpeciesData` re-filtered and re-sorted every collection whenever the snapshot object changed identity, which any settings or outbox write does, so an untouched collection paid a full localeCompare sort on every store write.',
+    summary:
+      'Final milestone 5 item: `hooks/barnStore/speciesSelectors.ts` owns the twenty per-collection species selectors that used to be inline in `baseSpeciesData`, plus the photo index. Each is memoised by `memoizeByCollectionRev` on `collectionRevKey`, an FNV-1a signature over every row\'s `id`/`_rev`, so a write to one collection no longer re-filters or re-sorts the other nineteen, and an unchanged collection keeps the array identity the downstream memos compare. The cache is bounded at 64 entries; `resetSpeciesSelectorCache` clears it for tests. Sorting, filtering, task archived-animal exclusion and photo ordering are unchanged, and `useBarnStore` still returns all 200 keys.',
+    files: [
+      'src/hooks/barnStore/speciesSelectors.ts',
+      'src/hooks/__tests__/speciesSelectors.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/speciesSelectors.ts',
+        requiredSubstrings: [
+          'collectionRevKey',
+          'memoizeByCollectionRev',
+          'selectSpeciesAnimals',
+          'selectSpeciesPhotoIndex',
+        ],
+        rationale:
+          'The rev signature is what makes reuse safe; losing it either drops the memo or serves stale rows.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['selectSpeciesAnimals', 'selectSpeciesPhotoIndex'],
+        forbiddenSubstrings: ['const animals = snapshot.animals'],
+        rationale:
+          'The store must read the memoised selectors; the inline derivation is what this item removed.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep every selector a pure function of one collection and the species name — the cache key assumes it.',
+      'Bump the entity `_rev` on every write; a silent field edit would serve a stale list until the next revision.',
+      'Call `resetSpeciesSelectorCache()` in a test that reuses ids and revisions with different content.',
+    ],
+  },
+  {
+    id: 'IMP-126',
+    title: 'Selector Cache Flushed on Dataset Replacement',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The rev-keyed selector cache keyed on row ids and revisions could not tell a restored or imported dataset from the one it replaced: a backup holding the same ids at the same revisions with different field values would have been served from the old cache.',
+    summary:
+      'Every selector cache key is now scoped to a dataset generation. `invalidateSpeciesSelectorCache()` bumps the generation and clears the cache, and it is called by `runDestructiveRestore` after the replace (and after a rollback replace) plus at every wholesale dataset entry point in the store: JSON backup import, archive import, delta import, archived-herd restore, platform import and SQLite import. Ordinary writes keep reusing the cache, because they do not replace the dataset. Three selector tests document the collision and prove the flush, and `restoreOrchestrator.test.ts` proves the restore path itself flushes before the replacement is observable.',
+    files: [
+      'src/hooks/barnStore/speciesSelectors.ts',
+      'src/hooks/barnStore/restoreOrchestrator.ts',
+      'src/hooks/useBarnStore.ts',
+      'src/hooks/__tests__/speciesSelectors.test.ts',
+      'src/hooks/__tests__/restoreOrchestrator.test.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/speciesSelectors.ts',
+        requiredSubstrings: ['invalidateSpeciesSelectorCache', 'datasetEpoch'],
+        rationale:
+          'The generation is the only guard between a restore and a stale list; losing it silently reintroduces the hazard.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/restoreOrchestrator.ts',
+        requiredSubstrings: ['invalidateSpeciesSelectorCache'],
+        rationale:
+          'All restores share this path, so the flush belongs here rather than in each caller.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['invalidateSpeciesSelectorCache'],
+        rationale:
+          'Imports bypass the restore orchestrator and need their own flush.',
+      },
+    ],
+    restorePlaybook: [
+      'Call `invalidateSpeciesSelectorCache()` in any new path that replaces the snapshot wholesale, before the replacement can render.',
+      'Never rely on revision signatures alone for cross-dataset identity — restores reuse ids and revisions.',
+      'Keep the generation bump ahead of the cache clear so in-flight entries cannot be re-keyed to the old dataset.',
+    ],
+  },
+  {
+    id: 'IMP-127',
+    title: 'Render-Level Store Harness',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Every store test so far was a pure-function test or a key snapshot, so the loops that actually break \u2014 a real React commit, a write through the adapter, a snapshot that comes back as a new object, derived selectors and their memo re-running, and a restore replacing the dataset underneath them \u2014 had no coverage at all.',
+    summary:
+      'Milestone 7 starts with `hooks/__tests__/barnStoreIntegration.test.tsx`, a jsdom render-level harness driving `useBarnStore` through `renderHook`, and `hooks/__tests__/support/memoryStorageAdapter.ts`, a typed in-memory `StorageAdapter` that upserts and deletes by method name, cascades animal deletes to photos and care logs, and returns a deep copy per `loadSnapshot` so the hook sees the browser\'s new-object-per-reload shape. Two loops are covered: a save through the store appearing in the derived species list, and a JSON replace import serving the restored rows for the same ids and revisions (the IMP-126 guard, now proven through the store rather than the selector alone). `jsdom`, `@testing-library/react` and its `@testing-library/dom` peer are dev dependencies.',
+    files: [
+      'src/hooks/__tests__/barnStoreIntegration.test.tsx',
+      'src/hooks/__tests__/support/memoryStorageAdapter.ts',
+      'package.json',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/__tests__/barnStoreIntegration.test.tsx',
+        requiredSubstrings: ['@vitest-environment jsdom', 'renderHook', 'importJsonBackup'],
+        rationale:
+          'Without the jsdom environment or a real render the file silently degrades to the same unit-level coverage it replaces.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/support/memoryStorageAdapter.ts',
+        requiredSubstrings: ['replaceSnapshot', 'loadSnapshot', 'structuredClone'],
+        rationale:
+          'A shallow adapter that hands back the same object would hide the identity bugs the harness exists to catch.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the adapter honest: every write must be visible to the next `loadSnapshot`, and the snapshot must come back as a new object.',
+      'Enter a species route (`setRoute(\'herd\')`) before asserting derived lists; non-species routes return empty lists by design.',
+      'Still open in milestone 7: the OPFS archive offload loop and the sync-conflict resolve loop.',
+    ],
+  },
+  {
+    id: 'IMP-128',
     title: 'Prompt Changelog Wires Up Like the Improvements Ledger',
     category: 'ci-tooling',
     release: 'alpha-3',
@@ -2672,7 +2797,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     ],
   },
   {
-    id: 'IMP-126',
+    id: 'IMP-129',
     title: 'The Prompt Ledger Rejects Half-Opted-In Entries',
     category: 'ci-tooling',
     release: 'alpha-3',
@@ -2684,7 +2809,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'An entry that set `decidedOn` but not `version` or `commitShaOrTag` rendered as a legacy `### PRM-` block with no failure, so a change could look logged while only part of it was.',
     summary:
-      '`findLedgerOptInViolations` in `src/domain/promptRegistry.ts` reports any entry that sets a ledger field without all three opt-in fields (`decidedOn`, `version`, `commitShaOrTag`), and any `status: superseded` entry that does not name its replacement in `supersededBy`; `npm run verify:prompts` fails with the missing field names. Entries with no ledger fields stay legacy and pass, so the eight existing prompt entries are untouched.',
+      '`findLedgerOptInViolations` in `src/domain/promptRegistry.ts` reports any entry that sets a ledger field without all three opt-in fields (`decidedOn`, `version`, `commitShaOrTag`), and any `status: superseded` entry that does not name its replacement in `supersededBy`; `npm run verify:prompts` fails with the missing field names. Entries with no ledger fields stay legacy and pass, so the older prompt entries are untouched.',
     files: [
       'src/domain/promptRegistry.ts',
       'scripts/verify-prompts.ts',

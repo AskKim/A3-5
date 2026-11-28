@@ -1,6 +1,6 @@
 {
   "name": "pedigree",
-  "description": "Community Pedigree Project \u2014 React + Vite + TypeScript offline-first PWA (core app must always stay in React; android-wrapper/ is only a thin hybrid Kotlin WebView shell) | App Name: Community Pedigree | Repo: pedigree | Package Name: pedigree",
+  "description": "Community Pedigree Project — React + Vite + TypeScript offline-first PWA (core app must always stay in React; android-wrapper/ is only a thin hybrid Kotlin WebView shell) | App Name: Community Pedigree | Repo: pedigree | Package Name: pedigree",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://askkim.github.io/Pedigree/",
   "version": "0.1.0-alpha.3",
@@ -42,11 +42,14 @@
     "vite": "^8.4.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/sql.js": "^1.16.1",
     "@vitest/coverage-v8": "^5.1.0",
+    "jsdom": "^31.0.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",

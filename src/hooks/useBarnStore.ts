@@ -102,6 +102,31 @@ import {
   WoolHarvest,
   YouthProjectBook,
 } from '../domain/models';
+import {
+  invalidateSpeciesSelectorCache,
+  selectSpeciesAnimalReservations,
+  selectSpeciesAnimals,
+  selectSpeciesBreedings,
+  selectSpeciesCages,
+  selectSpeciesCareLogs,
+  selectSpeciesClientContacts,
+  selectSpeciesFeedAllocations,
+  selectSpeciesFeedBatches,
+  selectSpeciesJudgeAssignments,
+  selectSpeciesJudgeClubs,
+  selectSpeciesJudgeExpenses,
+  selectSpeciesJournalEntries,
+  selectSpeciesLedgerEntries,
+  selectSpeciesMileageLogs,
+  selectSpeciesPhotoIndex,
+  selectSpeciesProcessingLogs,
+  selectSpeciesShows,
+  selectSpeciesTasks,
+  selectSpeciesWaitlistEntries,
+  selectSpeciesWoolHarvests,
+  selectSpeciesYouthProjectBooks,
+} from './barnStore/speciesSelectors';
+
 import { normalizeBarnJournalEntry } from '../domain/barnJournal';
 import { PEDIGREE_APP_CONFIG } from '../app/pedigreeAppConfig';
 import {
@@ -1269,161 +1294,61 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         totalRecordCount: 0,
       };
     }
-    const animals = snapshot.animals
-      .filter((a) => isSameSpecies(a.species, speciesProfile.name))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const animals = selectSpeciesAnimals(snapshot.animals, speciesProfile.name);
 
     const activeAnimals = animals.filter((a) => !isAnimalArchived(a));
     const archivedAnimals = animals.filter((a) => isAnimalArchived(a));
     const archivedIds = new Set(archivedAnimals.map((a) => a.id));
 
     const herdById = buildSpeciesHerdMap(animals, speciesProfile.name);
-    const cages = snapshot.cages.filter((c) => isSameSpecies(c.species, speciesProfile.name));
-    const breedings = snapshot.breedings
-      .filter((b) => isSameSpecies(b.species, speciesProfile.name))
-      .sort((a, b) => b.bredDateIso.localeCompare(a.bredDateIso));
-
-    const priorityRank = (p: string) => (p === 'High' ? 0 : p === 'Normal' ? 1 : 2);
-    const tasks = snapshot.tasks
-      .filter(
-        (t) =>
-          isSameSpecies(t.species, speciesProfile.name) &&
-          // Archived animals stay in storage for pedigrees but do not generate active incomplete tasks
-          (!t.linkedAnimalId || !archivedIds.has(t.linkedAnimalId) || t.completed)
-      )
-      .sort((a, b) => {
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        const pDiff = priorityRank(a.priority) - priorityRank(b.priority);
-        if (pDiff !== 0) return pDiff;
-        return (a.dueDateIso || '9999-99-99').localeCompare(b.dueDateIso || '9999-99-99');
-      });
-
-    const careLogs = snapshot.careLogs
-      .filter((l) => isSameSpecies(l.species, speciesProfile.name))
-      .sort((a, b) => b.dateIso.localeCompare(a.dateIso));
-
-    const animalPhotos = (snapshot.animalPhotos ?? []).filter((p) =>
-      isSameSpecies(p.species, speciesProfile.name)
+    const cages = selectSpeciesCages(snapshot.cages, speciesProfile.name);
+    const breedings = selectSpeciesBreedings(snapshot.breedings, speciesProfile.name);
+    // Archived animals stay in storage for pedigrees but do not generate active incomplete tasks
+    const tasks = selectSpeciesTasks(snapshot.tasks, speciesProfile.name, archivedAnimals);
+    const careLogs = selectSpeciesCareLogs(snapshot.careLogs, speciesProfile.name);
+    const { animalPhotos, photosByAnimalId, primaryPhotoByAnimalId } = selectSpeciesPhotoIndex(
+      snapshot.animalPhotos ?? [],
+      speciesProfile.name
     );
-    const photosByAnimalId = new Map<string, AnimalPhoto[]>();
-    const primaryPhotoByAnimalId = new Map<string, AnimalPhoto>();
-
-    for (const photo of animalPhotos) {
-      const bucket = photosByAnimalId.get(photo.animalId) || [];
-      bucket.push(photo);
-      photosByAnimalId.set(photo.animalId, bucket);
-    }
-    for (const [aid, bucket] of photosByAnimalId.entries()) {
-      bucket.sort((a, b) => {
-        if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
-        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
-        return a.createdAt.localeCompare(b.createdAt);
-      });
-      if (bucket.length > 0) {
-        primaryPhotoByAnimalId.set(aid, bucket[0]);
-      }
-    }
-
-    const shows = snapshot.shows
-      .filter((s) => isSameSpecies(s.species, speciesProfile.name))
-      .sort((a, b) => a.eventDateIso.localeCompare(b.eventDateIso));
-
-    const feedBatches = (snapshot.feedBatches ?? [])
-      .filter((b) => isSameSpecies(b.species, speciesProfile.name))
-      .sort((a, b) =>
-        (b.purchaseDateIso || '').localeCompare(a.purchaseDateIso || '') ||
-        b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const feedAllocations = (snapshot.feedAllocations ?? [])
-      .filter((al) => isSameSpecies(al.species, speciesProfile.name))
-      .sort((a, b) =>
-        (b.dateIso || '').localeCompare(a.dateIso || '') ||
-        b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const ledgerEntries = (snapshot.ledgerEntries ?? [])
-      .filter((le) => isSameSpecies(le.species, speciesProfile.name))
-      .sort((a, b) =>
-        (b.dateIso || '').localeCompare(a.dateIso || '') ||
-        b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const processingLogs = (snapshot.processingLogs ?? [])
-      .filter((pl) => isSameSpecies(pl.species, speciesProfile.name))
-      .sort((a, b) =>
-        (b.harvestDateIso || b.scheduledDateIso || '').localeCompare(
-          a.harvestDateIso || a.scheduledDateIso || ''
-        ) || b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const youthProjectBooks = (snapshot.youthProjectBooks ?? [])
-      .filter((yp) => isSameSpecies(yp.species, speciesProfile.name))
-      .sort((a, b) =>
-        (b.projectYear || '').localeCompare(a.projectYear || '') ||
-        (b.startDateIso || '').localeCompare(a.startDateIso || '') ||
-        b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const clientContacts = (snapshot.clientContacts ?? [])
-      .filter((c) => isSameSpecies(c.species, speciesProfile.name))
-      .sort((a, b) => a.fullName.localeCompare(b.fullName));
-
-    const waitlistEntries = (snapshot.waitlistEntries ?? [])
-      .filter((w) => isSameSpecies(w.species, speciesProfile.name))
-      .sort((a, b) => a.priorityRank - b.priorityRank || b.createdAt.localeCompare(a.createdAt));
-
-    const animalReservations = (snapshot.animalReservations ?? [])
-      .filter((r) => isSameSpecies(r.species, speciesProfile.name))
-      .sort((a, b) =>
-        (b.reservedDateIso || '').localeCompare(a.reservedDateIso || '') ||
-        b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const woolHarvests = (snapshot.woolHarvests ?? [])
-      .filter((w) => isSameSpecies(w.species, speciesProfile.name))
-      .sort(
-        (a, b) =>
-          (b.harvestDateIso || '').localeCompare(a.harvestDateIso || '') ||
-          b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const mileageLogs = (snapshot.mileageLogs ?? [])
-      .filter((m) => isSameSpecies(m.species, speciesProfile.name))
-      .sort(
-        (a, b) =>
-          (b.dateIso || '').localeCompare(a.dateIso || '') ||
-          b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const journalEntries = (snapshot.journalEntries ?? [])
-      .filter((j) => isSameSpecies(j.species, speciesProfile.name))
-      .sort(
-        (a, b) =>
-          (b.entryDateIso || '').localeCompare(a.entryDateIso || '') ||
-          (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) ||
-          b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const judgeClubs = (snapshot.judgeClubs ?? [])
-      .filter((c) => isSameSpecies(c.species, speciesProfile.name))
-      .sort((a, b) => a.clubName.localeCompare(b.clubName) || b.createdAt.localeCompare(a.createdAt));
-
-    const judgeAssignments = (snapshot.judgeAssignments ?? [])
-      .filter((a) => isSameSpecies(a.species, speciesProfile.name))
-      .sort(
-        (a, b) =>
-          (a.showDateIso || '').localeCompare(b.showDateIso || '') ||
-          b.createdAt.localeCompare(a.createdAt)
-      );
-
-    const judgeExpenses = (snapshot.judgeExpenses ?? [])
-      .filter((e) => isSameSpecies(e.species, speciesProfile.name))
-      .sort(
-        (a, b) =>
-          (b.dateIso || '').localeCompare(a.dateIso || '') ||
-          b.createdAt.localeCompare(a.createdAt)
-      );
+    const shows = selectSpeciesShows(snapshot.shows, speciesProfile.name);
+    const feedBatches = selectSpeciesFeedBatches(snapshot.feedBatches, speciesProfile.name);
+    const feedAllocations = selectSpeciesFeedAllocations(
+      snapshot.feedAllocations,
+      speciesProfile.name
+    );
+    const ledgerEntries = selectSpeciesLedgerEntries(snapshot.ledgerEntries, speciesProfile.name);
+    const processingLogs = selectSpeciesProcessingLogs(
+      snapshot.processingLogs,
+      speciesProfile.name
+    );
+    const youthProjectBooks = selectSpeciesYouthProjectBooks(
+      snapshot.youthProjectBooks,
+      speciesProfile.name
+    );
+    const clientContacts = selectSpeciesClientContacts(
+      snapshot.clientContacts,
+      speciesProfile.name
+    );
+    const waitlistEntries = selectSpeciesWaitlistEntries(
+      snapshot.waitlistEntries,
+      speciesProfile.name
+    );
+    const animalReservations = selectSpeciesAnimalReservations(
+      snapshot.animalReservations,
+      speciesProfile.name
+    );
+    const woolHarvests = selectSpeciesWoolHarvests(snapshot.woolHarvests, speciesProfile.name);
+    const mileageLogs = selectSpeciesMileageLogs(snapshot.mileageLogs, speciesProfile.name);
+    const journalEntries = selectSpeciesJournalEntries(
+      snapshot.journalEntries,
+      speciesProfile.name
+    );
+    const judgeClubs = selectSpeciesJudgeClubs(snapshot.judgeClubs, speciesProfile.name);
+    const judgeAssignments = selectSpeciesJudgeAssignments(
+      snapshot.judgeAssignments,
+      speciesProfile.name
+    );
+    const judgeExpenses = selectSpeciesJudgeExpenses(snapshot.judgeExpenses, speciesProfile.name);
 
     const testingRecordCount = countSpeciesTestingRecords(snapshot, speciesProfile.name);
     const nonTestingRecordCount = countSpeciesNonTestingRecords(snapshot, speciesProfile.name);
@@ -6148,6 +6073,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const currentSnapshot = snapshotRef.current;
         if (!currentSnapshot) return;
         try {
+          invalidateSpeciesSelectorCache();
           const { mergeBarnSnapshots, parseBarnBackupJson } = await import(
             '../domain/syncAndExports'
           );
@@ -6249,6 +6175,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const currentSnapshot = snapshotRef.current;
         if (!currentSnapshot) return;
         try {
+          invalidateSpeciesSelectorCache();
           const { parseBackupArchiveOffThread } = await import('../storage/offThreadWorkerClient');
           const parsed = await parseBackupArchiveOffThread(
             bytes,
@@ -6397,6 +6324,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         const currentSnapshot = snapshotRef.current ?? snapshot;
         if (!currentSnapshot) return;
         try {
+          invalidateSpeciesSelectorCache();
           const baseOps = syncOperationsHydratedRef.current
             ? syncOperationsRef.current
             : await loadSyncOperationsFromIdbAndIndex();
@@ -6892,6 +6820,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           : snapshotRef.current;
         if (!freshBase) return;
         try {
+          invalidateSpeciesSelectorCache();
           const [loaded, { mergeRestoredArchiveIntoSnapshot }] = await Promise.all([
             loadOpfsHerdArchive(archiveKey, freshBase.settings),
             import('../domain/backupVault'),
@@ -7021,6 +6950,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
         if (!currentSnapshot) return;
 
         try {
+          invalidateSpeciesSelectorCache();
           const { resolveAnimalsWithConflictChoices } =
             await import('../domain/importers/conflictResolver');
           const resolvedAnimals = resolveAnimalsWithConflictChoices(
@@ -7173,6 +7103,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       return enqueueStoreMutation(async () => {
         const currentSnapshot = snapshotRef.current;
         try {
+          invalidateSpeciesSelectorCache();
           if (currentSnapshot && currentSnapshot.animals.length > 0) {
             await saveSafetyRollingBackup(currentSnapshot, 'Pre-SQLite-import safety snapshot');
           }

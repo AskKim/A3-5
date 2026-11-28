@@ -16,6 +16,7 @@ import { appPerfTimings } from '../../utils/perfTiming';
  * their own file format, and anything specific to their source (the OPFS path switches species).
  */
 import type { BarnDatabaseSnapshot } from '../../domain/models';
+import { invalidateSpeciesSelectorCache } from './speciesSelectors';
 
 /** Settings that must never ride along with a restored snapshot. */
 export function stripRestoredBackupBookkeeping(
@@ -112,6 +113,8 @@ async function runDestructiveRestoreInner<P extends RestorePayload>(
 
     deps.clearPhotoCache();
     await deps.replaceSnapshot(stripRestoredBackupBookkeeping(payload.snapshot));
+    // The restored rows may carry the same ids and revisions as the dataset they replace.
+    invalidateSpeciesSelectorCache();
     await deps.clearLocalSyncAndBackupReminderState();
     deps.clearWipedRecoveryContext();
     plan.afterReplace?.(payload);
@@ -122,6 +125,7 @@ async function runDestructiveRestoreInner<P extends RestorePayload>(
       if (!actual || actual.animals !== expected.animals || actual.photos !== expected.photos) {
         if (safetySnapshot) {
           await deps.replaceSnapshot(safetySnapshot);
+          invalidateSpeciesSelectorCache();
           await deps.reloadFromAdapter();
         }
         deps.notify(

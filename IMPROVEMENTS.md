@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (62 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (65 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (126)
+## Logged Improvements (129)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2634,6 +2634,50 @@ Status:     active
 1. Wrap a consumer in `<SyncStateSliceProvider>` before calling `useSyncStateSlice()`; the hook throws outside one by design.
 2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
 3. Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.
+
+## 2026-11-28 — Rev-Keyed Memoised Species Selectors
+Why:        `baseSpeciesData` re-filtered and re-sorted every collection whenever the snapshot object changed identity, which any settings or outbox write does, so an untouched collection paid a full localeCompare sort on every store write.
+Changed:    `src/hooks/barnStore/speciesSelectors.ts`, `src/hooks/__tests__/speciesSelectors.test.ts`, `src/hooks/useBarnStore.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/speciesSelectors.ts` must contain `collectionRevKey`, `memoizeByCollectionRev`, `selectSpeciesAnimals`, `selectSpeciesPhotoIndex` — *The rev signature is what makes reuse safe; losing it either drops the memo or serves stale rows.*
+- `src/hooks/useBarnStore.ts` must contain `selectSpeciesAnimals`, `selectSpeciesPhotoIndex` — *The store must read the memoised selectors; the inline derivation is what this item removed.*
+  - Forbidden regression: `const animals = snapshot.animals`
+
+**Restoration Playbook if Overwritten:**
+1. Keep every selector a pure function of one collection and the species name — the cache key assumes it.
+2. Bump the entity `_rev` on every write; a silent field edit would serve a stale list until the next revision.
+3. Call `resetSpeciesSelectorCache()` in a test that reuses ids and revisions with different content.
+
+## 2026-11-28 — Selector Cache Flushed on Dataset Replacement
+Why:        The rev-keyed selector cache keyed on row ids and revisions could not tell a restored or imported dataset from the one it replaced: a backup holding the same ids at the same revisions with different field values would have been served from the old cache.
+Changed:    `src/hooks/barnStore/speciesSelectors.ts`, `src/hooks/barnStore/restoreOrchestrator.ts`, `src/hooks/useBarnStore.ts`, `src/hooks/__tests__/speciesSelectors.test.ts`, `src/hooks/__tests__/restoreOrchestrator.test.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/speciesSelectors.ts` must contain `invalidateSpeciesSelectorCache`, `datasetEpoch` — *The generation is the only guard between a restore and a stale list; losing it silently reintroduces the hazard.*
+- `src/hooks/barnStore/restoreOrchestrator.ts` must contain `invalidateSpeciesSelectorCache` — *All restores share this path, so the flush belongs here rather than in each caller.*
+- `src/hooks/useBarnStore.ts` must contain `invalidateSpeciesSelectorCache` — *Imports bypass the restore orchestrator and need their own flush.*
+
+**Restoration Playbook if Overwritten:**
+1. Call `invalidateSpeciesSelectorCache()` in any new path that replaces the snapshot wholesale, before the replacement can render.
+2. Never rely on revision signatures alone for cross-dataset identity — restores reuse ids and revisions.
+3. Keep the generation bump ahead of the cache clear so in-flight entries cannot be re-keyed to the old dataset.
+
+## 2026-11-28 — Render-Level Store Harness
+Why:        Every store test so far was a pure-function test or a key snapshot, so the loops that actually break — a real React commit, a write through the adapter, a snapshot that comes back as a new object, derived selectors and their memo re-running, and a restore replacing the dataset underneath them — had no coverage at all.
+Changed:    `src/hooks/__tests__/barnStoreIntegration.test.tsx`, `src/hooks/__tests__/support/memoryStorageAdapter.ts`, `package.json`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/__tests__/barnStoreIntegration.test.tsx` must contain `@vitest-environment jsdom`, `renderHook`, `importJsonBackup` — *Without the jsdom environment or a real render the file silently degrades to the same unit-level coverage it replaces.*
+- `src/hooks/__tests__/support/memoryStorageAdapter.ts` must contain `replaceSnapshot`, `loadSnapshot`, `structuredClone` — *A shallow adapter that hands back the same object would hide the identity bugs the harness exists to catch.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the adapter honest: every write must be visible to the next `loadSnapshot`, and the snapshot must come back as a new object.
+2. Enter a species route (`setRoute('herd')`) before asserting derived lists; non-species routes return empty lists by design.
+3. Still open in milestone 7: the OPFS archive offload loop and the sync-conflict resolve loop.
 
 ## 2026-11-28 — Prompt Changelog Wires Up Like the Improvements Ledger
 Why:        The prompt changelog was generated like IMPROVEMENTS.md but every entry still rendered the legacy `### PRM-0NN:` block, and its status vocabulary could not name the entry that replaced it.
