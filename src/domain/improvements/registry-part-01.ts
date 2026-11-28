@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Improvement registry entries IMP-001 … IMP-017 (17 of 85).
+ * Improvement registry entries IMP-001 … IMP-017 (17 entries).
  *
  * Split out of `improvementRegistry.ts` so the registry stays reviewable as it grows. The public
  * surface (`IMPROVEMENTS_REGISTRY`, invariant evaluation, markdown/JSON export) still lives in

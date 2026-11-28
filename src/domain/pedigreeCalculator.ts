@@ -19,14 +19,17 @@
 
 import { Animal, BiologicalSex, isSameSpecies, SpeciesProfile } from './models';
 
+/** Breeding-risk band derived from a COI percentage. */
 export type CoiRiskCode = 'OUTCROSS' | 'LOW' | 'MODERATE' | 'LINEBRED' | 'HIGH' | 'CYCLE';
 
+/** Band code, label and guidance for a COI percentage. */
 export interface CoiRiskDescriptor {
   code: CoiRiskCode;
   label: string;
   guidance: string;
 }
 
+/** One shared ancestor's contribution to a pairing's COI. */
 export interface AncestorContribution {
   ancestor: Animal;
   coiContributionPercent: number;
@@ -34,6 +37,7 @@ export interface AncestorContribution {
   damAppearances: number;
 }
 
+/** Full COI result: percentage, risk band and ancestor breakdown. */
 export interface CoiAnalysis {
   coiFraction: number;
   coiPercent: number;
@@ -44,6 +48,7 @@ export interface CoiAnalysis {
   hasPedigreeCycle?: boolean;
 }
 
+/** One cell in a rendered pedigree grid. */
 export interface PedigreeSlot {
   generation: number; // 0 = subject, 1 = parents, 2 = grandparents, 3 = great-grandparents, 4 = G4
   slotIndex: number; // 0..(2^generation - 1)
@@ -93,6 +98,7 @@ export function describeCoiRisk(percent: number): CoiRiskDescriptor {
   };
 }
 
+/** Risk descriptor used when a pedigree cycle blocks calculation. */
 export function describeCycleCoiRisk(): CoiRiskDescriptor {
   return {
     code: 'CYCLE',
@@ -102,6 +108,7 @@ export function describeCycleCoiRisk(): CoiRiskDescriptor {
   };
 }
 
+/** How many ancestor slots are filled, per generation. */
 export interface PedigreeCompletenessSummary {
   known3Gen: number;
   max3Gen: number;
@@ -415,6 +422,7 @@ function computeCommonAncestorContributions(
   return contributions.sort((a, b) => b.coiContributionPercent - a.coiContributionPercent);
 }
 
+/** Species-scoped COI evaluator bound to one herd map. */
 export interface SpeciesCoiEvaluator {
   calculatePairingCoi: (
     sireId: string,
@@ -686,6 +694,7 @@ export function buildPedigreeSlots(
   return slots;
 }
 
+/** Branch summary used by the 3-generation viewport. */
 export interface PedigreeGen3BranchSummary {
   branchIndex: number; // 0..7 corresponding to generation 3 slotIndex
   slotKey: string; // "3:<branchIndex>"
@@ -695,6 +704,7 @@ export interface PedigreeGen3BranchSummary {
   hasKnownAncestors: boolean;
 }
 
+/** Visible branch window plus its offset for panning. */
 export interface PedigreeBranchViewportResult {
   visibleSlots: PedigreeSlot[];
   branchSummaries: Map<string, PedigreeGen3BranchSummary>;

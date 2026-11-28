@@ -64,6 +64,7 @@ import {
 
 export type { SyncEntityType, SyncOperation };
 
+/** Audit row recording two devices writing the same field. */
 export interface SyncConflictEntry {
   conflict_id: string;
   entity_type: SyncEntityType;
@@ -82,6 +83,7 @@ export interface SyncConflictEntry {
   resolved_at?: string;
 }
 
+/** Delta file exchanged between devices. */
 export interface DeltaExportFile {
   format: 'community-pedigree-delta-v1';
   device_id: string;
@@ -89,6 +91,7 @@ export interface DeltaExportFile {
   operations: SyncOperation[];
 }
 
+/** Builds one append-only sync operation with a fresh `op_id`. */
 export function createOutboxOperation(params: {
   entityType: SyncEntityType;
   entityUuid: string;
@@ -297,6 +300,7 @@ export function diffSnapshotsToSyncOperations(params: {
   return ops;
 }
 
+/** Outcome of merging a peer delta: applied, skipped and conflicts. */
 export interface DeltaMergeResult {
   nextSnapshot: BarnDatabaseSnapshot;
   mergedOperations: SyncOperation[];

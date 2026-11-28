@@ -11,6 +11,7 @@
 
 import { readBlobAsArrayBuffer } from './es2018Shims';
 
+/** Native container hooks used instead of a browser download. */
 export interface NativeExportBridge {
   isNativeWrapper(): boolean;
   exportOrShareBinary(req: {
@@ -21,6 +22,7 @@ export interface NativeExportBridge {
   }): Promise<{ ok: boolean; error?: string }>;
 }
 
+/** OPFS scratchpad hooks for staging large exports. */
 export interface WebFileOpfsTempHooks {
   isSupported(): boolean;
   markActive(fileName: string): void;
@@ -41,6 +43,7 @@ export interface WebFileOpfsTempHooks {
   ): Promise<{ fileName: string; blob: Blob } | null>;
 }
 
+/** Overridable runtime hooks for OPFS staging and iOS detection. */
 export interface WebFileRuntimeHooks {
   onDiagnosticEvent?: (entry: {
     level: 'info' | 'warn' | 'error';
@@ -62,14 +65,17 @@ const NOOP_WEB_EXPORT_BRIDGE: NativeExportBridge = {
 let activeWebFileBridge: NativeExportBridge = NOOP_WEB_EXPORT_BRIDGE;
 let activeWebFileRuntime: WebFileRuntimeHooks = {};
 
+/** Installs the native export bridge. */
 export function configureWebFileBridge(bridge: NativeExportBridge): void {
   activeWebFileBridge = bridge;
 }
 
+/** Installs runtime hooks; tests reset them afterwards. */
 export function configureWebFileRuntime(hooks: WebFileRuntimeHooks): void {
   activeWebFileRuntime = { ...activeWebFileRuntime, ...hooks };
 }
 
+/** Restores default browser-only behaviour. */
 export function resetWebFileConfiguration(): void {
   activeWebFileBridge = NOOP_WEB_EXPORT_BRIDGE;
   activeWebFileRuntime = {};
@@ -104,8 +110,10 @@ function emitDiagnostic(entry: {
   activeWebFileRuntime.onDiagnosticEvent?.(entry);
 }
 
+/** What happened when a file was handed to the share sheet. */
 export type FileShareOutcome = 'shared' | 'downloaded' | 'cancelled';
 
+/** True when running as an installed iOS web app. */
 export function isInstalledIosPwa(): boolean {
   const isIos = activeWebFileRuntime.isIosBrowser ?? defaultIsIosBrowser;
   const isStandalone = activeWebFileRuntime.isStandalonePwa ?? defaultIsStandalonePwa;
@@ -117,11 +125,13 @@ export function isInstalledIosPwa(): boolean {
   return false;
 }
 
+/** True when the user cancelled the share sheet. */
 export function isFileShareAbortError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
   return (err as { name?: unknown }).name === 'AbortError';
 }
 
+/** Payload size above which exports stage through OPFS. */
 export const OPFS_SCRATCHPAD_THRESHOLD_BYTES = 512 * 1024;
 const BLOB_DOWNLOAD_CLEANUP_DELAY_MS = 35000; // 35 seconds to accommodate iOS download handling
 
@@ -132,6 +142,7 @@ function estimatePayloadByteLength(payload: string | Uint8Array): number {
   return payload.length * 2;
 }
 
+/** iOS needs a direct download to keep the user gesture alive. */
 export function shouldBypassOpfsForIosGesture(payload: string | Uint8Array): boolean {
   return isInstalledIosPwa() && estimatePayloadByteLength(payload) < OPFS_SCRATCHPAD_THRESHOLD_BYTES;
 }
@@ -491,6 +502,7 @@ export async function downloadTextChunks(
   await downloadBlobDirect(filename, new Blob(parts, { type: typedMime }));
 }
 
+/** Downloads a string as a file with the given MIME type. */
 export async function downloadTextFile(
   filename: string,
   content: string,
@@ -601,6 +613,7 @@ async function sharePayloadOrDownload(params: {
   }
 }
 
+/** Shares a text file when possible, otherwise downloads it. */
 export async function shareTextFileOrDownload(params: {
   filename: string;
   content: string;
@@ -617,6 +630,7 @@ export async function shareTextFileOrDownload(params: {
   });
 }
 
+/** Downloads bytes as a file. */
 export async function downloadBinaryFile(
   filename: string,
   bytes: Uint8Array,
@@ -625,6 +639,7 @@ export async function downloadBinaryFile(
   await triggerBlobDownloadWithOpfsScratchpad(filename, bytes, mimeType);
 }
 
+/** Shares bytes when possible, otherwise downloads them. */
 export async function shareBinaryFileOrDownload(params: {
   filename: string;
   bytes: Uint8Array;
@@ -641,6 +656,7 @@ export async function shareBinaryFileOrDownload(params: {
   });
 }
 
+/** Copies text, falling back to a hidden textarea on old browsers. */
 export async function copyTextWithFallback(
   text: string
 ): Promise<'clipboard' | 'execCommand' | 'unsupported'> {

@@ -14,6 +14,7 @@
 
 export type ImageOptimizationPresetId = 'compact' | 'balanced' | 'high_detail';
 
+/** Dimensions and quality budget for one preset. */
 export interface ImageOptimizationPreset {
   id: ImageOptimizationPresetId;
   label: string;
@@ -26,6 +27,7 @@ export interface ImageOptimizationPreset {
   typicalSizeHint: string;
 }
 
+/** Preset table shared by the browser and native optimisers. */
 export const IMAGE_OPTIMIZATION_PRESETS: Record<
   ImageOptimizationPresetId,
   ImageOptimizationPreset
@@ -68,6 +70,7 @@ export const IMAGE_OPTIMIZATION_PRESETS: Record<
   },
 };
 
+/** Preset used when the barn has not chosen one. */
 export const DEFAULT_IMAGE_OPTIMIZATION_PRESET: ImageOptimizationPresetId = 'balanced';
 
 /** Hard single-canvas backing store area ceiling (16M px) to avoid WebKit/mobile OOM crashes. */
@@ -75,6 +78,7 @@ export const MAX_CANVAS_AREA_PX = 16_000_000;
 /** Tighter single-canvas area ceiling (3M px) for Low-Memory / constrained tier devices. */
 export const MAX_CONSTRAINED_CANVAS_AREA_PX = 3_000_000;
 
+/** Area ceiling for the current device tier. */
 export function getCanvasAreaCeiling(isConstrained: boolean): number {
   return isConstrained ? MAX_CONSTRAINED_CANVAS_AREA_PX : MAX_CANVAS_AREA_PX;
 }
@@ -129,6 +133,7 @@ export function capCanvasDevicePixelRatio(
   return Math.min(2, dpr);
 }
 
+/** Resolves a stored preset id, falling back to the default. */
 export function resolveImageOptimizationPreset(
   presetId?: string | null
 ): ImageOptimizationPreset {
@@ -199,6 +204,7 @@ export function formatByteSizePure(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+/** Result of optimising one image. */
 export interface OptimizedImagePayload {
   originalFileName: string;
   mimeType: string;

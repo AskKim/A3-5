@@ -29,9 +29,9 @@ The codebase enforces strict dependency direction and domain isolation across `s
    - Decoupled feature engines (`csv-importer`, `csv-exporter`, `backup-vault`, `document-export`, `ics-calendar`, `ocr-parser`) implementing `IFeatureModule`.
    - Cross-feature sibling imports (`@features/A` importing `@features/B`) are prohibited.
 3. **Domain & Application Layers (`@domain/*` → `src/domain/`, `@app/*` → `src/app/`):**
-   - `src/domain/` houses pure TypeScript livestock/pedigree rules and Alpha 2 compatibility facades.
+   - `src/domain/` houses pure TypeScript livestock/pedigree rules and Alpha 2 compatibility facades. The improvement registry lives in `src/domain/improvements/` (`registry-part-*.ts` plus `rationales.ts`); `src/domain/improvementRegistry.ts` remains its public surface.
    - `src/app/` (`pedigreeAppConfig.ts`, `pedigreeAppWiring.ts`, `PlatformBridgeContext.tsx`, `animalProfileSchema.ts`, `animalCsvConfig.ts`) serves as the sole composition root wiring `@engine/*` and `@features/*` to Community Pedigree.
-   - Layer boundaries and zero circular dependencies are enforced by `npm run verify:layers` (`scripts/audit-layers.ts` + shrinking allowlist `scripts/layer-allowlist.json`) and `src/domain/__tests__/modularLayerArchitecture.test.ts`.
+   - Layer boundaries and zero circular dependencies are enforced by `npm run verify:layers` (`scripts/audit-layers.ts` + shrinking allowlist `scripts/layer-allowlist.json`) and `src/domain/__tests__/modularLayerArchitecture.test.ts`. Build-time circular chunk imports are caught separately by `npm run verify:chunks` (`scripts/verify-chunk-graph.ts`), which must run after `npm run build`.
 
 ## 2. Cross-Platform & Pure Domain Guardrails
 
@@ -48,7 +48,7 @@ The codebase enforces strict dependency direction and domain isolation across `s
 
 2. **Pluggable Storage Adapter (`src/storage/`), Multi-Shell Contracts & Optional Client OAuth (`src/utils/`):**
    - `storageAdapter.ts`: Defines the `BarnStorageAdapter` contract.
-   - `webSqliteAdapter.ts`: Executes standard relational SQLite (`PEDIGREE_SQLITE_SCHEMA`) in the browser via `sql.js` WebAssembly and persists the unencrypted `.sqlite` binary inside IndexedDB (or an injected `IStorageAdapter` `backingStore` for native shells).
+   - `webSqliteAdapter.ts`: Executes standard relational SQLite (`PEDIGREE_SQLITE_SCHEMA`) in the browser via `sql.js` WebAssembly and persists the unencrypted `.sqlite` binary inside IndexedDB (or an injected `IStorageAdapter` `backingStore` for native shells). The adapter is split by concern: `sqliteSchema.ts` (DDL, shared with the native wrappers), `sqliteIdbPersistence.ts` (persistence and quota recovery), `sqliteRowMappers.ts` (row → domain) and `sqliteRowWriters.ts` (domain → row).
    - **Native Apple & Desktop Shell Blueprints (`apple-wrapper/`, `ios-wrapper/`, `desktop-wrapper/`):** Define `WKScriptMessageHandler` (`WKWebView` native SQLite storage preventing 7-day WebKit ITP eviction) and Electron/Tauri IPC contracts routed through `@engine/bridge/*` and `NativeBridgeStorageAdapter`.
    - **Why SQLite-First Wins Cross-Platform:** The exact same `PEDIGREE_SQLITE_SCHEMA` SQL runs in native SQLite containers on Android/iOS/desktop, and users can export/sync a literal unencrypted `.sqlite` database file across devices via Google Drive, OneDrive, Dropbox, or Syncthing.
    - **Offline-First Calendar Export (`src/utils/`):** `src/utils/googleCalendarClient.ts` is content-agnostic, has no external Firebase/auth dependency, and pairs with `src/app/pedigreeCalendarClient.ts` and `src/domain/calendarExport.ts` for offline `.ics` generation and optional Google/Outlook Calendar web template links.
@@ -60,3 +60,4 @@ The codebase enforces strict dependency direction and domain isolation across `s
 4. **Documentation, Invariants & Backlog (`docs/plans/`):**
    - Automated anti-wipeout invariants are tracked in the registries (`src/domain/improvements/registry-part-*.ts`, `src/domain/promptRegistry.ts`) and their generated ledgers (`IMPROVEMENTS.md`, `PROMPT_CHANGES.md` — rewritten by `npm run regen:ledgers`, never by hand) and verified via `npm run verify:improvements` / `npm run verify:prompts`.
    - Open unimplemented suggestions are tracked in `docs/plans/suggestions-backlog.md` alongside `ARCHITECTURE.md`, `ROADMAP.md`, and `EXTRACTION_INVENTORY.md` so roadmap context persists across GitHub syncs and AI Studio reinstalls.
+   - Documentation is indexed in [docs/README.md](./docs/README.md), with the store contract in [docs/contracts/](./docs/contracts/), decision records in [docs/decisions/](./docs/decisions/), and per-layer READMEs in `src/engine/`, `src/features/`, `src/storage/` and `src/hooks/barnStore/`. The full gate list lives in [scripts/README.md](./scripts/README.md).

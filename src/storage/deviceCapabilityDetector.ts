@@ -44,6 +44,7 @@ interface NavigatorWithDeviceMemory extends Navigator {
 
 let cachedWebpEncodeSupported: boolean | null = null;
 
+/** Probes whether the browser can encode WebP. */
 export function probeWebpEncodeSupport(): boolean {
   if (cachedWebpEncodeSupported !== null) return cachedWebpEncodeSupported;
   if (typeof document === 'undefined') {
@@ -82,6 +83,7 @@ export function probeWebpEncodeSupport(): boolean {
   return cachedWebpEncodeSupported;
 }
 
+/** Reads cores, memory, screen and storage signals. */
 export function readBrowserHardwareSignals(): DeviceHardwareSignals {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return {
@@ -176,6 +178,7 @@ export function readBrowserHardwareSignals(): DeviceHardwareSignals {
   };
 }
 
+/** Reads browser feature availability. */
 export function readBrowserFeatureSignals(): BrowserFeatureSignals {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return {
@@ -256,10 +259,12 @@ export function readBrowserFeatureSignals(): BrowserFeatureSignals {
   };
 }
 
+/** Classifies the current device from live signals. */
 export function detectCurrentDeviceCapability(): DeviceCapabilityAssessment {
   return classifyDeviceCapability(readBrowserHardwareSignals());
 }
 
+/** Assesses browser compatibility from live signals. */
 export function detectCurrentBrowserCompatibility(
   assessment?: DeviceCapabilityAssessment
 ): BrowserCompatibilityAssessment {
@@ -291,6 +296,7 @@ function writeLocalFlag(key: string, value: boolean): void {
   }
 }
 
+/** State and actions returned by the device capability hook. */
 export interface DeviceCapabilityController {
   assessment: DeviceCapabilityAssessment;
   browserCompatibility: BrowserCompatibilityAssessment;
@@ -307,6 +313,7 @@ export interface DeviceCapabilityController {
   refreshDetection: () => void;
 }
 
+/** React hook over the current device assessment and its dismissal state. */
 export function useDeviceCapability(): DeviceCapabilityController {
   const [assessment, setAssessment] = useState<DeviceCapabilityAssessment>(() =>
     detectCurrentDeviceCapability()

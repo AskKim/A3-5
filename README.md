@@ -37,8 +37,9 @@ Community Pedigree is a digital pedigree book, breeding planner, and herd manage
 - `android-wrapper/` — The small native Android program that packages the web app into an installable `.apk` file for Android phones.
 - `apple-wrapper/` & `ios-wrapper/` — The native Swift blueprint and `WKWebView` SQLite contracts for running on iPhones, iPads, and Mac computers with permanent storage.
 - `desktop-wrapper/` — The lightweight blueprint for running as a standalone desktop app on Windows, macOS, and Linux.
-- `docs/` — User manuals, release/deployment guides, and architecture references (see [docs/ARCHITECTURE_GUIDE.md](./docs/ARCHITECTURE_GUIDE.md)).
-- `prompts/` & `scripts/` — Protected engineering prompts, preflight tooling, and automated architecture/invariant verification scripts.
+- `docs/` — User manuals, release/deployment guides, contracts, decision records, and architecture references. Start at [docs/README.md](./docs/README.md).
+- `prompts/` & `scripts/` — Protected engineering prompts, preflight tooling, and the automated verification gates (see [scripts/README.md](./scripts/README.md)).
+- Layer and folder READMEs: [`src/engine/`](./src/engine/README.md), [`src/features/`](./src/features/README.md), [`src/storage/`](./src/storage/README.md), [`src/hooks/barnStore/`](./src/hooks/barnStore/README.md).
 
 ---
 
@@ -76,20 +77,27 @@ Community Pedigree is a digital pedigree book, breeding planner, and herd manage
 ### Local Development & Verification
 
 ```bash
-npm install
-npm run dev
+npm ci          # deterministic install from the committed lockfile
+npm run dev     # dev server on http://localhost:3000
 
-# Verification suite (tests, typecheck, invariants, layer boundaries & build)
-npm test
-npm run lint
-npm run verify:improvements
-npm run verify:layers
-npm run verify:engine
-npm run verify:extraction
+# Every gate: typecheck, tests, coverage floor, and the registry / prompt / module /
+# layer / engine / extraction / Android / contract invariants
+npm run verify
+
+# Build-dependent gates (not part of npm run verify)
 npm run build
+npm run verify:chunks
 ```
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md), [ROADMAP.md](./ROADMAP.md), and [docs/ARCHITECTURE_GUIDE.md](./docs/ARCHITECTURE_GUIDE.md) for detailed domain architecture, modularity boundaries, and wrapper specifications.
+Individual gates, their allowlists and what each one fails on are listed in
+[scripts/README.md](./scripts/README.md). A Pages-subpath build additionally runs
+`npm run verify:site-identity -- --base="/<repo-name>/"`.
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md), [ROADMAP.md](./ROADMAP.md), and
+[docs/ARCHITECTURE_GUIDE.md](./docs/ARCHITECTURE_GUIDE.md) for detailed domain architecture, modularity
+boundaries, and wrapper specifications. [docs/README.md](./docs/README.md) indexes every document,
+including the store contract ([docs/contracts/barn-store-contract.md](./docs/contracts/barn-store-contract.md))
+and the decision records ([docs/decisions/](./docs/decisions/)).
 
 ### GitHub Actions Workflows (Quick Guide)
 

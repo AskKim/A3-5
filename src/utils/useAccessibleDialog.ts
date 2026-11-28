@@ -28,10 +28,12 @@ function notifyOpenDialogListeners(): void {
   }
 }
 
+/** Number of dialogs currently marked open. */
 export function getOpenDialogCount(): number {
   return openDialogCount;
 }
 
+/** Notifies when the open-dialog count changes. */
 export function subscribeOpenDialogCount(listener: OpenDialogListener): () => void {
   openDialogListeners.add(listener);
   listener(openDialogCount);
@@ -69,6 +71,7 @@ function isTopmostDialog(container: HTMLElement): boolean {
   return allDialogs[allDialogs.length - 1] === container;
 }
 
+/** Options for focus trapping and escape handling. */
 export interface UseAccessibleDialogOptions {
   isOpen: boolean;
   onClose: () => void;
@@ -76,6 +79,7 @@ export interface UseAccessibleDialogOptions {
   initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
+/** Traps focus, restores it on close and handles Escape on the top dialog. */
 export function useAccessibleDialog<T extends HTMLElement = HTMLDivElement>({
   isOpen,
   onClose,

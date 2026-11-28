@@ -1,4 +1,3 @@
-import { appPerfTimings } from '../../utils/perfTiming';
 /**
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -15,6 +14,7 @@ import { appPerfTimings } from '../../utils/perfTiming';
  * Callers stay responsible for: serialising the restore through `enqueueStoreMutation`, decoding
  * their own file format, and anything specific to their source (the OPFS path switches species).
  */
+import { appPerfTimings } from '../../utils/perfTiming';
 import type { BarnDatabaseSnapshot } from '../../domain/models';
 import { computeSnapshotChecksum } from '../../domain/snapshotChecksum';
 import { invalidateSpeciesSelectorCache } from './speciesSelectors';
@@ -33,6 +33,7 @@ export function stripRestoredBackupBookkeeping(
   };
 }
 
+/** Every capability a restore source must supply to `runDestructiveRestore`. */
 export interface DestructiveRestoreDeps {
   snapshotRef: { current: BarnDatabaseSnapshot | null };
   /** After a wiped-storage recovery there is nothing left worth backing up. */
@@ -52,6 +53,7 @@ export interface DestructiveRestoreDeps {
   reportPersistenceFailure: (action: string, error: unknown) => void;
 }
 
+/** Minimum payload every restore source decodes: the snapshot to install. */
 export interface RestorePayload {
   snapshot: BarnDatabaseSnapshot;
 }

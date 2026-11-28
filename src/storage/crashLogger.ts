@@ -43,6 +43,7 @@ import {
   triggerIndexedDbOpfsDump,
 } from './storageProbes';
 
+/** Diagnostic types re-exported for screens that only need the types. */
 export type {
   DiagnosticCategory,
   DiagnosticConfig,
@@ -53,6 +54,7 @@ export type {
   MemorySample,
 };
 
+/** Support address shown in diagnostics; empty until configured. */
 export const DEFAULT_SUPPORT_EMAIL = '';
 
 const LOG_IDB_NAME = 'community_pedigree_diagnostics_v1';
@@ -72,6 +74,7 @@ const ASYNC_TOAST_DEDUPE_MS = 4500;
 const ASYNC_TOAST_AUTO_DISMISS_MS = 9000;
 const MAX_ACTIVE_ASYNC_TOASTS = 2;
 
+/** One toast-worthy async failure. */
 export interface AsyncErrorNotice {
   id: string;
   timestampMs: number;
@@ -129,6 +132,7 @@ function notifySubscribers(): void {
   }
 }
 
+/** Notifies after new diagnostic entries are written. */
 export function subscribeDiagnosticLogs(callback: () => void): () => void {
   subscribers.add(callback);
   return () => {
@@ -147,10 +151,12 @@ function notifyAsyncToastSubscribers(): void {
   }
 }
 
+/** Current async error toasts, newest first. */
 export function getActiveAsyncErrorToasts(): AsyncErrorNotice[] {
   return [...activeAsyncToasts];
 }
 
+/** Dismisses one async error toast. */
 export function dismissAsyncErrorToast(id: string): void {
   const timer = asyncToastTimers.get(id);
   if (timer !== undefined) {
@@ -164,6 +170,7 @@ export function dismissAsyncErrorToast(id: string): void {
   }
 }
 
+/** Notifies when the async error toast list changes. */
 export function subscribeAsyncErrorToasts(
   callback: (notices: AsyncErrorNotice[]) => void
 ): () => void {
@@ -253,6 +260,7 @@ export function emitAsyncErrorToast(params: {
   return notice;
 }
 
+/** Clears toast state between tests. */
 export function resetAsyncErrorToastsForTests(): void {
   for (const timer of asyncToastTimers.values()) {
     clearTimeout(timer);
@@ -263,11 +271,13 @@ export function resetAsyncErrorToastsForTests(): void {
   notifyAsyncToastSubscribers();
 }
 
+/** Records the active route on subsequent diagnostic entries. */
 export function setCurrentDiagnosticRoute(route: string): void {
   currentRoute = route || 'unknown';
   updateSessionHeartbeat(true);
 }
 
+/** Reads the stored diagnostic config, falling back to defaults. */
 export function getDiagnosticConfig(): DiagnosticConfig {
   const ls = getSafeLocalStorage();
   if (!ls) return { ...DEFAULT_CONFIG };
@@ -288,6 +298,7 @@ export function getDiagnosticConfig(): DiagnosticConfig {
   }
 }
 
+/** Patches and persists the diagnostic config. */
 export function updateDiagnosticConfig(patch: Partial<DiagnosticConfig>): DiagnosticConfig {
   const next: DiagnosticConfig = {
     ...getDiagnosticConfig(),
@@ -331,6 +342,7 @@ function sanitizeLogString(raw: unknown, maxLen: number): string {
   return str;
 }
 
+/** Samples JS heap and storage estimates when the browser exposes them. */
 export function captureMemorySample(): MemorySample {
   const perfMem =
     typeof performance !== 'undefined'
@@ -369,6 +381,7 @@ export function captureMemorySample(): MemorySample {
   };
 }
 
+/** Memory sample plus origin storage usage and quota. */
 export async function captureMemoryAndStorageSample(): Promise<MemorySample> {
   const base = captureMemorySample();
   const storage = getSafeStorageManager();
@@ -384,6 +397,7 @@ export async function captureMemoryAndStorageSample(): Promise<MemorySample> {
   return base;
 }
 
+/** True for quota, allocation and out-of-memory failures. */
 export function isMemoryLikeError(errOrMessage: unknown): boolean {
   const text =
     errOrMessage instanceof Error
@@ -398,6 +412,7 @@ function getCutoffTimestampMs(retentionDays: number): number {
   return Date.now() - Math.max(1, retentionDays) * 86_400_000;
 }
 
+/** Filters noisy console messages that are not worth retaining. */
 export function shouldIgnoreConsoleDiagnosticMessage(message: string): boolean {
   const trimmed = String(message || '').trim();
   if (!trimmed) return false;
@@ -407,6 +422,7 @@ export function shouldIgnoreConsoleDiagnosticMessage(message: string): boolean {
   );
 }
 
+/** Validates a stored entry and drops ignored console noise. */
 export function normalizeStoredDiagnosticEntry(
   entry: DiagnosticLogEntry | null | undefined
 ): DiagnosticLogEntry | null {
@@ -472,6 +488,7 @@ function readRingBuffer(): DiagnosticLogEntry[] {
   }
 }
 
+/** Reads the synchronous session trace written before a crash. */
 export function readEmergencySessionTrace(
   sessionStore: Pick<Storage, 'getItem'> | null | undefined = getSafeSessionStorage()
 ): DiagnosticLogEntry[] {
@@ -493,6 +510,7 @@ export function readEmergencySessionTrace(
   }
 }
 
+/** Clears the emergency session trace after it is imported. */
 export function clearEmergencySessionTrace(
   sessionStore: Pick<Storage, 'removeItem'> | null | undefined = getSafeSessionStorage()
 ): void {
@@ -504,6 +522,7 @@ export function clearEmergencySessionTrace(
   }
 }
 
+/** Writes a compact entry synchronously so it survives a tab kill. */
 export function writeEmergencySessionTraceSync(
   entry: DiagnosticLogEntry,
   sessionStore: Pick<Storage, 'getItem' | 'setItem'> | null | undefined = getSafeSessionStorage()
@@ -670,6 +689,7 @@ async function persistEntryToIdb(entry: DiagnosticLogEntry): Promise<void> {
   }
 }
 
+/** Enforces the retention window and entry cap. */
 export async function pruneExpiredDiagnosticLogs(): Promise<void> {
   const cfg = getDiagnosticConfig();
   const cutoff = getCutoffTimestampMs(cfg.retentionDays);
@@ -725,6 +745,7 @@ export async function pruneExpiredDiagnosticLogs(): Promise<void> {
   }
 }
 
+/** Reads stored diagnostic entries, newest first. */
 export async function listDiagnosticLogs(): Promise<DiagnosticLogEntry[]> {
   const cfg = getDiagnosticConfig();
   const cutoff = getCutoffTimestampMs(cfg.retentionDays);
@@ -781,6 +802,7 @@ export async function listDiagnosticLogs(): Promise<DiagnosticLogEntry[]> {
   return Array.from(byId.values()).sort((a, b) => b.timestampMs - a.timestampMs);
 }
 
+/** Deletes every stored diagnostic entry. */
 export async function clearAllDiagnosticLogs(): Promise<void> {
   clearEmergencySessionTrace();
   const ls = getSafeLocalStorage();
@@ -824,6 +846,7 @@ export async function clearAllDiagnosticLogs(): Promise<void> {
   notifySubscribers();
 }
 
+/** Aggregates counts, retention and memory state for the diagnostics screen. */
 export async function getDiagnosticSummary(
   prefetchedEntries?: DiagnosticLogEntry[]
 ): Promise<DiagnosticSummary> {
@@ -861,6 +884,7 @@ export async function getDiagnosticSummary(
   };
 }
 
+/** Writes one diagnostic entry, honouring retention and noise filters. */
 export function logDiagnosticEvent(params: {
   level: DiagnosticLogLevel;
   category: DiagnosticCategory;
@@ -927,6 +951,7 @@ export function logDiagnosticEvent(params: {
   return entry;
 }
 
+/** Records a React error-boundary crash. */
 export function recordReactCrash(
   error: Error,
   componentStack?: string
@@ -961,6 +986,7 @@ function updateSessionHeartbeat(active: boolean): void {
   }
 }
 
+/** Marks the session as ended cleanly so the next boot is not flagged. */
 export function markCleanSessionExit(): void {
   if (heartbeatIntervalId) {
     clearInterval(heartbeatIntervalId);
@@ -973,6 +999,7 @@ export function markCleanSessionExit(): void {
   updateSessionHeartbeat(false);
 }
 
+/** Detects a killed or crashed previous session from the heartbeat. */
 export function inspectPreviousSessionUncleanExit(): DiagnosticLogEntry | null {
   const ls = getSafeLocalStorage();
   if (!ls) return null;
@@ -1083,6 +1110,7 @@ async function sampleMemoryPressure(): Promise<void> {
   }
 }
 
+/** Classifies and logs an unhandled promise rejection. */
 export function handleUnhandledRejectionReason(reason: unknown): void {
   const errName = reason && typeof reason === 'object' ? String((reason as { name?: string }).name || '') : '';
   // Skip intentional user file-picker cancellations cleanly
@@ -1162,6 +1190,7 @@ export function handleUnhandledRejectionReason(reason: unknown): void {
   }
 }
 
+/** Installs window error, rejection and pagehide handlers once. */
 export function installGlobalCrashHandlers(): void {
   if (typeof window === 'undefined' || handlersInstalled) return;
   handlersInstalled = true;

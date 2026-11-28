@@ -225,6 +225,7 @@ function mergeAnimalPhotosWithBlobPreservation(
   return { merged: Array.from(map.values()), added, updated };
 }
 
+/** Counts of rows added, updated and skipped by a snapshot merge. */
 export interface SyncMergeReport {
   snapshot: BarnDatabaseSnapshot;
   animalsAdded: number;
@@ -416,6 +417,7 @@ export function mergeBarnSnapshots(
   };
 }
 
+/** Why a per-species backup is being written. */
 export type SpeciesBackupReason =
   | 'manual'
   | 'pre-remove-species'
@@ -1738,8 +1740,10 @@ function escapeHtml(raw: string): string {
   return escapeSafeHtml(raw);
 }
 
+/** Paper orientation for a printed pedigree. */
 export type PedigreePrintOrientation = 'landscape' | 'portrait';
 
+/** Options for an Evans-style HTML pedigree print. */
 export interface PedigreePrintOptions {
   /** Page orientation for 8.5" x 11" printing & PDF export (default: 'landscape'). */
   orientation?: PedigreePrintOrientation;
@@ -2220,6 +2224,7 @@ export function generateEvansHtmPedigree(
 </html>`;
 }
 
+/** Options for a printable blank pedigree form. */
 export interface BlankPedigreeTemplateOptions {
   generations?: PedigreeGenerationDepth;
   includeFarmHeader?: boolean;
@@ -2248,6 +2253,7 @@ export function buildDefaultBreederContactLine(settings: BarnSettings): string {
   return [fullLocation, phone, email, site].filter(Boolean).join(' · ');
 }
 
+/** File name for a blank pedigree template. */
 export function buildBlankPedigreeTemplateFileName(
   generations: PedigreeGenerationDepth = 3,
   speciesName?: string
@@ -2575,6 +2581,7 @@ export function exportSpeciesBackupJson(
   );
 }
 
+/** Options for a 4x2 inch thermal cage card. */
 export interface ThermalCageCardOptions {
   /** Embed a scannable QR code jumping straight to the animal's local PWA profile. */
   includeQrCode?: boolean;
@@ -2722,6 +2729,7 @@ export interface PdfReadyBarnReport {
   }>;
 }
 
+/** Projects a snapshot into PDF-ready report DTOs. */
 export function buildPdfReadyBarnSnapshot(
   snapshot: BarnDatabaseSnapshot,
   filterSpecies?: string

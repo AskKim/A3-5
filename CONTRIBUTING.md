@@ -17,21 +17,21 @@ By submitting a pull request or other contribution to the Community Pedigree Pro
 
 ### Local Setup
 ```bash
-npm install
+npm ci       # deterministic install from the committed lockfile
 npm run dev
 ```
 
 ### Required Pre-PR Checks
-Run the full verification suite before opening a Pull Request:
+Run the full verification suite plus the build before opening a Pull Request:
 ```bash
-npm test                     # Unit & architecture boundary tests (Vitest)
-npm run lint                 # Strict TypeScript check (tsc --noEmit)
-npm run verify:improvements  # Anti-wipeout improvement registry invariants
-npm run verify:layers        # Three-layer import & DOM-isolation ratchet
-npm run verify:engine        # Isolated @engine/@features/@utils typecheck
-npm run verify:extraction    # Standalone temp-dir framework compilation check
-npm run build                # Production Vite PWA build
+npm run verify   # typecheck, tests, coverage floor, registry/prompt/module/layer/
+                 # engine/extraction/Android/contract invariants
+npm run build    # Production Vite PWA build
+npm run verify:chunks   # circular chunk-import ratchet, needs the build output
 ```
+
+What each gate protects, and what it fails on, is documented in
+[scripts/README.md](./scripts/README.md).
 
 ### Engineering Guardrails
 - **React PWA Only:** The core app (`src/`) must always remain React + Vite + TypeScript; `android-wrapper/` is strictly a thin Kotlin WebView shell.

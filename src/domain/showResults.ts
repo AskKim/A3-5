@@ -28,7 +28,9 @@ import {
   ShowEvent,
 } from './models';
 
+/** Legs needed for a Grand Champion certificate. */
 export const GC_LEG_TARGET = 3;
+/** Attachment cap per show result. */
 export const MAX_SHOW_ELEG_ATTACHMENTS_PER_RESULT = 6;
 
 const ALLOWED_AWARD_CODES = new Set<ShowAwardCode>(
@@ -57,6 +59,7 @@ function finiteNonNegPoints(raw: unknown, max = 1_000_000): number {
   return Math.min(max, Math.round(n * 100) / 100);
 }
 
+/** Keeps only known award codes, de-duplicated. */
 export function normalizeShowAwards(raw: unknown): ShowAwardCode[] {
   if (!Array.isArray(raw)) return [];
   const seen = new Set<ShowAwardCode>();
@@ -70,6 +73,7 @@ export function normalizeShowAwards(raw: unknown): ShowAwardCode[] {
   return AWARD_DISPLAY_ORDER.filter((code) => seen.has(code));
 }
 
+/** Validates an e-leg attachment, returning null when unusable. */
 export function sanitizeShowELegAttachment(raw: unknown): ShowELegAttachment | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const obj = raw as Record<string, unknown>;
@@ -98,6 +102,7 @@ export function sanitizeShowELegAttachment(raw: unknown): ShowELegAttachment | n
   };
 }
 
+/** True when a result carries any placement, award or leg. */
 export function hasMeaningfulShowResult(result: ShowAnimalResult): boolean {
   return Boolean(
     result.classPlacement.trim() ||
@@ -111,6 +116,7 @@ export function hasMeaningfulShowResult(result: ShowAnimalResult): boolean {
   );
 }
 
+/** Cleans a stored results array, dropping empty rows. */
 export function normalizeShowResults(
   raw: unknown,
   options?: { dropEmpty?: boolean }
@@ -164,6 +170,7 @@ export function normalizeShowResults(
   return Array.from(byAnimalId.values());
 }
 
+/** Keeps entered animals and result rows in sync. */
 export function mergeEnteredAnimalIdsWithResults(
   enteredAnimalIds: string[],
   results?: ShowAnimalResult[]
@@ -216,6 +223,7 @@ export function computeShowLegDeltas(
   return deltas;
 }
 
+/** One show appearance in an animal's history. */
 export interface AnimalShowHistoryEntry {
   showId: string;
   showName: string;
@@ -225,6 +233,7 @@ export interface AnimalShowHistoryEntry {
   result: ShowAnimalResult | null;
 }
 
+/** E-leg attachment tagged with its show for the vault. */
 export interface AnimalELegVaultItem extends ShowELegAttachment {
   showId: string;
   showName: string;
@@ -233,6 +242,7 @@ export interface AnimalELegVaultItem extends ShowELegAttachment {
   legCertificateNumber?: string;
 }
 
+/** Grand Champion progress toward the leg target. */
 export interface GrandChampionProgress {
   isGrandChampion: boolean;
   grandChampionNumber: string;
@@ -245,6 +255,7 @@ export interface GrandChampionProgress {
   shortLabel: string;
 }
 
+/** Aggregated show record for one animal. */
 export interface AnimalShowSummary {
   showsEntered: number;
   placementsRecorded: number;
@@ -261,6 +272,7 @@ export interface AnimalShowSummary {
   pedigreeHonorLine: string;
 }
 
+/** Formats award counts as one readable line. */
 export function formatAwardCountsText(awardCounts: Record<ShowAwardCode, number>): string {
   const parts: string[] = [];
   for (const code of AWARD_DISPLAY_ORDER) {
@@ -272,6 +284,7 @@ export function formatAwardCountsText(awardCounts: Record<ShowAwardCode, number>
   return parts.join(' · ');
 }
 
+/** Aggregates placements, awards and legs for one animal. */
 export function computeAnimalShowSummary(
   animal: Animal,
   shows: ShowEvent[] = [],

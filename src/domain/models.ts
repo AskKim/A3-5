@@ -21,10 +21,14 @@ import type { CustomThemeColors } from './themePalette';
  * packs share one explicit regional baseline.
  */
 export const APP_LOCALE = 'en-US' as const;
+/** Language subtag of `APP_LOCALE`, for `lang` attributes and Intl calls. */
 export const APP_LANGUAGE_CODE = 'en' as const;
+/** Region subtag of `APP_LOCALE`. */
 export const APP_REGION_CODE = 'US' as const;
+/** The one locale the app is authored in. */
 export type SupportedAppLocale = typeof APP_LOCALE;
 
+/** Human-readable description of the authored locale. */
 export interface AppLocaleMetadata {
   locale: SupportedAppLocale;
   baseLanguage: string;
@@ -32,6 +36,7 @@ export interface AppLocaleMetadata {
   displayName: string;
 }
 
+/** The authored locale split into language, region and display name. */
 export const APP_LOCALE_METADATA: AppLocaleMetadata = {
   locale: APP_LOCALE,
   baseLanguage: APP_LANGUAGE_CODE,
@@ -67,16 +72,20 @@ export function normalizeBcp47LanguageTag(raw: unknown): string {
   return formattedParts.join('-');
 }
 
+/** Returns the language subtag of a BCP 47 tag, or `""` when it is invalid. */
 export function extractBaseLanguageCode(tag: string): string {
   const normalized = normalizeBcp47LanguageTag(tag);
   if (!normalized) return '';
   return normalized.split('-')[0] ?? '';
 }
 
+/** Sex as stored on a record; species-specific words normalise into it. */
 export type BiologicalSex = 'Male' | 'Female' | 'Unknown';
 
+/** Data conflicts a breeder can dismiss on one animal. */
 export type AnimalConflictKind = 'duplicate_tattoo' | 'parent_sex_mismatch';
 
+/** Keeps only known conflict kinds, de-duplicated. */
 export function normalizeIgnoredConflicts(raw: unknown): AnimalConflictKind[] {
   if (!Array.isArray(raw)) return [];
   const seen = new Set<AnimalConflictKind>();
@@ -88,8 +97,10 @@ export function normalizeIgnoredConflicts(raw: unknown): AnimalConflictKind[] {
   return Array.from(seen);
 }
 
+/** Lifecycle status of an animal record. */
 export type AnimalStatus = 'Active' | 'Junior' | 'Retired' | 'Archived' | 'Sold' | 'Deceased';
 
+/** Breeding workflow state, from planned through weaned. */
 export type BreedingStatus =
   | 'Planned'
   | 'Bred'
@@ -98,6 +109,7 @@ export type BreedingStatus =
   | 'Weaned'
   | 'Missed';
 
+/** Category a scheduled task is filed under. */
 export type TaskCategory =
   | 'Care'
   | 'Palpation'
@@ -109,12 +121,16 @@ export type TaskCategory =
   | 'Show Prep'
   | 'Other';
 
+/** Scheduling priority; High sorts first. */
 export type TaskPriority = 'High' | 'Normal' | 'Low';
 
+/** The event a milestone offset is measured from. */
 export type MilestoneRelativeTo = 'AFTER_BRED' | 'BEFORE_BIRTH' | 'AFTER_BIRTH';
 
+/** Supported weight entry and display units. */
 export type WeightUnit = 'lbs_oz' | 'lbs' | 'grams' | 'kg';
 
+/** Selectable weight units with display labels. */
 export const WEIGHT_UNIT_OPTIONS: ReadonlyArray<{ value: WeightUnit; label: string; shortLabel: string }> = [
   { value: 'lbs_oz', label: 'Pounds & Oz', shortLabel: 'lbs / oz' },
   { value: 'lbs', label: 'Decimal Pounds', shortLabel: 'lbs' },
@@ -122,6 +138,7 @@ export const WEIGHT_UNIT_OPTIONS: ReadonlyArray<{ value: WeightUnit; label: stri
   { value: 'grams', label: 'Grams (Metric)', shortLabel: 'g' },
 ];
 
+/** Coerces a stored value to a supported weight unit, else the fallback. */
 export function normalizeWeightUnit(raw: unknown, fallback: WeightUnit = 'lbs_oz'): WeightUnit {
   if (raw === 'lbs_oz' || raw === 'lbs' || raw === 'grams' || raw === 'kg') {
     return raw;
@@ -129,6 +146,7 @@ export function normalizeWeightUnit(raw: unknown, fallback: WeightUnit = 'lbs_oz
   return fallback;
 }
 
+/** Kinds of per-animal care log entry. */
 export type CareLogType =
   | 'Weight Check'
   | 'Show / Leg'
@@ -139,14 +157,17 @@ export type CareLogType =
   | 'Grooming & Hoof'
   | 'Journal Note';
 
+/** Whether a record is owned, a pedigree reference, or outside stock. */
 export type OwnershipType = 'Owned' | 'Reference' | 'Outside';
 
+/** Ownership options with UI labels. */
 export const OWNERSHIP_TYPES: ReadonlyArray<{ value: OwnershipType; label: string }> = [
   { value: 'Owned', label: 'Owned in My Barn' },
   { value: 'Reference', label: 'Pedigree Reference' },
   { value: 'Outside', label: 'Outside Stock' },
 ];
 
+/** Coerces free-text ownership to an `OwnershipType`. */
 export function normalizeOwnershipType(
   raw: unknown,
   fallback: OwnershipType = 'Owned'
@@ -159,15 +180,19 @@ export function normalizeOwnershipType(
   return fallback;
 }
 
+/** Whether a breeding service fee was earned, paid, or not charged. */
 export type ServiceFeeDirection = 'earned' | 'paid' | 'none';
 
+/** Coerces a stored value to a service-fee direction. */
 export function normalizeServiceFeeDirection(raw: unknown): ServiceFeeDirection {
   if (raw === 'earned' || raw === 'paid' || raw === 'none') return raw;
   return 'none';
 }
 
+/** Pregnancy-check outcome recorded on a breeding. */
 export type UltrasoundResult = '' | 'Positive' | 'Negative' | 'Inconclusive';
 
+/** Ultrasound results with UI labels. */
 export const ULTRASOUND_RESULTS: ReadonlyArray<{ value: UltrasoundResult; label: string }> = [
   { value: '', label: 'Not recorded' },
   { value: 'Positive', label: 'Positive (Pregnant)' },
@@ -175,6 +200,7 @@ export const ULTRASOUND_RESULTS: ReadonlyArray<{ value: UltrasoundResult; label:
   { value: 'Inconclusive', label: 'Inconclusive / Recheck' },
 ];
 
+/** Coerces free-text pregnancy results, including `+` and `-`. */
 export function normalizeUltrasoundResult(raw: unknown): UltrasoundResult {
   if (typeof raw !== 'string') return '';
   const clean = raw.trim().toLowerCase();
@@ -190,12 +216,14 @@ export function normalizeUltrasoundResult(raw: unknown): UltrasoundResult {
   return '';
 }
 
+/** Validates an ISO-4217 three-letter code, else the fallback. */
 export function normalizeCurrencyCode(raw: unknown, fallback = 'USD'): string {
   if (typeof raw !== 'string') return fallback;
   const clean = raw.trim().toUpperCase();
   return /^[A-Z]{3}$/.test(clean) ? clean : fallback;
 }
 
+/** Formats integer cents in the barn's currency code. */
 export function formatCurrencyCents(
   cents: number | undefined,
   currencyCode = 'USD'
@@ -228,6 +256,7 @@ export interface GenotypeAllelePair {
  */
 export type RufusLevel = '' | 'Low' | 'Medium' | 'High';
 
+/** Rufus modifier options with UI labels. */
 export const RUFUS_LEVEL_OPTIONS: ReadonlyArray<{ value: RufusLevel; label: string }> = [
   { value: '', label: 'Unspecified' },
   { value: 'High', label: 'High Rufus (Deep Rich Red)' },
@@ -235,6 +264,7 @@ export const RUFUS_LEVEL_OPTIONS: ReadonlyArray<{ value: RufusLevel; label: stri
   { value: 'Low', label: 'Low Rufus (Pale / Washy)' },
 ];
 
+/** Coerces free-text rufus levels. */
 export function normalizeRufusLevel(raw: unknown): RufusLevel {
   if (typeof raw !== 'string') return '';
   const clean = raw.trim().toLowerCase();
@@ -244,12 +274,14 @@ export function normalizeRufusLevel(raw: unknown): RufusLevel {
   return '';
 }
 
+/** Evidence accepted for marking a carrier trait cleared. */
 export type ClearedCarrierProofType =
   | 'test_bred'
   | 'dna_tested'
   | 'homozygous_locus'
   | 'breeder_verified';
 
+/** Display labels for each cleared-carrier proof type. */
 export const CLEARED_CARRIER_PROOF_LABELS: Record<ClearedCarrierProofType, string> = {
   test_bred: 'Test Bred (Clear)',
   dna_tested: 'DNA Tested Clear',
@@ -257,6 +289,7 @@ export const CLEARED_CARRIER_PROOF_LABELS: Record<ClearedCarrierProofType, strin
   breeder_verified: 'Breeder Verified Clear',
 };
 
+/** A trait the animal is proven clear of, with the proof used. */
 export interface ClearedCarrierRecord {
   trait: string;
   proofType: ClearedCarrierProofType;
@@ -265,8 +298,10 @@ export interface ClearedCarrierRecord {
   recordedAt?: string;
 }
 
+/** The reorderable blocks on a species hub. */
 export type SpeciesHubBlockId = 'tasks' | 'breedings' | 'cages' | 'feed' | 'shows';
 
+/** Default block order for a new species hub. */
 export const DEFAULT_SPECIES_HUB_BLOCK_ORDER: SpeciesHubBlockId[] = [
   'tasks',
   'breedings',
@@ -275,6 +310,7 @@ export const DEFAULT_SPECIES_HUB_BLOCK_ORDER: SpeciesHubBlockId[] = [
   'shows',
 ];
 
+/** Validates a stored block order and appends any missing blocks. */
 export function normalizeSpeciesHubBlockOrder(raw?: unknown): SpeciesHubBlockId[] {
   const allowed = new Set<SpeciesHubBlockId>(DEFAULT_SPECIES_HUB_BLOCK_ORDER);
   const ordered: SpeciesHubBlockId[] = [];
@@ -298,11 +334,13 @@ export function normalizeSpeciesHubBlockOrder(raw?: unknown): SpeciesHubBlockId[
   return ordered;
 }
 
+/** How calendar events reach the user's calendar. */
 export type CalendarDeliveryMode =
   | 'offline_ics'
   | 'google_calendar'
   | 'external_app_or_ics';
 
+/** Calendar connection and reminder preferences. */
 export interface CalendarSyncSettings {
   autoAddNewTasks: boolean;
   includeBreedingTasks: boolean;
@@ -318,6 +356,7 @@ export interface CalendarSyncSettings {
   googleCalendarName: string;
 }
 
+/** Calendar settings for a new barn: offline ICS, 15-minute reminder. */
 export const DEFAULT_CALENDAR_SYNC_SETTINGS: CalendarSyncSettings = {
   autoAddNewTasks: false,
   includeBreedingTasks: true,
@@ -333,6 +372,7 @@ export const DEFAULT_CALENDAR_SYNC_SETTINGS: CalendarSyncSettings = {
   googleCalendarName: 'Primary Google Calendar',
 };
 
+/** Cleans a reminder lead-time list: minutes, newest first, capped at four weeks. */
 export function normalizeCalendarAlarmList(
   rawList: unknown,
   fallbackMinutes: number
@@ -352,6 +392,7 @@ export function normalizeCalendarAlarmList(
   return Array.from(seen).sort((a, b) => b - a);
 }
 
+/** Fills every calendar setting from defaults, rejecting invalid values. */
 export function normalizeCalendarSyncSettings(raw?: unknown): CalendarSyncSettings {
   const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const rawTime = typeof obj.reminderTimeLocal === 'string' ? obj.reminderTimeLocal.trim() : '';
@@ -418,8 +459,10 @@ export function normalizeCalendarSyncSettings(raw?: unknown): CalendarSyncSettin
   };
 }
 
+/** Temperature unit for the optional forecast. */
 export type TemperatureUnit = 'F' | 'C';
 
+/** Opt-in forecast preferences; disabled and unset by default. */
 export interface WeatherForecastSettings {
   enabled: boolean;
   locationLabel: string;
@@ -428,6 +471,7 @@ export interface WeatherForecastSettings {
   temperatureUnit: TemperatureUnit;
 }
 
+/** Forecast settings in their disabled, unset state. */
 export const DEFAULT_WEATHER_FORECAST_SETTINGS: WeatherForecastSettings = {
   enabled: false,
   locationLabel: '',
@@ -436,6 +480,7 @@ export const DEFAULT_WEATHER_FORECAST_SETTINGS: WeatherForecastSettings = {
   temperatureUnit: 'F',
 };
 
+/** Validates coordinates, truncates the label and forces a known unit. */
 export function normalizeWeatherForecastSettings(raw?: unknown): WeatherForecastSettings {
   const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const label =
@@ -471,8 +516,10 @@ export function normalizeWeatherForecastSettings(raw?: unknown): WeatherForecast
  *   - Any configured species name (e.g. `"Rabbit"`, `"Goat"`) opens directly inside that species' hub.
  */
 export type DefaultPedigreeGenerations = 3 | 4 | 5 | 6;
+/** Generation depth a pedigree view can render. */
 export type PedigreeGenerationDepth = 3 | 4 | 5 | 6 | 7 | 8;
 
+/** Constrains a stored generation depth to 3-8, else the fallback. */
 export function normalizePedigreeGenerationDepth(
   value: unknown,
   fallback: PedigreeGenerationDepth = 3
@@ -484,6 +531,7 @@ export function normalizePedigreeGenerationDepth(
   return fallback;
 }
 
+/** Constrains a stored default generation count to 3-6. */
 export function normalizeDefaultPedigreeGenerations(
   value: unknown,
   fallback: DefaultPedigreeGenerations = 3
@@ -550,11 +598,13 @@ export interface SpeciesMilestoneTemplate {
   priority: TaskPriority;
 }
 
+/** Per-breed override of one milestone's offset. */
 export interface BreedMilestoneOffsetOverride {
   label: string;
   daysOffset: number;
 }
 
+/** Per-breed gestation, weaning, rebreeding and maturity overrides. */
 export interface BreedScheduleOverride {
   breed: string;
   gestationDays?: number;
@@ -564,6 +614,7 @@ export interface BreedScheduleOverride {
   milestoneOverrides?: BreedMilestoneOffsetOverride[];
 }
 
+/** Cleans per-breed overrides, dropping empty and duplicate breeds. */
 export function normalizeBreedScheduleOverrides(raw: unknown): BreedScheduleOverride[] {
   if (!Array.isArray(raw)) return [];
   const byBreedKey = new Map<string, BreedScheduleOverride>();
@@ -633,12 +684,14 @@ export function normalizeBreedScheduleOverrides(raw: unknown): BreedScheduleOver
   return Array.from(byBreedKey.values()).sort((a, b) => a.breed.localeCompare(b.breed));
 }
 
+/** One point on a species target growth curve. */
 export interface TargetWeightPoint {
   ageDays: number;
   weightGrams: number;
   label?: string;
 }
 
+/** Sorts and de-duplicates curve points by age, dropping invalid rows. */
 export function normalizeTargetWeightCurve(raw: unknown): TargetWeightPoint[] {
   if (!Array.isArray(raw)) return [];
   const byAge = new Map<number, TargetWeightPoint>();
@@ -744,8 +797,10 @@ export interface Animal {
   updatedAt: string;
 }
 
+/** Kinds of physical housing a cage record can describe. */
 export type HousingUnitType = 'hutch' | 'cage' | 'pen' | 'stall' | 'pasture' | 'colony';
 
+/** Housing options with UI labels. */
 export const HOUSING_UNIT_TYPES: ReadonlyArray<{ value: HousingUnitType; label: string }> = [
   { value: 'hutch', label: 'Hutch' },
   { value: 'cage', label: 'Cage' },
@@ -755,6 +810,7 @@ export const HOUSING_UNIT_TYPES: ReadonlyArray<{ value: HousingUnitType; label: 
   { value: 'colony', label: 'Colony / Group Run' },
 ];
 
+/** Coerces stored housing text, or `undefined` when unknown. */
 export function normalizeHousingUnitType(raw: unknown): HousingUnitType | undefined {
   if (typeof raw !== 'string') return undefined;
   const clean = raw.trim().toLowerCase();
@@ -796,6 +852,7 @@ export interface CageLocation {
   updatedAt: string;
 }
 
+/** One litter weigh-in during a breeding's lactation. */
 export interface LitterWeightMilestone {
   id: string;
   ageDays: number;
@@ -807,6 +864,7 @@ export interface LitterWeightMilestone {
   notes?: string;
 }
 
+/** Cleans weigh-ins and derives a missing total or average where possible. */
 export function normalizeLitterWeightMilestones(raw: unknown): LitterWeightMilestone[] {
   if (!Array.isArray(raw)) return [];
   const seenIds = new Set<string>();
@@ -941,8 +999,10 @@ export interface CareLog {
   updatedAt: string;
 }
 
+/** Award codes recorded on a show result. */
 export type ShowAwardCode = 'BOB' | 'BOS' | 'BIS' | 'GCH' | 'BOV' | 'BOSV' | 'RIS';
 
+/** Award codes with full and short labels. */
 export const SHOW_AWARD_OPTIONS: ReadonlyArray<{
   code: ShowAwardCode;
   label: string;
@@ -957,6 +1017,7 @@ export const SHOW_AWARD_OPTIONS: ReadonlyArray<{
   { code: 'RIS', label: 'Reserve in Show (RIS)', shortLabel: 'RIS' },
 ];
 
+/** Scanned e-leg certificate stored alongside a show result. */
 export interface ShowELegAttachment {
   id: string;
   fileName: string;
@@ -970,6 +1031,7 @@ export interface ShowELegAttachment {
   addedAtIso: string;
 }
 
+/** One animal's placement, awards and legs earned at a show. */
 export interface ShowAnimalResult {
   animalId: string;
   classPlacement: string;
@@ -1027,8 +1089,10 @@ export interface AnimalPhoto {
   updatedAt: string;
 }
 
+/** Retention window for feed-tag photos once a lot is indexed. */
 export type FeedPurgeWindowDays = 30 | 60 | 90 | 0;
 
+/** Purge-window options with descriptions. */
 export const FEED_PURGE_WINDOW_OPTIONS: ReadonlyArray<{
   days: FeedPurgeWindowDays;
   label: string;
@@ -1040,6 +1104,7 @@ export const FEED_PURGE_WINDOW_OPTIONS: ReadonlyArray<{
   { days: 0, label: 'Manual Purge Only', description: 'Keep tag photos until manually purged' },
 ];
 
+/** Constrains a stored purge window to 0, 30, 60 or 90 days. */
 export function normalizeFeedPurgeWindowDays(
   raw: unknown,
   fallback: FeedPurgeWindowDays = 60
@@ -1049,6 +1114,7 @@ export function normalizeFeedPurgeWindowDays(
   return fallback;
 }
 
+/** What a feed allocation is charged to. */
 export type FeedAllocationTargetType = 'cage' | 'litter' | 'animal' | 'general';
 
 /**
@@ -1110,8 +1176,10 @@ export interface FeedAllocation {
   updatedAt: string;
 }
 
+/** Direction of a ledger entry. */
 export type LedgerEntryType = 'expense' | 'income';
 
+/** Ledger bucket a transaction is filed under. */
 export type LedgerCategory =
   | 'feed'
   | 'bedding'
@@ -1126,6 +1194,7 @@ export type LedgerCategory =
   | 'grant_sponsor'
   | 'other';
 
+/** Ledger categories with labels and their default direction. */
 export const LEDGER_CATEGORY_OPTIONS: ReadonlyArray<{
   value: LedgerCategory;
   label: string;
@@ -1145,6 +1214,7 @@ export const LEDGER_CATEGORY_OPTIONS: ReadonlyArray<{
   { value: 'other', label: 'Other Income / Expense', defaultType: 'expense' },
 ];
 
+/** Coerces stored text to income or expense. */
 export function normalizeLedgerEntryType(
   raw: unknown,
   fallback: LedgerEntryType = 'expense'
@@ -1156,6 +1226,7 @@ export function normalizeLedgerEntryType(
   return fallback;
 }
 
+/** Matches a stored category by keyword, else the fallback. */
 export function normalizeLedgerCategory(
   raw: unknown,
   fallback: LedgerCategory = 'other'
@@ -1207,10 +1278,13 @@ export interface LedgerEntry {
   updatedAt: string;
 }
 
+/** Status of a meat and pelt processing log. */
 export type ProcessingStatus = 'Scheduled' | 'Processed' | 'Cancelled';
 
+/** Pelt quality grade. */
 export type PeltGrade = '' | 'Prime' | 'No. 1' | 'No. 2' | 'No. 3' | 'Cull' | 'Not Saved';
 
+/** Pelt grades with UI labels. */
 export const PELT_GRADE_OPTIONS: ReadonlyArray<{ value: PeltGrade; label: string }> = [
   { value: '', label: 'Unspecified' },
   { value: 'Prime', label: 'Prime (Dense, Even Fur)' },
@@ -1221,6 +1295,7 @@ export const PELT_GRADE_OPTIONS: ReadonlyArray<{ value: PeltGrade; label: string
   { value: 'Not Saved', label: 'Not Saved' },
 ];
 
+/** Coerces stored processing text, including harvested and planned. */
 export function normalizeProcessingStatus(
   raw: unknown,
   fallback: ProcessingStatus = 'Processed'
@@ -1233,6 +1308,7 @@ export function normalizeProcessingStatus(
   return fallback;
 }
 
+/** Coerces stored pelt grades, including numeric forms. */
 export function normalizePeltGrade(raw: unknown): PeltGrade {
   if (typeof raw !== 'string') return '';
   const clean = raw.trim().toLowerCase();
@@ -1274,14 +1350,17 @@ export interface ProcessingLog {
   updatedAt: string;
 }
 
+/** Youth organisation a project book belongs to. */
 export type YouthOrgType = '4-H' | 'FFA' | 'Other Youth';
 
+/** Youth organisations with UI labels. */
 export const YOUTH_ORG_OPTIONS: ReadonlyArray<{ value: YouthOrgType; label: string }> = [
   { value: '4-H', label: '4-H Youth Project' },
   { value: 'FFA', label: 'FFA SAE / Project' },
   { value: 'Other Youth', label: 'Other Youth Livestock Club' },
 ];
 
+/** Coerces stored youth organisation text. */
 export function normalizeYouthOrgType(
   raw: unknown,
   fallback: YouthOrgType = '4-H'
@@ -1294,6 +1373,7 @@ export function normalizeYouthOrgType(
   return fallback;
 }
 
+/** One feed purchase recorded in a youth project book. */
 export interface YouthProjectFeedLogEntry {
   id: string;
   dateIso: string; // YYYY-MM-DD
@@ -1305,6 +1385,7 @@ export interface YouthProjectFeedLogEntry {
   notes?: string;
 }
 
+/** Cleans feed logs, de-duplicating ids and sorting newest first. */
 export function normalizeYouthProjectFeedLogs(raw: unknown): YouthProjectFeedLogEntry[] {
   if (!Array.isArray(raw)) return [];
   const seenIds = new Set<string>();
@@ -1382,8 +1463,10 @@ export interface YouthProjectBook {
   updatedAt: string;
 }
 
+/** How a client prefers to be contacted. */
 export type PreferredContactMethod = 'email' | 'phone' | 'sms' | 'in_person' | 'other';
 
+/** Contact methods with UI labels. */
 export const PREFERRED_CONTACT_METHODS: ReadonlyArray<{
   value: PreferredContactMethod;
   label: string;
@@ -1395,6 +1478,7 @@ export const PREFERRED_CONTACT_METHODS: ReadonlyArray<{
   { value: 'other', label: 'Other' },
 ];
 
+/** Coerces stored contact preferences, defaulting to SMS. */
 export function normalizePreferredContactMethod(
   raw: unknown,
   fallback: PreferredContactMethod = 'sms'
@@ -1409,6 +1493,7 @@ export function normalizePreferredContactMethod(
   return fallback;
 }
 
+/** Segment a client belongs to. */
 export type ClientKind =
   | 'pet_buyer'
   | 'show_breeder'
@@ -1417,6 +1502,7 @@ export type ClientKind =
   | 'rescue_partner'
   | 'other';
 
+/** Client kinds with UI labels. */
 export const CLIENT_KINDS: ReadonlyArray<{
   value: ClientKind;
   label: string;
@@ -1429,6 +1515,7 @@ export const CLIENT_KINDS: ReadonlyArray<{
   { value: 'other', label: 'Other Client' },
 ];
 
+/** Matches a stored client kind by keyword, else the fallback. */
 export function normalizeClientKind(
   raw: unknown,
   fallback: ClientKind = 'pet_buyer'
@@ -1470,6 +1557,7 @@ export interface ClientContact {
   updatedAt: string;
 }
 
+/** Where a buyer sits in the waitlist workflow. */
 export type WaitlistStatus =
   | 'Active'
   | 'Matched'
@@ -1478,6 +1566,7 @@ export type WaitlistStatus =
   | 'Paused'
   | 'Cancelled';
 
+/** All waitlist statuses, in workflow order. */
 export const WAITLIST_STATUSES: ReadonlyArray<WaitlistStatus> = [
   'Active',
   'Matched',
@@ -1487,6 +1576,7 @@ export const WAITLIST_STATUSES: ReadonlyArray<WaitlistStatus> = [
   'Cancelled',
 ];
 
+/** Coerces stored waitlist text, including reserved and sold. */
 export function normalizeWaitlistStatus(
   raw: unknown,
   fallback: WaitlistStatus = 'Active'
@@ -1502,6 +1592,7 @@ export function normalizeWaitlistStatus(
   return fallback;
 }
 
+/** What the buyer wants the animal for. */
 export type WaitlistIntent =
   | 'Show / Breeding'
   | 'Pet / Companion'
@@ -1509,6 +1600,7 @@ export type WaitlistIntent =
   | 'Meat / Commercial'
   | 'Any';
 
+/** All waitlist intents. */
 export const WAITLIST_INTENTS: ReadonlyArray<WaitlistIntent> = [
   'Show / Breeding',
   'Pet / Companion',
@@ -1517,6 +1609,7 @@ export const WAITLIST_INTENTS: ReadonlyArray<WaitlistIntent> = [
   'Any',
 ];
 
+/** Matches a stored intent by keyword, else the fallback. */
 export function normalizeWaitlistIntent(
   raw: unknown,
   fallback: WaitlistIntent = 'Show / Breeding'
@@ -1559,6 +1652,7 @@ export interface WaitlistEntry {
   updatedAt: string;
 }
 
+/** Where a reservation stands, from inquiry hold to pickup. */
 export type ReservationStatus =
   | 'Inquiry Hold'
   | 'Pending Deposit'
@@ -1568,6 +1662,7 @@ export type ReservationStatus =
   | 'Picked Up / Completed'
   | 'Cancelled';
 
+/** All reservation statuses, in workflow order. */
 export const RESERVATION_STATUSES: ReadonlyArray<ReservationStatus> = [
   'Inquiry Hold',
   'Pending Deposit',
@@ -1578,6 +1673,7 @@ export const RESERVATION_STATUSES: ReadonlyArray<ReservationStatus> = [
   'Cancelled',
 ];
 
+/** Coerces stored reservation text, else the fallback. */
 export function normalizeReservationStatus(
   raw: unknown,
   fallback: ReservationStatus = 'Pending Deposit'
@@ -1637,8 +1733,10 @@ export interface AnimalReservation {
   updatedAt: string;
 }
 
+/** How wool was collected. */
 export type WoolHarvestMethod = 'Shear' | 'Pluck' | 'Brush / Comb' | 'Other';
 
+/** All wool harvest methods. */
 export const WOOL_HARVEST_METHODS: ReadonlyArray<WoolHarvestMethod> = [
   'Shear',
   'Pluck',
@@ -1646,6 +1744,7 @@ export const WOOL_HARVEST_METHODS: ReadonlyArray<WoolHarvestMethod> = [
   'Other',
 ];
 
+/** Coerces stored harvest methods, including clipped and combed. */
 export function normalizeWoolHarvestMethod(
   raw: unknown,
   fallback: WoolHarvestMethod = 'Shear'
@@ -1704,6 +1803,7 @@ export interface WoolHarvest {
   updatedAt: string;
 }
 
+/** Why a trip was driven. */
 export type MileageTripPurpose =
   | 'Show Travel'
   | 'Feed & Supply Run'
@@ -1713,6 +1813,7 @@ export type MileageTripPurpose =
   | 'Barn Maintenance'
   | 'Other';
 
+/** All mileage purposes. */
 export const MILEAGE_TRIP_PURPOSES: ReadonlyArray<MileageTripPurpose> = [
   'Show Travel',
   'Feed & Supply Run',
@@ -1726,6 +1827,7 @@ export const MILEAGE_TRIP_PURPOSES: ReadonlyArray<MileageTripPurpose> = [
 /** Default IRS business standard mileage rate in integer cents per mile ($0.70/mi). */
 export const DEFAULT_IRS_MILEAGE_RATE_CENTS = 70;
 
+/** Matches a stored purpose by keyword, else the fallback. */
 export function normalizeMileageTripPurpose(
   raw: unknown,
   fallback: MileageTripPurpose = 'Show Travel'
@@ -1780,6 +1882,7 @@ export interface MileageLog {
   updatedAt: string;
 }
 
+/** Colour category of a barn journal entry. */
 export type JournalColorCategory =
   | 'sage'
   | 'terracotta'
@@ -1788,12 +1891,14 @@ export type JournalColorCategory =
   | 'plum'
   | 'slate';
 
+/** Display metadata for a journal category. */
 export interface JournalCategoryMeta {
   id: JournalColorCategory;
   label: string;
   hexAccent: string;
 }
 
+/** Journal categories with labels and accent colours. */
 export const JOURNAL_COLOR_CATEGORIES: ReadonlyArray<JournalCategoryMeta> = [
   { id: 'sage', label: 'Daily Barn Ops', hexAccent: '#4F6D54' },
   { id: 'terracotta', label: 'Breeding & Litters', hexAccent: '#B85D43' },
@@ -1803,8 +1908,10 @@ export const JOURNAL_COLOR_CATEGORIES: ReadonlyArray<JournalCategoryMeta> = [
   { id: 'slate', label: 'Personal & Ideas', hexAccent: '#5C6773' },
 ];
 
+/** Star rating on a journal entry. */
 export type JournalStarRating = 0 | 1 | 2 | 3 | 4 | 5;
 
+/** Coerces a stored journal category id, else the fallback. */
 export function normalizeJournalColorCategory(
   raw: unknown,
   fallback: JournalColorCategory = 'sage'
@@ -1824,6 +1931,7 @@ export function normalizeJournalColorCategory(
   return fallback;
 }
 
+/** Clamps any value to a whole 0-5 star rating. */
 export function normalizeJournalStarRating(raw: unknown): JournalStarRating {
   const n = Number(raw);
   if (!Number.isFinite(n)) return 0;
@@ -1853,6 +1961,7 @@ export interface BarnJournalEntry {
   updatedAt: string;
 }
 
+/** Where a judging bid stands. */
 export type JudgeBidStatus =
   | 'Inquiry'
   | 'Bid Submitted'
@@ -1862,6 +1971,7 @@ export type JudgeBidStatus =
   | 'Declined'
   | 'Cancelled';
 
+/** All bid statuses, in workflow order. */
 export const JUDGE_BID_STATUSES: ReadonlyArray<JudgeBidStatus> = [
   'Inquiry',
   'Bid Submitted',
@@ -1872,6 +1982,7 @@ export const JUDGE_BID_STATUSES: ReadonlyArray<JudgeBidStatus> = [
   'Cancelled',
 ];
 
+/** Coerces stored bid text, including booked and passed. */
 export function normalizeJudgeBidStatus(
   raw: unknown,
   fallback: JudgeBidStatus = 'Bid Submitted'
@@ -1892,6 +2003,7 @@ export function normalizeJudgeBidStatus(
   return fallback;
 }
 
+/** Contract progress for a judging assignment. */
 export type JudgeContractStatus =
   | 'Not Sent'
   | 'Draft'
@@ -1900,6 +2012,7 @@ export type JudgeContractStatus =
   | 'Completed'
   | 'Void';
 
+/** All contract statuses, in workflow order. */
 export const JUDGE_CONTRACT_STATUSES: ReadonlyArray<JudgeContractStatus> = [
   'Not Sent',
   'Draft',
@@ -1909,6 +2022,7 @@ export const JUDGE_CONTRACT_STATUSES: ReadonlyArray<JudgeContractStatus> = [
   'Void',
 ];
 
+/** Coerces stored contract text, including signed and void. */
 export function normalizeJudgeContractStatus(
   raw: unknown,
   fallback: JudgeContractStatus = 'Not Sent'
@@ -1928,6 +2042,7 @@ export function normalizeJudgeContractStatus(
   return fallback;
 }
 
+/** Expense bucket for judge travel. */
 export type JudgeExpenseCategory =
   | 'Flight / Airfare'
   | 'Lodging / Hotel'
@@ -1938,6 +2053,7 @@ export type JudgeExpenseCategory =
   | 'Sanction / License Fee'
   | 'Other';
 
+/** All judge expense categories. */
 export const JUDGE_EXPENSE_CATEGORIES: ReadonlyArray<JudgeExpenseCategory> = [
   'Flight / Airfare',
   'Lodging / Hotel',
@@ -1949,6 +2065,7 @@ export const JUDGE_EXPENSE_CATEGORIES: ReadonlyArray<JudgeExpenseCategory> = [
   'Other',
 ];
 
+/** Matches a stored expense category by keyword, else the fallback. */
 export function normalizeJudgeExpenseCategory(
   raw: unknown,
   fallback: JudgeExpenseCategory = 'Other'
@@ -2086,6 +2203,7 @@ export interface BarnDatabaseSnapshot {
   judgeExpenses?: JudgeExpense[];
 }
 
+/** All animal statuses, in display order. */
 export const ANIMAL_STATUSES: AnimalStatus[] = [
   'Active',
   'Junior',
@@ -2095,6 +2213,7 @@ export const ANIMAL_STATUSES: AnimalStatus[] = [
   'Deceased',
 ];
 
+/** All breeding statuses, in workflow order. */
 export const BREEDING_STATUSES: BreedingStatus[] = [
   'Planned',
   'Bred',
@@ -2104,6 +2223,7 @@ export const BREEDING_STATUSES: BreedingStatus[] = [
   'Missed',
 ];
 
+/** All task categories. */
 export const TASK_CATEGORIES: TaskCategory[] = [
   'Care',
   'Palpation',
@@ -2116,8 +2236,10 @@ export const TASK_CATEGORIES: TaskCategory[] = [
   'Other',
 ];
 
+/** Task priorities, highest first. */
 export const TASK_PRIORITIES: TaskPriority[] = ['High', 'Normal', 'Low'];
 
+/** All care log types. */
 export const CARE_LOG_TYPES: CareLogType[] = [
   'Weight Check',
   'Show / Leg',
@@ -2129,6 +2251,7 @@ export const CARE_LOG_TYPES: CareLogType[] = [
   'Journal Note',
 ];
 
+/** Sanctioning bodies offered on a show record. */
 export const SHOW_SANCTIONS: string[] = [
   'ARBA',
   'ADGA / AGS',
@@ -2164,6 +2287,7 @@ export function setCoreClockSkewMs(skewMs: number | null | undefined): void {
     typeof skewMs === 'number' && Number.isFinite(skewMs) ? Math.round(skewMs) : 0;
 }
 
+/** Returns the recorded clock-skew offset in milliseconds. */
 export function getCoreClockSkewMs(): number {
   return coreClockSkewMs;
 }
@@ -2445,6 +2569,7 @@ export function stripAnimalNamePrefix(name: string, prefix?: string): string {
   return stripped || cleanName;
 }
 
+/** Alias of `applyAnimalNamePrefix`, kept for older callers. */
 export const applySpeciesNamePrefix = applyAnimalNamePrefix;
 
 /**
@@ -3105,9 +3230,12 @@ export function isAnimalNonAdult(
   return ageDays < cutoff;
 }
 
+/** JSON backup schema version written by current exports. */
 export const CURRENT_BACKUP_SCHEMA_VERSION = 6;
+/** Schema build tag stored in backups and checked by the upgrade gate. */
 export const APP_SCHEMA_BUILD_TAG = 'pedigree-v6';
 
+/** Minimal settings used when storage cannot be read. */
 export function buildEmptyFallbackSettings(): BarnSettings {
   const ts = nowIsoUtc();
   return {
@@ -3134,6 +3262,7 @@ export function buildEmptyFallbackSettings(): BarnSettings {
   };
 }
 
+/** Empty snapshot with fallback settings and the preset species only. */
 export function buildEmptyShellSnapshot(): BarnDatabaseSnapshot {
   const ts = nowIsoUtc();
   return {

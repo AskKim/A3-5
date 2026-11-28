@@ -49,6 +49,7 @@ export {
   CURRENT_BACKUP_SCHEMA_VERSION,
 };
 
+/** Kinds of vault backup the app can write. */
 export type VaultBackupKind =
   | 'monthly'
   | 'pre_upgrade'
@@ -56,6 +57,7 @@ export type VaultBackupKind =
   | 'pre_reset'
   | 'recovery_dump';
 
+/** Display labels for each vault backup kind. */
 export const VAULT_KIND_LABELS: Record<VaultBackupKind, string> = {
   monthly: 'Monthly Auto',
   pre_upgrade: 'Pre-Upgrade Safety',
@@ -64,6 +66,7 @@ export const VAULT_KIND_LABELS: Record<VaultBackupKind, string> = {
   recovery_dump: 'Recovery Dump',
 };
 
+/** Metadata stamped on a vault backup envelope. */
 export interface VaultBackupMetadata {
   key: string;
   fileName: string;
@@ -82,6 +85,7 @@ export interface VaultBackupMetadata {
   compressed?: boolean;
 }
 
+/** Versioned wrapper around a backup payload and its metadata. */
 export interface VaultBackupEnvelope {
   format: 'community-pedigree-vault-backup';
   package: 'Pedigree';
@@ -95,6 +99,7 @@ export interface VaultBackupEnvelope {
   snapshot: BarnDatabaseSnapshot;
 }
 
+/** Outcome of migrating an older backup into the current envelope. */
 export interface MigratedBackupResult {
   snapshot: BarnDatabaseSnapshot;
   schemaVersion: number;
@@ -105,6 +110,7 @@ export interface MigratedBackupResult {
   note?: string;
 }
 
+/** Marker written into an export to prove a real round trip. */
 export interface ExportCanaryProbe {
   format: 'community-pedigree-canary-v1';
   _schemaVersion: number;
@@ -117,11 +123,13 @@ export interface ExportCanaryProbe {
   checksumSha256: string;
 }
 
+/** Whether the export canary survived the round trip. */
 export interface ExportCanaryVerificationResult {
   ok: boolean;
   reason?: string;
 }
 
+/** Summary row describing one archived animal. */
 export interface ArchivedAnimalSummary {
   id: string;
   name: string;
@@ -139,6 +147,7 @@ export interface ArchivedAnimalSummary {
   hasPedigreeStubInDb: boolean;
 }
 
+/** Index entry for one archived herd bundle. */
 export interface ArchivedHerdIndexEntry {
   archiveKey: string;
   fileName: string;
@@ -153,6 +162,7 @@ export interface ArchivedHerdIndexEntry {
   animals: ArchivedAnimalSummary[];
 }
 
+/** Decoded archive bundle ready to merge back into the barn. */
 export interface UnpackedArchivedHerdBundle {
   archiveKey: string;
   createdAtIso: string;
@@ -163,6 +173,7 @@ export interface UnpackedArchivedHerdBundle {
   careLogs: CareLog[];
 }
 
+/** Archive bundle plus the metadata written with it. */
 export interface BuiltArchivedBundleResult {
   archiveKey: string;
   fileName: string;
@@ -192,6 +203,7 @@ const SHA256_INIT = new Uint32Array([
   0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 ]);
 
+/** SHA-256 hex digest of text or bytes, with no Node crypto dependency. */
 export function sha256HexPure(input: string | Uint8Array): string {
   const bytes = typeof input === 'string' ? strToU8(input) : input;
   const len = bytes.length;
@@ -325,6 +337,7 @@ function buildVaultEnvelopeParts(
   };
 }
 
+/** Wraps a payload in the versioned vault envelope. */
 export function buildVaultBackupEnvelope(
   snapshot: BarnDatabaseSnapshot,
   options: {
@@ -337,6 +350,7 @@ export function buildVaultBackupEnvelope(
   return buildVaultEnvelopeParts(snapshot, options).envelope;
 }
 
+/** Serialises a vault envelope to JSON text. */
 export function serializeVaultBackupEnvelope(
   snapshot: BarnDatabaseSnapshot,
   options: {
@@ -351,6 +365,7 @@ export function serializeVaultBackupEnvelope(
   return { envelope, jsonText };
 }
 
+/** Whether a pre-upgrade backup matches its checksum. */
 export interface PreUpgradeBackupVerificationResult {
   ok: boolean;
   checksumSha256: string;
@@ -384,6 +399,7 @@ export function buildVerifiedPreUpgradeJsonBackup(
   return { envelope, jsonText, verification };
 }
 
+/** Verifies a pre-upgrade backup's checksum before it is used. */
 export function verifyPreUpgradeJsonBackup(
   jsonText: string,
   expectedChecksumSha256?: string
@@ -430,8 +446,10 @@ export function verifyPreUpgradeJsonBackup(
   }
 }
 
+/** Entry name of the JSON payload inside a vault ZIP. */
 export const VAULT_ZIP_ENTRY_NAME = 'vault-backup.json';
 
+/** True when bytes start with the ZIP magic header. */
 export function isZipMagicBytes(bytes: Uint8Array): boolean {
   return (
     bytes.byteLength >= 4 &&
@@ -622,6 +640,7 @@ export function deserializeVaultBackupPayload(
 // Export Canary Probe & Round-Trip Checksum Verifier
 // ---------------------------------------------------------------------------
 
+/** Builds the canary marker for an export of this snapshot. */
 export function buildExportCanaryProbe(snapshot: BarnDatabaseSnapshot): ExportCanaryProbe {
   const sample = (snapshot.animals || []).slice(0, 12);
   const sampleAnimalIds = sample.map((a) => a.id);
@@ -649,6 +668,7 @@ export function buildExportCanaryProbe(snapshot: BarnDatabaseSnapshot): ExportCa
   };
 }
 
+/** Checks that an exported snapshot still round-trips its canary. */
 export function verifyExportCanaryRoundTrip(
   expected: ExportCanaryProbe,
   roundTrippedJson: string
@@ -748,6 +768,7 @@ export function computePedigreeReferencedIds(
   return needed;
 }
 
+/** Packages retired animals into an archive bundle. */
 export function buildArchivedAnimalsBundle(
   snapshot: BarnDatabaseSnapshot,
   targetAnimalIds: string[],
@@ -1090,6 +1111,7 @@ export function extractArchiveIndexMetadataOnly(
   };
 }
 
+/** Decodes one archived animal bundle. */
 export function unpackArchivedAnimalBundle(
   zipBytes: Uint8Array,
   fallbackSettings: BarnSettings = buildEmptyFallbackSettings()
@@ -1222,6 +1244,7 @@ export function unpackArchivedAnimalBundle(
   };
 }
 
+/** Merges a restored archive bundle back into a snapshot. */
 export function mergeRestoredArchiveIntoSnapshot(
   current: BarnDatabaseSnapshot,
   bundle: UnpackedArchivedHerdBundle,

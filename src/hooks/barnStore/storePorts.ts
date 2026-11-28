@@ -18,6 +18,7 @@ import type { BarnDatabaseSnapshot } from '../../domain/models';
 import { bumpRecordRevision } from '../../domain/syncOutbox';
 import { allocateNextLogicalCounter } from '../../storage/localSyncChannels';
 
+/** Optional overrides for the ports bundle; every field has a safe default. */
 export interface StorePortsConfig {
   deviceId: string;
   snapshotRef?: { current: BarnDatabaseSnapshot | null };
@@ -28,6 +29,7 @@ export interface StorePortsConfig {
   setPendingCalendarSync?: (payload: { tasks: never[]; filenameHint: string }) => void;
 }
 
+/** The shared bundle the mutation slices and non-component callers run against. */
 export interface StorePorts {
   snapshotRef: { current: BarnDatabaseSnapshot | null };
   deviceId: string;
@@ -41,6 +43,7 @@ export interface StorePorts {
   allocateNextLogicalCounter: () => number;
 }
 
+/** Builds the ports bundle described in this module's header. */
 export function createStorePorts(config: StorePortsConfig): StorePorts {
   const snapshotRef = config.snapshotRef ?? { current: null };
   let queue: Promise<unknown> = Promise.resolve();

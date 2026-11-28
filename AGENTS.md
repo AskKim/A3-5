@@ -110,7 +110,7 @@ The application must execute reliably across diverse host environments:
 ### 5.3 Strict TypeScript Verification and Drift Invariants
 - **No Type Escapes:** Never silence TypeScript compiler errors with `as any`, `@ts-ignore`, or `@ts-expect-error`. Resolve root types cleanly.
 - **Automated Invariant Verification:** Every file modification must preserve existing invariants verified by `npm run verify:improvements` and layer checks (`npm run verify:layers`, `npm run verify:engine`, `npm run verify:extraction`).
-- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, `verify:improvements`, `verify:layers`, `verify:engine`, and `verify:extraction`) plus `npm run build` before declaring tasks complete.
+- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, the coverage floor, and `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`) plus `npm run build` before declaring tasks complete. Run `npm run verify:chunks` on the build output whenever imports changed; it is deliberately outside `verify` because it needs `dist/`.
 
 ---
 

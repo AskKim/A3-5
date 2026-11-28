@@ -1,6 +1,6 @@
 # Extraction Inventory: Framework vs. Domain Modularity
 
-**Date:** 2026-11-24  
+**Date:** 2026-11-24 (delta appended 2026-11-28)  
 **Target Architecture:** Alpha 3 Three-Layer Modularity (`@engine/*`, `@features/*`, `@app/*`) — NEON Phases 1 & 2 Baseline  
 **Status:** 100% non-test file classification across `src/domain/`, `src/features/`, `src/app/`, `src/storage/`, and `src/utils/`; boot-entry lock verified; zero domain terms in shared/reusable modules; standalone `engine` (`/engine`) extraction deferred until Phase 7.
 
@@ -294,3 +294,64 @@ Guide for routing persistence through `@engine/bridge/*` and `@engine/storage/na
 - `src/engine/storage/sqliteWasmStorageAdapter.ts`: `SqliteWasmStorageAdapter` wrapping `sql.js` over swappable `IStorageAdapter` backends (`MemoryStorageAdapter`, `IndexedDbStorageAdapter`, `OpfsStorageAdapter`, or `NativeBridgeStorageAdapter`).
 - Native Routing Strategy: Under native Apple `WKWebView` or desktop shells, `NativeBridgeStorageAdapter` intercepts `IStorageAdapter` calls and delegates directly to host native SQLite via `window.webkit.messageHandlers.pedigreeStorage` or desktop IPC, completely bypassing browser WebKit storage eviction.
 
+
+---
+
+## 8. Delta since 2026-11-24 (appended 2026-11-28)
+
+The file-by-file lists above are the original audit. Modules added or split since then are classified
+here so the inventory keeps matching the tree without rewriting the sections above.
+
+### 8.1 `src/engine/` additions (all `extractable-core`)
+
+- `binaryEncoding.ts` — the encoding helpers moved down from `src/domain/`; the domain path is now a
+  compatibility shim.
+- `primitives/boundedCache.ts`, `primitives/deviceCapabilityCore.ts` — bounded LRU and hardware-tier
+  policy lifted out of `src/storage/`.
+- `storage/browserStorageAdapters.ts` — memory and IndexedDB adapters.
+- `storage/sqliteWasmStorageAdapter.ts`, `storage/resilientStorageAdapter.ts` — `sql.js` execution and
+  the retry/fallback wrapper.
+- `storage/opfsStream.ts`, `storage/crossTabSync.ts`, `storage/lifecycleCoordinator.ts`,
+  `storage/lanWebRtcTransport.ts`, `storage/browserProbes.ts` — OPFS streaming, cross-tab commit bus,
+  background-freeze lifecycle, WebRTC transport and storage probes.
+- `bridge/desktopBridgeAdapter.ts` — Electron/Tauri runtime sniffer and delegate.
+
+### 8.2 `src/storage/` split (`pedigree-domain`, browser implementation)
+
+`webSqliteAdapter.ts` now delegates to four modules that carry no UI concerns of their own:
+`sqliteSchema.ts` (canonical DDL, shared with the native wrappers), `sqliteIdbPersistence.ts`
+(persistence, quota recovery, cache cleanup), `sqliteRowMappers.ts` (row → domain) and
+`sqliteRowWriters.ts` (domain → row). `backgroundFreezeCoordinator.ts`, `opfsTempStream.ts`,
+`p2pLanChannel.ts`, `passphraseCrypto.ts` and `storageProbes.ts` are thin domain-wired facades over
+`@engine/*`; they stay `pedigree-domain` because they configure app-specific keys and policies.
+
+### 8.3 `src/hooks/barnStore/` (new folder, `pedigree-domain`)
+
+Twenty-one modules split out of `useBarnStore.ts`: two pure policy modules (`photoCacheBudget`,
+`backupReminder`), the restore orchestrator, rev-keyed species selectors, the typed facades and
+React-free ports, three context slices (`syncConflictSlice`, `vaultSlice`, `syncStateSlice`) and
+twelve mutation sub-hooks (`useAnimalsCrud`, `usePhotoMutations`, `useBreeding`, `useAlertDismissals`,
+`useCloudSyncActions`, `useOpfsVaultActions`, `useRollingBackupActions`, `useOpfsArchiveOffload`,
+`useSyncConflictResolution`, `useSyncConflictDismissal`, `usePhotoCache`, `useBackupReminderActions`).
+See `src/hooks/barnStore/README.md` for the map and the contract rules.
+
+### 8.4 `src/domain/` additions (`pedigree-domain`)
+
+- `improvements/` — the registry split into `registry-part-01…05.ts`, shared `types.ts` and
+  `rationales.ts`; `improvementRegistry.ts` remains the public surface.
+- `ledgerContract.ts` — the append-only ledger header and entry shape used by both verifiers.
+- `syncRetention.ts` — 120-day window plus 20k hard cap for the sync outbox.
+- `syncConflictExpiry.ts` — resolved conflicts expire; unresolved ones never do.
+- `moduleCatalog.ts` — classification rules behind `MODULES.md`.
+
+### 8.5 Tooling (`ci-tooling`, outside the runtime layers)
+
+`scripts/verify-chunk-graph.ts` (`verify:chunks`), `scripts/verify-contract-changelog.ts`
+(`verify:contract`), `scripts/verify-site-identity.ts` + `scripts/siteIdentity.ts`, and
+`scripts/regen-ledgers.ts` (`regen:ledgers`). The gate map is `scripts/README.md`.
+
+### 8.6 Documentation added
+
+`docs/README.md` (index), `docs/contracts/barn-store-contract.md`, `docs/decisions/0001-destructive-restore.md`,
+and the layer READMEs in `src/engine/`, `src/features/`, `src/storage/`, `src/hooks/barnStore/`,
+`src/domain/improvements/` and `scripts/`.

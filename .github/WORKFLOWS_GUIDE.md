@@ -18,7 +18,7 @@ GitHub Actions are automated helpers that run on GitHub's servers whenever you s
 
 | Workflow Name (in GitHub Actions) | File | When It Runs | What It Does in Plain English |
 | --- | --- | --- | --- |
-| **CI** | `ci.yml` | Automatic on every push & Pull Request | Runs all unit tests, checks code/layer rules, rehearses engine extraction, and verifies the web app builds cleanly. |
+| **CI** | `ci.yml` | Automatic on every push & Pull Request | Runs all unit tests, checks code/layer rules, rehearses engine extraction, verifies the build has no circular chunks, and checks both path builds plus site identity. |
 | **Deploy to GitHub Pages** | `deploy-pages.yml` | Push to `main` or `release` branch, or manual | Verifies tests/layers/types via Bun, then builds and publishes the live website on GitHub Pages. |
 | **Build Android APK** | `build-android-apk.yml` | Push/PR to `main`, or manual | Verifies the web app, packages it inside the Android wrapper, and produces downloadable `.apk` files. |
 | **Export Codebase to Markdown** | `export_repo_to_md.yml` | Manual only | Splits the codebase into <= 100 KB pieces, converts each to Markdown, and saves two flat ZIPs inside `export/`. |
@@ -39,7 +39,10 @@ GitHub Actions are automated helpers that run on GitHub's servers whenever you s
   2. Checks that no saved app features were accidentally overwritten (`npm run verify:improvements`).
   3. Verifies layer boundaries (`npm run verify:layers`), isolated engine compilation (`npm run verify:engine`), and temp-directory engine extraction (`npm run verify:extraction`).
   4. Checks TypeScript code for mistakes (`npm run lint`).
-  5. Tests building the app for both `/` and GitHub Pages subpaths.
+  5. Builds for the root path and checks the chunk graph for new circular imports (`npm run verify:chunks`).
+  6. Builds for the GitHub Pages subpath, asserts the Pages artifacts and manifest scopes, and runs the site-identity gate (`npm run verify:site-identity`).
+
+CI runs a subset of `npm run verify`: the registry, prompt, module, Android and store-contract gates run locally and in the other workflows, so a local `npm run verify` is still the complete check.
 - **How to read results:** Green checkmark = safe to merge. Red X = click the run to see which test or build step failed.
 
 ### 2. Deploy to GitHub Pages (`deploy-pages.yml`) — *Publish the Live Website*

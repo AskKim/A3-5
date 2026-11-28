@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+/** Synchronous lock with a React busy flag. */
 export interface AsyncLockController {
   isLocked: () => boolean;
   isDisposed: () => boolean;
@@ -20,6 +21,7 @@ export interface AsyncLockController {
   dispose: () => void;
 }
 
+/** Creates a submit lock usable outside React. */
 export function createAsyncLockController(options?: {
   postSettleCooldownMs?: number;
   onLockChange?: (locked: boolean) => void;
@@ -76,6 +78,7 @@ export function createAsyncLockController(options?: {
   };
 }
 
+/** Per-key lock for inline row actions. */
 export interface AsyncKeyedLockController {
   isLocked: (key: string) => boolean;
   isDisposed: () => boolean;
@@ -84,6 +87,7 @@ export interface AsyncKeyedLockController {
   dispose: () => void;
 }
 
+/** Creates a keyed lock usable outside React. */
 export function createAsyncKeyedLockController(options?: {
   onKeysChange?: (keys: string[]) => void;
 }): AsyncKeyedLockController {
@@ -124,6 +128,7 @@ export function createAsyncKeyedLockController(options?: {
   };
 }
 
+/** Busy flag and runner that blocks double submits. */
 export function useAsyncSubmitLock(options?: { postSettleCooldownMs?: number }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const cooldownMs = options?.postSettleCooldownMs ?? 0;
@@ -170,6 +175,7 @@ export function useAsyncSubmitLock(options?: { postSettleCooldownMs?: number }) 
   };
 }
 
+/** Per-record busy flags for silent inline toggles. */
 export function useAsyncKeyedLock() {
   const [lockedKeys, setLockedKeys] = useState<string[]>([]);
 

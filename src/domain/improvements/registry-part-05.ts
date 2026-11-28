@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Improvement registry entries IMP-069 … IMP-085 (17 of 85).
+ * Improvement registry entries IMP-069 … IMP-127 (59 entries).
  *
  * Split out of `improvementRegistry.ts` so the registry stays reviewable as it grows. The public
  * surface (`IMPROVEMENTS_REGISTRY`, invariant evaluation, markdown/JSON export) still lives in
@@ -2879,6 +2879,98 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     restorePlaybook: [
       'Keep `findLedgerOptInViolations` called from `scripts/verify-prompts.ts` and in its pass condition, not just imported.',
       'Log a prompt version with all three opt-in fields, or with none at all.',
+    ],
+  },
+  {
+    id: 'IMP-131',
+    title: 'Documentation Pass: Layer READMEs, Gate Map and Corrected Doc Paths',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'After the Alpha 3 slice work, the docs no longer described the tree: README/CONTRIBUTING/CLAUDE listed a six-gate verification suite that had grown to ten, ARCHITECTURE still pointed at the pre-split registry path, the module folders with the most new structure (engine, features, storage, barn-store slices, scripts, improvements) had no README, and the registry part headers claimed 85 entries when part 05 alone held 59.',
+    summary:
+      'Adds `docs/README.md` (documentation index plus generated-file rules), `scripts/README.md` (every gate, allowlist, build dependency and failure meaning), and layer READMEs for `src/engine`, `src/features`, `src/storage`, `src/hooks/barnStore` and `src/domain/improvements`. Corrects the verification and registry paths in `README.md`, `CONTRIBUTING.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `docs/ARCHITECTURE_GUIDE.md` and `AGENTS.md`; points the CI description at the gates `ci.yml` actually runs; rewrites the contradictory iOS placeholder README to defer to the Apple contracts; appends a dated delta to `EXTRACTION_INVENTORY.md` instead of rewriting its audit; and fixes the five registry part-module headers plus the restore-orchestrator license header order (it sat below an import). Adds JSDoc to the rev-keyed species selectors, the React-free store ports and the restore payload/deps contracts. A second pass documents the highest-traffic modules by import count: `models.ts` (202 importers), `inputSanitization`, `syncAndExports`, `syncOutbox`, `pedigreeCalculator`, `imageOptimizationSpec`, `backupVault`, `geneticsEngine`, `carrierGenetics`, `showResults`, `barnAlerts`, `deviceCapability` and `backupArchive` in the domain; `storageProtection`, `crashLogger`, `storageProbes`, `deviceCapabilityDetector`, `webImageOptimizer` and `offThreadWorkerClient` in storage; and `webFileActions`, `useAsyncSubmitLock` and `useAccessibleDialog` in utils.',
+    files: [
+      'README.md',
+      'CONTRIBUTING.md',
+      'CLAUDE.md',
+      'ARCHITECTURE.md',
+      'AGENTS.md',
+      'EXTRACTION_INVENTORY.md',
+      'docs/README.md',
+      'docs/ARCHITECTURE_GUIDE.md',
+      'scripts/README.md',
+      'src/engine/README.md',
+      'src/features/README.md',
+      'src/storage/README.md',
+      'src/hooks/barnStore/README.md',
+      'src/domain/improvements/README.md',
+      'src/domain/improvements/registry-part-01.ts',
+      'src/domain/improvements/registry-part-02.ts',
+      'src/domain/improvements/registry-part-03.ts',
+      'src/domain/improvements/registry-part-04.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'src/hooks/barnStore/restoreOrchestrator.ts',
+      'src/hooks/barnStore/speciesSelectors.ts',
+      'src/hooks/barnStore/storePorts.ts',
+      'src/domain/models.ts',
+      'src/domain/inputSanitization.ts',
+      'src/domain/syncAndExports.ts',
+      'src/domain/syncOutbox.ts',
+      'src/domain/pedigreeCalculator.ts',
+      'src/domain/imageOptimizationSpec.ts',
+      'src/domain/backupVault.ts',
+      'src/domain/geneticsEngine.ts',
+      'src/domain/carrierGenetics.ts',
+      'src/domain/showResults.ts',
+      'src/domain/barnAlerts.ts',
+      'src/domain/deviceCapability.ts',
+      'src/domain/backupArchive.ts',
+      'src/storage/storageProtection.ts',
+      'src/storage/crashLogger.ts',
+      'src/storage/storageProbes.ts',
+      'src/storage/deviceCapabilityDetector.ts',
+      'src/storage/webImageOptimizer.ts',
+      'src/storage/offThreadWorkerClient.ts',
+      'src/utils/webFileActions.ts',
+      'src/utils/useAsyncSubmitLock.ts',
+      'src/utils/useAccessibleDialog.ts',
+      'ios-wrapper/README.md',
+      '.github/WORKFLOWS_GUIDE.md',
+    ],
+    invariants: [
+      {
+        filePath: 'README.md',
+        requiredSubstrings: ['npm run verify', 'docs/README.md', 'scripts/README.md'],
+        rationale:
+          'The front page is where a new contributor gets the command list; a stale list sends them to a subset of the gates.',
+      },
+      {
+        filePath: 'docs/README.md',
+        requiredSubstrings: ['barn-store-contract.md', 'src/hooks/barnStore/README.md', 'regen:ledgers'],
+        rationale:
+          'The index is only useful if it reaches the contract, the module maps and the generated-file rule.',
+      },
+      {
+        filePath: 'scripts/README.md',
+        requiredSubstrings: ['verify:chunks', 'verify:site-identity', 'regen:ledgers'],
+        rationale:
+          'The build-dependent gates and the one writing command are exactly the ones people forget.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/README.md',
+        requiredSubstrings: ['runDestructiveRestore', 'invalidateSpeciesSelectorCache', 'verify:contract'],
+        rationale:
+          'The two rules that cause data loss when forgotten, plus the gate that guards the key surface.',
+      },
+    ],
+    restorePlaybook: [
+      'When a gate or npm script changes, update `scripts/README.md` and the command blocks in README, CONTRIBUTING and CLAUDE in the same change.',
+      'Keep generated files generated: edit the registry and run `npm run regen:ledgers`, never the ledger.',
+      'If a folder gains a second concern or a new contract, add or update its README rather than growing the top-level one.',
     ],
   },
 ];
