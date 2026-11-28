@@ -4180,9 +4180,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 60', 'branches: 50', 'functions: 46', 'lines: 61'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/engine/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the two suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/healthAndSettingsPanels.render.test.tsx',
@@ -4227,6 +4227,44 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Load `sql.js` and `sql-wasm.wasm?url` with `import()` inside the adapter, never at module scope, and keep the memoized promises so repeated `initialize()`/`inspectRawSqliteBytes()` calls reuse one compile.',
       'Keep the `Promise.all([sqlPromise, storeReadPromise])` shape: the WASM compile and the IndexedDB read must stay concurrent so laziness does not add a serial round trip.',
       'Measure with `dist/index.html` modulepreload entries and `performance.getEntriesByType(\'paint\')` on a production build; the WASM request must land after first-contentful-paint.',
+    ],
+  },
+  {
+    id: 'IMP-162',
+    title: 'Mount the Reports, Journal and Bench Screens',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Three daily-use workspaces — the printable reports catalog, the personal barn journal and the fast sequential entry bench — still had zero executable statements, so their species switching, filter selects and cage-walk queue were only ever exercised by hand.',
+    summary:
+      'Adds `reportsJournalBench.render.test.tsx`: the catalog lists its reports and switches species, narrows to the Financial category (dropping the calendar reports), and opens a report into its preview; the journal shows its empty state, opens the entry editor and applies the star/category filters; the bench renders the five-cage walk queue, records a weight and commits the entry through `onCommitEntry`, and switches focus mode to BCS. Coverage rises to 61.99/52.01/48.10/63.54, so the global floors move to 60/51/47/62 and the component floors to 33/26/21/34.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/reportsJournalBench.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 60', 'branches: 51', 'functions: 47', 'lines: 62'],
+        rationale:
+          'This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/reportsJournalBench.render.test.tsx',
+        requiredSubstrings: ['Goat Only', 'onCommitEntry', '5★ Only'],
+        rationale:
+          'These three assertions are the only proof that the catalog really switches species, the bench writes through its commit callback and the journal filters actually run.',
+      },
+    ],
+    restorePlaybook: [
+      'The reports category filter is a labelled `<select>`; the header line (`Rabbit Only · N reports · Unit: …`) is split across spans, so assert it against `document.body.textContent`.',
+      'The bench disables both save buttons until a draft exists, so a commit test must type a weight into the `Weight Check (…)` field first.',
+      'Journal rating is a select (`5★ Only`), but colour categories are toggle buttons; query them by their pressed state rather than by role alone.',
     ],
   },
 ];
