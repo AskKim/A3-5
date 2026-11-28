@@ -2711,4 +2711,41 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the generation bump ahead of the cache clear so in-flight entries cannot be re-keyed to the old dataset.',
     ],
   },
+  {
+    id: 'IMP-127',
+    title: 'Render-Level Store Harness',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Every store test so far was a pure-function test or a key snapshot, so the loops that actually break \u2014 a real React commit, a write through the adapter, a snapshot that comes back as a new object, derived selectors and their memo re-running, and a restore replacing the dataset underneath them \u2014 had no coverage at all.',
+    summary:
+      'Milestone 7 starts with `hooks/__tests__/barnStoreIntegration.test.tsx`, a jsdom render-level harness driving `useBarnStore` through `renderHook`, and `hooks/__tests__/support/memoryStorageAdapter.ts`, a typed in-memory `StorageAdapter` that upserts and deletes by method name, cascades animal deletes to photos and care logs, and returns a deep copy per `loadSnapshot` so the hook sees the browser\'s new-object-per-reload shape. Two loops are covered: a save through the store appearing in the derived species list, and a JSON replace import serving the restored rows for the same ids and revisions (the IMP-126 guard, now proven through the store rather than the selector alone). `jsdom`, `@testing-library/react` and its `@testing-library/dom` peer are dev dependencies.',
+    files: [
+      'src/hooks/__tests__/barnStoreIntegration.test.tsx',
+      'src/hooks/__tests__/support/memoryStorageAdapter.ts',
+      'package.json',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/__tests__/barnStoreIntegration.test.tsx',
+        requiredSubstrings: ['@vitest-environment jsdom', 'renderHook', 'importJsonBackup'],
+        rationale:
+          'Without the jsdom environment or a real render the file silently degrades to the same unit-level coverage it replaces.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/support/memoryStorageAdapter.ts',
+        requiredSubstrings: ['replaceSnapshot', 'loadSnapshot', 'structuredClone'],
+        rationale:
+          'A shallow adapter that hands back the same object would hide the identity bugs the harness exists to catch.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the adapter honest: every write must be visible to the next `loadSnapshot`, and the snapshot must come back as a new object.',
+      'Enter a species route (`setRoute(\'herd\')`) before asserting derived lists; non-species routes return empty lists by design.',
+      'Still open in milestone 7: the OPFS archive offload loop and the sync-conflict resolve loop.',
+    ],
+  },
 ];

@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (62 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (63 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (126)
+## Logged Improvements (127)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2664,3 +2664,17 @@ Status:     active
 1. Call `invalidateSpeciesSelectorCache()` in any new path that replaces the snapshot wholesale, before the replacement can render.
 2. Never rely on revision signatures alone for cross-dataset identity — restores reuse ids and revisions.
 3. Keep the generation bump ahead of the cache clear so in-flight entries cannot be re-keyed to the old dataset.
+
+## 2026-11-28 — Render-Level Store Harness
+Why:        Every store test so far was a pure-function test or a key snapshot, so the loops that actually break — a real React commit, a write through the adapter, a snapshot that comes back as a new object, derived selectors and their memo re-running, and a restore replacing the dataset underneath them — had no coverage at all.
+Changed:    `src/hooks/__tests__/barnStoreIntegration.test.tsx`, `src/hooks/__tests__/support/memoryStorageAdapter.ts`, `package.json`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/__tests__/barnStoreIntegration.test.tsx` must contain `@vitest-environment jsdom`, `renderHook`, `importJsonBackup` — *Without the jsdom environment or a real render the file silently degrades to the same unit-level coverage it replaces.*
+- `src/hooks/__tests__/support/memoryStorageAdapter.ts` must contain `replaceSnapshot`, `loadSnapshot`, `structuredClone` — *A shallow adapter that hands back the same object would hide the identity bugs the harness exists to catch.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the adapter honest: every write must be visible to the next `loadSnapshot`, and the snapshot must come back as a new object.
+2. Enter a species route (`setRoute('herd')`) before asserting derived lists; non-species routes return empty lists by design.
+3. Still open in milestone 7: the OPFS archive offload loop and the sync-conflict resolve loop.
