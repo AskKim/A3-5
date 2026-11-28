@@ -53,21 +53,13 @@ import {
   buildSupportMailtoHref,
   formatSupportReportText,
 } from '../domain/supportBundle';
-import { buildSupportBundleZipOffThread } from '../storage/offThreadWorkerClient';
 import { formatTimestampedBackupSlug } from '../domain/syncAndExports';
 import {
-  clearAllDiagnosticLogs,
-  DiagnosticLogEntry,
-  DiagnosticSummary,
-  getDiagnosticConfig,
-  getDiagnosticSummary,
-  listDiagnosticLogs,
-  logDiagnosticEvent,
-  LogRetentionDays,
-  readEmergencySessionTrace,
-  subscribeDiagnosticLogs,
-  updateDiagnosticConfig,
-} from '../storage/crashLogger';
+  getDiagnosticsPort,
+  type DiagnosticLogEntry,
+  type DiagnosticSummary,
+  type LogRetentionDays,
+} from '../app/ports/diagnostics';
 import { getHeavyZipExportGate } from '../domain/deviceCapability';
 import {
   DESTRUCTIVE_CONFIRM_PHRASES,
@@ -152,7 +144,7 @@ export function DiagnosticsAndSupportPanel({
   const showLogsSections = visibleSections === 'all' || visibleSections === 'logs-and-support';
   const showMaintenanceSections = visibleSections === 'all' || visibleSections === 'maintenance';
   const isSectionExpanded = !collapsible || expanded;
-  const [config, setConfig] = useState(() => getDiagnosticConfig());
+  const [config, setConfig] = useState(() => getDiagnosticsPort().getDiagnosticConfig());
   const [entries, setEntries] = useState<DiagnosticLogEntry[]>([]);
   const [summary, setSummary] = useState<DiagnosticSummary | null>(null);
   const [showLogViewer, setShowLogViewer] = useState(false);
@@ -246,15 +238,15 @@ export function DiagnosticsAndSupportPanel({
     : { requiresConfirmation: false, title: '', body: '', advice: '' };
 
   const refreshDiagnostics = useCallback(async () => {
-    const list = await listDiagnosticLogs();
-    const sum = await getDiagnosticSummary(list);
+    const list = await getDiagnosticsPort().listDiagnosticLogs();
+    const sum = await getDiagnosticsPort().getDiagnosticSummary(list);
     // The mount refresh, the log subscription and the 15s interval all land here. If the panel is
     // unmounted while those reads are in flight, setting state afterwards makes React schedule an
     // update against a torn-down document (`window is not defined` in jsdom). Drop the result
     // instead of rendering it into a component that no longer exists.
     if (!isMountedRef.current) return;
     setEntries(list);
-    setEmergencyTraceCount(readEmergencySessionTrace().length);
+    setEmergencyTraceCount(getDiagnosticsPort().readEmergencySessionTrace().length);
     setSummary(sum);
     setConfig(sum.config);
   }, []);
@@ -278,7 +270,7 @@ export function DiagnosticsAndSupportPanel({
 
   useEffect(() => {
     void refreshDiagnostics();
-    const unsub = subscribeDiagnosticLogs(() => {
+    const unsub = getDiagnosticsPort().subscribeDiagnosticLogs(() => {
       void refreshDiagnostics();
     });
     const timer = setInterval(() => {
@@ -323,9 +315,9 @@ export function DiagnosticsAndSupportPanel({
   );
 
   const handleToggleVerbose = (enabled: boolean) => {
-    const next = updateDiagnosticConfig({ verboseEnabled: enabled });
+    const next = getDiagnosticsPort().updateDiagnosticConfig({ verboseEnabled: enabled });
     setConfig(next);
-    logDiagnosticEvent({
+    getDiagnosticsPort().logDiagnosticEvent({
       level: 'info',
       category: 'lifecycle',
       message: `Verbose diagnostic logging ${enabled ? 'enabled' : 'paused (errors/crashes still recorded)'}`,
@@ -335,7 +327,7 @@ export function DiagnosticsAndSupportPanel({
   const handleRetentionChange = (days: LogRetentionDays) => {
     const validated = validateLogRetentionDaysOverride(days);
     if (!validated.ok) return;
-    const next = updateDiagnosticConfig({ retentionDays: validated.days });
+    const next = getDiagnosticsPort().updateDiagnosticConfig({ retentionDays: validated.days });
     setConfig(next);
     void refreshDiagnostics();
   };
@@ -358,8 +350,8 @@ export function DiagnosticsAndSupportPanel({
 
   const handleDownloadLogsTxt = async () => {
     await actionLock.runLocked(async () => {
-      const list = await listDiagnosticLogs();
-      const sum = await getDiagnosticSummary(list);
+      const list = await getDiagnosticsPort().listDiagnosticLogs();
+      const sum = await getDiagnosticsPort().getDiagnosticSummary(list);
       const filename = `pedigree-error-logs-${formatTimestampedBackupSlug()}.txt`;
       await downloadTextFile(filename, formatSupportReportText(list, sum, snapshot), 'text/plain');
       setLastBuiltMailMeta(null);
@@ -369,8 +361,8 @@ export function DiagnosticsAndSupportPanel({
 
   const handleDownloadLogsJson = async () => {
     await actionLock.runLocked(async () => {
-      const list = await listDiagnosticLogs();
-      const sum = await getDiagnosticSummary(list);
+      const list = await getDiagnosticsPort().listDiagnosticLogs();
+      const sum = await getDiagnosticsPort().getDiagnosticSummary(list);
       const filename = `pedigree-error-logs-${formatTimestampedBackupSlug()}.json`;
       await downloadTextFile(
         filename,
@@ -431,13 +423,13 @@ export function DiagnosticsAndSupportPanel({
           return;
         }
 
-        const list = await listDiagnosticLogs();
-        const sum = await getDiagnosticSummary(list);
+        const list = await getDiagnosticsPort().listDiagnosticLogs();
+        const sum = await getDiagnosticsPort().getDiagnosticSummary(list);
         const bundleSnapshot =
           includeDataInBundle && includePhotosInBundle && onHydrateSnapshotForExport
             ? await onHydrateSnapshotForExport(snapshot)
             : snapshot;
-        const built = await buildSupportBundleZipOffThread({
+        const built = await getDiagnosticsPort().buildSupportBundleZipOffThread({
           entries: list,
           summary: sum,
           snapshot: bundleSnapshot,
@@ -494,7 +486,7 @@ export function DiagnosticsAndSupportPanel({
         );
       }
     } catch (err) {
-      logDiagnosticEvent({
+      getDiagnosticsPort().logDiagnosticEvent({
         level: 'error',
         category: isQuotaExceededError(err) ? 'storage' : 'storage',
         message: isQuotaExceededError(err)
@@ -514,8 +506,8 @@ export function DiagnosticsAndSupportPanel({
   };
 
   const handleCopySupportText = async () => {
-    const list = await listDiagnosticLogs();
-    const sum = await getDiagnosticSummary(list);
+    const list = await getDiagnosticsPort().listDiagnosticLogs();
+    const sum = await getDiagnosticsPort().getDiagnosticSummary(list);
     const report = formatSupportReportText(list.slice(0, 60), sum);
     const copyMode = await copyTextWithFallback(report);
     if (copyMode !== 'unsupported') {
@@ -1085,7 +1077,7 @@ export function DiagnosticsAndSupportPanel({
             <button
               type="button"
               onClick={() => {
-                logDiagnosticEvent({
+                getDiagnosticsPort().logDiagnosticEvent({
                   level: 'info',
                   category: 'lifecycle',
                   message: 'Manual diagnostic test log recorded from Development',
@@ -1112,7 +1104,7 @@ export function DiagnosticsAndSupportPanel({
                 <button
                   type="button"
                   onClick={() =>
-                    void clearAllDiagnosticLogs().then(() => {
+                    void getDiagnosticsPort().clearAllDiagnosticLogs().then(() => {
                       setConfirmClearLogs(false);
                       return refreshDiagnostics();
                     })

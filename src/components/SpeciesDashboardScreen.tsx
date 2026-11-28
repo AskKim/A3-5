@@ -125,7 +125,7 @@ import {
   RemarkCardLayoutMode,
   ShowEntryDivision,
 } from '../domain/showDocuments';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { countSpeciesNonTestingRecords } from '../domain/sampleData';
 import { SpeciesMigrationOptions } from '../domain/speciesMigration';
 import {
@@ -1042,7 +1042,7 @@ export function SpeciesDashboardScreen({
     try {
       const selected = Array.from(files).slice(0, remainingSlots);
       for (const file of selected) {
-        const optimized = await optimizeImageFile(file, settings.imageOptimizationPreset);
+        const optimized = await getImageOptimizerPort().optimizeImageFile(file, settings.imageOptimizationPreset);
         addedAttachments.push({
           id: `eleg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
           fileName: optimized.originalFileName || file.name || 'e-leg-certificate',

@@ -182,7 +182,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 3. `src/app/` File-by-File Inventory (12 Non-Test Files — All `pedigree-domain`)
+## 3. `src/app/` File-by-File Inventory (13 Non-Test Files — All `pedigree-domain`)
 
 - `src/app/index.ts` — `pedigree-domain` — Application layer barrel export.
 - `src/app/appConfig.interface.ts` — `pedigree-domain` — Multi-species registry and terminology contracts.
@@ -196,6 +196,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/app/ports/installPrompt.tsx` — `pedigree-domain` — Install/offline capability port: owns the `src/storage/storageProtection` import so `PWAInstallButton`/`OfflineIndicator` render from an injected `InstallPromptPort` (IMP-145).
 - `src/app/ports/ideasBacklog.tsx` — `pedigree-domain` — Offline captured-ideas capability port: owns the `src/storage/capturedIdeasStore` import so `SuggestionsBacklogScreen` loads, saves, removes and clears ideas through an injected `IdeasBacklogPort` (IMP-147).
 - `src/app/ports/diagnostics.ts` — `pedigree-domain` — Crash/diagnostics capability port: owns the `crashLogger`, `backgroundFreezeCoordinator` and `offThreadWorkerClient` imports so `CrashErrorBoundary`, `DevelopmentErrorBoundary` and `AsyncErrorToastHost` log, summarise and dismiss through `getDiagnosticsPort()` (IMP-151).
+- `src/app/ports/imageOptimizer.ts` — `pedigree-domain` — Image-optimization capability port: owns the `webImageOptimizer` import so the animal editor, photo gallery, importer panel, print preview and three screens call `getImageOptimizerPort()` instead of compressing through a storage module (IMP-153).
 
 ---
 

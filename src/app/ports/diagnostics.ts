@@ -11,17 +11,24 @@
  * swap in its own with `setDiagnosticsPort` and restore it with `resetDiagnosticsPort`.
  */
 import {
+  clearAllDiagnosticLogs,
   dismissAsyncErrorToast,
   getActiveAsyncErrorToasts,
+  getDiagnosticConfig,
   getDiagnosticSummary,
   isMemoryLikeError,
   listDiagnosticLogs,
+  logDiagnosticEvent,
   markCleanSessionExit,
+  readEmergencySessionTrace,
   recordReactCrash,
   subscribeAsyncErrorToasts,
+  subscribeDiagnosticLogs,
+  updateDiagnosticConfig,
   type AsyncErrorNotice,
   type DiagnosticLogEntry,
   type DiagnosticSummary,
+  type LogRetentionDays,
 } from '../../storage/crashLogger';
 import {
   getPausedBackgroundJobs,
@@ -35,12 +42,19 @@ export type {
   AsyncErrorNotice,
   DiagnosticLogEntry,
   DiagnosticSummary,
+  LogRetentionDays,
   PausedBackgroundJob,
 };
 
 /** Everything the crash surfaces need to log, summarise, export and dismiss. */
 export interface DiagnosticsPort {
   recordReactCrash: typeof recordReactCrash;
+  logDiagnosticEvent: typeof logDiagnosticEvent;
+  getDiagnosticConfig: typeof getDiagnosticConfig;
+  updateDiagnosticConfig: typeof updateDiagnosticConfig;
+  subscribeDiagnosticLogs: typeof subscribeDiagnosticLogs;
+  readEmergencySessionTrace: typeof readEmergencySessionTrace;
+  clearAllDiagnosticLogs: typeof clearAllDiagnosticLogs;
   listDiagnosticLogs: typeof listDiagnosticLogs;
   getDiagnosticSummary: typeof getDiagnosticSummary;
   isMemoryLikeError: typeof isMemoryLikeError;
@@ -57,6 +71,12 @@ export interface DiagnosticsPort {
 /** The browser implementation over the real offline log and freeze-coordinator stores. */
 export const browserDiagnosticsPort: DiagnosticsPort = {
   recordReactCrash,
+  logDiagnosticEvent,
+  getDiagnosticConfig,
+  updateDiagnosticConfig,
+  subscribeDiagnosticLogs,
+  readEmergencySessionTrace,
+  clearAllDiagnosticLogs,
   listDiagnosticLogs,
   getDiagnosticSummary,
   isMemoryLikeError,

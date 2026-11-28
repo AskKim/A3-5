@@ -1,8 +1,6 @@
 [
-  "src/components/AnimalEditorModal.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/AnimalPhotoGallery.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
   "src/components/AnimalPhotoGallery.tsx -> src/storage/photoHydration [components must not import storage singletons; inject an @app port]",
-  "src/components/AnimalPhotoGallery.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/BarnSchedulerGantt.tsx -> src/storage/p2pLanChannel [components must not import storage singletons; inject an @app port]",
   "src/components/BreedingCalendarPanel.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/BreedingCalendarPanel.tsx -> src/storage/weatherForecast [components must not import storage singletons; inject an @app port]",
@@ -18,12 +16,8 @@
   "src/components/DevelopmentScreen.tsx -> src/storage/pwaUpdateManager [components must not import storage singletons; inject an @app port]",
   "src/components/DevelopmentScreen.tsx -> src/storage/storageProbes [components must not import storage singletons; inject an @app port]",
   "src/components/DevelopmentScreen.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
-  "src/components/DiagnosticsAndSupportPanel.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
-  "src/components/DiagnosticsAndSupportPanel.tsx -> src/storage/offThreadWorkerClient [components must not import storage singletons; inject an @app port]",
   "src/components/DiagnosticsAndSupportPanel.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
-  "src/components/EconomicsLedgerScreen.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/ExternalImporterPanel.tsx -> src/storage/offThreadWorkerClient [components must not import storage singletons; inject an @app port]",
-  "src/components/ExternalImporterPanel.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/FeedLedgerScreen.tsx -> src/storage/feedTagOcr [components must not import storage singletons; inject an @app port]",
   "src/components/HealthReferencePanel.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/HealthReferencePanel.tsx -> src/storage/vetDocsFolder [components must not import storage singletons; inject an @app port]",
@@ -37,10 +31,7 @@
   "src/components/ImportExportHubScreen.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
   "src/components/PedigreeOcrScannerPanel.tsx -> src/storage/pedigreeOcrScanner [components must not import storage singletons; inject an @app port]",
   "src/components/PrintPreviewModal.tsx -> src/storage/crashLogger [components must not import storage singletons; inject an @app port]",
-  "src/components/PrintPreviewModal.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/SettingsAndSyncScreen.tsx -> src/storage/storageProtection [components must not import storage singletons; inject an @app port]",
-  "src/components/SettingsAndSyncScreen.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/SpeciesDashboardScreen.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]",
-  "src/components/SpeciesDashboardScreen.tsx -> src/storage/webImageOptimizer [components must not import storage singletons; inject an @app port]",
   "src/components/UnifiedBackupVaultPanel.tsx -> src/storage/localSyncChannels [components must not import storage singletons; inject an @app port]"
 ]

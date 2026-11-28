@@ -51,7 +51,7 @@ import {
   isMemoryLikeError,
   logDiagnosticEvent,
 } from '../storage/crashLogger';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import {
   copyTextWithFallback,
@@ -773,7 +773,7 @@ export function PrintPreviewModal({
     dismissFileActionError();
     setLogoUploading(true);
     try {
-      const optimized = await optimizeImageFile(file, 'compact');
+      const optimized = await getImageOptimizerPort().optimizeImageFile(file, 'compact');
       const nextUrl = sanitizeSafeRasterImageDataUrl(
         optimized.thumbnailDataUrl || optimized.dataUrl
       );

@@ -93,7 +93,7 @@ import {
   MAX_PHOTO_UPLOAD_BYTES,
   validateUploadFileSize,
 } from '../domain/inputSanitization';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import { CarrierTraitCombobox } from './CarrierTraitCombobox';
@@ -398,7 +398,7 @@ export function AnimalEditorModal({
           continue;
         }
         try {
-          const opt = await optimizeImageFile(file, activePreset.id);
+          const opt = await getImageOptimizerPort().optimizeImageFile(file, activePreset.id);
           next.push(opt);
         } catch (err) {
           failures.push(

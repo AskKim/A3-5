@@ -3856,5 +3856,54 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).',
       'Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.',
     ],
-  }
+  },
+  {
+    id: 'IMP-153',
+    title: 'Drain the Diagnostics Panel and Photo Compression Through @app Ports',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      '`DiagnosticsAndSupportPanel` made twenty direct crash-logger calls and seven photo surfaces compressed uploads by importing `webImageOptimizer`, so the support bundle builder and every editor depended on storage modules they cannot render without.',
+    summary:
+      'The diagnostics port gained the rest of the log surface (`logDiagnosticEvent`, config read/write, log subscription, emergency trace, clear) and the panel now makes all twenty calls through `getDiagnosticsPort()`. A new `src/app/ports/imageOptimizer.ts` exposes `optimizeImageFile` and `optimizeStagedImporterPhotos` as an injectable `ImageOptimizerPort`, and `AnimalEditorModal`, `AnimalPhotoGallery`, `EconomicsLedgerScreen`, `PrintPreviewModal`, `SettingsAndSyncScreen`, `SpeciesDashboardScreen` and `ExternalImporterPanel` use it. Component→storage coupling drops from 44 to 35 edges across 16 files.',
+    files: [
+      'src/app/ports/diagnostics.ts',
+      'src/app/ports/imageOptimizer.ts',
+      'src/components/DiagnosticsAndSupportPanel.tsx',
+      'src/components/AnimalEditorModal.tsx',
+      'src/components/AnimalPhotoGallery.tsx',
+      'src/components/EconomicsLedgerScreen.tsx',
+      'src/components/PrintPreviewModal.tsx',
+      'src/components/SettingsAndSyncScreen.tsx',
+      'src/components/SpeciesDashboardScreen.tsx',
+      'src/components/ExternalImporterPanel.tsx',
+      'scripts/ui-storage-coupling-budget.json',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/DiagnosticsAndSupportPanel.tsx',
+        requiredSubstrings: ['getDiagnosticsPort'],
+        rationale:
+          'Every log read/write in the panel must go through the port; a direct crashLogger import would restore the UI→storage edge.',
+      },
+      {
+        filePath: 'src/components/AnimalEditorModal.tsx',
+        requiredSubstrings: ['getImageOptimizerPort'],
+        rationale:
+          'Photo compression is a capability, not a storage call: the editor must keep using the injectable optimiser.',
+      },
+    ],
+    restorePlaybook: [
+      'A storage-backed capability goes into an @app port with its storage binding in the port file; the component only imports the port.',
+      'Keep the module-level injectables (`get*Port` / `set*Port` / `reset*Port`) symmetric so tests can restore them in cleanup.',
+      'Regenerate the coupling ledger with `--write-ui-budget` only after `audit-layers.ts` shows a smaller set, and never raise it.',
+    ],
+  },
 ];

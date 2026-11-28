@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (87 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (88 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (151)
+## Logged Improvements (152)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3028,3 +3028,17 @@ Status:     active
 1. For a screen with tab-gated workspaces, click every tab and assert its tabpanel; a single default-tab mount leaves the other workspaces unexecuted.
 2. For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).
 3. Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.
+
+## 2026-11-28 — Drain the Diagnostics Panel and Photo Compression Through @app Ports
+Why:        `DiagnosticsAndSupportPanel` made twenty direct crash-logger calls and seven photo surfaces compressed uploads by importing `webImageOptimizer`, so the support bundle builder and every editor depended on storage modules they cannot render without.
+Changed:    `src/app/ports/diagnostics.ts`, `src/app/ports/imageOptimizer.ts`, `src/components/DiagnosticsAndSupportPanel.tsx`, `src/components/AnimalEditorModal.tsx`, `src/components/AnimalPhotoGallery.tsx`, `src/components/EconomicsLedgerScreen.tsx`, `src/components/PrintPreviewModal.tsx`, `src/components/SettingsAndSyncScreen.tsx`, `src/components/SpeciesDashboardScreen.tsx`, `src/components/ExternalImporterPanel.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/DiagnosticsAndSupportPanel.tsx` must contain `getDiagnosticsPort` — *Every log read/write in the panel must go through the port; a direct crashLogger import would restore the UI→storage edge.*
+- `src/components/AnimalEditorModal.tsx` must contain `getImageOptimizerPort` — *Photo compression is a capability, not a storage call: the editor must keep using the injectable optimiser.*
+
+**Restoration Playbook if Overwritten:**
+1. A storage-backed capability goes into an @app port with its storage binding in the port file; the component only imports the port.
+2. Keep the module-level injectables (`get*Port` / `set*Port` / `reset*Port`) symmetric so tests can restore them in cleanup.
+3. Regenerate the coupling ledger with `--write-ui-budget` only after `audit-layers.ts` shows a smaller set, and never raise it.

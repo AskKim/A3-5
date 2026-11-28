@@ -5,14 +5,14 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 272
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (21.7%)
+- **Total Non-Test Source Modules:** 273
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (21.6%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 213 (78.3%)
+- **Content-Specific Modules:** 214 (78.4%)
   - Domain Engines (`src/domain/`): 87
-  - App Composition & Configs (`src/app/`): 12
+  - App Composition & Configs (`src/app/`): 13
   - Storage Adapters & Workers (`src/storage/`): 29
   - Native Bridge (`src/native/`): 1
   - State Store Hook (`src/hooks/`): 28
@@ -110,7 +110,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (213)
+## 2. Content-Specific Modules (214)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (87)
 
@@ -204,7 +204,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/upgradeGate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/woolFiber.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 
-### Application Composition & Configs (`src/app/`, `@app/*`) (12)
+### Application Composition & Configs (`src/app/`, `@app/*`) (13)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -219,6 +219,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/app/PlatformBridgeContext.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/diagnostics.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/ideasBacklog.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
+| `src/app/ports/imageOptimizer.ts` | Application-level species/domain configuration or dependency-injection wiring. |
 | `src/app/ports/installPrompt.tsx` | Application-level species/domain configuration or dependency-injection wiring. |
 
 ### Content-Bound Storage Adapters & Workers (`src/storage/`) (29)

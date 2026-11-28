@@ -84,7 +84,7 @@ import {
 import { sanitizeSafeRasterImageDataUrl } from '../domain/inputSanitization';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
 import type { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import {
   RollingBackupMeta,
   StorageProtectionStatus,
@@ -544,7 +544,7 @@ export function SettingsAndSyncScreen({
     setLogoError(null);
     setLogoUploading(true);
     try {
-      const optimized = await optimizeImageFile(file, 'compact');
+      const optimized = await getImageOptimizerPort().optimizeImageFile(file, 'compact');
       const nextUrl = sanitizeSafeRasterImageDataUrl(
         optimized.thumbnailDataUrl || optimized.dataUrl
       );
