@@ -12,9 +12,9 @@
 1. **Check for Existing Open Work (Precheck)**
    - Inspect `docs/plans/` for an active plan file: `docs/plans/active-backlog-plan.md` (or any other active `.md` plan in `docs/plans/` excluding `docs/plans/suggestions-backlog.md`) whose steps still contain `[WIP]` or `[TODO]`.
    - Inspect `docs/plans/` for open handoffs: any `handoff-*.yaml` whose `status:` block still contains `[WIP]` or `[TODO]`.
-   - **If an open handoff is found:** Do **not** start a new backlog item and do **not** overwrite the handoff. Continue that handoff's `next_action` until every step is `[DONE]`, then return to this workflow.
+   - **If any open handoff is found (scan every `handoff-*.yaml`, not just the first):** Do **not** start a new backlog item and do **not** overwrite the handoff. Continue the first open handoff's `next_action` until every step is `[DONE]`, then re-scan `docs/plans/` and continue the next open one — a finished file is not a finished directory, and a second open handoff reported as complete is how pending work gets lost.
    - **If an active plan file is found:** Do **not** overwrite it. Stop this workflow immediately and read/execute `prompts/resume_backlog_plan_prompt.md` instead.
-   - **Only when neither exists** may a new backlog entry be started. The backlog is a deliberate one-at-a-time scratch pad, not a queue to drain in parallel.
+   - **Only when neither exists** — no active plan and no open step in **any** `handoff-*.yaml` — may a new backlog entry be started. The backlog is a deliberate one-at-a-time scratch pad, not a queue to drain in parallel.
 
 2. **Load & Internalize Master System Prompt**
    - Read `prompts/master_system_prompt.md` completely and internalize all execution, architecture, type safety, and coding invariants before taking any action.

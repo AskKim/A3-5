@@ -723,7 +723,9 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
   'IMP-059#src/domain/judgeNotebook.ts#1':
     'Pure TypeScript Judge Notebook conflict checks, mileage/expense calculations, CSV exports, and XSS-safe HTML contracts must remain DOM-free.',
   'IMP-059#src/storage/webSqliteAdapter.ts#1':
-    'SQLite schema v9 must create, migrate, and persist judge_clubs, judge_assignments, judge_expenses, and enableJudgeNotebook.',
+    'SQLite schema v9 must create and migrate judge_clubs, judge_assignments, and judge_expenses.',
+  'IMP-059#src/storage/sqliteSnapshotReaders.ts#1':
+    'Snapshot reads must hydrate enableJudgeNotebook from barn_settings, since the settings row is now mapped in the snapshot readers.',
   'IMP-059#src/hooks/useBarnStore.ts#1':
     'Store must expose outbox-tracked CRUD mutators for Judge clubs, assignments, and expenses.',
   'IMP-059#src/components/JudgeNotebookScreen.tsx#1':

@@ -1,24 +1,10 @@
 goal: Finish remaining architectural modularity and reusability across storage adapters, monolithic store/SQLite hubs, UI component seams, shim retirement, and standalone @engine extraction
-parked:
-  status: deferred_by_owner
-  decided: 2026-11-28
-  note: >-
-    Nothing in this file is done. Every remaining step is marked [DEFERRED] instead of a WIP or TODO
-    marker, so this file no longer counts as an open handoff for the backlog gate documented in
-    prompts/start_new_backlog_prompt.md and prompts/resume_backlog_plan_prompt.md. The detail is kept
-    so the work can be resumed exactly where it stops.
-  reason: >-
-    The barn-store handoff (docs/plans/handoff-barn-store-improvements.yaml) is complete and all seven
-    of its milestones are closed; this handoff is a separate, much larger programme. The owner chose to
-    leave it documented for now rather than start its remaining phases.
-  resume: >-
-    Change the [DEFERRED] markers back to WIP/TODO markers, then follow next_action from the first one.
 status:
   - [DONE] src/storage/* | Aligned browser/worker storage probes, OPFS streaming, passphrase crypto, cross-tab sync, background freeze, photo cache, LAN WebRTC, PKCE sessionStorage, and weather localStorage onto @engine/storage/* and @engine/primitives/* contracts (with verified @engine unit tests)
   - [DONE] src/storage/webSqliteAdapter.ts | Split schema DDL (sqliteSchema.ts), IndexedDB persistence/quota recovery (sqliteIdbPersistence.ts), row mappers (sqliteRowMappers.ts) and row writers (sqliteRowWriters.ts) out of the adapter
-  - [DEFERRED] src/storage/webSqliteAdapter.ts | Adapter is 2,609 lines: snapshot row readers plus generic batch/delete mutation helpers are the next extraction
+  - [DONE] src/storage/webSqliteAdapter.ts | Adapter 2,609 → 2,352 lines: snapshot row readers moved to sqliteSnapshotReaders.ts (readSnapshotFromDatabase, queryObjectsFromDb, mapAnimalRow) and the transaction/batch-write/multi-row-delete helpers to sqliteMutationHelpers.ts; deleteAnimalsBatch and deleteTasksBatch now express statements instead of hand-rolled loops; 10 tests (IMP-133)
   - [DONE] Planned slice series: eleven sub-hooks/policy modules now live under src/hooks/barnStore/* (photo-cache budget, backup-reminder policy + actions, photo cache + loaders, alert dismissals, cloud-sync settings/PKCE, OPFS vault, sync-conflict dismissal + resolution, rolling backups, OPFS archive offload) with tests; useBarnStore.ts 9,548 → 9,075 lines and the 200-key contract snapshot unchanged. The barn-store handoff carried this series on to 7,718 lines and is now closed.
-  - [DEFERRED] src/hooks/useBarnStore.ts | Next phase, not part of the slice series: the remaining entity/CRUD/import-export actions (7,676 lines) need domain slice controllers and headless action dispatchers, and the store still wires ~40 sub-hook ports by hand.
+  - [WIP] src/hooks/useBarnStore.ts | Next phase, not part of the slice series: the remaining entity/CRUD/import-export actions (7,676 lines) need domain slice controllers and headless action dispatchers, and the store still wires ~40 sub-hook ports by hand.
     - [DONE] photoCacheBudget.ts | Category cache budgets per device tier (IMP-090)
     - [DONE] backupReminder.ts | Local backup/snooze storage policy (IMP-091)
     - [DONE] useBackupReminderActions.ts | recordBackupExport / snoozeBackupReminder (IMP-092)
@@ -30,17 +16,17 @@ status:
     - [DONE] useSyncConflictResolution.ts | Apply the chosen side, merge ops, mark resolved (IMP-098)
     - [DONE] useRollingBackupActions.ts | Rolling snapshot restore + delete (IMP-099)
     - [DONE] useOpfsArchiveOffload.ts | Archive animals out of the live barn (IMP-100)
-    - [DEFERRED] Next phase: extract entity CRUD and import/export controllers, then auto-wire the port objects
-  - [DEFERRED] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
-  - [DEFERRED] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Codemod remaining callers directly onto @engine/*, retire compatibility shims, and extract generic non-domain logic left in src/domain/*
-  - [DEFERRED] src/domain/improvementRegistry.ts | Audit domain seed/test files for PII/contact hygiene via prompts/core_hygiene.md and expand layer/duplication checks across components & storage
-  - [DEFERRED] /engine & package.json | Extract verified content-agnostic @engine/*, @features/*, and @utils/* into standalone reusable package/repository once app coupling hits zero
-  - [DEFERRED] EXTRACTION_INVENTORY.md & src/domain/improvementRegistry.ts | Sync documentation, run npm run verify + npm run build, and register the final IMP entry
+    - [TODO] Next phase: extract entity CRUD and import/export controllers, then auto-wire the port objects
+  - [TODO] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
+  - [TODO] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Codemod remaining callers directly onto @engine/*, retire compatibility shims, and extract generic non-domain logic left in src/domain/*
+  - [TODO] src/domain/improvementRegistry.ts | Audit domain seed/test files for PII/contact hygiene via prompts/core_hygiene.md and expand layer/duplication checks across components & storage
+  - [TODO] /engine & package.json | Extract verified content-agnostic @engine/*, @features/*, and @utils/* into standalone reusable package/repository once app coupling hits zero
+  - [TODO] EXTRACTION_INVENTORY.md & src/domain/improvementRegistry.ts | Sync documentation, run npm run verify + npm run build, and register the final IMP entry
 constraints:
   - Keep Core PWA strictly in React + Vite + TypeScript (ES2018 target) — never convert to Kotlin or Compose
   - Preserve BOOT_ENTRY_LOCK_CHECKSUMS (src/main.tsx, src/App.tsx, index.html) unless explicitly authorized
   - Maintain zero layer violations (scripts/layer-allowlist.json = []) and zero as any / @ts-ignore / @ts-expect-error
   - Do not modify or import /import/ staging files; keep Alpha 2 features intact with thin facades until callers migrate
-decisions: Standalone /engine extraction waits until Phase 3 storage alignment, useBarnStore/webSqliteAdapter split, and shim retirement complete so extracted packages require zero rewrites
-verified: tsc=pass | test=pass | build=pass (as of the last slice commit 9cbdbdf; no code changed since, so this is not a fresh run)
-next_action: PARKED by owner decision (2026-11-28). Do not resume automatically. When the owner re-opens it, start with the snapshot row readers/upserters in src/storage/webSqliteAdapter.ts, then the entity CRUD controllers, keeping the 200-key contract snapshot unchanged.
+decisions: Standalone /engine extraction waits until storage alignment, useBarnStore/webSqliteAdapter split, and shim retirement complete so extracted packages require zero rewrites
+verified: tsc=pass | test=pass (focused: 10 new) | build=pending
+next_action: Extract entity CRUD and import/export controllers out of src/hooks/useBarnStore.ts, then auto-wire the port objects; keep the 200-key contract snapshot unchanged.

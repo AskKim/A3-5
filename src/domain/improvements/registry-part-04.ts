@@ -644,8 +644,11 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
           'judge_clubs',
           'judge_assignments',
           'judge_expenses',
-          'enableJudgeNotebook',
         ],
+      },
+      {
+        filePath: 'src/storage/sqliteSnapshotReaders.ts',
+        requiredSubstrings: ['enableJudgeNotebook'],
       },
       {
         filePath: 'src/hooks/useBarnStore.ts',

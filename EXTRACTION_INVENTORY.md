@@ -219,7 +219,9 @@ All legacy browser/worker storage modules are classified `pedigree-domain` in Ph
 - `src/storage/pwaUpdateManager.ts` — `pedigree-domain` — Service Worker registration and update prompt controller.
 - `src/storage/sqliteIdbPersistence.ts` — `pedigree-domain` — IndexedDB persistence, quota recovery, and browser cache purge helpers for `WebSqliteAdapter`.
 - `src/storage/sqliteRowMappers.ts` — `pedigree-domain` — SQLite row-to-domain mappers (`mapSettingsRow`, `mapSqliteAnimalRow`, `mapCageRow`, …) that rebuild barn models from query rows for `WebSqliteAdapter`.
+- `src/storage/sqliteMutationHelpers.ts` — `pedigree-domain` — Transaction envelope plus generic batch-write and multi-row delete helpers (`runSqliteTransaction`, `writeRowsInTransaction`, `deleteRowsForIds`) shared by every `WebSqliteAdapter` write path.
 - `src/storage/sqliteRowWriters.ts` — `pedigree-domain` — SQLite row upsert/delete writers (`upsertSettingsRow`, `upsertAnimalRow`, …) that bind barn models to statements inside `WebSqliteAdapter` transactions.
+- `src/storage/sqliteSnapshotReaders.ts` — `pedigree-domain` — Snapshot row readers (`readSnapshotFromDatabase`, `queryObjectsFromDb`, `mapAnimalRow`) that rebuild every barn table into a `BarnDatabaseSnapshot` for `WebSqliteAdapter`.
 - `src/storage/sqliteSchema.ts` — `pedigree-domain` — Canonical SQLite schema DDL (`PEDIGREE_SQLITE_SCHEMA`) shared across SQLite adapters.
 - `src/storage/storageAdapter.ts` — `pedigree-domain` — Alpha 2 `BarnStorageAdapter` contract.
 - `src/storage/storageProbes.ts` — `pedigree-domain` — Browser storage quota and probe facade over `@engine/storage/browserProbes`.
@@ -318,10 +320,11 @@ here so the inventory keeps matching the tree without rewriting the sections abo
 
 ### 8.2 `src/storage/` split (`pedigree-domain`, browser implementation)
 
-`webSqliteAdapter.ts` now delegates to four modules that carry no UI concerns of their own:
+`webSqliteAdapter.ts` now delegates to six modules that carry no UI concerns of their own:
 `sqliteSchema.ts` (canonical DDL, shared with the native wrappers), `sqliteIdbPersistence.ts`
-(persistence, quota recovery, cache cleanup), `sqliteRowMappers.ts` (row → domain) and
-`sqliteRowWriters.ts` (domain → row). `backgroundFreezeCoordinator.ts`, `opfsTempStream.ts`,
+(persistence, quota recovery, cache cleanup), `sqliteRowMappers.ts` (row → domain),
+`sqliteSnapshotReaders.ts` (SELECTs + snapshot assembly), `sqliteRowWriters.ts` (domain → row) and
+`sqliteMutationHelpers.ts` (transaction envelope, batch write, multi-row delete). `backgroundFreezeCoordinator.ts`, `opfsTempStream.ts`,
 `p2pLanChannel.ts`, `passphraseCrypto.ts` and `storageProbes.ts` are thin domain-wired facades over
 `@engine/*`; they stay `pedigree-domain` because they configure app-specific keys and policies.
 

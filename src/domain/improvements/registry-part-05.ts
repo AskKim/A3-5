@@ -3055,4 +3055,96 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.',
     ],
   },
+  {
+    id: 'IMP-134',
+    title: 'SQLite Snapshot Readers and Mutation Helpers Split Out of the Adapter',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'webSqliteAdapter.ts was still 2,609 lines and carried three unrelated jobs inside one class: connection lifecycle, reading every barn table back into a snapshot, and its own copies of the transaction envelope, batch-write and multi-row-delete loops. A new entity had to re-implement the transaction handling to add a batch save or a cascade delete.',
+    summary:
+      'Adds `src/storage/sqliteSnapshotReaders.ts` (`readSnapshotFromDatabase`, `queryObjectsFromDb`, `mapAnimalRow`, lightweight-photo projections, missing-table tolerance) and `src/storage/sqliteMutationHelpers.ts` (`runSqliteTransaction`, `writeRowsInTransaction`, `deleteRowsForIds`). The adapter drops 2,609 → 2,352 lines and now describes statements instead of loop-and-transaction plumbing: `saveEntityBatch` calls `writeRowsInTransaction`, and `deleteAnimalsBatch`/`deleteTasksBatch` pass their cascade SQL to `deleteRowsForIds`. New `sqliteSnapshotReaders.test.ts` and `sqliteMutationHelpers.test.ts` (10 tests) cover name ordering, malformed JSON falling back without dropping the row, lightweight payload stripping, a missing optional table, commit, rollback-and-rethrow, empty batches, and multi-statement deletes.',
+    files: [
+      'src/storage/sqliteSnapshotReaders.ts',
+      'src/storage/sqliteMutationHelpers.ts',
+      'src/storage/__tests__/sqliteSnapshotReaders.test.ts',
+      'src/storage/__tests__/sqliteMutationHelpers.test.ts',
+      'src/storage/webSqliteAdapter.ts',
+      'EXTRACTION_INVENTORY.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/sqliteSnapshotReaders.ts',
+        requiredSubstrings: ['readSnapshotFromDatabase', 'queryObjectsFromDb', 'lightweightPhotos'],
+        rationale:
+          'The lightweight-photo projection is the difference between a fast boot and a 40 MB snapshot read; it has to stay next to the readers that apply it.',
+      },
+      {
+        filePath: 'src/storage/webSqliteAdapter.ts',
+        requiredSubstrings: ["from './sqliteSnapshotReaders'", 'deleteRowsForIds', 'writeRowsInTransaction'],
+        rationale:
+          'The adapter must keep delegating snapshot reads and batch mutations instead of growing a second copy of either loop.',
+      },
+    ],
+    restorePlaybook: [
+      'Snapshot reads belong in `sqliteSnapshotReaders.ts`; a new table is one query plus one mapper call there, not a new adapter method.',
+      'Batch writes and multi-row deletes belong in `sqliteMutationHelpers.ts`; pass statements, do not re-open a transaction by hand.',
+      'Keep the missing-table tolerance in `safeTableQuery` — older imported databases legitimately lack the newer tables.',
+    ],
+  },
+  {
+    id: 'IMP-135',
+    title: 'Handoff Closure Must Scan Every Handoff File',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Finishing one handoff was reported as `NO PENDING WORK` while `docs/plans/handoff-modularity-reusability.yaml` still had seven open steps. The workflow only ever looked at the file it was reading, so a second open handoff was invisible at the exact moment a run decided it was done.',
+    summary:
+      '`prompts/resume_backlog_plan_prompt.md` and `prompts/start_new_backlog_prompt.md` now require scanning **every** `handoff-*.yaml`, name the failure mode they prevent, and treat a finished file as not a finished directory: the run re-scans `docs/plans/` after each closure and continues the next open handoff. The run-end rule in the resume prompt now says the run ends only when every open handoff and plan is empty. `GEMINI.md` emits one `PENDING HANDOFF` line per open file and reserves `NO PENDING WORK` for a directory with no open steps, with the same re-scan rule in the Resume protocol.',
+    files: [
+      'prompts/resume_backlog_plan_prompt.md',
+      'prompts/start_new_backlog_prompt.md',
+      'GEMINI.md',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'GEMINI.md',
+        requiredSubstrings: ['for **every** open file', 'after scanning **all** `handoff-*.yaml` files'],
+        rationale:
+          'The status line is the first thing a run reports; if it can name only one file, a second open handoff stays invisible.',
+      },
+      {
+        filePath: 'prompts/resume_backlog_plan_prompt.md',
+        requiredSubstrings: [
+          're-scan `docs/plans/handoff-*.yaml` after every closure',
+          'List **every** open `handoff-*.yaml`',
+        ],
+        rationale:
+          'The resume path decides when a run is finished, so the all-files scan and the re-scan rule have to live there.',
+      },
+      {
+        filePath: 'prompts/start_new_backlog_prompt.md',
+        requiredSubstrings: [
+          'scan every `handoff-*.yaml`, not just the first',
+          'a finished file is not a finished directory',
+        ],
+        rationale:
+          'The backlog gate is the other place that can start unrelated work while a handoff is still open.',
+      },
+    ],
+    restorePlaybook: [
+      'Never report `NO PENDING WORK` from the file in hand: list `docs/plans/handoff-*.yaml` and read every `status:` block first.',
+      'After closing a handoff, re-scan the directory before moving to a backlog item or ending the run.',
+      'When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.',
+    ],
+  },
 ];
