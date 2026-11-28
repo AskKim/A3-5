@@ -90,6 +90,48 @@
       "status": "completed",
       "completed_at": "2026-11-28T03:06:28Z",
       "touched_files": []
+    },
+    {
+      "step_id": "ci-setup",
+      "branch": "freebuff/ae0e1ce3853e2d9932e8688e",
+      "version": "0.1.0-alpha.3",
+      "head_sha": "8eb7bf2b93f75633ba57e288be2ff5636f51fe92",
+      "platform": "freebuff",
+      "status": "completed",
+      "completed_at": "2026-11-28T12:07:49Z",
+      "touched_files": [
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "step_id": "modularity-check",
+      "branch": "freebuff/ae0e1ce3853e2d9932e8688e",
+      "version": "0.1.0-alpha.3",
+      "head_sha": "8eb7bf2b93f75633ba57e288be2ff5636f51fe92",
+      "platform": "freebuff",
+      "status": "completed",
+      "completed_at": "2026-11-28T12:09:03Z",
+      "touched_files": []
+    },
+    {
+      "step_id": "reusability-check",
+      "branch": "freebuff/ae0e1ce3853e2d9932e8688e",
+      "version": "0.1.0-alpha.3",
+      "head_sha": "8eb7bf2b93f75633ba57e288be2ff5636f51fe92",
+      "platform": "freebuff",
+      "status": "completed",
+      "completed_at": "2026-11-28T12:09:03Z",
+      "touched_files": []
+    },
+    {
+      "step_id": "attribution-audit",
+      "branch": "freebuff/ae0e1ce3853e2d9932e8688e",
+      "version": "0.1.0-alpha.3",
+      "head_sha": "8eb7bf2b93f75633ba57e288be2ff5636f51fe92",
+      "platform": "freebuff",
+      "status": "completed",
+      "completed_at": "2026-11-28T12:09:04Z",
+      "touched_files": []
     }
   ],
   "last_error": null
