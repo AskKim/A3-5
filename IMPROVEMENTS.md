@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (52 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (53 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (116)
+## Logged Improvements (117)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2476,3 +2476,20 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Wrap long operations with `appPerfTimings.time(label, fn)`; never let measurement throw into the caller.
 2. Keep the sample ring bounded.
+
+### IMP-117: Conflicts Can Be Cleared by Expiry Without a Delete Path
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** The review log kept every collision ever detected, and the loader sorted the whole history on every load — but there was no way to delete a row, so nothing could ever age out.
+- **Summary:** Milestone 3 tail: `src/domain/syncConflictExpiry.ts` decides what ages out and the store applies it during conflict hydration, using a new `deleteSyncConflictsFromIdb` indexed delete. The rule that matters more than the window: **an unresolved conflict never expires**, because resolving is a decision only the owner can make and dropping the row would silently pick a side. Only rows already marked resolved expire, 30 days after `detected_at`; an unparseable timestamp counts as recent, a disabled window or bad clock returns the log unchanged, and survivors keep their newest-first order. Pruning is reported as a storage diagnostic rather than happening silently.
+- **Tracked Files:** `src/domain/syncConflictExpiry.ts`, `src/storage/localSyncChannels.ts`, `src/hooks/useBarnStore.ts`, `src/domain/__tests__/syncConflictExpiry.test.ts`, `EXTRACTION_INVENTORY.md`
+
+**Automated Invariants Checked:**
+- `src/domain/syncConflictExpiry.ts` must contain `export function planSyncConflictRetention`, `conflict.resolved === true` — *The resolved check is the safety property: expiring an open conflict destroys an undecided choice.*
+- `src/hooks/useBarnStore.ts` must contain `planSyncConflictRetention`, `deleteSyncConflictsFromIdb` — *A planner nobody calls leaves the log growing forever — the state this entry replaces.*
+
+**Restoration Playbook if Overwritten:**
+1. Only resolved conflicts expire; the window runs from `detected_at`.
+2. Deleting review-log rows is best effort: the log is history, not source of truth.

@@ -637,6 +637,40 @@ export async function saveSyncConflictInIdb(conflict: SyncConflictEntry): Promis
   await appendSyncConflictsToIdb([conflict]);
 }
 
+/** Delete review-log rows by id. Best effort: the log is history, not source of truth. */
+export async function deleteSyncConflictsFromIdb(
+  conflictIds: readonly string[]
+): Promise<void> {
+  if (conflictIds.length === 0 || !getSafeIndexedDb()) return;
+  await withCrossTabLock(SYNC_OUTBOX_LOCK_NAME, async () => {
+    try {
+      await withSyncIdb(
+        (db) =>
+          new Promise<void>((resolve, reject) => {
+            const tx = db.transaction(STORE_CONFLICTS, 'readwrite');
+            const untrackTx = trackActiveIdbTransaction(tx);
+            const store = tx.objectStore(STORE_CONFLICTS);
+            for (const conflictId of conflictIds) store.delete(conflictId);
+            tx.oncomplete = () => {
+              untrackTx();
+              resolve();
+            };
+            tx.onerror = () => {
+              untrackTx();
+              reject(tx.error);
+            };
+            tx.onabort = () => {
+              untrackTx();
+              reject(tx.error || new Error('Sync conflict delete aborted'));
+            };
+          })
+      );
+    } catch {
+      // Nothing to recover: the next load simply re-reads what survived.
+    }
+  });
+}
+
 export async function clearAllSyncStateInIdb(): Promise<void> {
   if (!getSafeIndexedDb()) return;
   await withCrossTabLock(SYNC_OUTBOX_LOCK_NAME, async () => {

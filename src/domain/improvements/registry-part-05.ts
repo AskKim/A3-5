@@ -2246,4 +2246,43 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the sample ring bounded.',
     ],
   },
+  {
+    id: 'IMP-117',
+    title: 'Conflicts Can Be Cleared by Expiry Without a Delete Path',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'The review log kept every collision ever detected, and the loader sorted the whole history on every load — but there was no way to delete a row, so nothing could ever age out.',
+    summary:
+      'Milestone 3 tail: `src/domain/syncConflictExpiry.ts` decides what ages out and the store applies it during conflict hydration, using a new `deleteSyncConflictsFromIdb` indexed delete. The rule that matters more than the window: **an unresolved conflict never expires**, because resolving is a decision only the owner can make and dropping the row would silently pick a side. Only rows already marked resolved expire, 30 days after `detected_at`; an unparseable timestamp counts as recent, a disabled window or bad clock returns the log unchanged, and survivors keep their newest-first order. Pruning is reported as a storage diagnostic rather than happening silently.',
+    files: [
+      'src/domain/syncConflictExpiry.ts',
+      'src/storage/localSyncChannels.ts',
+      'src/hooks/useBarnStore.ts',
+      'src/domain/__tests__/syncConflictExpiry.test.ts',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/syncConflictExpiry.ts',
+        requiredSubstrings: [
+          'export function planSyncConflictRetention',
+          'conflict.resolved === true',
+        ],
+        rationale:
+          'The resolved check is the safety property: expiring an open conflict destroys an undecided choice.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['planSyncConflictRetention', 'deleteSyncConflictsFromIdb'],
+        rationale:
+          'A planner nobody calls leaves the log growing forever — the state this entry replaces.',
+      },
+    ],
+    restorePlaybook: [
+      'Only resolved conflicts expire; the window runs from `detected_at`.',
+      'Deleting review-log rows is best effort: the log is history, not source of truth.',
+    ],
+  },
 ];

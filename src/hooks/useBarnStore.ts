@@ -177,6 +177,7 @@ import {
   disconnectBackupSyncFolder,
   getOrCreateLocalDeviceId,
   getPersistedBackupSyncStatus,
+  deleteSyncConflictsFromIdb,
   loadAllSyncConflictsFromIdb,
   loadAllSyncOperationsFromIdb,
   reauthorizeBackupSyncFolder,
@@ -295,6 +296,7 @@ import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
 import { useAnimalsCrud, type AnimalsCrudAdapter } from './barnStore/useAnimalsCrud';
 import { usePhotoMutations, type PhotoMutationAdapter } from './barnStore/usePhotoMutations';
 import { useBreeding, type BreedingAdapter } from './barnStore/useBreeding';
+import { planSyncConflictRetention } from '../domain/syncConflictExpiry';
 import { planSyncOperationRetention } from '../domain/syncRetention';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
@@ -1021,8 +1023,18 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
           void loadAllSyncConflictsFromIdb()
             .then((conflicts) => {
               if (!mounted) return;
-              syncConflictsRef.current = conflicts;
-              setSyncConflicts(conflicts);
+              // Only already-resolved rows expire; an open conflict is a decision nobody has made.
+              const { kept, expired } = planSyncConflictRetention(conflicts);
+              if (expired.length > 0) {
+                void deleteSyncConflictsFromIdb(expired.map((c) => c.conflict_id));
+                logDiagnosticEvent({
+                  level: 'info',
+                  category: 'storage',
+                  message: `Pruned ${expired.length} resolved sync conflict(s) past the retention window; ${kept.length} kept.`,
+                });
+              }
+              syncConflictsRef.current = kept;
+              setSyncConflicts(kept);
             })
             .catch((err) => {
               logDiagnosticEvent({
