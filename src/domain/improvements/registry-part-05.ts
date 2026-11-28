@@ -4595,7 +4595,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'src/features/reminders/reminderSchedule.ts',
       'src/features/reminders/index.ts',
       'src/features/reminders/__tests__/reminderSchedule.test.ts',
-      'docs/plans/handoff-platform-capabilities.yaml',
+      'docs/plans/handoff-platform-ingress.yaml',
       'EXTRACTION_INVENTORY.md',
       'IMPROVEMENTS.md',
       'MODULES.md',
@@ -4615,6 +4615,85 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-171',
+    title: 'Cover Gantt Drag, Resize and Keyboard Rescheduling',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'IMP-169 covered the Gantt grid but left its pointer path untested: dragging a bar, resizing its start edge and arrow-key nudging are the gestures that actually write new chore dates, and a sign error there would move work silently.',
+    summary:
+      'Extends `barnSchedulerGantt.render.test.tsx` with the pointer and keyboard path: a two-column drag commits `onRescheduleTask` with both dates shifted two days, a same-day drag and a cancelled drag commit nothing, dragging the bar separator resizes the start edge by one day while the due date stays put, arrow keys nudge one day each way, and a chore with an unusable date lands in the unscheduled strip where `Schedule Today` reschedules it to today. Gantt coverage goes 46.8% → 64.5% (branches 70%, functions 61%), so the component statement floor moves to 37.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        rationale:
+          'This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
+        requiredSubstrings: ['COLUMN_PX', 'pointerCancel', "getByRole('separator')"],
+        rationale:
+          'The pixel-to-column constant, the cancel branch and the resize separator are the three pieces that make the drag tests exercise real commit logic instead of a click.',
+      },
+    ],
+    restorePlaybook: [
+      'jsdom reports `clientWidth` as 0, so the component falls back to a 560px track; with the default 21-day window one column is 560/21 ≈ 26.7px and a two-column drag is +2 days.',
+      'Fire `pointermove` and `pointerup` on `window` (the effect binds there), and wait for the bar to report `aria-pressed="true"` before moving, or the listener is not attached yet.',
+      'Starting a drag from the separator selects the owning bar, not the separator: assert selection on the bar.',
+    ],
+  },
+  {
+    id: 'IMP-172',
+    title: 'Cover the Gantt LAN Handshake Wiring',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The Gantt drawer mounts the whole LAN pairing UI — offer code, answer code, connect, push outbox, shared folder — but every one of those handlers was unreachable in tests because jsdom has no WebRTC, so a mis-wired argument would have shipped silently.',
+    summary:
+      'Adds `barnSchedulerGanttLan.render.test.tsx`, mocking the `p2pLanChannel` port and driving the drawer: generating an offer passes the device id and shows the token, a rejected offer shows its error instead of a code, a pasted host offer produces the answer code, Connect refuses with no session and then completes a real one, Push Outbox is absent until the link reports connected and then sends the delta (with send failures surfaced), a picked sync folder reads peer files and merges them through `onReconcileOutboxOps`, and unmounting closes the session. Gantt coverage goes 64.5% → 85.1% (branches 79%); totals 63.79/53.55/49.98/65.38, inside the existing floors, so no ratchet is needed.',
+    files: [
+      'src/components/__tests__/barnSchedulerGanttLan.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/__tests__/barnSchedulerGanttLan.render.test.tsx',
+        requiredSubstrings: [
+          "vi.mock('../../app/ports/p2pLanChannel'",
+          'Paste host Offer code',
+          'Push Outbox to Peer',
+        ],
+        rationale:
+          'The port mock, the offer-code input and the connected-only push control are what make this a wiring test of the drawer rather than of the transport.',
+      },
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/engine/**'"],
+        rationale:
+          'The floors did not move in this change, so the entry only guards that the per-area thresholds still exist.',
+      },
+    ],
+    restorePlaybook: [
+      'Use `vi.hoisted` for the controller stub and keep mutable capture (the options handed to `createLanP2pSession`) inside that hoisted object — referencing the hoisted object from its own initializer is a TDZ error.',
+      'Drive the connected state by calling the captured `onStateChange(\'connected\')` inside `act`, then the Push Outbox button appears.',
+      'The component closes the session on unmount, so assert `close` after `unmount()` rather than after a click.',
+    ],
+  },
+  {
+    id: 'IMP-173',
     title: 'Add the Web Reminder Delivery Port and Persisted Opt-In',
     category: 'workflow-polish',
     release: 'alpha-3',

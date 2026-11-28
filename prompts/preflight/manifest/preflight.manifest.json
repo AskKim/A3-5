@@ -69,6 +69,7 @@
       "type": "REUSABLE",
       "phase": "A",
       "runners": ["ai-studio", "freebuff"],
+      "track": "release",
       "instruction": "read ONLY `<!-- PHASE_A_START -->` through `<!-- PHASE_A_END -->`",
       "description": "Phase-A release sanity check."
     },
@@ -78,6 +79,7 @@
       "type": "REUSABLE",
       "phase": "A",
       "runners": ["ai-studio", "freebuff"],
+      "track": "release",
       "instruction": "AGPL-3.0 & `THIRD_PARTY_NOTICES.md` audit from `package-lock.json` (use `npm ls --json` only if a shell exists)",
       "description": "AGPL-3 attribution audit."
     },
@@ -87,6 +89,7 @@
       "type": "REUSABLE",
       "phase": "A",
       "runners": ["ai-studio", "freebuff"],
+      "track": "release",
       "instruction": "SemVer & changelog sync; the duplicate guard stops a repeat",
       "description": "Version bump and changelog sync."
     },
@@ -150,8 +153,9 @@
       "type": "REUSABLE",
       "phase": "B",
       "runners": ["antigravity", "freebuff"],
+      "track": "release",
       "human_signoff": true,
-      "instruction": "read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`; HUMAN GATE - its post-merge smoke is human-assisted, so it logs `awaiting_human` unless a person confirms it with --human-signoff",
+      "instruction": "read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`; its post-merge smoke is human-assisted",
       "description": "Phase-B release sanity check."
     },
     {
@@ -160,8 +164,9 @@
       "type": "REUSABLE",
       "phase": "B",
       "runners": ["antigravity", "freebuff"],
+      "track": "release",
       "human_signoff": true,
-      "instruction": "release cut, post-deploy smoke test, human-only sign-off; HUMAN GATE - the sign-off is listed, never performed, so it logs `awaiting_human` unless a person confirms it with --human-signoff",
+      "instruction": "release cut, post-deploy smoke test, human-only sign-off that is listed rather than performed",
       "description": "Final release plan and sign-off."
     }
   ]

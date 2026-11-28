@@ -215,7 +215,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/app/ports/pedigreeOcrScanner.ts` — `pedigree-domain` — Pedigree OCR scanning capability port for the pedigree scanner panel (IMP-156).
 - `src/app/ports/passphraseCrypto.ts` — `pedigree-domain` — Backup passphrase encryption capability port for the import hub (IMP-156).
 - `src/app/ports/p2pLanChannel.ts` — `pedigree-domain` — Peer-to-peer LAN channel capability port for the barn scheduler Gantt (IMP-156).
-- `src/app/ports/reminders.tsx` — `pedigree-domain` — Reminders capability port: composes the `@features/reminders` schedule with `src/storage/reminderScheduler` delivery, injectable with a provider (IMP-171).
+- `src/app/ports/reminders.tsx` — `pedigree-domain` — Reminders capability port: composes the `@features/reminders` schedule with `src/storage/reminderScheduler` delivery, injectable with a provider (IMP-173).
 - `src/app/ports/webSqliteMaintenance.ts` — `pedigree-domain` — Web SQLite cache-purge capability port for the crash boundary (IMP-156).
 
 ---
@@ -224,7 +224,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 All legacy browser/worker storage modules are classified `pedigree-domain` in Phases 1–3 (`storageProbes`, `opfsTempStream`, `passphraseCrypto`, `backgroundFreezeCoordinator`, `p2pLanChannel`, `photoHydration`, `localSyncChannels`, `storageProtection`, `cloudAppFolderSync`, and `weatherForecast` delegate core primitives to `@engine/storage/*` & `@engine/primitives/*`):
 - `src/storage/archiveAndImport.worker.ts` — `pedigree-domain` — Off-thread `.ZIP` backup and external archive import Web Worker.
-- `src/storage/reminderScheduler.ts` — `pedigree-domain` — Persisted reminder opt-in, snoozes, delivered-key watermark and service-worker notification delivery (IMP-171).
+- `src/storage/reminderScheduler.ts` — `pedigree-domain` — Persisted reminder opt-in, snoozes, delivered-key watermark and service-worker notification delivery (IMP-173).
 - `src/storage/backgroundFreezeCoordinator.ts` — `pedigree-domain` — Page lifecycle freeze/resume flush coordinator facade over `@engine/storage/lifecycleCoordinator`.
 - `src/storage/capturedIdeasStore.ts` — `pedigree-domain` — Local storage store for captured user ideas.
 - `src/storage/cloudAppFolderSync.ts` — `pedigree-domain` — File System Access API / OAuth cloud folder sync driver.

@@ -7,26 +7,26 @@
 > `prompts/preflight/manifest/preflight.manifest.json`. Do not edit by hand: run
 > `npm run preflight:gen -- --write`, and `npm run preflight:lint` fails on drift.
 
-| Step ID | Prompt File | Type | Phase | Runners (preferred first) |
-|---|---|---|---|---|
-| seed-handshake | `run-uni/seed-handshake.md` | FIRST_TIME | A | ai-studio → freebuff |
-| a11y-setup | `run-uni/a11y.md` | FIRST_TIME | A | ai-studio → freebuff |
-| crawl-setup | `run-uni/crawl-setup.md` | FIRST_TIME | A | ai-studio → freebuff |
-| ci-setup | `run-uni/ci-setup.md` | FIRST_TIME | A | ai-studio → freebuff |
-| a11y-check | `run-uni/a11y-check.md` | REUSABLE | A | ai-studio → freebuff |
-| modularity-check | `run-uni/modularity-check.md` | REUSABLE | A | ai-studio → freebuff |
-| reusability-check | `run-uni/reusability-check.md` | REUSABLE | A | ai-studio → freebuff |
-| release-check-p1 | `run-uni/release-check.md` | REUSABLE | A | ai-studio → freebuff |
-| attribution-audit | `run-uni/audit.md` | REUSABLE | A | ai-studio → freebuff |
-| ver-update | `run-uni/ver-update.md` | REUSABLE | A | ai-studio → freebuff |
-| ai-baseline | `run-uni/ai.md` | FIRST_TIME | B | antigravity → freebuff |
-| scripts-lint-setup | `run-uni/scripts-lint-setup.md` | FIRST_TIME | B | antigravity → freebuff |
-| backup-setup | `run-uni/backup-setup.md` | FIRST_TIME | B | antigravity → freebuff |
-| crawl-guide | `run-uni/crawl-guide.md` | REUSABLE | B | antigravity → freebuff |
-| backup-check | `run-uni/backup-check.md` | REUSABLE | B | antigravity → freebuff |
-| ci-guide | `run-uni/ci-guide.md` | REUSABLE | B | antigravity → freebuff |
-| release-check-p2 | `run-uni/release-check.md` | REUSABLE | B | antigravity → freebuff |
-| release-plan | `run-uni/release-plan.md` | REUSABLE | B | antigravity → freebuff |
+| Step ID | Track | Prompt File | Type | Phase | Runners (preferred first) |
+|---|---|---|---|---|---|
+| seed-handshake | preflight | `run-uni/seed-handshake.md` | FIRST_TIME | A | ai-studio → freebuff |
+| a11y-setup | preflight | `run-uni/a11y.md` | FIRST_TIME | A | ai-studio → freebuff |
+| crawl-setup | preflight | `run-uni/crawl-setup.md` | FIRST_TIME | A | ai-studio → freebuff |
+| ci-setup | preflight | `run-uni/ci-setup.md` | FIRST_TIME | A | ai-studio → freebuff |
+| a11y-check | preflight | `run-uni/a11y-check.md` | REUSABLE | A | ai-studio → freebuff |
+| modularity-check | preflight | `run-uni/modularity-check.md` | REUSABLE | A | ai-studio → freebuff |
+| reusability-check | preflight | `run-uni/reusability-check.md` | REUSABLE | A | ai-studio → freebuff |
+| release-check-p1 | release | `run-uni/release-check.md` | REUSABLE | A | ai-studio → freebuff |
+| attribution-audit | release | `run-uni/audit.md` | REUSABLE | A | ai-studio → freebuff |
+| ver-update | release | `run-uni/ver-update.md` | REUSABLE | A | ai-studio → freebuff |
+| ai-baseline | preflight | `run-uni/ai.md` | FIRST_TIME | B | antigravity → freebuff |
+| scripts-lint-setup | preflight | `run-uni/scripts-lint-setup.md` | FIRST_TIME | B | antigravity → freebuff |
+| backup-setup | preflight | `run-uni/backup-setup.md` | FIRST_TIME | B | antigravity → freebuff |
+| crawl-guide | preflight | `run-uni/crawl-guide.md` | REUSABLE | B | antigravity → freebuff |
+| backup-check | preflight | `run-uni/backup-check.md` | REUSABLE | B | antigravity → freebuff |
+| ci-guide | preflight | `run-uni/ci-guide.md` | REUSABLE | B | antigravity → freebuff |
+| release-check-p2 | release | `run-uni/release-check.md` | REUSABLE | B | antigravity → freebuff |
+| release-plan | release | `run-uni/release-plan.md` | REUSABLE | B | antigravity → freebuff |
 
 ## The Two Step Types
 
@@ -37,6 +37,16 @@
 There is no third class for work that happens once per release. That is a `REUSABLE` step
 whose duplicate guard finds a `completed` entry in `docs/handoff-state.json` for the same
 branch + version + HEAD and skips it with the completion timestamp.
+
+## The Two Tracks
+
+- **preflight** — the sweep in `pf-launcher-uni.md`. It runs for any piece of work, and it has
+  no human gates, so it always reaches the end.
+- **release** — the tail in `pf-release-uni.md`. It only runs when cutting a release, because
+  it ends in decisions a person has to make. A step in this track may declare
+  `human_signoff`, which `preflight-log.mjs` turns into `awaiting_human` unless
+  `--human-signoff "<who/how>"` is supplied. The generator rejects a human gate on a
+  `preflight` step, because that would block every ordinary run.
 
 ## Phase Routing And Runner Brackets
 

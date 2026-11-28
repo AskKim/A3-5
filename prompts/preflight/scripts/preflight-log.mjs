@@ -13,6 +13,7 @@ import {
 } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { dirname } from 'node:path';
+import { sweepStatus } from './sweep-status.mjs';
 
 const args = process.argv.slice(2);
 const getArg = (flag) => {
@@ -71,6 +72,34 @@ if (!stepId || !['completed', 'failed', 'skipped'].includes(status) || !PLATFORM
 const statePath = 'docs/handoff-state.json';
 const lockPath = 'docs/.handoff.lock';
 mkdirSync(dirname(statePath), { recursive: true });
+
+// The release track is a tail, not a second sweep: it only runs on top of a sweep that finished
+// for this branch and version. Filing a release step over an unfinished sweep is how a release
+// gets cut on evidence nobody gathered, so this refuses before touching the lock or the state.
+function sweepGap() {
+  try {
+    if (!existsSync(statePath)) return ['<docs/handoff-state.json missing>'];
+    const current = JSON.parse(readFileSync(statePath, 'utf8'));
+    const manifest = JSON.parse(
+      readFileSync('prompts/preflight/manifest/preflight.manifest.json', 'utf8')
+    );
+    return sweepStatus(current, manifest.steps).missing;
+  } catch (err) {
+    return [`<state unreadable: ${err instanceof Error ? err.message : String(err)}>`];
+  }
+}
+
+if (step?.track === 'release') {
+  const gap = sweepGap();
+  if (gap.length > 0) {
+    console.error(
+      `RELEASE_BLOCKED [${stepId}]: the sweep is not complete for this branch and version. ` +
+        `Missing: ${gap.join(', ')}. Run pf-launcher-uni.md to the end first; a release is not ` +
+        'the place to discover an unfinished sweep.'
+    );
+    process.exit(1);
+  }
+}
 
 if (existsSync(lockPath)) {
   const ageMs = Date.now() - statSync(lockPath).mtimeMs;

@@ -277,3 +277,116 @@ describe('BarnSchedulerGantt', () => {
     ).toBe(true);
   });
 });
+
+/** A chore with an explicit two-day span, so move versus resize can be told apart. */
+function spannedTask(): BarnTask {
+  return {
+    ...sampleTasks[0],
+    id: 'gantt-drag-task',
+    category: 'Care',
+    priority: 'Low',
+    completed: false,
+    startDateIso: addDaysIso(todayDateIso(), 8),
+    dueDateIso: addDaysIso(todayDateIso(), 10),
+  };
+}
+
+/**
+ * jsdom reports `clientWidth` as 0, so the component falls back to a 560px track; with the default
+ * 21-day window each day column is 560/21 ≈ 26.7px. These helpers drag by whole columns.
+ */
+const COLUMN_PX = 560 / 21;
+
+async function beginDrag(target: HTMLElement, clientX = 100, bar: HTMLElement = target) {
+  fireEvent.pointerDown(target, { clientX, button: 0, pointerType: 'mouse' });
+  // Starting a drag from the separator still selects the bar that owns it.
+  await vi.waitFor(() => expect(bar.getAttribute('aria-pressed')).toBe('true'));
+  return clientX;
+}
+
+describe('BarnSchedulerGantt pointer and keyboard scheduling', () => {
+  it('reschedules a chore two days later when its bar is dragged and released', async () => {
+    const task = spannedTask();
+    const handlers = renderGantt({ tasks: [task] });
+    const bar = barFor([task], task.dueDateIso);
+
+    const startX = await beginDrag(bar);
+    fireEvent.pointerMove(window, { clientX: startX + COLUMN_PX * 2 });
+    fireEvent.pointerUp(window);
+
+    await vi.waitFor(() =>
+      expect(handlers.onRescheduleTask).toHaveBeenCalledWith(task, {
+        startDateIso: addDaysIso(task.startDateIso as string, 2),
+        dueDateIso: addDaysIso(task.dueDateIso, 2),
+      })
+    );
+  });
+
+  it('does not reschedule when the drag lands on the same day or is cancelled', async () => {
+    const task = spannedTask();
+    const handlers = renderGantt({ tasks: [task] });
+    const bar = barFor([task], task.dueDateIso);
+
+    const startX = await beginDrag(bar);
+    fireEvent.pointerMove(window, { clientX: startX + 3 });
+    fireEvent.pointerUp(window);
+    expect(handlers.onRescheduleTask).not.toHaveBeenCalled();
+
+    await beginDrag(bar);
+    fireEvent.pointerMove(window, { clientX: startX + COLUMN_PX * 3 });
+    fireEvent.pointerCancel(window);
+    expect(handlers.onRescheduleTask).not.toHaveBeenCalled();
+  });
+
+  it('resizes the start edge from the bar separator without moving the due date', async () => {
+    const task = spannedTask();
+    const handlers = renderGantt({ tasks: [task] });
+    const bar = barFor([task], task.dueDateIso);
+    const separator = within(bar).getByRole('separator');
+
+    const startX = await beginDrag(separator, 100, bar);
+    fireEvent.pointerMove(window, { clientX: startX + COLUMN_PX });
+    fireEvent.pointerUp(window);
+
+    await vi.waitFor(() =>
+      expect(handlers.onRescheduleTask).toHaveBeenCalledWith(task, {
+        startDateIso: addDaysIso(task.startDateIso as string, 1),
+        dueDateIso: task.dueDateIso,
+      })
+    );
+  });
+
+  it('nudges the selected chore by keyboard arrows', async () => {
+    const task = spannedTask();
+    const handlers = renderGantt({ tasks: [task] });
+    const bar = barFor([task], task.dueDateIso);
+
+    fireEvent.keyDown(bar, { key: 'ArrowRight' });
+    await vi.waitFor(() =>
+      expect(handlers.onRescheduleTask).toHaveBeenCalledWith(task, {
+        startDateIso: addDaysIso(task.startDateIso as string, 1),
+        dueDateIso: addDaysIso(task.dueDateIso, 1),
+      })
+    );
+
+    fireEvent.keyDown(bar, { key: 'ArrowLeft' });
+    await vi.waitFor(() =>
+      expect(handlers.onRescheduleTask).toHaveBeenCalledWith(task, {
+        startDateIso: addDaysIso(task.startDateIso as string, -1),
+        dueDateIso: addDaysIso(task.dueDateIso, -1),
+      })
+    );
+  });
+
+  it('offers to schedule a chore that has no usable dates', () => {
+    const task: BarnTask = { ...sampleTasks[0], id: 'gantt-unscheduled', dueDateIso: 'not-a-date' };
+    const handlers = renderGantt({ tasks: [task] });
+
+    expect(screen.getByText('Unscheduled Chores (1)')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Schedule Today' }));
+    expect(handlers.onRescheduleTask).toHaveBeenCalledWith(task, {
+      startDateIso: '',
+      dueDateIso: todayDateIso(),
+    });
+  });
+});

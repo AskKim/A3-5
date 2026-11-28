@@ -23,7 +23,7 @@ by `npm run verify:prompts`. Whenever a prompt in `/prompts/` is added, refined,
 accidentally overwritten, run the verifier to pinpoint any lost directives or protection flags
 and follow the restoration playbook below.
 
-- **Active Prompt Trackers:** 11
+- **Active Prompt Trackers:** 12
 - **Archived Snapshot Trackers:** 1
 
 ## Quick Verification Commands
@@ -38,7 +38,7 @@ npm run verify
 
 ---
 
-## Logged Prompt Revisions (12)
+## Logged Prompt Revisions (13)
 
 ### PRM-001: Active Master System Prompt Governance, Alignment & Registry Mandates
 
@@ -221,3 +221,17 @@ Status:     active
 **Recovery Playbook if Broken or Overwritten:**
 1. Restore the launcher from the pristine template (`node prompts/preflight/scripts/preflight-reset.mjs --full`), then re-render it with `npm run preflight:gen -- --write`.
 2. Restore `prompts/preflight/manifest/preflight.manifest.json` as the only step list; never reintroduce a second manifest copy or a third step type.
+
+## pf-release-uni 2026-11-28 — Preflight Release Runner — Release Tail Split From The Sweep
+Prompt:     prompts/preflight/pf-release-uni.md @ 64db14b
+Why:        The sweep is run for any piece of work, but it ended in a version bump, an AGPL audit, the release checklist and a sign-off only a person can give, so every ordinary run stopped at work that did not apply to it - and one of those steps was once filed complete without its human-assisted smoke test ever running.
+Changed:    Steps now carry a `track`: `preflight` (13 steps, 7 Phase A and 6 Phase B) renders into `pf-launcher-uni.md` and always reaches the end, while `release` (5 steps: `release-check-p1`, `attribution-audit`, `ver-update`, `release-check-p2`, `release-plan`) renders into the new `pf-release-uni.md` from the same manifest. The generator rejects `human_signoff` on a preflight step, and `preflight-log.mjs` records `awaiting_human` instead of `completed` for a gated step unless `--human-signoff "<who/how>"` is passed. A release step is additionally refused outright (`RELEASE_BLOCKED`) unless every sweep step has a `completed` entry for the same branch and version, so a release can never be filed on top of an unfinished or failed sweep. That rule lives once in `sweep-status.mjs`, shared by the guard and by the `preflight-state.mjs --require-sweep` self-check the runner tells a person to run (exit 1 with `sweep_incomplete` and the missing ids), and both paths are covered by `npm test`.
+Status:     active
+
+**Protected Invariants:**
+- `prompts/preflight/pf-release-uni.md` must contain `# PreFlight Release Runner`, `## Precondition: A Finished Sweep`, `RELEASE_BLOCKED`, `HUMAN GATE`, `--human-signoff` — *The release runner is generated, so the precondition and the human-gate contract live on its face; losing either would let a release run without a finished sweep or let a gate be closed by the runner that did the machine work.*
+
+**Recovery Playbook if Broken or Overwritten:**
+1. Re-render both runners with `npm run preflight:gen -- --write`; never hand-edit `pf-launcher-uni.md` or `pf-release-uni.md`.
+2. Keep `human_signoff` legal only on `release` steps and keep the `RELEASE_BLOCKED` precondition in `preflight-log.mjs`; both are what stop a false completion.
+3. Keep `sweep-status.mjs` as the only definition of a finished sweep, shared by the writer and the `--require-sweep` self-check, and keep `preflightReleaseGuard.test.ts` passing: a manual probe does not survive a refactor.

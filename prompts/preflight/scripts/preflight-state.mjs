@@ -5,6 +5,11 @@
 // Usage:
 //   node prompts/preflight/scripts/preflight-state.mjs [--branch <name>] [--version <tag>]
 //   node prompts/preflight/scripts/preflight-state.mjs --write-hash
+//   node prompts/preflight/scripts/preflight-state.mjs --require-sweep
+//
+// `--require-sweep` is what the release runner tells a person to run: it exits 1 with
+// `sweep_incomplete` when any sweep step has no `completed` entry for this branch and version,
+// using the same rule as the writer's RELEASE_BLOCKED guard.
 //
 // Prints one JSON object to stdout. Exit 0 = state readable and Phase A acceptable for Phase B,
 // exit 1 = missing/invalid state or a hard stop (stale, delta, branch/version mismatch).
@@ -13,6 +18,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { sweepStatus } from './sweep-status.mjs';
 
 const STATE_PATH = 'docs/handoff-state.json';
 const CONFIG_PATH = 'prompts/preflight/preflight.config.json';
@@ -168,8 +174,14 @@ const delta = changedPathsInScope(state.ai_studio_commit_sha, scope);
 const currentAnchor = anchorSummary(ANCHOR_FILE);
 const storedAnchor = state.improvement_log_anchor ?? null;
 
+// Shared with the writer's release guard, never re-derived: a check that answers a different
+// question than the gate it advertises is worse than no check at all.
+const sweep = sweepStatus(state, manifestSteps);
+const requireSweep = args.includes('--require-sweep');
+
 const reasons = [];
 if (validationErrors.length > 0) reasons.push('state_invalid');
+if (requireSweep && sweep.missing.length > 0) reasons.push('sweep_incomplete');
 if (state.ai_studio_status !== 'completed') reasons.push('phase_a_incomplete');
 if (elapsedHours === null) reasons.push('phase_a_timestamp_missing');
 else if (elapsedHours > staleHours) reasons.push('phase_a_stale');
@@ -214,6 +226,7 @@ const summary = {
   phase_a_scope_hash: state.phase_a_scope_hash ?? null,
   phase_a_scope_delta: delta,
   improvement_log_anchor: currentAnchor,
+  sweep,
   resume_cursor: state.resume_cursor ?? null,
   resume_step_id: nextStep ? nextStep.id : null,
   // Phase comes from the manifest, never from a second hand-maintained list in this file.
@@ -221,11 +234,14 @@ const summary = {
   last_error: state.last_error ?? null,
   validation_errors: validationErrors,
   blocked_reasons: reasons,
-  next_action: nextStep
-    ? `Run step ${nextStep.id} (${nextStep.file}).`
-    : reasons.length === 0
-      ? 'All manifest steps completed for this branch, version and HEAD; proceed to release-plan sign-off.'
-      : 'Resolve blocked_reasons, run --write-hash after copying sandbox edits, then resume.',
+  next_action:
+    requireSweep && sweep.missing.length > 0
+      ? `Sweep incomplete for ${state.active_branch} @ ${state.target_version}; run pf-launcher-uni.md to the end. Missing: ${sweep.missing.join(', ')}.`
+      : nextStep
+        ? `Run step ${nextStep.id} (${nextStep.file}).`
+        : reasons.length === 0
+          ? 'All manifest steps completed for this branch, version and HEAD; proceed to release-plan sign-off.'
+          : 'Resolve blocked_reasons, run --write-hash after copying sandbox edits, then resume.',
 };
 
 console.log(JSON.stringify(summary, null, 2));

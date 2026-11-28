@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (106 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (108 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (170)
+## Logged Improvements (172)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3268,7 +3268,7 @@ Status:     active
 
 ## 2026-11-28 — Add a Pure Reminder Schedule Builder for On-Device Delivery
 Why:        The app has no reminder implementation at all, and the first platform-ingress milestone needs the scheduling rules to exist before any delivery channel (service worker or WorkerManager) can transport them.
-Changed:    `src/features/reminders/reminderSchedule.ts`, `src/features/reminders/index.ts`, `src/features/reminders/__tests__/reminderSchedule.test.ts`, `docs/plans/handoff-platform-capabilities.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
+Changed:    `src/features/reminders/reminderSchedule.ts`, `src/features/reminders/index.ts`, `src/features/reminders/__tests__/reminderSchedule.test.ts`, `docs/plans/handoff-platform-ingress.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
 Status:     active
 
 **Automated Invariants Checked:**
@@ -3277,6 +3277,34 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep biological rules out of `@features/reminders`: the caller passes species-adjusted offset days and titles, so the builder holds no gestation or species table.
 2. Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.
+
+## 2026-11-28 — Cover Gantt Drag, Resize and Keyboard Rescheduling
+Why:        IMP-169 covered the Gantt grid but left its pointer path untested: dragging a bar, resizing its start edge and arrow-key nudging are the gestures that actually write new chore dates, and a sign error there would move work silently.
+Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.*
+- `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `COLUMN_PX`, `pointerCancel`, `getByRole('separator')` — *The pixel-to-column constant, the cancel branch and the resize separator are the three pieces that make the drag tests exercise real commit logic instead of a click.*
+
+**Restoration Playbook if Overwritten:**
+1. jsdom reports `clientWidth` as 0, so the component falls back to a 560px track; with the default 21-day window one column is 560/21 ≈ 26.7px and a two-column drag is +2 days.
+2. Fire `pointermove` and `pointerup` on `window` (the effect binds there), and wait for the bar to report `aria-pressed="true"` before moving, or the listener is not attached yet.
+3. Starting a drag from the separator selects the owning bar, not the separator: assert selection on the bar.
+
+## 2026-11-28 — Cover the Gantt LAN Handshake Wiring
+Why:        The Gantt drawer mounts the whole LAN pairing UI — offer code, answer code, connect, push outbox, shared folder — but every one of those handlers was unreachable in tests because jsdom has no WebRTC, so a mis-wired argument would have shipped silently.
+Changed:    `src/components/__tests__/barnSchedulerGanttLan.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/__tests__/barnSchedulerGanttLan.render.test.tsx` must contain `vi.mock('../../app/ports/p2pLanChannel'`, `Paste host Offer code`, `Push Outbox to Peer` — *The port mock, the offer-code input and the connected-only push control are what make this a wiring test of the drawer rather than of the transport.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/engine/**'` — *The floors did not move in this change, so the entry only guards that the per-area thresholds still exist.*
+
+**Restoration Playbook if Overwritten:**
+1. Use `vi.hoisted` for the controller stub and keep mutable capture (the options handed to `createLanP2pSession`) inside that hoisted object — referencing the hoisted object from its own initializer is a TDZ error.
+2. Drive the connected state by calling the captured `onStateChange('connected')` inside `act`, then the Push Outbox button appears.
+3. The component closes the session on unmount, so assert `close` after `unmount()` rather than after a click.
 
 ## 2026-11-28 — Add the Web Reminder Delivery Port and Persisted Opt-In
 Why:        The schedule builder needs a channel: an opt-in that survives reloads, a permission handshake that never nags, and delivery that cannot double-fire when a tab is reopened — with the layering rule that `src/storage` may not import `@features`.
