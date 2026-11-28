@@ -196,6 +196,16 @@ if (
   reasons.push('improvement_log_anchor_changed');
 }
 
+// A step logged at an older commit is not stale when nothing it audited has changed since. The
+// exact-HEAD rule made every finished sweep read as unfinished the moment its own state file was
+// committed, so a runner could never see a sweep as done. Scope is what a step actually checked,
+// and `phase_a_scope_delta` above already reasons from the same notion.
+const scopeUntouchedSince = (sha) => {
+  if (sha === headSha) return true;
+  const changed = changedPathsInScope(sha, scope);
+  return Array.isArray(changed) && changed.length === 0;
+};
+
 const completedForRun = new Set(
   (Array.isArray(state.history) ? state.history : [])
     .filter(
@@ -204,7 +214,7 @@ const completedForRun = new Set(
         entry.status === 'completed' &&
         entry.branch === state.active_branch &&
         entry.version === state.target_version &&
-        (entry.head_sha === headSha || entry.head_sha === 'sandbox-uncommitted')
+        (entry.head_sha === 'sandbox-uncommitted' || scopeUntouchedSince(entry.head_sha))
     )
     .map((entry) => entry.step_id)
 );

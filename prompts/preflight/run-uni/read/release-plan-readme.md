@@ -10,7 +10,7 @@ This readme is **dual-audience**: **Part 1** explains the step in plain English 
 
 - **You need this step when:** last, once every other step is `completed` for this branch and version.
 - **How often:** every release.
-- **Which assistant runs it:** Anti-Gravity or Freebuff (Phase B).
+- **Which assistant runs it:** Anti-Gravity or Freebuff (last of the five release steps).
 - **How you know it worked:** `OK [release-plan] files=<count>` plus the ordered cut plan and the exact tag name; then `COMPLETE`.
 
 ---

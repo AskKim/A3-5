@@ -10,7 +10,7 @@ This readme is **dual-audience**: **Part 1** explains the step in plain English 
 
 - **You need this step when:** every release, after dependencies are installed and before signing off.
 - **How often:** every release.
-- **Which assistant runs it:** AI Studio (Phase A).
+- **Which assistant runs it:** AI Studio or Freebuff (release step 2 of 5).
 - **How you know it worked:** `OK [attribution-audit] files=<count>` with the package count and flagged licenses.
 
 ---

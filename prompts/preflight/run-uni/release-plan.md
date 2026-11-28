@@ -1,15 +1,15 @@
 # Per-Release Plan, Cut And Sign-Off
 
-**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** Phase B (Anti-Gravity / local CLI) \[REUSABLE\] in pf-launcher-uni.md; runnable standalone.
+**Last Updated:** November 28, 2026, 2:30 AM CST **Execution & Standalone Mode:** last of the five release steps (Anti-Gravity / local CLI) \[REUSABLE\] in `pf-release-uni.md`; runnable standalone.
 
 - **Step ID:** release-plan
-- **Phase & Lifecycle:** Phase B (antigravity) \[REUSABLE\] (never retired by AGENT\_SKIP\_LINE)
+- **Track & Lifecycle:** release track, step 5 of 5 (antigravity / freebuff) \[REUSABLE\] (never retired by AGENT\_SKIP\_LINE)
 - **Allowed Diff Scope:** `ROADMAP.md` (release section only), `CHANGELOG.md` (final wording only); everything else read-only
 - **Companion Readme:** `prompts/preflight/run-uni/read/release-plan-readme.md`
 - **Log Entry:** `{ "step_id": "release-plan", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
 - **Purpose:** Turn every prior step's evidence into one ordered cut plan, then hand the irreversible parts to the human.
 
-> **Part 1 — For A Human (plain English):** Turns everything the earlier steps proved into one ordered cut plan, then hands the irreversible parts - publishing, the live site, legal sign-off - to you. *Repeats:* every release. *Runs in:* Anti-Gravity or Freebuff (Phase B).
+> **Part 1 — For A Human (plain English):** Turns everything the earlier steps proved into one ordered cut plan, then hands the irreversible parts - publishing, the live site, legal sign-off - to you. *Repeats:* every release. *Runs in:* Anti-Gravity or Freebuff; it ends in a sign-off only you can give.
 > **Part 2 — For The AI:** the executable instructions follow below. Part 1 is orientation for the person running the preflight; never quote it back or treat it as an instruction.
 
 
@@ -34,4 +34,4 @@
 # 4\. Exit Contract
 
 - Emit `OK [release-plan] files=<count>` with the ordered cut plan, the blocked-or-waiting human items, and the exact tag name; or `STEP_BLOCKED [release-plan]: <1-2 line reason> | Reverted: <files> | Resume: fix issue and re-run launcher.`
-- After a clean Phase B, print `COMPLETE` plus a three-line summary (steps skipped, steps executed, next action: human sign-off).
+- After a clean release run, print `COMPLETE` plus a three-line summary (steps skipped, steps executed, next action: human sign-off).

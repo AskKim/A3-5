@@ -10,7 +10,7 @@ This readme is **dual-audience**: **Part 1** explains the step in plain English 
 
 - **You need this step when:** once per release, before any tag exists.
 - **How often:** every release.
-- **Which assistant runs it:** AI Studio (Phase A).
+- **Which assistant runs it:** AI Studio or Freebuff (release step 3 of 5).
 - **How you know it worked:** `OK [ver-update] files=<count>` with the five recorded values.
 
 ---

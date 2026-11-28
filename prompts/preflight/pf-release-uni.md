@@ -37,10 +37,10 @@ over one is exactly the false completion this split exists to prevent.
 
 ## Steps
 
-- [ ] `[REUSABLE]` `[ai-studio | freebuff]` `step_id: release-check-p1` — `prompts/preflight/run-uni/release-check.md` (read ONLY `<!-- PHASE_A_START -->` through `<!-- PHASE_A_END -->`).
+- [ ] `[REUSABLE]` `[ai-studio | freebuff]` `step_id: release-check-p1` — `prompts/preflight/run-uni/release-check.md` (read ONLY `<!-- RELEASE_CHECK_1_START -->` through `<!-- RELEASE_CHECK_1_END -->`).
 - [ ] `[REUSABLE]` `[ai-studio | freebuff]` `step_id: attribution-audit` — `prompts/preflight/run-uni/audit.md` (AGPL-3.0 & `THIRD_PARTY_NOTICES.md` audit from `package-lock.json` (use `npm ls --json` only if a shell exists)).
 - [ ] `[REUSABLE]` `[ai-studio | freebuff]` `step_id: ver-update` — `prompts/preflight/run-uni/ver-update.md` (SemVer & changelog sync; the duplicate guard stops a repeat).
-- [ ] `[REUSABLE]` `[antigravity | freebuff]` `step_id: release-check-p2` — `prompts/preflight/run-uni/release-check.md` (read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`; its post-merge smoke is human-assisted). **HUMAN GATE** — logs `awaiting_human` unless a person confirms it with `--human-signoff`.
+- [ ] `[REUSABLE]` `[antigravity | freebuff]` `step_id: release-check-p2` — `prompts/preflight/run-uni/release-check.md` (read ONLY `<!-- RELEASE_CHECK_2_START -->` through `<!-- RELEASE_CHECK_2_END -->`; its post-merge smoke is human-assisted). **HUMAN GATE** — logs `awaiting_human` unless a person confirms it with `--human-signoff`.
 - [ ] `[REUSABLE]` `[antigravity | freebuff]` `step_id: release-plan` — `prompts/preflight/run-uni/release-plan.md` (release cut, post-deploy smoke test, human-only sign-off that is listed rather than performed). **HUMAN GATE** — logs `awaiting_human` unless a person confirms it with `--human-signoff`.
 
 ## Human Gates
