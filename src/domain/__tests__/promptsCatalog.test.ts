@@ -39,9 +39,7 @@ describe('promptsCatalog — /prompts/ inventory, protection flags & active/arch
       'master_system_prompt_old_v1.md',
       'master_system_prompt_old_v2.md',
       'master_system_prompt_old_v4.md',
-      'modularity_check_prompt.md',
       'resume_backlog_plan_prompt.md',
-      'reusability_check_prompt.md',
       'start_new_backlog_prompt.md',
     ]);
 
@@ -52,7 +50,7 @@ describe('promptsCatalog — /prompts/ inventory, protection flags & active/arch
 
     const manifest = buildPromptsCatalogManifest(filesByPath, '2026-11-18T10:00:00.000Z');
     expect(manifest.folderPath).toBe('/prompts');
-    expect(manifest.entries).toHaveLength(10);
+    expect(manifest.entries).toHaveLength(8);
     expect(isValidPromptsManifest(manifest)).toBe(true);
 
     for (const entry of manifest.entries) {
@@ -68,8 +66,6 @@ describe('promptsCatalog — /prompts/ inventory, protection flags & active/arch
       'start_new_backlog_prompt.md',
       'resume_backlog_plan_prompt.md',
       'fix_error_log_prompt.md',
-      'modularity_check_prompt.md',
-      'reusability_check_prompt.md',
       'core_hygiene.md',
     ]);
     expect(archived.map((e) => e.filename)).toEqual([

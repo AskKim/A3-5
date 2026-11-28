@@ -1,15 +1,23 @@
 <!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->
 # Reusability Check
 
-**Last-Edited Timestamp:** 2026-11-27  
-**Prompt Reusability:** Reusable across projects & repositories (auto-discovers shared modules, conventions, and verification suites)
+**Last-Edited Timestamp:** 2026-11-28  
+**Prompt Reusability:** Reusable across projects & repositories (auto-discovers shared modules, conventions, and verification suites)  
+**Preflight Lifecycle:** `[REUSABLE]` — scheduled on every release in Phase B of `prompts/preflight/pf-launcher-uni.md`; never retired by `AGENT_SKIP_LINE`
+
+- **Step ID:** reusability-check
+- **Phase & Lifecycle:** Phase B (antigravity / local CLI) \[REUSABLE\]; also runnable standalone, and in Phase A when the audit needs no build
+- **Allowed Diff Scope:** shared modules and their callers, inventories/barrels, and the tests that prove the new seam
+- **Companion Readme:** `prompts/preflight/run-uni/read/reusability-check-readme.md`
+- **Log Entry:** `{ "step_id": "reusability-check", "branch": "<branch-name>", "version": "<version-tag>", "head_sha": "<HEAD|sandbox-uncommitted>", "platform": "antigravity", "status": "completed", "completed_at": "<YYYY-MM-DDTHH:MM:SSZ>", "touched_files": [] }`
+- **Purpose:** Find where shared code is accidentally domain-, host-, or shape-locked, and generalise only what genuinely pays for itself.
 
 > **Reusable Prompt Notice:**
 > This prompt is **project-agnostic and reusable** across any TypeScript/JavaScript or multi-module codebase. It dynamically inspects the target repository's structure, shared packages/layers, conventions, and verification scripts before evaluating and improving code reusability.
 >
 > **Protection & Execution Rule (`DO_NOT_REMOVE_WITHOUT_CONFIRMATION`):**
 > Whenever the user asks you to read, load, or run this file, **immediately execute this workflow once** from Phase 1 through Phase 4 without asking for confirmation (unless blocked by an unresolvable ambiguity or a required change to a protected/locked file).
-> **Do not delete, move, overwrite, or remove this file from `/prompts/` without explicit user confirmation.**
+> **Do not delete, move, overwrite, or remove this file from `prompts/` (currently `prompts/preflight/run-uni/reusability-check.md`) without explicit user confirmation.**
 
 ---
 
@@ -49,7 +57,7 @@ Audit shared, utility, feature, storage, and domain/UI modules for reusability b
 - **If actionable reusability issues are found:**
   - If the repo uses a checkpointed plan/handoff convention for multi-file (`>= 3` files) changes, create and update it as required, then proceed immediately.
   - Apply fixes in safe, incremental steps:
-    1. **Consolidate Duplication:** Move or point duplicated pure logic and micro-utilities (slugifiers, escapers, deterministic hashes, binary/data-URL codecs, etc.) to the canonical shared primitive/codec/feature/utility module without introducing heavy transitive dependencies.
+    1. **Consolidate Duplication:** Move or point duplicated pure logic and micro-utilities (slugifiers, escapers, deterministic hashes, binary/data-URL codecs, etc.) to the canonical shared primitive/codec/feature/utility module without introducing heavy transitive dependencies. Confirm the canonical owner already exists before inventing a module: a second home for the same helper is a regression, not a fix. Report the duplicated line count you removed so the gain is measurable.
     2. **Parameterize & Decouple:** Replace hardcoded prefixes, brand strings, domain schemas, or concrete host globals with typed options, generics `<T>`, schema configs, or adapter/bridge interfaces, keeping thin domain-bound wrappers in `app/` or `domain/` for existing callers.
     3. **Harden Lifecycle & Singleton Isolation:** Ensure shared utilities clean up timers/listeners/handles/URLs cleanly and expose explicit initialization, `reset*`, or DI seams paired with test assertions.
     4. **Sync Inventories & Contracts:** Update any module inventories/docs (e.g., `EXTRACTION_INVENTORY.md`), barrel exports, and layer tests to reflect newly generalized or extracted modules.
@@ -62,4 +70,9 @@ Audit shared, utility, feature, storage, and domain/UI modules for reusability b
   1. **Reusability Scorecard:** Status of all verification, isolated-compile, test, and build checks.
   2. **Improvements Applied (or Confirmed Clean):** Duplications consolidated, modules parameterized/decoupled, and DI seams added (with file paths).
   3. **Remaining Opportunities:** Any lower-priority or intentionally domain-bound modules left as-is and why.
-  4. **Estimated Reusability:** After completing all edits (if any), output `Estimated Reusability: <0-100>%` followed by a 1-line objective basis (extractable domain-free surface ratio, duplication elimination, DI parameterization, singleton reset/lifecycle safety, and remaining app-coupled modules).
+  4. **Checks That Could Not Run:** Every gate you skipped or that could not execute here, with the missing toolchain or permission that blocked it - never presented as a pass. Include any audit that printed success while verifying nothing because its input was absent.
+  5. **Estimated Reusability:** After completing all edits (if any), output `Estimated Reusability: <0-100>%` followed by a 1-line objective basis (extractable domain-free surface ratio, duplication elimination, DI parameterization, singleton reset/lifecycle safety, and remaining app-coupled modules).
+
+## Exit Contract
+
+- Print `OK [reusability-check] files=<count>` with the scorecard and duplication counts when the audit finishes, or `STEP_BLOCKED [reusability-check]: <1-2 line reason> | Reverted: <files> | Resume: fix issue and re-run launcher.` when a consolidation cannot be completed safely in this run. Revert only the files this step touched.

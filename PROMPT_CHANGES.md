@@ -62,32 +62,32 @@ npm run verify
 - **Prompt File:** `prompts/start_new_backlog_prompt.md`
 - **Lifecycle:** `active`
 - **Category:** Backlog & Handoff Workflows (`backlog-workflow`)
-- **Last Edited:** 2026-11-24
-- **Intent:** Pick the top item from `docs/plans/suggestions-backlog.md` and drive end-to-end implementation without clobbering active plans.
-- **Change Summary:** Redirects immediately to `resume_backlog_plan_prompt.md` if an active plan already exists, enforces full audit/build verification, and marks completed suggestions cleanly.
+- **Last Edited:** 2026-11-28
+- **Intent:** Pick the top item from `docs/plans/suggestions-backlog.md` and drive end-to-end implementation without clobbering active plans or open handoffs.
+- **Change Summary:** Precheck now covers open handoffs as well as active plans: an unfinished `handoff-*.yaml` is continued before any new backlog item is started, and only when neither exists does the workflow pick an entry. Still redirects to `resume_backlog_plan_prompt.md` for active plans and enforces full audit/build verification.
 - **Tracked Files:** `prompts/start_new_backlog_prompt.md`
 
 **Protected Invariants:**
-- `prompts/start_new_backlog_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `suggestions-backlog.md`, `resume_backlog_plan_prompt.md` — *Backlog starter prompt must stay protected and check for active plans before starting a new item.*
+- `prompts/start_new_backlog_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `suggestions-backlog.md`, `resume_backlog_plan_prompt.md`, `handoff-*.yaml` — *Backlog starter prompt must stay protected and check for both active plans and open handoffs before starting a new item.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/start_new_backlog_prompt.md` with precheck redirect to `prompts/resume_backlog_plan_prompt.md`.
+1. Restore `prompts/start_new_backlog_prompt.md` with the open-handoff precheck and the redirect to `prompts/resume_backlog_plan_prompt.md`.
 
 ### PRM-004: Resume Active Backlog Plan Continuation Workflow
 
 - **Prompt File:** `prompts/resume_backlog_plan_prompt.md`
 - **Lifecycle:** `active`
 - **Category:** Backlog & Handoff Workflows (`backlog-workflow`)
-- **Last Edited:** 2026-11-24
-- **Intent:** Resume in-progress multi-step implementation plans safely after loading master governance.
-- **Change Summary:** Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, runs full verification, and removes finished temporary plan files.
+- **Last Edited:** 2026-11-28
+- **Intent:** Resume in-progress multi-step implementation plans or open handoffs safely after loading master governance.
+- **Change Summary:** Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, resumes an open `handoff-*.yaml` when no active plan exists, and treats a milestone closure as a checkpoint, not a turn boundary, so one run continues milestone-to-milestone until the list is empty or the budget runs out. Runs full verification and removes finished temporary plan files.
 - **Tracked Files:** `prompts/resume_backlog_plan_prompt.md`
 
 **Protected Invariants:**
-- `prompts/resume_backlog_plan_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `prompts/master_system_prompt.md` — *Resume prompt must stay protected and always load `prompts/master_system_prompt.md` first.*
+- `prompts/resume_backlog_plan_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `prompts/master_system_prompt.md`, `handoff-*.yaml`, `checkpoint, not a turn boundary` — *Resume prompt must stay protected, load `prompts/master_system_prompt.md` first, treat an open handoff as work to continue rather than work to replace, and keep the continuity rule that stops a green checkpoint from ending the run.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/resume_backlog_plan_prompt.md` with phase-by-phase plan continuation and delete-on-wrapup cleanup.
+1. Restore `prompts/resume_backlog_plan_prompt.md` with phase-by-phase plan continuation, open-handoff continuation and delete-on-wrapup cleanup.
 
 ### PRM-005: Automated Crash Diagnostic & Code Remediation Prompt
 
@@ -108,35 +108,35 @@ npm run verify
 
 ### PRM-006: Reusable 4-Phase Modularity Check Prompt
 
-- **Prompt File:** `prompts/modularity_check_prompt.md`
+- **Prompt File:** `prompts/preflight/run-uni/modularity-check.md`
 - **Lifecycle:** `active`
 - **Category:** Modularity & Reusability Audits (`architecture-audit`)
-- **Last Edited:** 2026-11-27
+- **Last Edited:** 2026-11-28
 - **Intent:** Provide a concise, project-agnostic modularity evaluation and remediation prompt covering layer direction, shared types, sibling isolation, cycles, and inventory sync.
-- **Change Summary:** Added protected reusable `modularity_check_prompt.md` and refined Phase 2–4 to enforce comment/string-safe scanning, `hooks/` & `components/` coverage, shared type placement out of UI components, all-layer cycle detection, and final `Estimated Modularity` percentage reporting.
-- **Tracked Files:** `prompts/modularity_check_prompt.md`, `src/domain/promptsCatalog.ts`
+- **Change Summary:** Added protected reusable `modularity-check.md` and refined Phase 2–4 to enforce comment/string-safe scanning, `hooks/` & `components/` coverage, shared type placement out of UI components, all-layer cycle detection, gate-honesty reporting (no silent skips), and final `Estimated Modularity` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.
+- **Tracked Files:** `prompts/preflight/run-uni/modularity-check.md`, `prompts/preflight/preflight.manifest.json`, `prompts/preflight/pf-launcher-uni.md`
 
 **Protected Invariants:**
-- `prompts/modularity_check_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `# Modularity Check`, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:` — *Modularity prompt must stay protected, project-agnostic, include all-layer cycle/sibling isolation checks, and report Estimated Modularity percentage.*
+- `prompts/preflight/run-uni/modularity-check.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `# Modularity Check`, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:` — *Modularity prompt must stay protected, project-agnostic, include all-layer cycle/sibling isolation checks, and report Estimated Modularity percentage.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/modularity_check_prompt.md` and verify its entry in `src/domain/promptsCatalog.ts`.
+1. Restore `prompts/preflight/run-uni/modularity-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Sibling Isolation:`, `Estimated Modularity:`) and keep it wired as the `modularity-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.
 
 ### PRM-007: Reusable 4-Phase Reusability Check Prompt
 
-- **Prompt File:** `prompts/reusability_check_prompt.md`
+- **Prompt File:** `prompts/preflight/run-uni/reusability-check.md`
 - **Lifecycle:** `active`
 - **Category:** Modularity & Reusability Audits (`architecture-audit`)
-- **Last Edited:** 2026-11-27
+- **Last Edited:** 2026-11-28
 - **Intent:** Provide a concise, project-agnostic reusability evaluation and refactoring prompt covering domain leakage, duplicated micro-utilities, rigid signatures, singleton teardown, and lifecycle hygiene.
-- **Change Summary:** Added protected reusable `reusability_check_prompt.md` and hardened Phase 2–4 to require micro-utility consolidation without transitive heavy dependency leaks, singleton `reset*` hooks, non-default test fixtures proving reusability, and final `Estimated Reusability` percentage reporting.
-- **Tracked Files:** `prompts/reusability_check_prompt.md`, `src/domain/promptsCatalog.ts`
+- **Change Summary:** Added protected reusable `reusability-check.md` and hardened Phase 2–4 to require micro-utility consolidation onto an existing canonical owner without transitive heavy dependency leaks, singleton `reset*` hooks, non-default test fixtures proving reusability, measurable duplication counts, and final `Estimated Reusability` percentage reporting; relocated from `/prompts/` into `prompts/preflight/run-uni/` and wired as a `[REUSABLE]` Phase B preflight step.
+- **Tracked Files:** `prompts/preflight/run-uni/reusability-check.md`, `prompts/preflight/preflight.manifest.json`, `prompts/preflight/pf-launcher-uni.md`
 
 **Protected Invariants:**
-- `prompts/reusability_check_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `# Reusability Check`, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:` — *Reusability prompt must stay protected, project-agnostic, guard against bundle bloat/singleton lock-in, and report Estimated Reusability percentage.*
+- `prompts/preflight/run-uni/reusability-check.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `# Reusability Check`, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:` — *Reusability prompt must stay protected, project-agnostic, guard against bundle bloat/singleton lock-in, and report Estimated Reusability percentage.*
 
 **Recovery Playbook if Broken or Overwritten:**
-1. Restore `prompts/reusability_check_prompt.md` and verify its entry in `src/domain/promptsCatalog.ts`.
+1. Restore `prompts/preflight/run-uni/reusability-check.md` (protected `DO_NOT_REMOVE_WITHOUT_CONFIRMATION` line 1, `Prompt Reusability:`, `Domain & Brand Leakage in Shared Code:`, `Estimated Reusability:`) and keep it wired as the `reusability-check` `[REUSABLE]` step in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`.
 
 ### PRM-008: Core Hygiene & PII Check Prompt (Core Content-Free Naming + Human/Contact PII Scrub)
 
@@ -153,3 +153,4 @@ npm run verify
 
 **Recovery Playbook if Broken or Overwritten:**
 1. Restore `prompts/core_hygiene.md` and keep it registered in `CURATED_PROMPT_DESCRIPTIONS` in `src/domain/promptsCatalog.ts`.
+

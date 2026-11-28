@@ -552,10 +552,10 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'Provide project-agnostic reusable modularity and reusability evaluation/remediation prompts in /prompts/, improve both prompts, and apply two passes of modularity and reusability improvements across the codebase.',
     summary:
-      'Adds reusable, protected `prompts/modularity_check_prompt.md` (`Modularity Check`) and `prompts/reusability_check_prompt.md` (`Reusability Check`) registered in `src/domain/promptsCatalog.ts`; expands `scripts/audit-layers.ts` to audit `hooks/` and `components/`, block `node:*` imports in browser source with comment/string-literal-safe import parsing, and verifies zero upward leaks by moving `PendingGoogleCalendarSync` from `CalendarIntegrationModals.tsx` to `src/domain/calendarExport.ts`; consolidates duplicated slugifiers, `escapeRegExp`, `escapeHtml`, `dataUrlToBinary`, and `fnv1a32Base36` onto `@engine/primitives/sanitization`, `@engine/binaryEncoding`, and `@engine/primitives/crypto`; exports `resetLazyRouteDefaults`, `resetWebFileConfiguration`, and `resetGoogleCalendarClientConfiguration` singleton reset hooks; and expands cycle/bridge test coverage in `modularLayerArchitecture.test.ts` with accurate `@engine/*` alias resolution.',
+      'Adds reusable, protected `modularity-check.md` (`Modularity Check`) and `reusability-check.md` (`Reusability Check`), later relocated from `/prompts/` into `prompts/preflight/run-uni/` as `[REUSABLE]` preflight steps with mate readmes; expands `scripts/audit-layers.ts` to audit `hooks/` and `components/`, block `node:*` imports in browser source with comment/string-literal-safe import parsing, and verifies zero upward leaks by moving `PendingGoogleCalendarSync` from `CalendarIntegrationModals.tsx` to `src/domain/calendarExport.ts`; consolidates duplicated slugifiers, `escapeRegExp`, `escapeHtml`, `dataUrlToBinary`, and `fnv1a32Base36` onto `@engine/primitives/sanitization`, `@engine/binaryEncoding`, and `@engine/primitives/crypto`; exports `resetLazyRouteDefaults`, `resetWebFileConfiguration`, and `resetGoogleCalendarClientConfiguration` singleton reset hooks; and expands cycle/bridge test coverage in `modularLayerArchitecture.test.ts` with accurate `@engine/*` alias resolution.',
     files: [
-      'prompts/modularity_check_prompt.md',
-      'prompts/reusability_check_prompt.md',
+      'prompts/preflight/run-uni/modularity-check.md',
+      'prompts/preflight/run-uni/reusability-check.md',
       'src/domain/promptsCatalog.ts',
       'scripts/audit-layers.ts',
       'src/engine/primitives/sanitization.ts',
@@ -570,7 +570,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     ],
     invariants: [
       {
-        filePath: 'prompts/modularity_check_prompt.md',
+        filePath: 'prompts/preflight/run-uni/modularity-check.md',
         requiredSubstrings: [
           '# Modularity Check',
           'Prompt Reusability:',
@@ -578,7 +578,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         ],
       },
       {
-        filePath: 'prompts/reusability_check_prompt.md',
+        filePath: 'prompts/preflight/run-uni/reusability-check.md',
         requiredSubstrings: [
           '# Reusability Check',
           'Prompt Reusability:',
@@ -611,7 +611,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Keep `prompts/modularity_check_prompt.md` and `prompts/reusability_check_prompt.md` registered in `src/domain/promptsCatalog.ts`.',
+      'Keep `prompts/preflight/run-uni/modularity-check.md` and `prompts/preflight/run-uni/reusability-check.md` wired as the `modularity-check` / `reusability-check` `[REUSABLE]` preflight steps in `prompts/preflight/preflight.manifest.json` and `prompts/preflight/pf-launcher-uni.md`; both left `src/domain/promptsCatalog.ts` when they moved under `prompts/preflight/`.',
       'Keep `hooks/` and `components/` coverage plus comment/string-safe scanning in `scripts/audit-layers.ts` and keep `PendingGoogleCalendarSync` in `src/domain/calendarExport.ts`.',
       'Keep shared `escapeRegExp`, `slugifySegment`, `fnv1a32Base36`, and `dataUrlToBinary` reuse across domain and utils modules, plus `resetLazyRouteDefaults`, `resetWebFileConfiguration`, and `resetGoogleCalendarClientConfiguration`.',
     ],

@@ -87,22 +87,6 @@ const CURATED_PROMPT_DESCRIPTIONS: Record<string, CuratedPromptDescription> = {
       'Run alongside an exported support-report.txt, error-logs.json, or stack trace to diagnose and fix application crashes.',
     preferredOrder: 4,
   },
-  'modularity_check_prompt.md': {
-    title: 'Modularity Check',
-    summary:
-      'Reusable, project-agnostic 4-phase modularity audit and remediation workflow that discovers repo layer rules and scripts, detects directional import/DOM/cycle/inventory drift, and fixes violations in dependency order.',
-    whenToUse:
-      'Run in this or another codebase to evaluate current modular boundaries and trigger immediate remediation of any structural violations.',
-    preferredOrder: 5,
-  },
-  'reusability_check_prompt.md': {
-    title: 'Reusability Check',
-    summary:
-      'Reusable, project-agnostic 4-phase reusability audit and remediation workflow that detects domain leakage, duplicated logic, rigid signatures, host/singleton lock-in, and lifecycle gaps, then consolidates and parameterizes shared modules.',
-    whenToUse:
-      'Run in this or another codebase to evaluate how reusable shared code and utilities are and refactor accidental coupling or duplication.',
-    preferredOrder: 6,
-  },
   'core_hygiene.md': {
     title: 'Core Hygiene & PII Check',
     summary:
