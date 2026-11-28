@@ -2490,7 +2490,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'IMPROVEMENTS.md and PROMPT_CHANGES.md were hand-maintained and generated at the same time, so the append-only header vanished on regeneration and their prose silently drifted from the registries.',
     summary:
-      'Both ledgers open with a contract header emitted by `src/domain/ledgerContract.ts` (`formatLedgerHeader`), and their registries carry optional `decidedOn`/`status`/`rejected` ledger fields that render the documented `## YYYY-MM-DD — title` shape. `npm run regen:ledgers` writes each ledger from its registry, and `npm run verify:improvements` / `npm run verify:prompts` fail on a missing header, a malformed new entry, or any line that differs from a fresh registry render — so appending means a registry entry plus regeneration, never a hand edit.',
+      'Both ledgers open with a contract header emitted by `src/domain/ledgerContract.ts` (`formatLedgerHeader`), and their registries carry optional `decidedOn`/`status`/`rejected` ledger fields that render the documented `## YYYY-MM-DD — title` shape. `npm run regen:ledgers` writes each ledger from its registry, and `npm run verify:improvements` / `npm run verify:prompts` fail on a missing header, a malformed new entry, or any line that differs from a fresh registry render — so appending means a registry entry plus regeneration, never a hand edit. The formatter\'s shared module also joins the `improvement-registry` manual chunk, because leaving it outside split the facade from its parts and rebuilt the `not iterable` chunk cycle; `npm run verify:site-identity` likewise defaults to the base the build resolves (flag, then `GITHUB_REPOSITORY`, then `homepage`) instead of assuming the domain root.',
     files: [
       'IMPROVEMENTS.md',
       'PROMPT_CHANGES.md',
@@ -2502,6 +2502,8 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'scripts/regen-ledgers.ts',
       'scripts/verify-improvements.ts',
       'scripts/verify-prompts.ts',
+      'scripts/verify-site-identity.ts',
+      'vite.config.ts',
       'package.json',
       'AGENTS.md',
       'GEMINI.md',

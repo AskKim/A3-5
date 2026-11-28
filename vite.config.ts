@@ -535,9 +535,11 @@ export default defineConfig(() => {
               {
                 // The facade and its entry parts MUST share one chunk: splitting them produced a
                 // circular chunk pair (parts <- facade <- parts) that threw "not iterable" at init.
+                // `ledgerContract` belongs here too: it is the facade's dependency, and leaving it
+                // outside split the facade into a second chunk and rebuilt the same cycle.
                 // Rationale prose stays in its own lazily-imported chunk on purpose.
                 name: 'improvement-registry',
-                test: /[\\/]src[\\/]domain[\\/](improvementRegistry\.ts$|improvements[\\/](types|registry-part-\d+)\.ts$)/,
+                test: /[\\/]src[\\/]domain[\\/](improvementRegistry\.ts$|improvements[\\/](types|registry-part-\d+)\.ts$|ledgerContract\.ts$)/,
                 includeDependenciesRecursively: false,
                 priority: 10,
               },

@@ -2591,7 +2591,7 @@ npm run lint && npm run build
 
 ## 2026-11-28 — Append-Only Ledgers Generated From Their Registries
 Why:        IMPROVEMENTS.md and PROMPT_CHANGES.md were hand-maintained and generated at the same time, so the append-only header vanished on regeneration and their prose silently drifted from the registries.
-Changed:    `IMPROVEMENTS.md`, `PROMPT_CHANGES.md`, `src/domain/ledgerContract.ts`, `src/domain/improvementRegistry.ts`, `src/domain/promptRegistry.ts`, `src/domain/improvements/types.ts`, `src/domain/__tests__/ledgerContract.test.ts`, `scripts/regen-ledgers.ts`, `scripts/verify-improvements.ts`, `scripts/verify-prompts.ts`, `package.json`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`
+Changed:    `IMPROVEMENTS.md`, `PROMPT_CHANGES.md`, `src/domain/ledgerContract.ts`, `src/domain/improvementRegistry.ts`, `src/domain/promptRegistry.ts`, `src/domain/improvements/types.ts`, `src/domain/__tests__/ledgerContract.test.ts`, `scripts/regen-ledgers.ts`, `scripts/verify-improvements.ts`, `scripts/verify-prompts.ts`, `scripts/verify-site-identity.ts`, `vite.config.ts`, `package.json`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`
 Rejected:   Keeping a hand-appended ledger tail that regeneration carries over. It lost because two writers had already drifted ten lines in PRM-003/PRM-004, and once appends moved to the registry the region logic rendered the new contract entry and then cut it back out of the file.
 Status:     active
 

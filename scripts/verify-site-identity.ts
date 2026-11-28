@@ -11,10 +11,15 @@
  *
  * Runs against `dist/`, so it is not part of `npm run verify` — call it after a build:
  *   tsx scripts/verify-site-identity.ts --base=/Pedigree/ [--dist=dist]
+ *
+ * Without `--base` it re-resolves the base exactly as the build would (explicit flag,
+ * `GITHUB_REPOSITORY`, then `package.json#homepage`), so a plain `npm run build` is checked
+ * against the base it actually used instead of assuming the domain root.
  */
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { resolveSiteIdentity } from './siteIdentity';
 
 interface Failure {
   artifact: string;
@@ -94,7 +99,9 @@ function redirectPath(raw: string): string | null {
 }
 
 function main(): void {
-  const expectedBase = normalizeBase(readArg('base') ?? '');
+  // `--base` wins, otherwise mirror the build's own resolution rather than assuming `/`.
+  const explicitBase = readArg('base');
+  const expectedBase = normalizeBase(explicitBase ?? resolveSiteIdentity().base);
   const distDir = readArg('dist') ?? 'dist';
   const failures: Failure[] = [];
 
