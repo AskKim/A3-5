@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (48 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (50 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (112)
+## Logged Improvements (114)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2408,3 +2408,37 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Merge properties: order-independent op set, no duplicate ids, idempotent replay, stable local order, bounded log.
 2. Keep the seed list literal so a failing case is reproducible.
+
+### IMP-113: Bulk Conflict Resolution Is Reachable From the Review Log
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** The batched resolver existed but nothing could call it — the review UI only had per-conflict buttons, so the whole queue still meant clicking each row.
+- **Summary:** The Field Collision Review Log header now carries **Keep all applied** and **Use all alternate** whenever more than one conflict is open. They share the row lock under a dedicated key (never a real conflict id), so a bulk run and a row click cannot overlap. The first attempt added a 201st store key and wired it through `src/App.tsx`, and the boot-entry checksum gate rejected the edit — `App.tsx` is checksum-locked, correctly. Instead the existing `resolveSyncConflict` now accepts either one id or a list: a list routes to the batched merge, so the key set stays at 200, no facade claim was needed, and no locked file was touched. The changelog records the widened signature anyway.
+- **Tracked Files:** `src/components/ImportExportHubScreen.tsx`, `src/hooks/barnStore/useSyncConflictResolution.ts`, `docs/contracts/barn-store-contract.md`
+
+**Automated Invariants Checked:**
+- `src/components/ImportExportHubScreen.tsx` must contain `BULK_RESOLVE_LOCK_KEY`, `Keep all applied`, `Use all alternate` — *The bulk resolver is worthless if no control reaches it, and an unlocked bulk run can interleave with a row click.*
+- `src/hooks/barnStore/useSyncConflictResolution.ts` must contain `typeof conflictId !== 'string'`, `resolveAllSyncConflictsAction` — *The list form is the only route to the single-merge path; without it the bulk buttons silently fall back to one merge per conflict.*
+
+**Restoration Playbook if Overwritten:**
+1. Bulk resolve lives on the review-log header, guarded by its own lock key.
+2. Adding a store key means claiming it in a facade and recording it in the contract changelog.
+
+### IMP-114: Contract-Change Gate Requires a Recorded Reason
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** The contract test froze the key set but said nothing about why it changed, so a snapshot edit could land with no explanation beyond the diff.
+- **Summary:** Milestone 6, first half: `npm run verify:contract` compares `barnStoreContract.keys.json` against `docs/contracts/barn-store-contract.md`. The doc must declare the current key count and the snapshot’s SHA-256, and carry at least one dated changelog entry; any silent snapshot edit fails with a message naming the mismatch and telling you to add the line and update both. Added to `npm run verify`, so it runs with the rest of the gates. The changelog starts with the 200-key freeze and the 201st key added for bulk conflict resolution.
+- **Tracked Files:** `scripts/verify-contract-changelog.ts`, `docs/contracts/barn-store-contract.md`, `package.json`
+
+**Automated Invariants Checked:**
+- `docs/contracts/barn-store-contract.md` must contain `## Changelog`, `- Keys: 200`, `- SHA-256:` — *The doc is the gate’s only input; without the declared count, hash and a changelog section the gate has nothing to compare.*
+- `package.json` must contain `verify:contract` — *A gate that is not in `npm run verify` is a gate nobody runs.*
+
+**Restoration Playbook if Overwritten:**
+1. Changing the store contract: update the snapshot, add a dated changelog line, then update the declared key count and SHA-256 in the same change.
+2. The hash is over the snapshot file’s exact bytes.

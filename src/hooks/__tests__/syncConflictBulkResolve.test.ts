@@ -81,6 +81,16 @@ describe('resolveAllSyncConflictsAction', () => {
     expect(createOperation.mock.calls[0][0]).toMatchObject({ newValue: 'winner' });
   });
 
+  it('resolves only the ids it is given', async () => {
+    const { deps, createOperation } = makeDeps([conflict('a'), conflict('b')]);
+
+    const count = await resolveAllSyncConflictsAction(deps, 'winning', ['b']);
+
+    expect(count).toBe(1);
+    expect(createOperation).toHaveBeenCalledTimes(1);
+    expect(createOperation.mock.calls[0][0]).toMatchObject({ entityUuid: 'animal-b' });
+  });
+
   it('does nothing and says so when there is nothing open', async () => {
     const { deps, mergeOperations } = makeDeps([conflict('a', true)]);
     const count = await resolveAllSyncConflictsAction(deps, 'winning');

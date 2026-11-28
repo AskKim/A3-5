@@ -156,6 +156,9 @@ import { ExternalImporterPanel } from './ExternalImporterPanel';
 import { PedigreeOcrScannerPanel } from './PedigreeOcrScannerPanel';
 import { UnifiedBackupVaultPanel } from './UnifiedBackupVaultPanel';
 
+/** Shared lock key for the bulk conflict-resolve buttons (never a real conflict id). */
+const BULK_RESOLVE_LOCK_KEY = '__bulk_conflict_resolve__';
+
 export type ImportExportHubSection = 'all' | 'sync' | 'backup' | 'imports' | 'exporters';
 
 interface ImportExportHubScreenProps {
@@ -187,7 +190,10 @@ interface ImportExportHubScreenProps {
     mode: 'merge' | 'replace'
   ) => Promise<void>;
   onImportDeltaOperations: (ops: SyncOperation[]) => Promise<void>;
-  onResolveSyncConflict: (conflictId: string, side: 'winning' | 'losing') => Promise<void>;
+  onResolveSyncConflict: (
+    conflictId: string | readonly string[],
+    side: 'winning' | 'losing'
+  ) => Promise<void>;
   onDismissSyncConflict: (conflictId: string) => Promise<void>;
   onBuildLocalDeltaJson: () => { filename: string; content: string };
   onRestoreRollingBackup: (key: string) => Promise<void>;
@@ -1679,8 +1685,44 @@ export function ImportExportHubScreen({
 
           {syncConflicts.length > 0 && (
             <div className="border-t border-[var(--barn-sage)]/25 pt-4 space-y-3">
-              <div className="text-xs sm:text-sm font-semibold text-[var(--barn-ink)]">
-                Field Collision Review Log ({unresolvedConflicts.length} unresolved)
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs sm:text-sm font-semibold text-[var(--barn-ink)]">
+                  Field Collision Review Log ({unresolvedConflicts.length} unresolved)
+                </div>
+                {unresolvedConflicts.length > 1 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={conflictRowLock.isKeyLocked(BULK_RESOLVE_LOCK_KEY)}
+                      onClick={() =>
+                        void conflictRowLock.runKeyLocked(BULK_RESOLVE_LOCK_KEY, () =>
+                          onResolveSyncConflict(
+                            unresolvedConflicts.map((c) => c.conflict_id),
+                            'winning'
+                          )
+                        )
+                      }
+                      className="min-h-[40px] sm:min-h-[36px] px-3 py-1.5 rounded-lg bg-[var(--barn-sage)] text-[var(--barn-on-sage)] text-xs font-semibold disabled:opacity-60"
+                    >
+                      Keep all applied
+                    </button>
+                    <button
+                      type="button"
+                      disabled={conflictRowLock.isKeyLocked(BULK_RESOLVE_LOCK_KEY)}
+                      onClick={() =>
+                        void conflictRowLock.runKeyLocked(BULK_RESOLVE_LOCK_KEY, () =>
+                          onResolveSyncConflict(
+                            unresolvedConflicts.map((c) => c.conflict_id),
+                            'losing'
+                          )
+                        )
+                      }
+                      className="min-h-[40px] sm:min-h-[36px] px-3 py-1.5 rounded-lg border border-[var(--barn-border)] bg-[var(--barn-canvas)] text-xs font-medium hover:bg-[var(--barn-subtle)] disabled:opacity-60"
+                    >
+                      Use all alternate
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="space-y-2.5 max-h-64 overflow-y-auto">
                 {syncConflicts.slice(0, 10).map((c) => (

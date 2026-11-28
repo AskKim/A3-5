@@ -114,8 +114,11 @@ export async function resolveSyncConflictAction(
 }
 
 export interface SyncConflictResolution {
-  resolveSyncConflict: (conflictId: string, useSide: SyncConflictSide) => Promise<void>;
-  resolveAllSyncConflicts: (useSide: SyncConflictSide) => Promise<number>;
+  /** One conflict id, or several to resolve together in a single merge. */
+  resolveSyncConflict: (
+    conflictId: string | readonly string[],
+    useSide: SyncConflictSide
+  ) => Promise<void>;
 }
 
 /**
@@ -127,11 +130,13 @@ export interface SyncConflictResolution {
  */
 export async function resolveAllSyncConflictsAction(
   deps: SyncConflictResolutionDeps,
-  useSide: SyncConflictSide
+  useSide: SyncConflictSide,
+  conflictIds?: readonly string[]
 ): Promise<number> {
+  const wanted = conflictIds ? new Set(conflictIds) : null;
   return deps.enqueueStoreMutation(async () => {
     const currentSnapshot = deps.snapshotRef.current;
-    const open = deps.syncConflicts.filter((c) => !c.resolved);
+    const open = deps.syncConflicts.filter((c) => !c.resolved && (!wanted || wanted.has(c.conflict_id)));
     if (!currentSnapshot || open.length === 0) {
       deps.notify('No open sync conflicts to resolve.');
       return 0;
@@ -215,108 +220,63 @@ export function useSyncConflictResolution(
     engine,
   } = deps;
 
+  const callDeps = useCallback(
+    (): SyncConflictResolutionDeps => ({
+      enqueueStoreMutation,
+      snapshotRef,
+      syncConflicts,
+      setSyncConflicts,
+      syncOperationsRef,
+      syncOperationsHydratedRef,
+      setSyncOperations,
+      deviceId,
+      allocateNextLogicalCounter,
+      nextEntityRev,
+      nowIsoUtc,
+      loadSyncOperations,
+      replaceSnapshot,
+      replaceSyncOperations,
+      rebuildMaxRevIndex,
+      saveConflict,
+      reloadFromAdapter,
+      notify,
+      reportPersistenceFailure,
+      engine,
+    }),
+    [
+      enqueueStoreMutation,
+      snapshotRef,
+      syncConflicts,
+      setSyncConflicts,
+      syncOperationsRef,
+      syncOperationsHydratedRef,
+      setSyncOperations,
+      deviceId,
+      allocateNextLogicalCounter,
+      nextEntityRev,
+      nowIsoUtc,
+      loadSyncOperations,
+      replaceSnapshot,
+      replaceSyncOperations,
+      rebuildMaxRevIndex,
+      saveConflict,
+      reloadFromAdapter,
+      notify,
+      reportPersistenceFailure,
+      engine,
+    ]
+  );
+
   const resolveSyncConflict = useCallback(
-    (conflictId: string, useSide: SyncConflictSide) =>
-      resolveSyncConflictAction(
-        {
-          enqueueStoreMutation,
-          snapshotRef,
-          syncConflicts,
-          setSyncConflicts,
-          syncOperationsRef,
-          syncOperationsHydratedRef,
-          setSyncOperations,
-          deviceId,
-          allocateNextLogicalCounter,
-          nextEntityRev,
-          nowIsoUtc,
-          loadSyncOperations,
-          replaceSnapshot,
-          replaceSyncOperations,
-          rebuildMaxRevIndex,
-          saveConflict,
-          reloadFromAdapter,
-          notify,
-          reportPersistenceFailure,
-          engine,
-        },
-        conflictId,
-        useSide
-      ),
-    [
-      enqueueStoreMutation,
-      snapshotRef,
-      syncConflicts,
-      setSyncConflicts,
-      syncOperationsRef,
-      syncOperationsHydratedRef,
-      setSyncOperations,
-      deviceId,
-      allocateNextLogicalCounter,
-      nextEntityRev,
-      nowIsoUtc,
-      loadSyncOperations,
-      replaceSnapshot,
-      replaceSyncOperations,
-      rebuildMaxRevIndex,
-      saveConflict,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-      engine,
-    ]
+    async (conflictId: string | readonly string[], useSide: SyncConflictSide) => {
+      if (typeof conflictId !== 'string') {
+        await resolveAllSyncConflictsAction(callDeps(), useSide, conflictId);
+        return;
+      }
+      await resolveSyncConflictAction(callDeps(), conflictId, useSide);
+    },
+    [callDeps]
   );
 
-  const resolveAllSyncConflicts = useCallback(
-    (useSide: SyncConflictSide) =>
-      resolveAllSyncConflictsAction(
-        {
-          enqueueStoreMutation,
-          snapshotRef,
-          syncConflicts,
-          setSyncConflicts,
-          syncOperationsRef,
-          syncOperationsHydratedRef,
-          setSyncOperations,
-          deviceId,
-          allocateNextLogicalCounter,
-          nextEntityRev,
-          nowIsoUtc,
-          loadSyncOperations,
-          replaceSnapshot,
-          replaceSyncOperations,
-          rebuildMaxRevIndex,
-          saveConflict,
-          reloadFromAdapter,
-          notify,
-          reportPersistenceFailure,
-          engine,
-        },
-        useSide
-      ),
-    [
-      enqueueStoreMutation,
-      snapshotRef,
-      syncConflicts,
-      setSyncConflicts,
-      syncOperationsRef,
-      syncOperationsHydratedRef,
-      setSyncOperations,
-      deviceId,
-      allocateNextLogicalCounter,
-      nextEntityRev,
-      nowIsoUtc,
-      loadSyncOperations,
-      replaceSnapshot,
-      replaceSyncOperations,
-      rebuildMaxRevIndex,
-      saveConflict,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-      engine,
-    ]
-  );
-
-  return { resolveSyncConflict, resolveAllSyncConflicts };
+  return { resolveSyncConflict };
 }
