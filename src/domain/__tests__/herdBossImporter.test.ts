@@ -64,4 +64,67 @@ describe('herdBossImporter & AnimalStatus archive detection', () => {
     expect(byName.get('Andean Star')?.sex).toBe('Male');
     expect(preview.parentLinksResolved).toBeGreaterThanOrEqual(6);
   });
+
+  it('survives quoted commas, CRLF and a BOM while clamping bad values', () => {
+    const csv = [
+      '\uFEFFID,Species,Name,Tag,Sex,Status,Birth_Date,Weight',
+      '201,Rabbit,"Doe, Senior",D-1,Doe,Active,not-a-date,-4',
+    ].join('\r\n');
+    const preview = HerdBossImporter.parse(
+      [{ fileName: 'animals.csv', bytes: encodeCsv(csv) }],
+      makeEmptySnapshot(),
+      { fallbackSpeciesName: 'Rabbit' }
+    );
+
+    expect(preview.animals).toHaveLength(1);
+    expect(preview.animals[0].name).toBe('Doe, Senior');
+    expect(preview.animals[0].weightGrams ?? 0).toBeGreaterThanOrEqual(0);
+  });
+
+  it('keeps imported ids unique when the export repeats them', () => {
+    const csv = [
+      'ID,Species,Name,Tag,Sex',
+      '301,Rabbit,First Doe,D-1,Doe',
+      '301,Rabbit,Second Doe,D-2,Doe',
+    ].join('\n');
+    const preview = HerdBossImporter.parse(
+      [{ fileName: 'animals.csv', bytes: encodeCsv(csv) }],
+      makeEmptySnapshot(),
+      { fallbackSpeciesName: 'Rabbit' }
+    );
+    const ids = preview.animals.map((animal) => animal.id);
+    expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('creates pedigree stubs for unmatched sire and dam references', () => {
+    const csv = [
+      'ID,Species,Name,Tag,Sex,Sire,Dam',
+      '401,Rabbit,Orphan Kit,O-1,Buck,Ghost Buck,Ghost Doe',
+    ].join('\n');
+    const preview = HerdBossImporter.parse(
+      [{ fileName: 'animals.csv', bytes: encodeCsv(csv) }],
+      makeEmptySnapshot(),
+      { fallbackSpeciesName: 'Rabbit' }
+    );
+
+    expect(preview.animals).toHaveLength(3);
+    const kit = preview.animals.find((animal) => animal.name === 'Orphan Kit');
+    const sire = preview.animals.find((animal) => animal.id === kit?.sireId);
+    const dam = preview.animals.find((animal) => animal.id === kit?.damId);
+    expect(sire?.name).toBe('Ghost Buck');
+    expect(dam?.name).toBe('Ghost Doe');
+    expect(sire?.sireId).toBeFalsy();
+    expect(preview.parentLinksResolved).toBeGreaterThanOrEqual(2);
+  });
+
+  it('returns an empty preview for a header-only export', () => {
+    const preview = HerdBossImporter.parse(
+      [{ fileName: 'animals.csv', bytes: encodeCsv('ID,Species,Name,Tag,Sex\n') }],
+      makeEmptySnapshot(),
+      { fallbackSpeciesName: 'Rabbit' }
+    );
+    expect(preview.animals).toHaveLength(0);
+    expect(preview.speciesDetected).toHaveLength(0);
+  });
 });

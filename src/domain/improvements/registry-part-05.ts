@@ -3211,7 +3211,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['thresholds:', 'statements: 57', 'branches: 47', 'functions: 43', 'lines: 58'],
+        requiredSubstrings: ['thresholds:', 'src/domain/**', 'src/components/**', 'src/hooks/**'],
         rationale:
           'The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance. These tokens track the latest ratchet, raised with IMP-146.',
       },
@@ -3590,7 +3590,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 57', 'src/domain/**', 'src/components/**', 'src/hooks/**'],
+        requiredSubstrings: ['thresholds:', 'src/domain/**', 'src/components/**', 'src/hooks/**'],
         rationale:
           'Global floors plus per-area floors are what stop a new untested screen from riding on the tested domain layer; a missing area floor reopens that trade.',
       },
@@ -3642,6 +3642,45 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the idea store behind `IdeasBacklogPort`; a new screen operation becomes a method on the port with the browser default, not a direct storage import.',
       'Check the burn-down ledger after the edit (`npx tsx scripts/audit-layers.ts`) and regenerate it with `--write-ui-budget` only when it shrank.',
       'Assert the screen contract through an injected port so the test does not depend on IndexedDB/OPFS being present.',
+    ],
+  },
+  {
+    id: 'IMP-148',
+    title: 'Coverage Ratchet Raised Again With Feed, Judge, Editor and Importer Tests',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The remaining zero-coverage workspace screens (feed inventory, judge notebook) and the partially covered animal editor and HerdBoss importer were the largest cheap gaps left after IMP-146, and the global floors still sat a full point below the measured values.',
+    summary:
+      'Adds feed-inventory and judge-notebook mounts to the screen suite, a direct animal-editor render suite (existing animal save draft, cancel without saving, new animal creation) and four malformed-export cases for the HerdBoss importer (quoted commas with CRLF and BOM, duplicate ids kept unique, pedigree stubs synthesized for unmatched sire/dam names, header-only file). Together they moved coverage to 59.05/49.13/44.64/60.45, so the floors rise to 58/48/43/59 and the component floor to 24/17/14/24 and hooks to 45/33/44/46. Numeric floors are pinned by this entry only, so future raises do not rewrite older registry entries.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/screensSmoke.render.test.tsx',
+      'src/components/__tests__/animalEditor.render.test.tsx',
+      'src/domain/__tests__/herdBossImporter.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 58', 'branches: 48', 'functions: 43', 'lines: 59'],
+        rationale:
+          'The floors are the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; this entry carries the current numbers and a future ratchet moves them here.',
+      },
+      {
+        filePath: 'src/components/__tests__/animalEditor.render.test.tsx',
+        requiredSubstrings: ['Save ${speciesProfile.name}', 'Cancel', 'onSave'],
+        rationale:
+          'The editor is the only write path for animal records; a suite that stops asserting the save draft or the cancel path would leave that path unverified.',
+      },
+    ],
+    restorePlaybook: [
+      'When a screen renders tab-gated sections, assert the heading and the interactive controls rather than text that only appears on a non-default tab.',
+      'For an importer, test the malformed export arms: quoted commas, BOM/CRLF, duplicate ids and unmatched pedigree names are where the branches live.',
+      'Keep numeric coverage floors pinned in the newest ratchet entry only; older entries should guard the shape of the ratchet, not its historical values.',
     ],
   },
 ];

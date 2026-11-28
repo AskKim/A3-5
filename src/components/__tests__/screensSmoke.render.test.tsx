@@ -16,6 +16,8 @@ import { SpeciesDashboardScreen } from '../SpeciesDashboardScreen';
 import { EconomicsLedgerScreen } from '../EconomicsLedgerScreen';
 import { BreedingScreen } from '../BreedingScreen';
 import { PedigreeScreen } from '../PedigreeScreen';
+import { FeedLedgerScreen } from '../FeedLedgerScreen';
+import { JudgeNotebookScreen } from '../JudgeNotebookScreen';
 import type { ActiveSpeciesData } from '../../hooks/useBarnStore';
 import type { BarnDatabaseSnapshot } from '../../domain/models';
 import { buildFullPredefinedSampleSnapshot } from '../../domain/sampleData';
@@ -219,6 +221,52 @@ describe('BreedingScreen', () => {
     );
     expect(screen.getByText(/Pairing & Cage-Side Logger/)).toBeTruthy();
     expect(screen.getByText(/Projected Kinship/)).toBeTruthy();
+  });
+});
+
+describe('FeedLedgerScreen', () => {
+  it('renders feed inventory and lot ledger rows', () => {
+    render(
+      <FeedLedgerScreen
+        snapshot={snapshot}
+        activeData={activeData}
+        settings={settings}
+        onBackToHub={vi.fn()}
+        onOpenAnimal={vi.fn()}
+        onSaveFeedBatch={vi.fn()}
+        onDeleteFeedBatch={vi.fn()}
+        onLogFeedAllocation={vi.fn()}
+        onDeleteFeedAllocation={vi.fn()}
+        onRunBiosecurityPurge={vi.fn()}
+        onUpdateSettings={vi.fn()}
+        onLoadFullTagPhoto={vi.fn(async () => null)}
+      />
+    );
+    expect(screen.getByText(/Feed Inventory/)).toBeTruthy();
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(3);
+    expect(screen.getAllByRole('tab').length).toBeGreaterThan(0);
+  });
+});
+
+describe('JudgeNotebookScreen', () => {
+  it('renders the judge notebook workspace', () => {
+    render(
+      <JudgeNotebookScreen
+        activeData={activeData}
+        settings={settings}
+        onBackToHub={vi.fn()}
+        onUpdateSettings={vi.fn()}
+        onOpenEconomics={vi.fn()}
+        onSaveJudgeClub={vi.fn()}
+        onDeleteJudgeClub={vi.fn()}
+        onSaveJudgeAssignment={vi.fn()}
+        onDeleteJudgeAssignment={vi.fn()}
+        onSaveJudgeExpense={vi.fn()}
+        onDeleteJudgeExpense={vi.fn()}
+      />
+    );
+    expect(screen.getAllByText(/Judge's Notebook/).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(2);
   });
 });
 

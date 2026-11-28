@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (82 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (83 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (146)
+## Logged Improvements (147)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2818,7 +2818,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/backupExportSurfaces.r
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `thresholds:`, `statements: 57`, `branches: 47`, `functions: 43`, `lines: 58` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance. These tokens track the latest ratchet, raised with IMP-146.*
+- `vitest.config.ts` must contain `thresholds:`, `src/domain/**`, `src/components/**`, `src/hooks/**` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance. These tokens track the latest ratchet, raised with IMP-146.*
 - `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `downloadTextFileMock`, `Herd Roster Spreadsheet`, `getByRole('status')` — *Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.*
 
 **Restoration Playbook if Overwritten:**
@@ -2936,7 +2936,7 @@ Changed:    `vitest.config.ts`, `src/domain/__tests__/modelsNormalizers.test.ts`
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 57`, `src/domain/**`, `src/components/**`, `src/hooks/**` — *Global floors plus per-area floors are what stop a new untested screen from riding on the tested domain layer; a missing area floor reopens that trade.*
+- `vitest.config.ts` must contain `thresholds:`, `src/domain/**`, `src/components/**`, `src/hooks/**` — *Global floors plus per-area floors are what stop a new untested screen from riding on the tested domain layer; a missing area floor reopens that trade.*
 - `src/components/__tests__/screensSmoke.render.test.tsx` must contain `HerdScreen`, `SpeciesDashboardScreen`, `EconomicsLedgerScreen`, `BreedingScreen`, `PedigreeScreen` — *These five screens carried the bulk of the zero-coverage statements; a mount that silently disappears would take thousands of statements back to unexecuted.*
 
 **Restoration Playbook if Overwritten:**
@@ -2957,3 +2957,17 @@ Status:     active
 1. Keep the idea store behind `IdeasBacklogPort`; a new screen operation becomes a method on the port with the browser default, not a direct storage import.
 2. Check the burn-down ledger after the edit (`npx tsx scripts/audit-layers.ts`) and regenerate it with `--write-ui-budget` only when it shrank.
 3. Assert the screen contract through an injected port so the test does not depend on IndexedDB/OPFS being present.
+
+## 2026-11-28 — Coverage Ratchet Raised Again With Feed, Judge, Editor and Importer Tests
+Why:        The remaining zero-coverage workspace screens (feed inventory, judge notebook) and the partially covered animal editor and HerdBoss importer were the largest cheap gaps left after IMP-146, and the global floors still sat a full point below the measured values.
+Changed:    `vitest.config.ts`, `src/components/__tests__/screensSmoke.render.test.tsx`, `src/components/__tests__/animalEditor.render.test.tsx`, `src/domain/__tests__/herdBossImporter.test.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 58`, `branches: 48`, `functions: 43`, `lines: 59` — *The floors are the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; this entry carries the current numbers and a future ratchet moves them here.*
+- `src/components/__tests__/animalEditor.render.test.tsx` must contain `Save ${speciesProfile.name}`, `Cancel`, `onSave` — *The editor is the only write path for animal records; a suite that stops asserting the save draft or the cancel path would leave that path unverified.*
+
+**Restoration Playbook if Overwritten:**
+1. When a screen renders tab-gated sections, assert the heading and the interactive controls rather than text that only appears on a non-default tab.
+2. For an importer, test the malformed export arms: quoted commas, BOM/CRLF, duplicate ids and unmatched pedigree names are where the branches live.
+3. Keep numeric coverage floors pinned in the newest ratchet entry only; older entries should guard the shape of the ratchet, not its historical values.
