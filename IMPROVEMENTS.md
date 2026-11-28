@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (97 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (98 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (161)
+## Logged Improvements (162)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3157,10 +3157,25 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/reportsJournalBench.re
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 60`, `branches: 51`, `functions: 47`, `lines: 62` — *This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.*
 - `src/components/__tests__/reportsJournalBench.render.test.tsx` must contain `Goat Only`, `onCommitEntry`, `5★ Only` — *These three assertions are the only proof that the catalog really switches species, the bench writes through its commit callback and the journal filters actually run.*
 
 **Restoration Playbook if Overwritten:**
 1. The reports category filter is a labelled `<select>`; the header line (`Rabbit Only · N reports · Unit: …`) is split across spans, so assert it against `document.body.textContent`.
 2. The bench disables both save buttons until a draft exists, so a commit test must type a weight into the `Weight Check (…)` field first.
 3. Journal rating is a select (`5★ Only`), but colour categories are toggle buttons; query them by their pressed state rather than by role alone.
+
+## 2026-11-28 — Mount the Photo Gallery, Home Hub and Migration Modal, and Guard the OCR Scanner
+Why:        The animal photo gallery, the first-run home screen and the cross-species migration modal were the last three component modules at zero executable statements, and the offline pedigree scanner was at 2% because nothing exercised its file guards.
+Changed:    `vitest.config.ts`, `src/components/__tests__/photoHomeMigration.render.test.tsx`, `src/storage/__tests__/pedigreeOcrGuards.test.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 61`, `branches: 51`, `functions: 47`, `lines: 63` — *This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.*
+- `src/storage/__tests__/pedigreeOcrGuards.test.ts` must contain `SVG vector files are blocked for security`, `pdf_unsupported`, `manual_empty` — *The SVG refusal is a security guard and the manual-page fallback is the recovery path for an unreadable PDF; losing either assertion leaves both unverified.*
+- `src/components/__tests__/photoHomeMigration.render.test.tsx` must contain `Remove`, `Save Farm Name`, `Confirm Cross-Species Migration` — *These assert the delete confirmation gate, the first-run barn naming write and the migration review step, which are the three irreversible-looking actions in the batch.*
+
+**Restoration Playbook if Overwritten:**
+1. The gallery delete is a two-step inline control: the trash button arms it and a `Remove` button performs the delete.
+2. The OCR guards need no engine: an SVG File is rejected before any decode, and a `%PDF-1.4` header with junk bytes returns `pdf_unsupported` with one `manual_empty` page.
+3. Do not try to cover raster OCR in jsdom; it needs canvas/ImageBitmap and a Tesseract worker, so it stays a browser-only path.
