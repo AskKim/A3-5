@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Isolated Error Boundary for "The Techy Stuff" Developer & Troubleshooting Screen.
+ * Isolated Error Boundary for "Development" Developer & Troubleshooting Screen.
  *
  * Ensures any fault inside diagnostic inspection, memory dump tooling, or developer
  * state tools stays strictly isolated from active breeding, herd, and pedigree views,
@@ -115,7 +115,7 @@ export class TechyStuffErrorBoundary extends React.Component<
           <ShieldAlert className="w-6 h-6 text-[var(--barn-danger)] shrink-0 mt-0.5" aria-hidden="true" />
           <div className="space-y-1 min-w-0">
             <h1 className="font-display text-xl font-semibold text-[var(--barn-ink)]">
-              &ldquo;The Techy Stuff&rdquo; Diagnostic Panel Hit an Isolated Error
+              &ldquo;Development&rdquo; Diagnostic Panel Hit an Isolated Error
             </h1>
             <p className="text-xs text-[var(--barn-muted)] leading-relaxed">
               This fault was trapped inside the Developer &amp; Troubleshooting boundary so your

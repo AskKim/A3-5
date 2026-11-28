@@ -13,8 +13,13 @@ import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { SyncConflictEntry } from '../../domain/syncOutbox';
 
 /** The resolved copy of a conflict, preserving every other field. */
-export function buildResolvedSyncConflict(conflict: SyncConflictEntry): SyncConflictEntry {
-  return { ...conflict, resolved: true };
+export function buildResolvedSyncConflict(
+  conflict: SyncConflictEntry,
+  resolvedAtIso: string = new Date().toISOString()
+): SyncConflictEntry {
+  // Retention runs from this stamp, not from `detected_at`: a conflict detected months ago and
+  // resolved today should live a full window from the decision, not vanish immediately.
+  return { ...conflict, resolved: true, resolved_at: resolvedAtIso };
 }
 
 /** Mark one conflict resolved in a list, leaving every other entry identical. */
@@ -31,6 +36,8 @@ export interface SyncConflictDismissalDeps {
   syncConflicts: readonly SyncConflictEntry[];
   setSyncConflicts: Dispatch<SetStateAction<SyncConflictEntry[]>>;
   saveConflict: (conflict: SyncConflictEntry) => Promise<unknown>;
+  /** Injectable clock so the resolution stamp (and therefore retention) is testable. */
+  nowIsoUtc?: () => string;
 }
 
 /**
@@ -43,7 +50,10 @@ export async function dismissSyncConflictAction(
 ): Promise<void> {
   const conflict = deps.syncConflicts.find((c) => c.conflict_id === conflictId);
   if (!conflict) return;
-  const resolvedConflict = buildResolvedSyncConflict(conflict);
+  const resolvedConflict = buildResolvedSyncConflict(
+    conflict,
+    (deps.nowIsoUtc ?? (() => new Date().toISOString()))()
+  );
   await deps.saveConflict(resolvedConflict);
   deps.setSyncConflicts((prev) => markSyncConflictResolved(prev, resolvedConflict));
 }

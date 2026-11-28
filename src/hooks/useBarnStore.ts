@@ -6546,6 +6546,7 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     syncConflicts,
     setSyncConflicts,
     saveConflict: saveSyncConflictInIdb,
+    nowIsoUtc: getAdjustedNowIsoUtc,
   });
 
   const buildLocalDeltaJsonPayload = useCallback(() => {

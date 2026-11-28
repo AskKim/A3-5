@@ -190,7 +190,7 @@ export function AboutModal({
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Terminal className="w-4 h-4 text-[var(--barn-sage)] shrink-0" aria-hidden="true" />
                   <div className="min-w-0">
-                    <div className="font-semibold text-[var(--barn-ink)] truncate">The Techy Stuff</div>
+                    <div className="font-semibold text-[var(--barn-ink)] truncate">Development</div>
                     <div className="text-[10px] text-[var(--barn-muted)] truncate">Developer console &amp; diagnostics</div>
                   </div>
                 </div>

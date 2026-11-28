@@ -1075,7 +1075,7 @@ export function DiagnosticsAndSupportPanel({
                 logDiagnosticEvent({
                   level: 'info',
                   category: 'lifecycle',
-                  message: 'Manual diagnostic test log recorded from The Techy Stuff',
+                  message: 'Manual diagnostic test log recorded from Development',
                   details: { route: 'techyStuff', animalCount: snapshot.animals.length },
                 });
                 void refreshDiagnostics();

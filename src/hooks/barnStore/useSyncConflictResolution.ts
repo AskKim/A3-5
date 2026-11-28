@@ -102,7 +102,7 @@ export async function resolveSyncConflictAction(
         deps.setSyncOperations(applied.mergedOperations);
       }
 
-      const resolvedConflict = buildResolvedSyncConflict(conflict);
+      const resolvedConflict = buildResolvedSyncConflict(conflict, deps.nowIsoUtc());
       await deps.saveConflict(resolvedConflict);
       deps.setSyncConflicts((prev) => markSyncConflictResolved(prev, resolvedConflict));
       await deps.reloadFromAdapter();
@@ -170,7 +170,7 @@ export async function resolveAllSyncConflictsAction(
         deps.setSyncOperations(applied.mergedOperations);
       }
 
-      const resolvedConflicts = open.map((conflict) => buildResolvedSyncConflict(conflict));
+      const resolvedConflicts = open.map((conflict) => buildResolvedSyncConflict(conflict, ts));
       for (const resolvedConflict of resolvedConflicts) {
         await deps.saveConflict(resolvedConflict);
       }

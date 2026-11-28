@@ -4,6 +4,7 @@ import {
   DEFAULT_SYNC_CONFLICT_RETENTION_DAYS,
   planSyncConflictRetention,
 } from '../syncConflictExpiry';
+import { buildResolvedSyncConflict } from '../../hooks/barnStore/useSyncConflictDismissal';
 
 const conflict = (over: Partial<SyncConflictEntry> = {}): SyncConflictEntry =>
   ({
@@ -59,6 +60,32 @@ describe('planSyncConflictRetention', () => {
     const plan = planSyncConflictRetention([broken], NOW);
     expect(plan.expired).toEqual([]);
     expect(plan.kept).toHaveLength(1);
+  });
+
+  it('runs the window from when the conflict was resolved, not detected', () => {
+    // Detected months ago, resolved yesterday: the decision is fresh and must survive.
+    const resolvedRecently = conflict({
+      conflict_id: 'recent-resolution',
+      detected_at: '2025-12-01T00:00:00.000Z',
+      resolved_at: '2026-05-31T00:00:00.000Z',
+    });
+    // Detected yesterday but resolved months ago: the decision has aged out.
+    const resolvedLongAgo = conflict({
+      conflict_id: 'old-resolution',
+      detected_at: '2026-05-31T00:00:00.000Z',
+      resolved_at: '2026-01-01T00:00:00.000Z',
+    });
+
+    const plan = planSyncConflictRetention([resolvedRecently, resolvedLongAgo], NOW);
+
+    expect(plan.kept.map((c) => c.conflict_id)).toEqual(['recent-resolution']);
+    expect(plan.expired.map((c) => c.conflict_id)).toEqual(['old-resolution']);
+  });
+
+  it('stamps the resolution time so retention has a clock to read', () => {
+    const stamped = buildResolvedSyncConflict(conflict({ resolved: false }), NOW);
+    expect(stamped.resolved).toBe(true);
+    expect(stamped.resolved_at).toBe(NOW);
   });
 
   it('is a no-op for an empty log, a disabled window or a bad clock', () => {

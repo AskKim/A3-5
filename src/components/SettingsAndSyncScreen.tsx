@@ -842,7 +842,7 @@ export function SettingsAndSyncScreen({
                     type="button"
                     onClick={onOpenTechyStuff}
                     className="min-h-[40px] px-3.5 py-1.5 rounded-xl border border-[var(--barn-border)] bg-[var(--barn-canvas)] hover:bg-[var(--barn-subtle)] text-xs font-semibold text-[var(--barn-ink)] inline-flex items-center gap-1.5 transition-colors shadow-2xs"
-                    title="Open The Techy Stuff Developer & Diagnostic Console"
+                    title="Open Development Developer & Diagnostic Console"
                   >
                     <Terminal className="w-3.5 h-3.5 text-[var(--barn-sage)] shrink-0" aria-hidden="true" />
                     <span>Developer</span>

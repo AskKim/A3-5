@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (53 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (54 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (117)
+## Logged Improvements (118)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2483,7 +2483,7 @@ npm run lint && npm run build
 - **Category:** Workflow & UI Polish (`workflow-polish`)
 - **Origin:** Session Improvement
 - **User Goal:** The review log kept every collision ever detected, and the loader sorted the whole history on every load — but there was no way to delete a row, so nothing could ever age out.
-- **Summary:** Milestone 3 tail: `src/domain/syncConflictExpiry.ts` decides what ages out and the store applies it during conflict hydration, using a new `deleteSyncConflictsFromIdb` indexed delete. The rule that matters more than the window: **an unresolved conflict never expires**, because resolving is a decision only the owner can make and dropping the row would silently pick a side. Only rows already marked resolved expire, 30 days after `detected_at`; an unparseable timestamp counts as recent, a disabled window or bad clock returns the log unchanged, and survivors keep their newest-first order. Pruning is reported as a storage diagnostic rather than happening silently.
+- **Summary:** Milestone 3 tail: `src/domain/syncConflictExpiry.ts` decides what ages out and the store applies it during conflict hydration, using a new `deleteSyncConflictsFromIdb` indexed delete. The rule that matters more than the window: **an unresolved conflict never expires**, because resolving is a decision only the owner can make and dropping the row would silently pick a side. Only rows already marked resolved expire, 30 days after `resolved_at` — the moment the owner decided — falling back to `detected_at` for rows resolved before that field existed; an unparseable timestamp counts as recent, a disabled window or bad clock returns the log unchanged, and survivors keep their newest-first order. Pruning is reported as a storage diagnostic rather than happening silently.
 - **Tracked Files:** `src/domain/syncConflictExpiry.ts`, `src/storage/localSyncChannels.ts`, `src/hooks/useBarnStore.ts`, `src/domain/__tests__/syncConflictExpiry.test.ts`, `EXTRACTION_INVENTORY.md`
 
 **Automated Invariants Checked:**
@@ -2491,5 +2491,24 @@ npm run lint && npm run build
 - `src/hooks/useBarnStore.ts` must contain `planSyncConflictRetention`, `deleteSyncConflictsFromIdb` — *A planner nobody calls leaves the log growing forever — the state this entry replaces.*
 
 **Restoration Playbook if Overwritten:**
-1. Only resolved conflicts expire; the window runs from `detected_at`.
+1. Only resolved conflicts expire; the window runs from `resolved_at`.
 2. Deleting review-log rows is best effort: the log is history, not source of truth.
+
+### IMP-118: Development Page Is Called Development Again
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** “The Techy Stuff” started life as a section title inside Settings and got carried over as the page name when the section became its own screen. The page is the development and diagnostics console; it should say so.
+- **Summary:** Every user-visible label now reads **Development**: the route title and lazy-route label in `src/App.tsx`, the Settings launcher tooltip, the two offline/probe hints, the weather panel’s pointer, the About modal entry, the back links from the Prompts Directory and the Suggestions Backlog, the diagnostics log message, the isolated error panel heading and the screen’s own update-policy toast. Internal identifiers (`techyStuff` route key, `TechyStuffScreen`, `onOpenTechyStuff`, `TechyStuffErrorBoundary`) are unchanged, so the registry’s structural invariants still hold. Because the route label lives in the boot-locked `src/App.tsx`, the owner’s explicit request made this a sanctioned boot-entry edit: `BOOT_ENTRY_LOCK_CHECKSUMS` was regenerated for `src/App.tsx` in the same commit.
+- **Tracked Files:** `src/App.tsx`, `src/domain/improvementRegistry.ts`, `src/components/TechyStuffScreen.tsx`, `src/components/TechyStuffErrorBoundary.tsx`, `src/components/SettingsAndSyncScreen.tsx`, `src/components/AboutModal.tsx`, `src/components/PromptsDirectoryScreen.tsx`, `src/components/SuggestionsBacklogScreen.tsx`, `src/components/DiagnosticsAndSupportPanel.tsx`, `src/storage/weatherForecast.ts`
+
+**Automated Invariants Checked:**
+- `src/App.tsx` must contain `techyStuff: 'Development'` — *The old settings-section title was the page name by accident; keeping it out of the route table is the point of this entry.*
+  - Forbidden regression: `The Techy Stuff`
+- `src/components/TechyStuffScreen.tsx` must contain `Development` — *User-visible copy must not reintroduce the section title as a page name.*
+  - Forbidden regression: `The Techy Stuff`
+
+**Restoration Playbook if Overwritten:**
+1. The page is “Development”; the route key and component names stay `techyStuff` / `TechyStuffScreen`.
+2. Renaming user-visible copy in `src/App.tsx` requires regenerating its boot-entry checksum in the same commit.

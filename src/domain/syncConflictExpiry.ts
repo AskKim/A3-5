@@ -11,7 +11,8 @@
  * One rule matters more than the retention window: **an unresolved conflict is never expired.**
  * Resolving is a decision only the owner can make; dropping the row would silently pick a side and
  * hide that it ever happened. Only conflicts already marked resolved are eligible, and the clock runs
- * from `detected_at` (the only timestamp the record carries).
+ * from `resolved_at` — when the owner actually made the decision — falling back to `detected_at`
+ * for rows resolved before that field existed.
  */
 import type { SyncConflictEntry } from './syncOutbox';
 
@@ -43,9 +44,11 @@ export function planSyncConflictRetention(
   const expired: SyncConflictEntry[] = [];
   const kept: SyncConflictEntry[] = [];
   for (const conflict of conflicts) {
-    const detectedAt = Date.parse(String(conflict.detected_at ?? ''));
+    const resolvedAt = Date.parse(
+      String(conflict.resolved_at ?? conflict.detected_at ?? '')
+    );
     const eligible =
-      conflict.resolved === true && Number.isFinite(detectedAt) && detectedAt < cutoff;
+      conflict.resolved === true && Number.isFinite(resolvedAt) && resolvedAt < cutoff;
     (eligible ? expired : kept).push(conflict);
   }
 

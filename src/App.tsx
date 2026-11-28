@@ -128,7 +128,7 @@ const SettingsAndSyncScreen = lazyNamedRoute<
 
 const TechyStuffScreen = lazyNamedRoute<
   ComponentProps<typeof import('./components/TechyStuffScreen')['TechyStuffScreen']>
->(() => import('./components/TechyStuffScreen'), 'TechyStuffScreen', 'The Techy Stuff');
+>(() => import('./components/TechyStuffScreen'), 'TechyStuffScreen', 'Development');
 
 const PromptsDirectoryScreen = lazyNamedRoute<
   ComponentProps<typeof import('./components/PromptsDirectoryScreen')['PromptsDirectoryScreen']>
@@ -190,7 +190,7 @@ const ROUTE_LABELS: Record<WorkspaceRoute, string> = {
   judge: "Judge's Notebook",
   importExport: 'Import / Export Hub',
   settings: 'Settings',
-  techyStuff: 'The Techy Stuff',
+  techyStuff: 'Development',
   prompts: 'Prompts Directory',
   suggestions: 'Suggestion Backlog',
 };
@@ -689,9 +689,9 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
               onClick={() => setRoute('techyStuff')}
               title={
                 connectivity.reason === 'manual_offline'
-                  ? 'Manual App Offline Mode enabled — click to manage in The Techy Stuff'
+                  ? 'Manual App Offline Mode enabled — click to manage in Development'
                   : connectivity.reason === 'captive_or_unreachable'
-                  ? 'Network probe could not reach origin — click to probe in The Techy Stuff'
+                  ? 'Network probe could not reach origin — click to probe in Development'
                   : 'Operating in offline barn mode — click to inspect connectivity'
               }
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-[var(--barn-sage)] px-2.5 py-1 rounded-lg bg-[var(--barn-sage-tint)] border border-[var(--barn-sage)] hover:opacity-90"

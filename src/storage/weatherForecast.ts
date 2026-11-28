@@ -105,7 +105,7 @@ export async function searchWeatherLocations(
       results: [],
       offline: true,
       error: conn.manualOffline
-        ? 'Manual App Offline Mode is enabled. Disable it in The Techy Stuff to search locations, or enter coordinates manually.'
+        ? 'Manual App Offline Mode is enabled. Disable it in Development to search locations, or enter coordinates manually.'
         : 'Device is offline. You can still enter latitude/longitude manually or use your cached location.',
     };
   }

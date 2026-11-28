@@ -78,6 +78,8 @@ export interface SyncConflictEntry {
   losing_timestamp: string;
   detected_at: string;
   resolved: boolean;
+  /** When the owner resolved it. Absent on rows resolved before this field existed. */
+  resolved_at?: string;
 }
 
 export interface DeltaExportFile {

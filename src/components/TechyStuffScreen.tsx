@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * "The Techy Stuff" Developer & Troubleshooting Console (`src/components/TechyStuffScreen.tsx`).
+ * "Development" Developer & Troubleshooting Console (`src/components/TechyStuffScreen.tsx`).
  *
  * Organized into four focused operational workspaces (plus an "All Panels" view)
  * beneath a compact host telemetry bar and the permanent 5-Tier Capability Reference:
@@ -511,7 +511,7 @@ export function TechyStuffScreen({
     logDiagnosticEvent({
       level: 'info',
       category: 'lifecycle',
-      message: `PWA update policy changed to "${check.policy}" via The Techy Stuff`,
+      message: `PWA update policy changed to "${check.policy}" via Development`,
     });
     setUpdateCheckFeedback(`Update policy set to "${check.policy}".`);
   };
@@ -805,7 +805,7 @@ export function TechyStuffScreen({
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="font-display text-2xl font-bold text-[var(--barn-ink)]">
-              The Techy Stuff
+              Development
             </h1>
             <button
               type="button"

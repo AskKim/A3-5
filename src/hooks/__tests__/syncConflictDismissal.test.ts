@@ -38,7 +38,7 @@ describe('buildResolvedSyncConflict', () => {
     const original = conflict({ note: 'field clash' } as Partial<SyncConflictEntry>);
     const resolved = buildResolvedSyncConflict(original);
 
-    expect(resolved).toEqual({ ...original, resolved: true });
+    expect(resolved).toEqual({ ...original, resolved: true, resolved_at: expect.any(String) });
     expect(original.resolved).toBe(false);
   });
 });

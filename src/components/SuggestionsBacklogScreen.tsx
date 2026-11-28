@@ -518,7 +518,7 @@ export function SuggestionsBacklogScreen({ onBackToTechyStuff }: SuggestionsBack
               className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-[var(--barn-muted)]"
             >
               <FolderTree className="w-3.5 h-3.5 text-[var(--barn-sage)] shrink-0" aria-hidden="true" />
-              <span>The Techy Stuff</span>
+              <span>Development</span>
               <span aria-hidden="true">/</span>
               <span className="text-[var(--barn-ink)] font-semibold">Suggestion Backlog</span>
               <span aria-hidden="true">·</span>
@@ -541,7 +541,7 @@ export function SuggestionsBacklogScreen({ onBackToTechyStuff }: SuggestionsBack
               className="min-h-[44px] sm:min-h-[38px] max-w-full px-3.5 py-2 rounded-xl border border-[var(--barn-border)] bg-[var(--barn-canvas)] hover:bg-[var(--barn-subtle)] text-xs font-semibold inline-flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span>Back to The Techy Stuff</span>
+              <span>Back to Development</span>
             </button>
 
             <button
