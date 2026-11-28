@@ -3666,9 +3666,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 58', 'branches: 48', 'functions: 43', 'lines: 59'],
+        requiredSubstrings: ['thresholds:', 'src/components/**', 'src/domain/**'],
         rationale:
-          'The floors are the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; this entry carries the current numbers and a future ratchet moves them here.',
+          'The ratchet is the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; the numeric floors live in the newest ratchet entry.',
       },
       {
         filePath: 'src/components/__tests__/animalEditor.render.test.tsx',
@@ -3813,4 +3813,48 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'After the edit check `npx tsx scripts/audit-layers.ts`; regenerate the ledger with `--write-ui-budget` only when the edge count fell.',
     ],
   },
+  {
+    id: 'IMP-152',
+    title: 'Developer Console and External Importer Render Coverage',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The developer console carried 341 statements with zero executable coverage and the external importer panel sat at 24% even though both are screens a breeder opens to recover from a bad import or a storage problem.',
+    summary:
+      'Adds a developer-console render suite (mount with host telemetry and the tier matrix, switching between the storage/runtime/logs/maintenance workspaces, the open-all-sections toggle, and the destructive lab staying locked until safety is armed and the exact phrase is typed) and an external-importer suite (starter CSV template download, staging an uploaded file through the stubbed off-thread parser, merging the parsed preview into the barn, and surfacing a parse failure). Together they moved coverage to 59.91/50.12/45.66/61.36, so the floors rise to 58/49/44/60, components to 26/20/16/27, storage to 53/40/48/55 and the engine function floor to 75.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/developmentConsole.render.test.tsx',
+      'src/components/__tests__/externalImporterPanel.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 58', 'branches: 49', 'functions: 44', 'lines: 60'],
+        rationale:
+          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/developmentConsole.render.test.tsx',
+        requiredSubstrings: ['Arm Destructive Controls', 'PURGE TMP', 'onPurgeOpfsTmp'],
+        rationale:
+          'The phrase gate is the only thing between an operator and a wiped barn; a suite that stops asserting the lock, the wrong-phrase arm and the executed purge would leave that guard unverified.',
+      },
+      {
+        filePath: 'src/components/__tests__/externalImporterPanel.render.test.tsx',
+        requiredSubstrings: ['parseExternalImportOffThread', 'onCommitImport'],
+        rationale:
+          'Imports are the only way external records enter the barn; the stub keeps the test on the panel contract, and the commit assertion is what proves the parsed preview is what gets merged.',
+      },
+    ],
+    restorePlaybook: [
+      'For a screen with tab-gated workspaces, click every tab and assert its tabpanel; a single default-tab mount leaves the other workspaces unexecuted.',
+      'For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).',
+      'Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.',
+    ],
+  }
 ];

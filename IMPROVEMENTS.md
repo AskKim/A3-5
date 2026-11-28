@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (86 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (87 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (150)
+## Logged Improvements (151)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2964,7 +2964,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/screensSmoke.render.te
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 58`, `branches: 48`, `functions: 43`, `lines: 59` — *The floors are the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; this entry carries the current numbers and a future ratchet moves them here.*
+- `vitest.config.ts` must contain `thresholds:`, `src/components/**`, `src/domain/**` — *The ratchet is the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; the numeric floors live in the newest ratchet entry.*
 - `src/components/__tests__/animalEditor.render.test.tsx` must contain `Save ${speciesProfile.name}`, `Cancel`, `onSave` — *The editor is the only write path for animal records; a suite that stops asserting the save draft or the cancel path would leave that path unverified.*
 
 **Restoration Playbook if Overwritten:**
@@ -3013,3 +3013,18 @@ Status:     active
 1. Add a capability to `DiagnosticsPort` with its storage binding in the port file, not by importing storage in the component.
 2. Swap the port only through `setDiagnosticsPort` and always `resetDiagnosticsPort()` in test cleanup, since the module-level port outlives a test file.
 3. After the edit check `npx tsx scripts/audit-layers.ts`; regenerate the ledger with `--write-ui-budget` only when the edge count fell.
+
+## 2026-11-28 — Developer Console and External Importer Render Coverage
+Why:        The developer console carried 341 statements with zero executable coverage and the external importer panel sat at 24% even though both are screens a breeder opens to recover from a bad import or a storage problem.
+Changed:    `vitest.config.ts`, `src/components/__tests__/developmentConsole.render.test.tsx`, `src/components/__tests__/externalImporterPanel.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 58`, `branches: 49`, `functions: 44`, `lines: 60` — *This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.*
+- `src/components/__tests__/developmentConsole.render.test.tsx` must contain `Arm Destructive Controls`, `PURGE TMP`, `onPurgeOpfsTmp` — *The phrase gate is the only thing between an operator and a wiped barn; a suite that stops asserting the lock, the wrong-phrase arm and the executed purge would leave that guard unverified.*
+- `src/components/__tests__/externalImporterPanel.render.test.tsx` must contain `parseExternalImportOffThread`, `onCommitImport` — *Imports are the only way external records enter the barn; the stub keeps the test on the panel contract, and the commit assertion is what proves the parsed preview is what gets merged.*
+
+**Restoration Playbook if Overwritten:**
+1. For a screen with tab-gated workspaces, click every tab and assert its tabpanel; a single default-tab mount leaves the other workspaces unexecuted.
+2. For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).
+3. Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.
