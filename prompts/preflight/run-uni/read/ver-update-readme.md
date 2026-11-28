@@ -7,4 +7,4 @@
 - **Writes:** the five version strings, `CHANGELOG.md`, the Fastlane changelog for the new `versionCode`, and the `ROADMAP.md` release section.
 - **Pass signal:** `OK [ver-update] files=<count>` with the five recorded values.
 - **Fail signal:** `STEP_BLOCKED [ver-update]: ...`.
-- **Notes:** `releaseReadiness.test.ts` hardcodes the current version string and the `changelogs/1.txt` filename, so a bump is a test edit too. `schemaVersion` / `minDirectUpgradeSchema` move only on a real storage-schema change.
+- **Notes:** `releaseReadiness.test.ts` hardcodes the current version string and the newest `changelogs/<versionCode>.txt` filename, so a bump is a test edit too. `schemaVersion` / `minDirectUpgradeSchema` move only on a real storage-schema change.

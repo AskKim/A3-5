@@ -54,7 +54,7 @@ describe('IMP-053 release readiness — version sync, calendar math, worker free
       'utf8'
     );
     const fastlaneChangelog = fs.readFileSync(
-      path.join(ROOT_DIR, 'fastlane/metadata/android/en-US/changelogs/1.txt'),
+      path.join(ROOT_DIR, 'fastlane/metadata/android/en-US/changelogs/2.txt'),
       'utf8'
     );
 

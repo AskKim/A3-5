@@ -1,0 +1,5 @@
+Community Pedigree v0.1.0-alpha.3 (Android WebView Wrapper):
+- Device-to-device QR exchange: move a whole herd to a second phone without a file transfer
+- Per-species printable exports: certificates and herd sheets use each species' own terms
+- All-day breeding, kindling and weaning dates no longer shift by timezone
+- Settings and Import/Export Hub polish, with clearer warnings before destructive restores

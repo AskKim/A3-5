@@ -194,6 +194,18 @@ if (!existsSync(manifestPath)) {
   }
 }
 
+// The manifest is duplicated for the launcher's TOC generator; the two copies drifting apart (they
+// once differed only by soft hyphens) makes the wiring depend on which file a reader happened to
+// open, so they must stay byte-identical.
+const twinPath = join(root, 'preflight.manifest.json');
+if (existsSync(twinPath) && existsSync(manifestPath)) {
+  if (readFileSync(twinPath, 'utf8') !== readFileSync(manifestPath, 'utf8')) {
+    errors.push(
+      `${twinPath} and ${manifestPath} have drifted apart; keep both copies byte-identical`
+    );
+  }
+}
+
 // Static config must be filled in before a run: an angle-bracket placeholder is not a value.
 const configPath = join(root, 'preflight.config.json');
 if (!existsSync(configPath)) {
