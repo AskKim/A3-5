@@ -5,12 +5,12 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 290
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 60 (20.7%)
+- **Total Non-Test Source Modules:** 292
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 62 (21.2%)
   - Core Foundation (`src/engine/`): 31
-  - Non-Content Features (`src/features/`): 18
+  - Non-Content Features (`src/features/`): 20
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 230 (79.3%)
+- **Content-Specific Modules:** 230 (78.8%)
   - Domain Engines (`src/domain/`): 87
   - App Composition & Configs (`src/app/`): 29
   - Storage Adapters & Workers (`src/storage/`): 29
@@ -32,7 +32,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 1. Core / Foundation / Non-Content-Specific Modules (60)
+## 1. Core / Foundation / Non-Content-Specific Modules (62)
 
 ### Core Engine / Foundation (`src/engine/`, `@engine/*`) (31)
 
@@ -70,7 +70,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/engine/storage/storageAdapter.interface.ts` | Content-agnostic core primitive, codec, bridge, or storage foundation module. |
 | `src/engine/sync/index.ts` | Content-agnostic core primitive, codec, bridge, or storage foundation module. |
 
-### Non-Content-Specific Feature Modules (`src/features/`, `@features/*`) (18)
+### Non-Content-Specific Feature Modules (`src/features/`, `@features/*`) (20)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -92,6 +92,8 @@ npx tsx scripts/list-modules.ts --check
 | `src/features/index.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/ocr-parser/index.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/ocr-parser/ocrTextPipeline.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
+| `src/features/reminders/index.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
+| `src/features/reminders/reminderSchedule.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 
 ### Reusable Content-Free UI & Runtime Utilities (`src/utils/`) (11)
 

@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (103 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (104 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (167)
+## Logged Improvements (168)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3251,3 +3251,15 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep DOM-touching helpers out of `@features/*`: a capability probe like `canShareHtmlDocument` belongs in `src/utils/webFileActions.ts`, and user-facing error copy stays with the modal.
 2. Run `npm run verify:extraction` after touching `src/features` or `src/utils`: it compiles them against the ES2018 lib, which is stricter than the app tsconfig that allowed `trimStart`.
+
+## 2026-11-28 — Add a Pure Reminder Schedule Builder for On-Device Delivery
+Why:        The app has no reminder implementation at all, and the first platform-ingress milestone needs the scheduling rules to exist before any delivery channel (service worker or WorkerManager) can transport them.
+Changed:    `src/features/reminders/reminderSchedule.ts`, `src/features/reminders/index.ts`, `src/features/reminders/__tests__/reminderSchedule.test.ts`, `docs/plans/handoff-platform-ingress.yaml`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/features/reminders/reminderSchedule.ts` must contain `export function buildReminderSchedule`, `addReminderDaysIso` — *Every delivery channel transports this one pure schedule; if it grows a React hook or a storage import it can no longer run in a worker or a native bridge.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep biological rules out of `@features/reminders`: the caller passes species-adjusted offset days and titles, so the builder holds no gestation or species table.
+2. Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.

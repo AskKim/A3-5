@@ -4537,4 +4537,38 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       '`src/utils`: it compiles them against the ES2018 lib, which is stricter than the app tsconfig that allowed `trimStart`.',
     ],
   },
+  {
+    id: 'IMP-169',
+    title: 'Add a Pure Reminder Schedule Builder for On-Device Delivery',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The app has no reminder implementation at all, and the first platform-ingress milestone needs the scheduling rules to exist before any delivery channel (service worker or WorkerManager) can transport them.',
+    summary:
+      'New `@features/reminders` module: `buildReminderSchedule` turns dated tasks and milestone offsets into an ordered reminder list, with lead reminders always including the day itself, watermark keys that never re-fire, snoozes that defer the fire time instead of duplicating, grace/horizon windows, strict UTC calendar arithmetic and a deterministic sort. It stays free of React, storage, DOM globals and domain vocabulary — the caller supplies species-adjusted offsets and titles — so it can run inside a worker, a native bridge or a plain test. 17 cases cover month/year/leap boundaries, impossible dates, dedupe, snooze and ordering.',
+    files: [
+      'src/features/reminders/reminderSchedule.ts',
+      'src/features/reminders/index.ts',
+      'src/features/reminders/__tests__/reminderSchedule.test.ts',
+      'docs/plans/handoff-platform-ingress.yaml',
+      'EXTRACTION_INVENTORY.md',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/features/reminders/reminderSchedule.ts',
+        requiredSubstrings: ['export function buildReminderSchedule', 'addReminderDaysIso'],
+        rationale:
+          'Every delivery channel transports this one pure schedule; if it grows a React hook or a storage import it can no longer run in a worker or a native bridge.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep biological rules out of `@features/reminders`: the caller passes species-adjusted offset days and titles, so the builder holds no gestation or species table.',
+      'Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.',
+    ],
+  },
 ];
