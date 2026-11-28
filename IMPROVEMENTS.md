@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (105 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (106 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (169)
+## Logged Improvements (170)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3277,3 +3277,17 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep biological rules out of `@features/reminders`: the caller passes species-adjusted offset days and titles, so the builder holds no gestation or species table.
 2. Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.
+
+## 2026-11-28 — Cover Gantt Drag, Resize and Keyboard Rescheduling
+Why:        IMP-169 covered the Gantt grid but left its pointer path untested: dragging a bar, resizing its start edge and arrow-key nudging are the gestures that actually write new chore dates, and a sign error there would move work silently.
+Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.*
+- `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `COLUMN_PX`, `pointerCancel`, `getByRole('separator')` — *The pixel-to-column constant, the cancel branch and the resize separator are the three pieces that make the drag tests exercise real commit logic instead of a click.*
+
+**Restoration Playbook if Overwritten:**
+1. jsdom reports `clientWidth` as 0, so the component falls back to a 560px track; with the default 21-day window one column is 560/21 ≈ 26.7px and a two-column drag is +2 days.
+2. Fire `pointermove` and `pointerup` on `window` (the effect binds there), and wait for the bar to report `aria-pressed="true"` before moving, or the listener is not attached yet.
+3. Starting a drag from the separator selects the owning bar, not the separator: assert selection on the bar.

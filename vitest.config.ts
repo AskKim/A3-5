@@ -36,7 +36,7 @@ export default defineConfig({
         // thinnest shell (27.6% st) and domain the most mature (85.3% st), so a global average
         // alone would let new untested screens ride on tested domain code.
         'src/domain/**': { statements: 84, branches: 69, functions: 84, lines: 86 },
-        'src/components/**': { statements: 36, branches: 29, functions: 24, lines: 38 },
+        'src/components/**': { statements: 37, branches: 29, functions: 24, lines: 38 },
         'src/storage/**': { statements: 55, branches: 43, functions: 49, lines: 57 },
         'src/hooks/**': { statements: 45, branches: 33, functions: 44, lines: 46 },
         'src/engine/**': { statements: 72, branches: 62, functions: 79, lines: 74 },

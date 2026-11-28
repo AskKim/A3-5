@@ -4613,4 +4613,42 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Calendar math stays `Date.UTC`-based like the rest of the repo; never add millisecond arithmetic or a local-time parse.',
     ],
   },
+  {
+    id: 'IMP-171',
+    title: 'Cover Gantt Drag, Resize and Keyboard Rescheduling',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'IMP-169 covered the Gantt grid but left its pointer path untested: dragging a bar, resizing its start edge and arrow-key nudging are the gestures that actually write new chore dates, and a sign error there would move work silently.',
+    summary:
+      'Extends `barnSchedulerGantt.render.test.tsx` with the pointer and keyboard path: a two-column drag commits `onRescheduleTask` with both dates shifted two days, a same-day drag and a cancelled drag commit nothing, dragging the bar separator resizes the start edge by one day while the due date stays put, arrow keys nudge one day each way, and a chore with an unusable date lands in the unscheduled strip where `Schedule Today` reschedules it to today. Gantt coverage goes 46.8% → 64.5% (branches 70%, functions 61%), so the component statement floor moves to 37.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        rationale:
+          'This entry carries the current numeric floors after the ratchet; without them the pointer-coverage tests could be deleted while the gate still passed at the old numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
+        requiredSubstrings: ['COLUMN_PX', 'pointerCancel', "getByRole('separator')"],
+        rationale:
+          'The pixel-to-column constant, the cancel branch and the resize separator are the three pieces that make the drag tests exercise real commit logic instead of a click.',
+      },
+    ],
+    restorePlaybook: [
+      'jsdom reports `clientWidth` as 0, so the component falls back to a 560px track; with the default 21-day window one column is 560/21 ≈ 26.7px and a two-column drag is +2 days.',
+      'Fire `pointermove` and `pointerup` on `window` (the effect binds there), and wait for the bar to report `aria-pressed="true"` before moving, or the listener is not attached yet.',
+      'Starting a drag from the separator selects the owning bar, not the separator: assert selection on the bar.',
+    ],
+  },
 ];
