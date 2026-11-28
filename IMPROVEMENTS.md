@@ -3150,6 +3150,7 @@ Status:     active
 1. Load `sql.js` and `sql-wasm.wasm?url` with `import()` inside the adapter, never at module scope, and keep the memoized promises so repeated `initialize()`/`inspectRawSqliteBytes()` calls reuse one compile.
 2. Keep the `Promise.all([sqlPromise, storeReadPromise])` shape: the WASM compile and the IndexedDB read must stay concurrent so laziness does not add a serial round trip.
 3. Measure with `dist/index.html` modulepreload entries and `performance.getEntriesByType('paint')` on a production build; the WASM request must land after first-contentful-paint.
+4. If the SQLite boot ever has to leave startup entirely, defer the data render behind a skeleton or an explicit idle/demand trigger — not the boot call: a first-paint gate resolves within ~30 ms of FCP and only adds latency (measured above).
 
 ## 2026-11-28 — Mount the Reports, Journal and Bench Screens
 Why:        Three daily-use workspaces — the printable reports catalog, the personal barn journal and the fast sequential entry bench — still had zero executable statements, so their species switching, filter selects and cage-walk queue were only ever exercised by hand.
