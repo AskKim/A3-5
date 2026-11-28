@@ -12,6 +12,9 @@ import {
   resolveEntryRationales,
   isAlpha2Improvement,
   isAlpha3Improvement,
+  findImprovementLedgerOptInViolations,
+  findImprovementLedgerPinViolations,
+  LEGACY_IMPROVEMENT_ENTRY_IDS,
 } from '../improvementRegistry';
 import { INVARIANT_RATIONALES } from '../improvements/rationales';
 
@@ -206,6 +209,29 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
     expect(md).toContain('### IMP-070:');
     expect(md).toContain('- **Release Milestone:** Alpha 2 (`alpha-2`)');
     expect(md).toContain('- **Release Milestone:** Alpha 3 (`alpha-3`)');
+  });
+
+  it('rejects a new improvement that never opts into the ledger contract', () => {
+    const base = IMPROVEMENTS_REGISTRY[0];
+
+    const newLegacy = findImprovementLedgerOptInViolations([{ ...base, id: 'IMP-931' }]);
+    expect(newLegacy).toHaveLength(1);
+    expect(newLegacy[0].issue).toContain('decidedOn');
+
+    expect(
+      findImprovementLedgerOptInViolations([{ ...base, id: 'IMP-932', decidedOn: '2026-11-28' }])
+    ).toEqual([]);
+    expect(findImprovementLedgerOptInViolations()).toEqual([]);
+    expect(findImprovementLedgerPinViolations()).toEqual([]);
+  });
+
+  it('keeps the pinned legacy improvement IDs honest against the registry', () => {
+    expect(LEGACY_IMPROVEMENT_ENTRY_IDS).toHaveLength(121);
+
+    const stalePin = findImprovementLedgerPinViolations([IMPROVEMENTS_REGISTRY[0]]);
+    expect(stalePin.some((violation) => violation.issue.includes('no longer in the registry'))).toBe(
+      true
+    );
   });
 
   it('resolves an explanation for every invariant from the rationale map', () => {

@@ -87,10 +87,11 @@ jobs:
             }
           '
 
-      - name: Run unit tests, improvement verification & TypeScript lint
+      - name: Run unit tests, ledger verification & TypeScript lint
         run: |
           npm test
           npm run verify:improvements
+          npm run verify:prompts
           npm run lint
 
       - name: Build production PWA bundle (root path)

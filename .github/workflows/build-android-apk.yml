@@ -63,6 +63,7 @@ jobs:
             npm install --legacy-peer-deps --no-audit --no-fund
           fi
           npm run verify:improvements
+          npm run verify:prompts
           npm run verify:layers
           npm run verify:engine
           npm run verify:extraction

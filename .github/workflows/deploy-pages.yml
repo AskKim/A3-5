@@ -93,6 +93,9 @@ jobs:
       - name: Verify App Improvements Registry
         run: bun run verify:improvements
 
+      - name: Verify Prompt Registry & Changelog
+        run: bun run verify:prompts
+
       - name: Verify layer boundaries and engine typecheck
         run: |
           bun run verify:layers

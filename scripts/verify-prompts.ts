@@ -13,6 +13,7 @@ import { resolve } from 'node:path';
 import {
   evaluatePromptInvariants,
   findLedgerOptInViolations,
+  findLedgerPinViolations,
   formatPromptChangelogMarkdown,
   PROMPT_CHANGES_REGISTRY,
 } from '../src/domain/promptRegistry';
@@ -43,7 +44,10 @@ async function main() {
   );
 
   const report = evaluatePromptInvariants(filesByPath, PROMPT_CHANGES_REGISTRY);
-  const optInViolations = findLedgerOptInViolations(PROMPT_CHANGES_REGISTRY);
+  const optInViolations = [
+    ...findLedgerOptInViolations(PROMPT_CHANGES_REGISTRY),
+    ...findLedgerPinViolations(PROMPT_CHANGES_REGISTRY),
+  ];
 
   console.log(
     `[verify:prompts] Checked ${report.totalEntries} prompt revisions across ${report.totalFilesChecked} files.`
@@ -86,7 +90,7 @@ async function main() {
       `[verify:prompts] Ledger freshness: ${LEDGER_PATH} matches a fresh render of src/domain/promptRegistry.ts (${ledgerReport.totalEntries} entries).`
     );
     console.log(
-      '[verify:prompts] Ledger opt-in: every prompt entry is either fully legacy or fully contract-shaped.'
+      '[verify:prompts] Ledger opt-in: every entry is contract-shaped unless it is a pinned legacy ID; pins match the registry.'
     );
     process.exit(0);
   }
@@ -120,15 +124,15 @@ async function main() {
 
   if (optInViolations.length > 0) {
     console.error(
-      `[verify:prompts] FAIL — ${optInViolations.length} half-opted-in prompt entr${
-        optInViolations.length === 1 ? 'y' : 'ies'
-      } in src/domain/promptRegistry.ts:`
+      `[verify:prompts] FAIL — ${optInViolations.length} prompt ledger opt-in violation${
+        optInViolations.length === 1 ? '' : 's'
+      } (half-opted-in or unpinned legacy) in src/domain/promptRegistry.ts:`
     );
     for (const v of optInViolations) {
       console.error(`  - [${v.entryId}] ${v.title}: ${v.issue}`);
     }
     console.error(
-      '    Fix: set all of decidedOn, version and commitShaOrTag, or remove them and stay legacy.'
+      '    Fix: a new entry sets all of decidedOn, version and commitShaOrTag; only LEGACY_PROMPT_ENTRY_IDS may stay legacy.'
     );
   }
 

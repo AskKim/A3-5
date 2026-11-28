@@ -36,7 +36,7 @@ GitHub Actions are automated helpers that run on GitHub's servers whenever you s
 - **When to use it:** It runs by itself every time you push changes or open a Pull Request. You don't have to click anything.
 - **What it checks:**
   1. Runs all automated tests (`npm test`).
-  2. Checks that no saved app features were accidentally overwritten (`npm run verify:improvements`).
+  2. Checks that no saved app features or prompt guardrails were accidentally overwritten (`npm run verify:improvements`, `npm run verify:prompts`).
   3. Verifies layer boundaries (`npm run verify:layers`), isolated engine compilation (`npm run verify:engine`), and temp-directory engine extraction (`npm run verify:extraction`).
   4. Checks TypeScript code for mistakes (`npm run lint`).
   5. Tests building the app for both `/` and GitHub Pages subpaths.
@@ -48,7 +48,7 @@ GitHub Actions are automated helpers that run on GitHub's servers whenever you s
 - **How to run it:**
   - **Automatic:** Push or merge code into the `main` or `release` branch.
   - **Manual:** Go to **Actions → Deploy to GitHub Pages → Run workflow**.
-- **What it runs:** Runs `bun run test`, `bun run verify:improvements`, `bun run verify:layers`, `bun run verify:engine`, `bun run verify:extraction`, `bun run lint`, and `bun run build --base=...`.
+- **What it runs:** Runs `bun run test`, `bun run verify:improvements`, `bun run verify:prompts`, `bun run verify:layers`, `bun run verify:engine`, `bun run verify:extraction`, `bun run lint`, and `bun run build --base=...`.
 - **Note:** This workflow intentionally uses **Bun** (do not replace Bun with npm here).
 
 ### 3. Build Android APK (`build-android-apk.yml`) — *Create the Android App*

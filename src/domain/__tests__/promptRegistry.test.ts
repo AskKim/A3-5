@@ -10,7 +10,9 @@ import {
   buildPromptRecoveryJson,
   evaluatePromptInvariants,
   findLedgerOptInViolations,
+  findLedgerPinViolations,
   formatPromptChangelogMarkdown,
+  LEGACY_PROMPT_ENTRY_IDS,
   PROMPT_CHANGES_REGISTRY,
 } from '../promptRegistry';
 
@@ -89,8 +91,36 @@ describe('promptRegistry — /prompts/ changelog, invariants & recovery playbook
       ])
     ).toEqual([]);
 
-    expect(findLedgerOptInViolations([{ ...base, id: 'PRM-904' }])).toEqual([]);
+    // A brand-new entry cannot be logged in the legacy shape by omitting every ledger field.
+    const newLegacy = findLedgerOptInViolations([{ ...base, id: 'PRM-904' }]);
+    expect(newLegacy).toHaveLength(1);
+    expect(newLegacy[0].issue).toContain('LEGACY_PROMPT_ENTRY_IDS');
+
     expect(findLedgerOptInViolations()).toEqual([]);
+    expect(findLedgerPinViolations()).toEqual([]);
+  });
+
+  it('keeps the pinned legacy prompt IDs honest against the registry', () => {
+    expect(LEGACY_PROMPT_ENTRY_IDS).toHaveLength(8);
+
+    const stalePin = findLedgerPinViolations([
+      PROMPT_CHANGES_REGISTRY.find((entry) => entry.id === 'PRM-001')!,
+    ]);
+    expect(stalePin.some((violation) => violation.issue.includes('no longer in the registry'))).toBe(
+      true
+    );
+
+    const optedIn = findLedgerPinViolations([
+      {
+        ...PROMPT_CHANGES_REGISTRY.find((entry) => entry.id === 'PRM-001')!,
+        decidedOn: '2026-11-28',
+        version: 'v9',
+        commitShaOrTag: 'abc1234',
+      },
+    ]);
+    expect(
+      optedIn.some((violation) => violation.issue.includes('now opts into the contract'))
+    ).toBe(true);
   });
 
   it('rejects `superseded` without naming the replacing entry', () => {

@@ -13,6 +13,8 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
   evaluateImprovementInvariants,
+  findImprovementLedgerOptInViolations,
+  findImprovementLedgerPinViolations,
   formatImprovementsMarkdown,
   IMPROVEMENTS_REGISTRY,
 } from '../src/domain/improvementRegistry';
@@ -44,6 +46,10 @@ async function main() {
   );
 
   const report = evaluateImprovementInvariants(filesByPath, IMPROVEMENTS_REGISTRY, INVARIANT_RATIONALES);
+  const optInViolations = [
+    ...findImprovementLedgerOptInViolations(IMPROVEMENTS_REGISTRY),
+    ...findImprovementLedgerPinViolations(IMPROVEMENTS_REGISTRY),
+  ];
 
   console.log(
     `[verify:improvements] Checked ${report.totalEntries} improvements across ${report.totalFilesChecked} files.`
@@ -71,7 +77,12 @@ async function main() {
           formatImprovementsMarkdown(undefined, INVARIANT_RATIONALES)
         );
 
-  if (report.ok && ledgerViolations.length === 0 && freshnessViolations.length === 0) {
+  if (
+    report.ok &&
+    ledgerViolations.length === 0 &&
+    optInViolations.length === 0 &&
+    freshnessViolations.length === 0
+  ) {
     console.log(
       `[verify:improvements] PASS — all ${report.passedCount}/${report.totalEntries} tracked improvements are intact.`
     );
@@ -110,6 +121,20 @@ async function main() {
     }
     console.error(
       '    Restore the header from `formatLedgerHeader(\'improvements\')` in src/domain/ledgerContract.ts and shape new entries as documented there.'
+    );
+  }
+
+  if (optInViolations.length > 0) {
+    console.error(
+      `[verify:improvements] FAIL — ${optInViolations.length} improvement ledger opt-in violation${
+        optInViolations.length === 1 ? '' : 's'
+      } in src/domain/improvementRegistry.ts:`
+    );
+    for (const v of optInViolations) {
+      console.error(`  - [${v.entryId}] ${v.title}: ${v.issue}`);
+    }
+    console.error(
+      '    Fix: a new entry sets `decidedOn` (plus `status`/`rejected` where relevant); only LEGACY_IMPROVEMENT_ENTRY_IDS may stay legacy.'
     );
   }
 

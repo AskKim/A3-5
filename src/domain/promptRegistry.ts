@@ -89,21 +89,39 @@ const LEDGER_ENTRY_FIELDS = [
 const LEDGER_OPT_IN_FIELDS = ['decidedOn', 'version', 'commitShaOrTag'] as const;
 
 /**
- * Rejects entries the formatter would silently render as incomplete: any entry that sets a ledger
- * field without all three opt-in fields (`decidedOn`, `version`, `commitShaOrTag`), and any
- * `status: superseded` entry with no `supersededBy`. `formatPromptChangelogMarkdown` falls back to
- * the legacy `### PRM-0NN:` block for a half-opted-in entry, so without this gate an author could
- * believe a change was logged when only part of it was.
+ * Prompt entries that predate the ledger contract and keep the legacy `### PRM-0NN:` shape.
+ *
+ * Pinned by ID on purpose: an entry outside this list must carry the full three-field opt-in, so a
+ * new revision cannot be logged in the old shape by simply omitting every ledger field. Prune an ID
+ * once that entry opts in — the pin drift gate reports both a stale pin and a pinned entry that now
+ * uses the contract shape.
+ */
+export const LEGACY_PROMPT_ENTRY_IDS: readonly string[] = [
+  'PRM-001',
+  'PRM-002',
+  'PRM-003',
+  'PRM-004',
+  'PRM-005',
+  'PRM-006',
+  'PRM-007',
+  'PRM-008',
+];
+
+/**
+ * Rejects entries that would not be logged in the documented shape: a pinned legacy entry that
+ * half-opts-in, any entry outside `LEGACY_PROMPT_ENTRY_IDS` that is missing all or part of
+ * `decidedOn` + `version` + `commitShaOrTag`, and a `status: superseded` entry with no
+ * `supersededBy`. `formatPromptChangelogMarkdown` silently falls back to the legacy `### PRM-0NN:`
+ * block, so without this gate an author could believe a change was logged when only part of it
+ * was — or when none of it was.
  */
 export function findLedgerOptInViolations(
   entries: readonly PromptChangeEntry[] = PROMPT_CHANGES_REGISTRY
 ): PromptLedgerOptInViolation[] {
   const violations: PromptLedgerOptInViolation[] = [];
+  const pinned = new Set(LEGACY_PROMPT_ENTRY_IDS);
 
   for (const entry of entries) {
-    const present = LEDGER_ENTRY_FIELDS.filter((field) => entry[field] !== undefined);
-    if (present.length === 0) continue;
-
     if (entry.status === 'superseded' && !entry.supersededBy) {
       violations.push({
         entryId: entry.id,
@@ -113,16 +131,54 @@ export function findLedgerOptInViolations(
       });
     }
 
+    const present = LEDGER_ENTRY_FIELDS.filter((field) => entry[field] !== undefined);
+    if (present.length === 0 && pinned.has(entry.id)) continue;
+
     const missing = LEDGER_OPT_IN_FIELDS.filter((field) => entry[field] === undefined);
     if (missing.length === 0) continue;
 
     violations.push({
       entryId: entry.id,
       title: entry.title,
-      issue: `sets ${present.join(', ')} but is missing ${missing.join(
-        ', '
-      )} — the formatter would silently render the legacy block; set all of decidedOn, version and commitShaOrTag, or none`,
+      issue: pinned.has(entry.id)
+        ? `sets ${present.join(', ')} but is missing ${missing.join(
+            ', '
+          )} — the formatter would silently render the legacy block; set all of decidedOn, version and commitShaOrTag, or none`
+        : `is not in LEGACY_PROMPT_ENTRY_IDS and is missing ${missing.join(
+            ', '
+          )} — a new prompt revision must opt in with decidedOn, version and commitShaOrTag, or the formatter renders the legacy block`,
     });
+  }
+
+  return violations;
+}
+
+/**
+ * Keeps `LEGACY_PROMPT_ENTRY_IDS` honest in both directions: every pin must still name a registry
+ * entry, and that entry must still be legacy. Without this, the exemption could outlive the entries
+ * it was written for and quietly cover a future one.
+ */
+export function findLedgerPinViolations(
+  entries: readonly PromptChangeEntry[] = PROMPT_CHANGES_REGISTRY
+): PromptLedgerOptInViolation[] {
+  const violations: PromptLedgerOptInViolation[] = [];
+
+  for (const id of LEGACY_PROMPT_ENTRY_IDS) {
+    const pinned = entries.find((entry) => entry.id === id);
+    if (!pinned) {
+      violations.push({
+        entryId: id,
+        title: 'LEGACY_PROMPT_ENTRY_IDS',
+        issue: `pins ${id}, which is no longer in the registry — prune it from LEGACY_PROMPT_ENTRY_IDS`,
+      });
+    } else if (pinned.decidedOn) {
+      violations.push({
+        entryId: id,
+        title: pinned.title,
+        issue:
+          'is pinned as a grandfathered legacy entry but now opts into the contract — remove it from LEGACY_PROMPT_ENTRY_IDS',
+      });
+    }
   }
 
   return violations;

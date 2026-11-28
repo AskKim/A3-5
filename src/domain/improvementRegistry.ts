@@ -83,6 +83,88 @@ export const IMPROVEMENTS_REGISTRY: ImprovementEntry[] = [
 ];
 
 /**
+ * Improvements that predate the ledger contract and keep the legacy `### IMP-0NN:` shape
+ * (`IMP-001` – `IMP-121`). Pinned by ID on purpose: every entry outside this list must set
+ * `decidedOn`, so a new improvement cannot be logged in the old shape by omitting the ledger
+ * fields. Prune an ID once that entry opts in.
+ */
+export const LEGACY_IMPROVEMENT_ENTRY_IDS: readonly string[] = Array.from(
+  { length: 121 },
+  (_, index) => `IMP-${String(index + 1).padStart(3, '0')}`
+);
+
+export interface ImprovementLedgerOptInViolation {
+  entryId: string;
+  title: string;
+  issue: string;
+}
+
+/**
+ * Rejects entries that would not be logged in the documented shape: any entry outside
+ * `LEGACY_IMPROVEMENT_ENTRY_IDS` that sets no `decidedOn`, and a `status: superseded` entry with no
+ * `supersededBy`. `formatImprovementsMarkdown` silently falls back to the legacy `### IMP-0NN:`
+ * block, so without this gate an author could believe a change was logged when it was not.
+ */
+export function findImprovementLedgerOptInViolations(
+  entries: readonly ImprovementEntry[] = IMPROVEMENTS_REGISTRY
+): ImprovementLedgerOptInViolation[] {
+  const violations: ImprovementLedgerOptInViolation[] = [];
+  const pinned = new Set(LEGACY_IMPROVEMENT_ENTRY_IDS);
+
+  for (const entry of entries) {
+    if (entry.status === 'superseded' && !entry.supersededBy) {
+      violations.push({
+        entryId: entry.id,
+        title: entry.title,
+        issue:
+          'sets `status: superseded` without `supersededBy` — the replacing entry would be lost; name it, or use active/reverted',
+      });
+    }
+
+    if (entry.decidedOn || pinned.has(entry.id)) continue;
+
+    violations.push({
+      entryId: entry.id,
+      title: entry.title,
+      issue:
+        'is not in LEGACY_IMPROVEMENT_ENTRY_IDS and sets no `decidedOn` — a new improvement must opt into the contract shape, or the formatter renders the legacy block',
+    });
+  }
+
+  return violations;
+}
+
+/**
+ * Keeps `LEGACY_IMPROVEMENT_ENTRY_IDS` honest in both directions: every pin must still name a
+ * registry entry, and that entry must still be legacy.
+ */
+export function findImprovementLedgerPinViolations(
+  entries: readonly ImprovementEntry[] = IMPROVEMENTS_REGISTRY
+): ImprovementLedgerOptInViolation[] {
+  const violations: ImprovementLedgerOptInViolation[] = [];
+
+  for (const id of LEGACY_IMPROVEMENT_ENTRY_IDS) {
+    const pinned = entries.find((entry) => entry.id === id);
+    if (!pinned) {
+      violations.push({
+        entryId: id,
+        title: 'LEGACY_IMPROVEMENT_ENTRY_IDS',
+        issue: `pins ${id}, which is no longer in the registry — prune it from LEGACY_IMPROVEMENT_ENTRY_IDS`,
+      });
+    } else if (pinned.decidedOn) {
+      violations.push({
+        entryId: id,
+        title: pinned.title,
+        issue:
+          'is pinned as a grandfathered legacy entry but now opts into the contract — remove it from LEGACY_IMPROVEMENT_ENTRY_IDS',
+      });
+    }
+  }
+
+  return violations;
+}
+
+/**
  * Immutable SHA-256 baseline checksums for boot/entry files locked during NEON Phases 1–2
  * to prevent accidental boot/initialization regressions during modular extraction.
  */
