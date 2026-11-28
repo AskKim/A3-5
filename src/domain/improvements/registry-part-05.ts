@@ -3055,4 +3055,42 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.',
     ],
   },
+  {
+    id: 'IMP-134',
+    title: 'Ratchet Tests That Freeze the Pinned Legacy ID Lists',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The pinned legacy lists made the opt-in gates sound, but nothing stopped the lists themselves from growing: appending a new entry ID to `LEGACY_*_ENTRY_IDS` exempts that entry from the contract without touching a verifier, so the gate could be bypassed by pinning.',
+    summary:
+      'Adds a ratchet test per registry — `ratchets the pinned legacy prompt IDs so the exemption list can never grow` and its improvement counterpart — that compares the exported pin list against a frozen expected snapshot, so any added, removed or reordered ID fails the suite. Extending an exemption now takes a deliberate, reviewable edit to the expectation and the pin list together instead of a one-line append.',
+    files: [
+      'src/domain/__tests__/promptRegistry.test.ts',
+      'src/domain/__tests__/improvementRegistry.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'src/domain/improvements/rationales.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/__tests__/promptRegistry.test.ts',
+        requiredSubstrings: ['ratchets the pinned legacy prompt IDs', 'pinnedSnapshot'],
+        rationale:
+          'The pin list is the only exemption from the opt-in; without a frozen snapshot a new PRM ID can be appended and skip the gate silently.',
+      },
+      {
+        filePath: 'src/domain/__tests__/improvementRegistry.test.ts',
+        requiredSubstrings: ['ratchets the pinned legacy improvement IDs', 'pinnedSnapshot'],
+        rationale:
+          'The improvement pins need the same ratchet, or a `decidedOn`-less entry passes simply by being added to the list.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep both ratchet tests comparing `[...LEGACY_*_ENTRY_IDS]` to a frozen snapshot with `toEqual`, not a length-only assertion.',
+      'To pin a genuinely old entry, change the snapshot and the list in one reviewable commit and state why that entry cannot opt in.',
+      'Prefer opting an entry into the contract and pruning its pin over widening an exemption.',
+    ],
+  },
 ];

@@ -234,6 +234,17 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
     );
   });
 
+  it('ratchets the pinned legacy improvement IDs so the exemption list can never grow', () => {
+    // A `decidedOn`-less entry passes only because its ID is pinned, so growing this list is a
+    // quiet bypass. This snapshot is a second, independent bound: extending the list fails here
+    // until the range below is edited deliberately in the same change.
+    const pinnedSnapshot = Array.from(
+      { length: 121 },
+      (_, index) => `IMP-${String(index + 1).padStart(3, '0')}`
+    );
+    expect([...LEGACY_IMPROVEMENT_ENTRY_IDS]).toEqual(pinnedSnapshot);
+  });
+
   it('resolves an explanation for every invariant from the rationale map', () => {
     // The prose lives outside the entries (improvements/rationales.ts). If an entry is added or a
     // file path changes without a matching key, the markdown export silently loses that sentence —

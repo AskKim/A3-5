@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (69 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (70 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (133)
+## Logged Improvements (134)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2766,3 +2766,17 @@ Status:     active
 1. Log a new improvement with `decidedOn` (plus `status`/`rejected` where they apply) and a new prompt revision with all three of `decidedOn`, `version`, `commitShaOrTag`.
 2. When an old entry opts into the contract, delete its ID from `LEGACY_*_ENTRY_IDS` — the pin gate fails until the list is pruned.
 3. Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.
+
+## 2026-11-28 — Ratchet Tests That Freeze the Pinned Legacy ID Lists
+Why:        The pinned legacy lists made the opt-in gates sound, but nothing stopped the lists themselves from growing: appending a new entry ID to `LEGACY_*_ENTRY_IDS` exempts that entry from the contract without touching a verifier, so the gate could be bypassed by pinning.
+Changed:    `src/domain/__tests__/promptRegistry.test.ts`, `src/domain/__tests__/improvementRegistry.test.ts`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/__tests__/promptRegistry.test.ts` must contain `ratchets the pinned legacy prompt IDs`, `pinnedSnapshot` — *The pin list is the only exemption from the opt-in; without a frozen snapshot a new PRM ID can be appended and skip the gate silently.*
+- `src/domain/__tests__/improvementRegistry.test.ts` must contain `ratchets the pinned legacy improvement IDs`, `pinnedSnapshot` — *The improvement pins need the same ratchet, or a `decidedOn`-less entry passes simply by being added to the list.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep both ratchet tests comparing `[...LEGACY_*_ENTRY_IDS]` to a frozen snapshot with `toEqual`, not a length-only assertion.
+2. To pin a genuinely old entry, change the snapshot and the list in one reviewable commit and state why that entry cannot opt in.
+3. Prefer opting an entry into the contract and pruning its pin over widening an exemption.
