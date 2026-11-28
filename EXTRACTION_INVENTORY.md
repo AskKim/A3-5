@@ -182,7 +182,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 3. `src/app/` File-by-File Inventory (10 Non-Test Files — All `pedigree-domain`)
+## 3. `src/app/` File-by-File Inventory (11 Non-Test Files — All `pedigree-domain`)
 
 - `src/app/index.ts` — `pedigree-domain` — Application layer barrel export.
 - `src/app/appConfig.interface.ts` — `pedigree-domain` — Multi-species registry and terminology contracts.
@@ -194,6 +194,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/app/pedigreePdfActions.ts` — `pedigree-domain` — Domain PDF certificate export actions binding `src/domain/pdfExporter.ts` to content-agnostic `src/utils/webPdfActions.ts`.
 - `src/app/pedigreeCalendarClient.ts` — `pedigree-domain` — Domain Google Calendar push wrapper binding `BarnTask`/`CalendarSyncSettings` to content-agnostic `src/utils/googleCalendarClient.ts`.
 - `src/app/ports/installPrompt.tsx` — `pedigree-domain` — Install/offline capability port: owns the `src/storage/storageProtection` import so `PWAInstallButton`/`OfflineIndicator` render from an injected `InstallPromptPort` (IMP-145).
+- `src/app/ports/ideasBacklog.tsx` — `pedigree-domain` — Offline captured-ideas capability port: owns the `src/storage/capturedIdeasStore` import so `SuggestionsBacklogScreen` loads, saves, removes and clears ideas through an injected `IdeasBacklogPort` (IMP-147).
 
 ---
 

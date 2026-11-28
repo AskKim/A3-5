@@ -3608,4 +3608,40 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Exercise store mutations through the injected memory adapter instead of extracting the hook; the adapter is the existing seam.',
     ],
   },
+  {
+    id: 'IMP-147',
+    title: 'Move the Offline Ideas Backlog Behind an @app Port',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The suggestions screen is a developer screen with no persistence logic of its own, yet it imported `loadCapturedIdeas`, `saveCapturedIdea`, `deleteCapturedIdea` and `clearCapturedIdeas` straight out of `src/storage/capturedIdeasStore`. That was the largest single dependency a screen carried into the storage layer, and it could not be tested without the real offline stores.',
+    summary:
+      '`src/app/ports/ideasBacklog.tsx` now owns the storage edge as an `IdeasBacklogPort` capability with a browser default and an `IdeasBacklogPortProvider` for injection. `SuggestionsBacklogScreen` and its capture composer read the port through `useIdeasBacklogPort()`, so the screen loads, saves, removes and clears ideas without naming a storage module; three render tests drive the pending list, the remove action and the clear action through a fake port. The component\'s coupling budget drops from 50 to 49 edges.',
+    files: [
+      'src/app/ports/ideasBacklog.tsx',
+      'src/components/SuggestionsBacklogScreen.tsx',
+      'src/components/__tests__/suggestionsIdeasPort.render.test.tsx',
+      'scripts/ui-storage-coupling-budget.json',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/SuggestionsBacklogScreen.tsx',
+        requiredSubstrings: ['useIdeasBacklogPort'],
+        rationale:
+          'The screen must keep reading the offline idea list through the @app port rather than importing capturedIdeasStore directly.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the idea store behind `IdeasBacklogPort`; a new screen operation becomes a method on the port with the browser default, not a direct storage import.',
+      'Check the burn-down ledger after the edit (`npx tsx scripts/audit-layers.ts`) and regenerate it with `--write-ui-budget` only when it shrank.',
+      'Assert the screen contract through an injected port so the test does not depend on IndexedDB/OPFS being present.',
+    ],
+  },
 ];
