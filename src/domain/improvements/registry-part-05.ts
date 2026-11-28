@@ -2623,4 +2623,47 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.',
     ],
   },
+  {
+    id: 'IMP-125',
+    title: 'Rev-Keyed Memoised Species Selectors',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      '`baseSpeciesData` re-filtered and re-sorted every collection whenever the snapshot object changed identity, which any settings or outbox write does, so an untouched collection paid a full localeCompare sort on every store write.',
+    summary:
+      'Final milestone 5 item: `hooks/barnStore/speciesSelectors.ts` owns the twenty per-collection species selectors that used to be inline in `baseSpeciesData`, plus the photo index. Each is memoised by `memoizeByCollectionRev` on `collectionRevKey`, an FNV-1a signature over every row\'s `id`/`_rev`, so a write to one collection no longer re-filters or re-sorts the other nineteen, and an unchanged collection keeps the array identity the downstream memos compare. The cache is bounded at 64 entries; `resetSpeciesSelectorCache` clears it for tests. Sorting, filtering, task archived-animal exclusion and photo ordering are unchanged, and `useBarnStore` still returns all 200 keys.',
+    files: [
+      'src/hooks/barnStore/speciesSelectors.ts',
+      'src/hooks/__tests__/speciesSelectors.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/speciesSelectors.ts',
+        requiredSubstrings: [
+          'collectionRevKey',
+          'memoizeByCollectionRev',
+          'selectSpeciesAnimals',
+          'selectSpeciesPhotoIndex',
+        ],
+        rationale:
+          'The rev signature is what makes reuse safe; losing it either drops the memo or serves stale rows.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['selectSpeciesAnimals', 'selectSpeciesPhotoIndex'],
+        forbiddenSubstrings: ['const animals = snapshot.animals'],
+        rationale:
+          'The store must read the memoised selectors; the inline derivation is what this item removed.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep every selector a pure function of one collection and the species name — the cache key assumes it.',
+      'Bump the entity `_rev` on every write; a silent field edit would serve a stale list until the next revision.',
+      'Call `resetSpeciesSelectorCache()` in a test that reuses ids and revisions with different content.',
+    ],
+  },
 ];

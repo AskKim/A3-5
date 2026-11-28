@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (60 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (61 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (124)
+## Logged Improvements (125)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2634,3 +2634,18 @@ Status:     active
 1. Wrap a consumer in `<SyncStateSliceProvider>` before calling `useSyncStateSlice()`; the hook throws outside one by design.
 2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
 3. Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.
+
+## 2026-11-28 — Rev-Keyed Memoised Species Selectors
+Why:        `baseSpeciesData` re-filtered and re-sorted every collection whenever the snapshot object changed identity, which any settings or outbox write does, so an untouched collection paid a full localeCompare sort on every store write.
+Changed:    `src/hooks/barnStore/speciesSelectors.ts`, `src/hooks/__tests__/speciesSelectors.test.ts`, `src/hooks/useBarnStore.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/speciesSelectors.ts` must contain `collectionRevKey`, `memoizeByCollectionRev`, `selectSpeciesAnimals`, `selectSpeciesPhotoIndex` — *The rev signature is what makes reuse safe; losing it either drops the memo or serves stale rows.*
+- `src/hooks/useBarnStore.ts` must contain `selectSpeciesAnimals`, `selectSpeciesPhotoIndex` — *The store must read the memoised selectors; the inline derivation is what this item removed.*
+  - Forbidden regression: `const animals = snapshot.animals`
+
+**Restoration Playbook if Overwritten:**
+1. Keep every selector a pure function of one collection and the species name — the cache key assumes it.
+2. Bump the entity `_rev` on every write; a silent field edit would serve a stale list until the next revision.
+3. Call `resetSpeciesSelectorCache()` in a test that reuses ids and revisions with different content.
