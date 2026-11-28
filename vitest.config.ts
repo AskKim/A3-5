@@ -13,5 +13,14 @@ export default defineConfig({
   },
   test: {
     exclude: [...configDefaults.exclude, 'import/**', 'old/**', 'android-wrapper/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/__tests__/**', 'src/**/*.d.ts'],
+      // Ratchet, measured 2026-11-28 over all of src/** (unimported files count):
+      // st 48.01, br 40.31, fn 34.35, ln 49.23.
+      thresholds: { statements: 47, branches: 39, functions: 33, lines: 48 },
+    },
   },
 });

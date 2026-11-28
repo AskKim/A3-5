@@ -239,6 +239,7 @@ All legacy browser/worker storage modules are classified `pedigree-domain` in Ph
 - `src/utils/useAccessibleDialog.ts` — `extractable-ui-util` — Accessible modal focus trap and Escape-key hook.
 - `src/utils/useAsyncSubmitLock.ts` — `extractable-ui-util` — Re-entrancy guard hook for async form submissions.
 - `src/utils/useVirtualWindow.ts` — `extractable-ui-util` — ES2018 scroll window virtualizer hook for large lists and tables.
+- `src/utils/perfTiming.ts` — `extractable-ui-util` — Bounded labelled timing recorder for long operations.
 - `src/utils/webFileActions.ts` — `extractable-ui-util` — Bridge-agnostic browser/native binary download and share helpers configured via `configureWebFileBridge`.
 - `src/utils/webPdfActions.ts` — `extractable-ui-util` — Content-agnostic offscreen-canvas raster-to-JPEG encoder and generic `buildAndDownloadPdfDocument` helper.
 

@@ -1,3 +1,4 @@
+import { appPerfTimings } from '../../utils/perfTiming';
 /**
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -78,6 +79,16 @@ const rowCounts = (snapshot: BarnDatabaseSnapshot) => ({
  * Throws (after attempting a rollback) when verification fails or a write errors.
  */
 export async function runDestructiveRestore<P extends RestorePayload>(
+  deps: DestructiveRestoreDeps,
+  plan: DestructiveRestorePlan<P>,
+  load: () => Promise<P | null>
+): Promise<P | null> {
+  // Restores are the operation most likely to get slow as the stored dataset grows; time it so the
+  // diagnostics screen can show a real number instead of "it feels slow".
+  return appPerfTimings.time('restore:destructive', () => runDestructiveRestoreInner(deps, plan, load));
+}
+
+async function runDestructiveRestoreInner<P extends RestorePayload>(
   deps: DestructiveRestoreDeps,
   plan: DestructiveRestorePlan<P>,
   load: () => Promise<P | null>

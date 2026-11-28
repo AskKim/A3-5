@@ -2182,4 +2182,68 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The hash is over the snapshot file’s exact bytes.',
     ],
   },
+  {
+    id: 'IMP-115',
+    title: 'Coverage Provider With a Ratcheted Floor',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Test count is not coverage: the suite could grow while whole modules stayed untested, and nothing in the pipeline would notice.',
+    summary:
+      'Milestone 6 complete: `@vitest/coverage-v8` is installed at the vitest version, `vitest.config.ts` measures `src/**` (tests excluded) and enforces floors of 47% statements, 39% branches, 33% functions and 48% lines, and `npm run verify:coverage` joins `npm run verify`. Measuring over all of `src/**` matters: the first run without an explicit include only counted files a test happened to import and reported 71.88 / 59.73 / 69.09 / 74.07, while the honest figure over every source file is 48.01 / 40.31 / 34.35 / 49.23 — untested modules were simply absent. Floors sit a point under the honest numbers as a ratchet.',
+    files: ['vitest.config.ts', 'package.json'],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ["provider: 'v8'", 'thresholds:'],
+        rationale:
+          'A provider without thresholds reports coverage and enforces nothing — the exact state this entry replaces.',
+      },
+      {
+        filePath: 'package.json',
+        requiredSubstrings: ['verify:coverage'],
+        rationale:
+          'The floor only holds if the pipeline runs it.',
+      },
+    ],
+    restorePlaybook: [
+      'Coverage floors are a ratchet: raise them when the real numbers rise, lower them only with a recorded reason.',
+      'Coverage measures `src/**` minus tests; do not exclude source to make a floor pass.',
+    ],
+  },
+  {
+    id: 'IMP-116',
+    title: 'Timing Instrumentation for Restores',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Slow restores were reported as “it feels slow”, with no number to compare across barn sizes or releases.',
+    summary:
+      'Milestone 5, third item: `src/utils/perfTiming.ts` provides a bounded recorder that times an async operation, records whether it resolves or rejects, rounds to hundredths and never throws into the caller. `runDestructiveRestore` is wrapped in `restore:destructive`, so every OPFS, rolling and archive restore lands a comparable duration in the process-wide `appPerfTimings` ring without touching the restore logic itself.',
+    files: [
+      'src/utils/perfTiming.ts',
+      'src/hooks/barnStore/restoreOrchestrator.ts',
+      'src/utils/__tests__/perfTiming.test.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/restoreOrchestrator.ts',
+        requiredSubstrings: ["appPerfTimings.time('restore:destructive'"],
+        rationale:
+          'Instrumentation that is not on the shared restore path measures nothing, because every restore goes through this function.',
+      },
+      {
+        filePath: 'src/utils/perfTiming.ts',
+        requiredSubstrings: ['createPerfTimingRecorder', 'while (kept.length > limit)'],
+        rationale:
+          'The ring bound is what keeps instrumentation from becoming its own memory leak.',
+      },
+    ],
+    restorePlaybook: [
+      'Wrap long operations with `appPerfTimings.time(label, fn)`; never let measurement throw into the caller.',
+      'Keep the sample ring bounded.',
+    ],
+  },
 ];

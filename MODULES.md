@@ -5,12 +5,12 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 255
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (22.7%)
+- **Total Non-Test Source Modules:** 256
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (23.0%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
-  - Reusable Utilities (`src/utils/`): 10
-- **Content-Specific Modules:** 197 (77.3%)
+  - Reusable Utilities (`src/utils/`): 11
+- **Content-Specific Modules:** 197 (77.0%)
   - Domain Engines (`src/domain/`): 86
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
@@ -32,7 +32,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 1. Core / Foundation / Non-Content-Specific Modules (58)
+## 1. Core / Foundation / Non-Content-Specific Modules (59)
 
 ### Core Engine / Foundation (`src/engine/`, `@engine/*`) (31)
 
@@ -92,7 +92,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/features/ocr-parser/index.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/ocr-parser/ocrTextPipeline.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 
-### Reusable Content-Free UI & Runtime Utilities (`src/utils/`) (10)
+### Reusable Content-Free UI & Runtime Utilities (`src/utils/`) (11)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -101,6 +101,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/utils/es2018Shims.ts` | Content-free browser/React helper or hook extractable alongside core packages. |
 | `src/utils/googleCalendarClient.ts` | Content-free browser/React helper or hook extractable alongside core packages. |
 | `src/utils/lazyRoute.tsx` | Content-free browser/React helper or hook extractable alongside core packages. |
+| `src/utils/perfTiming.ts` | Content-free browser/React helper or hook extractable alongside core packages. |
 | `src/utils/useAccessibleDialog.ts` | Content-free browser/React helper or hook extractable alongside core packages. |
 | `src/utils/useAsyncSubmitLock.ts` | Content-free browser/React helper or hook extractable alongside core packages. |
 | `src/utils/useVirtualWindow.ts` | Content-free browser/React helper or hook extractable alongside core packages. |

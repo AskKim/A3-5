@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (50 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (52 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (114)
+## Logged Improvements (116)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2442,3 +2442,37 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Changing the store contract: update the snapshot, add a dated changelog line, then update the declared key count and SHA-256 in the same change.
 2. The hash is over the snapshot file’s exact bytes.
+
+### IMP-115: Coverage Provider With a Ratcheted Floor
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Test count is not coverage: the suite could grow while whole modules stayed untested, and nothing in the pipeline would notice.
+- **Summary:** Milestone 6 complete: `@vitest/coverage-v8` is installed at the vitest version, `vitest.config.ts` measures `src/**` (tests excluded) and enforces floors of 47% statements, 39% branches, 33% functions and 48% lines, and `npm run verify:coverage` joins `npm run verify`. Measuring over all of `src/**` matters: the first run without an explicit include only counted files a test happened to import and reported 71.88 / 59.73 / 69.09 / 74.07, while the honest figure over every source file is 48.01 / 40.31 / 34.35 / 49.23 — untested modules were simply absent. Floors sit a point under the honest numbers as a ratchet.
+- **Tracked Files:** `vitest.config.ts`, `package.json`
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `provider: 'v8'`, `thresholds:` — *A provider without thresholds reports coverage and enforces nothing — the exact state this entry replaces.*
+- `package.json` must contain `verify:coverage` — *The floor only holds if the pipeline runs it.*
+
+**Restoration Playbook if Overwritten:**
+1. Coverage floors are a ratchet: raise them when the real numbers rise, lower them only with a recorded reason.
+2. Coverage measures `src/**` minus tests; do not exclude source to make a floor pass.
+
+### IMP-116: Timing Instrumentation for Restores
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Slow restores were reported as “it feels slow”, with no number to compare across barn sizes or releases.
+- **Summary:** Milestone 5, third item: `src/utils/perfTiming.ts` provides a bounded recorder that times an async operation, records whether it resolves or rejects, rounds to hundredths and never throws into the caller. `runDestructiveRestore` is wrapped in `restore:destructive`, so every OPFS, rolling and archive restore lands a comparable duration in the process-wide `appPerfTimings` ring without touching the restore logic itself.
+- **Tracked Files:** `src/utils/perfTiming.ts`, `src/hooks/barnStore/restoreOrchestrator.ts`, `src/utils/__tests__/perfTiming.test.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/restoreOrchestrator.ts` must contain `appPerfTimings.time('restore:destructive'` — *Instrumentation that is not on the shared restore path measures nothing, because every restore goes through this function.*
+- `src/utils/perfTiming.ts` must contain `createPerfTimingRecorder`, `while (kept.length > limit)` — *The ring bound is what keeps instrumentation from becoming its own memory leak.*
+
+**Restoration Playbook if Overwritten:**
+1. Wrap long operations with `appPerfTimings.time(label, fn)`; never let measurement throw into the caller.
+2. Keep the sample ring bounded.
