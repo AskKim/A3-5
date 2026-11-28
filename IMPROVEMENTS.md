@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (91 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (92 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (155)
+## Logged Improvements (156)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3020,7 +3020,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/developmentConsole.ren
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 58`, `branches: 49`, `functions: 44`, `lines: 60` — *This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: per-area thresholds for components and storage must keep existing, because without them the two suites could be deleted while the global gate still passed.*
 - `src/components/__tests__/developmentConsole.render.test.tsx` must contain `Arm Destructive Controls`, `PURGE TMP`, `onPurgeOpfsTmp` — *The phrase gate is the only thing between an operator and a wiped barn; a suite that stops asserting the lock, the wrong-phrase arm and the executed purge would leave that guard unverified.*
 - `src/components/__tests__/externalImporterPanel.render.test.tsx` must contain `parseExternalImportOffThread`, `onCommitImport` — *Imports are the only way external records enter the barn; the stub keeps the test on the panel contract, and the commit assertion is what proves the parsed preview is what gets merged.*
 
@@ -3081,3 +3081,17 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Never import `src/storage/*` from `src/components/*` at runtime: add the capability to an `@app/ports` module and import that instead (type-only imports are already exempt).
 2. Regenerate the ledger with `npx tsx scripts/audit-layers.ts --write-ui-budget` after a migration; an empty file is the goal, and `verify:layers` fails if the file is stale in either direction.
+
+## 2026-11-28 — Mount the Memo, Wool, Mileage and Founder Species Panels
+Why:        Four species workspaces that breeders open routinely — the memo pad, the wool harvest panel, the mileage/tax panel and the founder & heritability panel — carried zero executable statements, so their summaries and form transitions were only ever checked by opening the app by hand.
+Changed:    `vitest.config.ts`, `src/components/__tests__/speciesPanels.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 59`, `branches: 49`, `functions: 45`, `lines: 61` — *This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.*
+- `src/components/__tests__/speciesPanels.render.test.tsx` must contain `Confirm Clear`, `Founder-Loss Ledger`, `Save Harvest` — *These three assertions are the only proof that the clear-notes gate, the tab switch and the harvest form actually render; dropping them would leave the suite counting mounts instead of behaviour.*
+
+**Restoration Playbook if Overwritten:**
+1. Mount panels against `buildFullPredefinedSampleSnapshot()` and a local `activeDataFrom()` helper rather than hand-building species data; the sample barn already exercises the populated branches.
+2. When a summary block is gated on a non-empty collection, pass a minimal typed record (see the wool harvest fixture) instead of asserting on the hidden block.
+3. Clear-notes flows need both states: the confirmation prompt after the first click and the executed save after the second.
