@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (88 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (89 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (152)
+## Logged Improvements (153)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3028,6 +3028,19 @@ Status:     active
 1. For a screen with tab-gated workspaces, click every tab and assert its tabpanel; a single default-tab mount leaves the other workspaces unexecuted.
 2. For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).
 3. Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.
+
+## 2026-11-28 — Fail the Verify Suite on a Finished Handoff or Plan File
+Why:        Finished plans and handoffs were meant to be deleted as they finished, but nothing enforced it: a completed handoff stayed in `docs/plans/` and came back on every startup as an `EXISTING INCOMPLETE:` notice, so the rule lived only in prose.
+Changed:    `scripts/verify-plans.ts`, `package.json`, `.github/workflows/ci.yml`, `AGENTS.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/verify-plans.ts` must contain `[WIP]`, `git rm docs/plans/`, `process.exit(1)` — *Removing the failure path or the printed fix would let a finished file pass silently again, which is exactly the state this entry exists to prevent.*
+- `package.json` must contain `npm run verify:plans` — *The gate only protects the suite while it is inside `npm run verify`; a standalone script nobody calls catches nothing.*
+
+**Restoration Playbook if Overwritten:**
+1. A `handoff-*`/`plan-*` file with no `[WIP]`/`[TODO]` line is finished: delete it instead of leaving it for the next startup notice.
+2. Keep the gate inside `npm run verify` and as its own CI step; on failure it reports the file name and the `git rm` fix.
 
 ## 2026-11-28 — Drain the Diagnostics Panel and Photo Compression Through @app Ports
 Why:        `DiagnosticsAndSupportPanel` made twenty direct crash-logger calls and seven photo surfaces compressed uploads by importing `webImageOptimizer`, so the support bundle builder and every editor depended on storage modules they cannot render without.

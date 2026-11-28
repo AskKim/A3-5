@@ -111,7 +111,7 @@ The application must execute reliably across diverse host environments:
 ### 5.3 Strict TypeScript Verification and Drift Invariants
 - **No Type Escapes:** Never silence TypeScript compiler errors with `as any`, `@ts-ignore`, or `@ts-expect-error`. Resolve root types cleanly.
 - **Automated Invariant Verification:** Every file modification must preserve existing invariants verified by `npm run verify:improvements` and layer checks (`npm run verify:layers`, `npm run verify:engine`, `npm run verify:extraction`).
-- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, the coverage floor, and `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`) plus `npm run build` before declaring tasks complete. Run `npm run verify:chunks` on the build output whenever imports changed; it is deliberately outside `verify` because it needs `dist/`.
+- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, the coverage floor, and `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`, `verify:plans`) plus `npm run build` before declaring tasks complete. Run `npm run verify:chunks` on the build output whenever imports changed; it is deliberately outside `verify` because it needs `dist/`.
 
 ---
 
@@ -193,7 +193,7 @@ lockfile is stale or a dependency change is intentional.
 | 2 | Typecheck (app) | `npm run lint` (`tsc --noEmit`) |
 | 3 | Typecheck (engine/features/utils) | `npm run verify:engine` |
 | 4 | Tests | `npm test` (`vitest run`, full suite) |
-| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android` |
+| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android`, `verify:plans` |
 | 6 | Aggregate shortcut | `npm run verify` — equals steps 2–5; use it **instead of** them, never in addition |
 | 7 | Preflight | `npm run preflight:lint`; `node prompts/preflight/scripts/preflight-run-context.mjs --branch "$(git rev-parse --abbrev-ref HEAD)" --version "$(node -p "require('./package.json').version")" --dry-run` |
 | 8 | Release metadata | `package.json` version = `public/version.json` `appVersion` = `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts` = `versionName` in `android-wrapper/app/build.gradle.kts` |
