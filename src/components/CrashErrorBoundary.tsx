@@ -20,16 +20,11 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import type { BarnDatabaseSnapshot } from '../domain/models';
-import type { buildSupportMailtoHref as BuildSupportMailtoHrefFn } from '../domain/supportBundle';
 import {
-  DiagnosticSummary,
-  getDiagnosticSummary,
-  isMemoryLikeError,
-  listDiagnosticLogs,
-  markCleanSessionExit,
-  recordReactCrash,
-} from '../storage/crashLogger';
-import { buildSupportBundleZipOffThread } from '../storage/offThreadWorkerClient';
+  getDiagnosticsPort,
+  type DiagnosticSummary,
+} from '../app/ports/diagnostics';
+import type { buildSupportMailtoHref as BuildSupportMailtoHrefFn } from '../domain/supportBundle';
 import {
   listRollingSnapshotBackups,
   loadRollingSnapshotBackup,
@@ -109,7 +104,7 @@ export class CrashErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error): Partial<CrashErrorBoundaryState> {
-    const memoryFault = isMemoryLikeError(error);
+    const memoryFault = getDiagnosticsPort().isMemoryLikeError(error);
     return {
       hasError: true,
       error,
@@ -121,7 +116,7 @@ export class CrashErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     const compStack = info.componentStack || '';
-    recordReactCrash(error, compStack);
+    getDiagnosticsPort().recordReactCrash(error, compStack);
     if (typeof window !== 'undefined') {
       window.__PEDIGREE_RECORD_BOOT_CRASH__?.();
     }
@@ -132,11 +127,11 @@ export class CrashErrorBoundary extends React.Component<
     this.setState({ busy: true, feedback: null });
     try {
       const [entries, supportMod, { formatTimestampedBackupSlug }] = await Promise.all([
-        listDiagnosticLogs(),
+        getDiagnosticsPort().listDiagnosticLogs(),
         import('../domain/supportBundle'),
         import('../domain/syncAndExports'),
       ]);
-      const summary = await getDiagnosticSummary(entries);
+      const summary = await getDiagnosticsPort().getDiagnosticSummary(entries);
       const snapshot = await loadBestAvailableSnapshotForSupport(false);
       const report = supportMod.formatSupportReportText(entries, summary, snapshot);
       const filename = `pedigree-crash-logs-${formatTimestampedBackupSlug()}.txt`;
@@ -157,16 +152,16 @@ export class CrashErrorBoundary extends React.Component<
     this.setState({ busy: true, feedback: null, lastBuiltMailMeta: null });
     try {
       const [entries, supportMod] = await Promise.all([
-        listDiagnosticLogs(),
+        getDiagnosticsPort().listDiagnosticLogs(),
         import('../domain/supportBundle'),
       ]);
       this.buildMailtoHrefFn = supportMod.buildSupportMailtoHref;
-      const summary = await getDiagnosticSummary(entries);
+      const summary = await getDiagnosticsPort().getDiagnosticSummary(entries);
       const snapshot = this.state.includeData
         ? await loadBestAvailableSnapshotForSupport(this.state.includePhotos)
         : null;
 
-      const built = await buildSupportBundleZipOffThread({
+      const built = await getDiagnosticsPort().buildSupportBundleZipOffThread({
         entries,
         summary,
         snapshot,
@@ -242,7 +237,7 @@ export class CrashErrorBoundary extends React.Component<
             ...lastBuiltMailMeta,
           })
         : null;
-    const memoryFault = error ? isMemoryLikeError(error) : false;
+    const memoryFault = error ? getDiagnosticsPort().isMemoryLikeError(error) : false;
 
     return (
       <main className="min-h-screen bg-[var(--barn-canvas,#f2e9da)] text-[var(--barn-ink,#241e18)] flex items-center justify-center p-4 sm:p-6">
@@ -313,7 +308,7 @@ export class CrashErrorBoundary extends React.Component<
             <button
               type="button"
               onClick={() => {
-                markCleanSessionExit();
+                getDiagnosticsPort().markCleanSessionExit();
                 window.location.reload();
               }}
               className="min-h-[42px] px-4 py-2 rounded-xl border border-[var(--barn-border,#cfc0a8)] text-xs font-semibold inline-flex items-center gap-1.5"
@@ -329,7 +324,7 @@ export class CrashErrorBoundary extends React.Component<
                 try {
                   await purgeStaleBrowserCaches();
                 } finally {
-                  markCleanSessionExit();
+                  getDiagnosticsPort().markCleanSessionExit();
                   window.location.href = `${window.location.pathname}?emergency_reset=true`;
                 }
               }}

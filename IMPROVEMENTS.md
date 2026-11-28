@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (85 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (86 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (149)
+## Logged Improvements (150)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2999,3 +2999,17 @@ Status:     active
 1. Keep section banners as `// ====` blocks directly above the first declaration of a section; they are parsing-neutral and the contract test ignores them.
 2. Notice actions are factories over the store setters, memoised on those setters, so the returned identities stay stable across renders.
 3. A sale completion must still collect every entity diff and call `recordOutboxOps` once, after all four writes.
+
+## 2026-11-28 — Route the Crash Surfaces Through an Injectable Diagnostics Port
+Why:        The three surfaces that exist to survive a crash (`CrashErrorBoundary`, `DevelopmentErrorBoundary`, `AsyncErrorToastHost`) each imported the crash logger, the freeze coordinator or the off-thread bundle builder directly, so the recovery UI could not be rendered or exercised without the real offline log stores.
+Changed:    `src/app/ports/diagnostics.ts`, `src/components/CrashErrorBoundary.tsx`, `src/components/DevelopmentErrorBoundary.tsx`, `src/components/AsyncErrorToastHost.tsx`, `src/components/__tests__/diagnosticsPort.render.test.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/AsyncErrorToastHost.tsx` must contain `getDiagnosticsPort` — *The toast host must keep reading notices through the port; a direct crashLogger import would restore the UI→storage edge and bypass the injectable.*
+- `src/components/CrashErrorBoundary.tsx` must contain `getDiagnosticsPort` — *A class error boundary cannot use a React context, so its diagnostics must go through the module-level port that tests can replace.*
+
+**Restoration Playbook if Overwritten:**
+1. Add a capability to `DiagnosticsPort` with its storage binding in the port file, not by importing storage in the component.
+2. Swap the port only through `setDiagnosticsPort` and always `resetDiagnosticsPort()` in test cleanup, since the module-level port outlives a test file.
+3. After the edit check `npx tsx scripts/audit-layers.ts`; regenerate the ledger with `--write-ui-budget` only when the edge count fell.

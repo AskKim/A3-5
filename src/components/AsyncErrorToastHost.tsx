@@ -13,17 +13,10 @@
 import { AlertTriangle, RefreshCw, ShieldAlert, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
-  getPausedBackgroundJobs,
-  PausedBackgroundJob,
-  resumePausedBackgroundJob,
-  subscribePausedBackgroundJobs,
-} from '../storage/backgroundFreezeCoordinator';
-import {
-  AsyncErrorNotice,
-  dismissAsyncErrorToast,
-  getActiveAsyncErrorToasts,
-  subscribeAsyncErrorToasts,
-} from '../storage/crashLogger';
+  getDiagnosticsPort,
+  type AsyncErrorNotice,
+  type PausedBackgroundJob,
+} from '../app/ports/diagnostics';
 
 interface AsyncErrorToastHostProps {
   onOpenDiagnostics: () => void;
@@ -38,17 +31,17 @@ export function AsyncErrorToastHost({
   onOpenBackups,
   isOnBackupsRoute = false,
 }: AsyncErrorToastHostProps) {
-  const [notices, setNotices] = useState<AsyncErrorNotice[]>(() => getActiveAsyncErrorToasts());
+  const [notices, setNotices] = useState<AsyncErrorNotice[]>(() => getDiagnosticsPort().getActiveAsyncErrorToasts());
   const [pausedJobs, setPausedJobs] = useState<PausedBackgroundJob[]>(() =>
-    getPausedBackgroundJobs().filter((j) => j.severity === 'severity')
+    getDiagnosticsPort().getPausedBackgroundJobs().filter((j) => j.severity === 'severity')
   );
   const [resumingJobId, setResumingJobId] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubToasts = subscribeAsyncErrorToasts((list) => {
+    const unsubToasts = getDiagnosticsPort().subscribeAsyncErrorToasts((list) => {
       setNotices(list);
     });
-    const unsubJobs = subscribePausedBackgroundJobs((jobs) => {
+    const unsubJobs = getDiagnosticsPort().subscribePausedBackgroundJobs((jobs) => {
       setPausedJobs(jobs.filter((j) => j.severity === 'severity'));
     });
     return () => {
@@ -97,7 +90,7 @@ export function AsyncErrorToastHost({
                 onClick={() => {
                   if (resumingJobId) return;
                   setResumingJobId(job.taskId);
-                  void resumePausedBackgroundJob(job.taskId).finally(() => {
+                  void getDiagnosticsPort().resumePausedBackgroundJob(job.taskId).finally(() => {
                     setResumingJobId(null);
                   });
                 }}
@@ -148,7 +141,7 @@ export function AsyncErrorToastHost({
               <button
                 type="button"
                 aria-label={`Dismiss ${notice.title}`}
-                onClick={() => dismissAsyncErrorToast(notice.id)}
+                onClick={() => getDiagnosticsPort().dismissAsyncErrorToast(notice.id)}
                 className="min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] -mt-1 -mr-1 rounded-lg hover:bg-[var(--barn-subtle)] inline-flex items-center justify-center shrink-0 text-[var(--barn-muted)]"
               >
                 <X className="w-4 h-4" aria-hidden="true" />
@@ -163,7 +156,7 @@ export function AsyncErrorToastHost({
                   <button
                     type="button"
                     onClick={() => {
-                      dismissAsyncErrorToast(notice.id);
+                      getDiagnosticsPort().dismissAsyncErrorToast(notice.id);
                       onOpenBackups();
                     }}
                     className="min-h-[44px] sm:min-h-[32px] px-3 py-1 rounded-lg bg-[var(--barn-sage)] text-[var(--barn-on-sage)] text-[11px] font-semibold hover:opacity-95"
@@ -175,7 +168,7 @@ export function AsyncErrorToastHost({
                   <button
                     type="button"
                     onClick={() => {
-                      dismissAsyncErrorToast(notice.id);
+                      getDiagnosticsPort().dismissAsyncErrorToast(notice.id);
                       onOpenDiagnostics();
                     }}
                     className="min-h-[44px] sm:min-h-[32px] px-3 py-1 rounded-lg border border-[var(--barn-border)] bg-[var(--barn-canvas)] text-[11px] font-semibold hover:bg-[var(--barn-subtle)]"
@@ -185,7 +178,7 @@ export function AsyncErrorToastHost({
                 )}
                 <button
                   type="button"
-                  onClick={() => dismissAsyncErrorToast(notice.id)}
+                  onClick={() => getDiagnosticsPort().dismissAsyncErrorToast(notice.id)}
                   className="min-h-[44px] sm:min-h-[32px] px-3 py-1 rounded-lg bg-[var(--barn-subtle)] text-[var(--barn-ink)] text-[11px] font-medium hover:opacity-90"
                 >
                   Dismiss
