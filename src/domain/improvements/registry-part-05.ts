@@ -4180,9 +4180,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 60', 'branches: 50', 'functions: 46', 'lines: 61'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/engine/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the two suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/healthAndSettingsPanels.render.test.tsx',
@@ -4208,7 +4208,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'The 688,280-byte `sql-wasm.wasm` build sat on every cold start: `webSqliteAdapter.ts` imported `sql.js` and `sql-wasm.wasm?url` at module scope, so rolldown put the 58 KB `vendor-sql` chunk in the modulepreload graph and the WASM download began with the boot storage call, i.e. at first contentful paint rather than after it.',
     summary:
-      '`webSqliteAdapter.ts` now reaches the SQLite runtime through two memoized dynamic imports (`import(\'sql.js\')` and `import(\'sql.js/dist/sql-wasm.wasm?url\')`) behind `createSqlJsStatic()`, which keeps the existing `Promise.all([...])` that compiles the WASM in parallel with the IndexedDB read. Both promises clear on rejection so a transient chunk or WASM fetch error retries on the next storage call. The build now emits `import("./vendor-sql-*.js")` from `storage-sqlite-*.js` instead of a static edge: the boot graph drops from 31 modulepreloaded files / 1,265,895 bytes to 30 / 1,207,858 bytes (-58,037 B, -56.7 KiB) and `vendor-sql` leaves the first-paint graph. In a production build the 688 KB `sql-wasm.wasm` is requested after FCP (1389 ms against FCP 924 ms, versus 1395 ms against FCP 1396 ms before), while boot and storage still round-trip: `window.__PEDIGREE_BOOT_OK__ === true`, the same 129 controls and 4,121 rendered characters, and the IndexedDB `sqlite_files` store intact across a reload.',
+      '`webSqliteAdapter.ts` now reaches the SQLite runtime through two memoized dynamic imports (`import(\'sql.js\')` and `import(\'sql.js/dist/sql-wasm.wasm?url\')`) behind `createSqlJsStatic()`, which keeps the existing `Promise.all([...])` that compiles the WASM in parallel with the IndexedDB read. Both promises clear on rejection so a transient chunk or WASM fetch error retries on the next storage call. The build now emits `import("./vendor-sql-*.js")` from `storage-sqlite-*.js` instead of a static edge: the boot graph drops from 31 modulepreloaded files / 1,265,895 bytes to 30 / 1,207,858 bytes (-58,037 B, -56.7 KiB) and `vendor-sql` leaves the first-paint graph. In a production build the 688 KB `sql-wasm.wasm` is requested after FCP (1389 ms against FCP 924 ms, versus 1395 ms against FCP 1396 ms before), while boot and storage still round-trip: `window.__PEDIGREE_BOOT_OK__ === true`, the same 129 controls and 4,121 rendered characters, and the IndexedDB `sqlite_files` store intact across a reload. Time-to-data was then measured in clean browser contexts (service worker unregistered, caches deleted, one static server, three runs per build) to decide whether to defer the boot storage call past first paint as well. That deferral was built (two animation frames plus `requestIdleCallback`) and measured as noise, then reverted: first data 3,167 / 3,358 / 4,663 ms before against 3,496 / 3,024 / 3,019 ms after, FCP 1,728 / 1,880 / 3,172 ms against 1,672 / 1,700 / 1,628 ms, and the WASM request FCP+274 ms against FCP+260 ms — because opening the database is already asynchronous, the idle slot lands within ~30 ms of FCP either way.',
     files: [
       'src/storage/webSqliteAdapter.ts',
       'src/domain/improvements/registry-part-05.ts',
@@ -4227,6 +4227,90 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Load `sql.js` and `sql-wasm.wasm?url` with `import()` inside the adapter, never at module scope, and keep the memoized promises so repeated `initialize()`/`inspectRawSqliteBytes()` calls reuse one compile.',
       'Keep the `Promise.all([sqlPromise, storeReadPromise])` shape: the WASM compile and the IndexedDB read must stay concurrent so laziness does not add a serial round trip.',
       'Measure with `dist/index.html` modulepreload entries and `performance.getEntriesByType(\'paint\')` on a production build; the WASM request must land after first-contentful-paint.',
+      'If the SQLite boot ever has to leave startup entirely, defer the data render behind a skeleton or an explicit idle/demand trigger — not the boot call: a first-paint gate resolves within ~30 ms of FCP and only adds latency (measured above).',
+    ],
+  },
+  {
+    id: 'IMP-162',
+    title: 'Mount the Reports, Journal and Bench Screens',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Three daily-use workspaces — the printable reports catalog, the personal barn journal and the fast sequential entry bench — still had zero executable statements, so their species switching, filter selects and cage-walk queue were only ever exercised by hand.',
+    summary:
+      'Adds `reportsJournalBench.render.test.tsx`: the catalog lists its reports and switches species, narrows to the Financial category (dropping the calendar reports), and opens a report into its preview; the journal shows its empty state, opens the entry editor and applies the star/category filters; the bench renders the five-cage walk queue, records a weight and commits the entry through `onCommitEntry`, and switches focus mode to BCS. Coverage rises to 61.99/52.01/48.10/63.54, so the global floors move to 60/51/47/62 and the component floors to 33/26/21/34.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/reportsJournalBench.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
+        rationale:
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.',
+      },
+      {
+        filePath: 'src/components/__tests__/reportsJournalBench.render.test.tsx',
+        requiredSubstrings: ['Goat Only', 'onCommitEntry', '5★ Only'],
+        rationale:
+          'These three assertions are the only proof that the catalog really switches species, the bench writes through its commit callback and the journal filters actually run.',
+      },
+    ],
+    restorePlaybook: [
+      'The reports category filter is a labelled `<select>`; the header line (`Rabbit Only · N reports · Unit: …`) is split across spans, so assert it against `document.body.textContent`.',
+      'The bench disables both save buttons until a draft exists, so a commit test must type a weight into the `Weight Check (…)` field first.',
+      'Journal rating is a select (`5★ Only`), but colour categories are toggle buttons; query them by their pressed state rather than by role alone.',
+    ],
+  },
+  {
+    id: 'IMP-163',
+    title: 'Mount the Photo Gallery, Home Hub and Migration Modal, and Guard the OCR Scanner',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The animal photo gallery, the first-run home screen and the cross-species migration modal were the last three component modules at zero executable statements, and the offline pedigree scanner was at 2% because nothing exercised its file guards.',
+    summary:
+      'Adds `photoHomeMigration.render.test.tsx` (gallery footprint summary and primary promotion, full-size viewer stepping and closing, inline delete confirmation; home barn naming and species-hub opening across all 11 sample cards; migration configure → confirm step) and `pedigreeOcrGuards.test.ts` (an SVG upload is refused with the security message, a PDF with no text or embedded scan degrades to one manual-entry page with the requested species and unit). Coverage rises to 62.63/52.60/48.90/64.17, so the global floors move to 61/51/47/63, the component floors to 35/28/23/36 and the storage branch floor to 41. Real page OCR stays uncovered on purpose: it needs a raster image and a browser engine that jsdom does not provide.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/photoHomeMigration.render.test.tsx',
+      'src/storage/__tests__/pedigreeOcrGuards.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 61', 'branches: 51', 'functions: 47', 'lines: 63'],
+        rationale:
+          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/storage/__tests__/pedigreeOcrGuards.test.ts',
+        requiredSubstrings: ['SVG vector files are blocked for security', 'pdf_unsupported', 'manual_empty'],
+        rationale:
+          'The SVG refusal is a security guard and the manual-page fallback is the recovery path for an unreadable PDF; losing either assertion leaves both unverified.',
+      },
+      {
+        filePath: 'src/components/__tests__/photoHomeMigration.render.test.tsx',
+        requiredSubstrings: ['Remove', 'Save Farm Name', 'Confirm Cross-Species Migration'],
+        rationale:
+          'These assert the delete confirmation gate, the first-run barn naming write and the migration review step, which are the three irreversible-looking actions in the batch.',
+      },
+    ],
+    restorePlaybook: [
+      'The gallery delete is a two-step inline control: the trash button arms it and a `Remove` button performs the delete.',
+      'The OCR guards need no engine: an SVG File is rejected before any decode, and a `%PDF-1.4` header with junk bytes returns `pdf_unsupported` with one `manual_empty` page.',
+      'Do not try to cover raster OCR in jsdom; it needs canvas/ImageBitmap and a Tesseract worker, so it stays a browser-only path.',
     ],
   },
 ];
