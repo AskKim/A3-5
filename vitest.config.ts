@@ -21,9 +21,11 @@ export default defineConfig({
       reporter: ['text-summary'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/**/__tests__/**', 'src/**/*.d.ts'],
-      // Ratchet, measured 2026-11-28 over all of src/** (unimported files count):
-      // st 48.01, br 40.31, fn 34.35, ln 49.23.
-      thresholds: { statements: 47, branches: 39, functions: 33, lines: 48 },
+      // Ratchet, re-measured 2026-11-28 after the storage failure-path and render-test
+      // passes over all of src/** (unimported files count): st 52.69, br 43.02,
+      // fn 38.77, ln 54.11. Floors sit a point under the measured values so a new
+      // untested module fails the gate instead of quietly diluting the render gains.
+      thresholds: { statements: 51, branches: 42, functions: 37, lines: 53 },
     },
   },
 });

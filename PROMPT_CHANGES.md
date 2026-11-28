@@ -23,7 +23,7 @@ by `npm run verify:prompts`. Whenever a prompt in `/prompts/` is added, refined,
 accidentally overwritten, run the verifier to pinpoint any lost directives or protection flags
 and follow the restoration playbook below.
 
-- **Active Prompt Trackers:** 8
+- **Active Prompt Trackers:** 10
 - **Archived Snapshot Trackers:** 1
 
 ## Quick Verification Commands
@@ -38,7 +38,7 @@ npm run verify
 
 ---
 
-## Logged Prompt Revisions (9)
+## Logged Prompt Revisions (11)
 
 ### PRM-001: Active Master System Prompt Governance, Alignment & Registry Mandates
 
@@ -183,3 +183,28 @@ Status:     active
 
 **Recovery Playbook if Broken or Overwritten:**
 1. Restore `prompts/start_new_backlog_prompt.md` with the open-handoff precheck and the redirect to `prompts/resume_backlog_plan_prompt.md`.
+
+## resume_backlog_plan_prompt 2026-11-28 — Resume Backlog Plan Prompt — All-Handoff Scan Revision
+Prompt:     prompts/resume_backlog_plan_prompt.md @ 170a49d
+Why:        A run ended with `NO PENDING WORK` after closing one handoff, while `docs/plans/handoff-modularity-reusability.yaml` still had seven open steps: the run-end rule only looked at the handoff it was reading.
+Changed:    The run now ends only when **every** open handoff and plan in `docs/plans/` is empty. Closing a `handoff-*.yaml` is explicitly not completion: the step-2 check lists every open `handoff-*.yaml` before picking one, names the single-file read as the failure mode, and re-scans the directory after each closure to continue the next open handoff.
+Status:     active
+
+**Protected Invariants:**
+- `prompts/resume_backlog_plan_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `prompts/master_system_prompt.md`, `handoff-*.yaml`, `checkpoint, not a turn boundary`, `re-scan `docs/plans/handoff-*.yaml` after every closure`, `List **every** open `handoff-*.yaml`` — *The resume path decides when a run is finished, so both the all-files scan and the post-closure re-scan have to live there and cannot be edited away silently.*
+
+**Recovery Playbook if Broken or Overwritten:**
+1. Restore the all-handoff run-end rule and the per-closure re-scan sentence; a single-file check is the regression this entry prevents.
+2. Keep the redirect to `prompts/start_new_backlog_prompt.md` for the case where no handoff and no plan is open.
+
+## start_new_backlog_prompt 2026-11-28 — Start New Backlog Prompt — Every-Handoff Precheck Revision
+Prompt:     prompts/start_new_backlog_prompt.md @ 170a49d
+Why:        The precheck stopped at the first handoff it found, so a second open handoff could sit untouched while the workflow moved on to a new backlog entry.
+Changed:    The precheck now says to scan every `handoff-*.yaml`, not just the first, continues the first open handoff and then re-scans for the next, states plainly that a finished file is not a finished directory, and allows a new backlog entry only when no active plan and no open step in any handoff exists.
+Status:     active
+
+**Protected Invariants:**
+- `prompts/start_new_backlog_prompt.md` must contain `<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->`, `suggestions-backlog.md`, `resume_backlog_plan_prompt.md`, `handoff-*.yaml`, `scan every `handoff-*.yaml`, not just the first`, `a finished file is not a finished directory` — *The backlog gate is the other place that can start unrelated work while a handoff is still open; the all-files scan and its reason must both survive.*
+
+**Recovery Playbook if Broken or Overwritten:**
+1. Restore the all-handoff precheck and the "finished file is not a finished directory" rule, then keep the redirect to the resume prompt for active plans.

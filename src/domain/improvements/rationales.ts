@@ -723,7 +723,9 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
   'IMP-059#src/domain/judgeNotebook.ts#1':
     'Pure TypeScript Judge Notebook conflict checks, mileage/expense calculations, CSV exports, and XSS-safe HTML contracts must remain DOM-free.',
   'IMP-059#src/storage/webSqliteAdapter.ts#1':
-    'SQLite schema v9 must create, migrate, and persist judge_clubs, judge_assignments, judge_expenses, and enableJudgeNotebook.',
+    'SQLite schema v9 must create and migrate judge_clubs, judge_assignments, and judge_expenses.',
+  'IMP-059#src/storage/sqliteSnapshotReaders.ts#1':
+    'Snapshot reads must hydrate enableJudgeNotebook from barn_settings, since the settings row is now mapped in the snapshot readers.',
   'IMP-059#src/hooks/useBarnStore.ts#1':
     'Store must expose outbox-tracked CRUD mutators for Judge clubs, assignments, and expenses.',
   'IMP-059#src/components/JudgeNotebookScreen.tsx#1':
@@ -998,8 +1000,8 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'Improvements need the same pinned exemption, otherwise a new entry logged without `decidedOn` passes as grandfathered.',
   'IMP-133#.github/workflows/ci.yml#1':
     'The prompt gate has to run where merges are decided; locally-only verification let prompt drift reach main.',
-  'IMP-134#src/domain/__tests__/promptRegistry.test.ts#1':
+  'IMP-139#src/domain/__tests__/promptRegistry.test.ts#1':
     'A frozen snapshot is what turns the pin list into a ratchet: appending a new PRM ID fails the suite instead of quietly bypassing the opt-in gate.',
-  'IMP-134#src/domain/__tests__/improvementRegistry.test.ts#1':
+  'IMP-139#src/domain/__tests__/improvementRegistry.test.ts#1':
     'Pinning a `decidedOn`-less entry must cost a deliberate snapshot edit, so the exemption cannot be widened as a shortcut.',
 };

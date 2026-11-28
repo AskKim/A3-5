@@ -8,9 +8,9 @@ Edit existing files with targeted diffs (`str_replace` / patch), never whole-fil
 ## Startup Check: Incomplete Plan / Work Notice
 Whenever project rules (`GEMINI.md`, `AGENTS.md`, or `prompts/master_system_prompt.md`) are loaded for a coding task (omit on standalone make-handoff-only requests, read-only Q&A/inline completions, or import-only fast-boot checks) — emit this status **at most once per response** right after `ALIGNED` (never repeat it at the end):
 - Check `docs/plans/` (excluding `suggestions-backlog.md`) for any existing incomplete plan or handoff file (`handoff-*.yaml`, `handoff.yaml`, `*.yaml`, or active `*.md` plan with `[WIP]`/`[TODO]` or uncompleted steps).
-- If found, output ONE compact line right after `ALIGNED`:
+- If found, output one compact line right after `ALIGNED` for **every** open file — never just the first, and never `NO PENDING WORK` because the file you happened to be working in is finished:
   `PENDING HANDOFF: <file_path> — <1-line goal/feature>` (or `PENDING PLAN: <file_path> — <1-line goal/feature>`).
-- If neither exists, output ONE compact line right after `ALIGNED`:
+- Only when no file in `docs/plans/` has open steps — after scanning **all** `handoff-*.yaml` files, since finishing one says nothing about the rest — output ONE compact line right after `ALIGNED`:
   `NO PENDING WORK`
 
 ## Auto-Handoff for Complex Features & "Write and Build a Handoff"
@@ -43,5 +43,5 @@ When asked ONLY to "write a handoff" (or "handoff for X") with no build instruct
   next_action: <exact starting point to resume>
 
 ## Resume & Cleanup Protocols
-- **Resume** ("resume handoff" or "resume <filename>"): Read the matching `docs/plans/handoff-*.yaml` (or the sole existing handoff if unspecified; if multiple exist and none is named, ask which topic to resume). To conserve tokens, read only the files named in `status:` / `next_action:` (skip `ARCHITECTURE.md`, `ROADMAP.md`, and `docs/archive/` unless needed). Run `git status -s` (when git is available) and inspect any `[WIP]` file to catch mid-file token cutoffs, then execute from the first `[WIP]` or `[TODO]` item, checkpoint `docs/plans/handoff-*.yaml` after each step, and delete it once all tasks and verification checks pass.
+- **Resume** ("resume handoff" or "resume <filename>"): Read the matching `docs/plans/handoff-*.yaml` (or the sole existing handoff if unspecified; if multiple exist and none is named, ask which topic to resume). Closing one handoff is not a wrap-up: re-scan `docs/plans/handoff-*.yaml` before claiming there is nothing pending, because another open file is still open work. To conserve tokens, read only the files named in `status:` / `next_action:` (skip `ARCHITECTURE.md`, `ROADMAP.md`, and `docs/archive/` unless needed). Run `git status -s` (when git is available) and inspect any `[WIP]` file to catch mid-file token cutoffs, then execute from the first `[WIP]` or `[TODO]` item, checkpoint `docs/plans/handoff-*.yaml` after each step, and delete it once all tasks and verification checks pass.
 - **Drop / Clear** ("drop handoff <topic>" or "clear handoffs"): Delete the specified `docs/plans/handoff-<topic>.yaml` (or all `docs/plans/handoff-*.yaml` when clearing all), never deleting `docs/plans/suggestions-backlog.md`, and reply with `Cleared: <deleted files>`.

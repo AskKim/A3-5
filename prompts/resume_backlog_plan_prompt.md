@@ -11,7 +11,7 @@
 
 - A milestone closure — register the change, regenerate docs, run `npm run verify` + `npm run build` + `npm run verify:chunks`, commit, push — is a **checkpoint, not a turn boundary**.
 - After a checkpoint, start the next milestone in the same run. Do **not** ask whether to continue, do **not** summarise-and-hand-back, and do **not** stop merely because the milestone you just finished verified green.
-- The run ends only when the handoff's remaining list is empty, or when the run's own budget is exhausted. Budget is the only acceptable reason to stop with work left; when that happens, say plainly which milestones landed, which remain, and that budget — not a blocker — ended the run.
+- The run ends only when **every** open handoff and plan in `docs/plans/` is empty, or when the run's own budget is exhausted. Closing one `handoff-*.yaml` is not completion: re-scan `docs/plans/handoff-*.yaml` after every closure, because more than one topic can be open at once and a `[DONE]` file you just finished says nothing about the others. Budget is the only acceptable reason to stop with work left; when that happens, say plainly which milestones landed, which remain, and that budget — not a blocker — ended the run.
 - Known forward blockers (a missing dev dependency, a harness that needs jsdom, an unavailable SDK) are reported at the end as limitations, never used to end the run early. Add the dependency the milestone needs and note it.
 
 ---
@@ -23,7 +23,7 @@
 
 2. **Review Active Implementation Plan**
    - Inspect `docs/plans/active-backlog-plan.md` (or any other active plan file in `docs/plans/` excluding `docs/plans/suggestions-backlog.md`) to determine current progress, completed steps, and the next pending task.
-   - **If no active plan file exists in `docs/plans/`:** Check for open handoffs — any `handoff-*.yaml` in `docs/plans/` whose `status:` block still contains `[WIP]` or `[TODO]`. If one exists, continue that handoff's `next_action` rather than starting a new backlog item, and checkpoint the handoff as each step finishes. Only when there is no open handoff either, stop this workflow and read/execute `prompts/start_new_backlog_prompt.md`.
+   - **If no active plan file exists in `docs/plans/`:** Check for open handoffs — any `handoff-*.yaml` in `docs/plans/` whose `status:` block still contains `[WIP]` or `[TODO]`. List **every** open `handoff-*.yaml` before picking one — reading a single file is how a second open handoff gets reported as `NO PENDING WORK` while it still has work in it. If one exists, continue that handoff's `next_action` rather than starting a new backlog item, checkpoint the handoff as each step finishes, then re-scan the directory and continue the next open one. Only when no `handoff-*.yaml` anywhere still has `[WIP]`/`[TODO]` steps, stop this workflow and read/execute `prompts/start_new_backlog_prompt.md`.
 
 3. **Execute Next Implementation Step**
    - Implement the next pending task in the plan while adhering strictly to project standards, code quality, `prompts/master_system_prompt.md` invariants, and test coverage.

@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (70 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (74 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (134)
+## Logged Improvements (138)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1339,7 +1339,8 @@ npm run lint && npm run build
 **Automated Invariants Checked:**
 - `src/domain/models.ts` must contain `enableJudgeNotebook?: boolean`, `JudgeClubContact`, `JudgeAssignment`, `JudgeExpense` — *BarnSettings must preserve the optional enableJudgeNotebook flag alongside Judge domain interfaces.*
 - `src/domain/judgeNotebook.ts` must contain `detectJudgeDateConflicts`, `evaluateJudgeAssignmentFinancials`, `summarizeJudgeNotebook`, `exportJudgeAssignmentsCsv`, `generateJudgeContractHtml`, `generateJudgeSummaryReportHtml` — *Pure TypeScript Judge Notebook conflict checks, mileage/expense calculations, CSV exports, and XSS-safe HTML contracts must remain DOM-free.*
-- `src/storage/webSqliteAdapter.ts` must contain `SQLITE_SCHEMA_VERSION = 9`, `judge_clubs`, `judge_assignments`, `judge_expenses`, `enableJudgeNotebook` — *SQLite schema v9 must create, migrate, and persist judge_clubs, judge_assignments, judge_expenses, and enableJudgeNotebook.*
+- `src/storage/webSqliteAdapter.ts` must contain `SQLITE_SCHEMA_VERSION = 9`, `judge_clubs`, `judge_assignments`, `judge_expenses` — *SQLite schema v9 must create and migrate judge_clubs, judge_assignments, and judge_expenses.*
+- `src/storage/sqliteSnapshotReaders.ts` must contain `enableJudgeNotebook` — *Snapshot reads must hydrate enableJudgeNotebook from barn_settings, since the settings row is now mapped in the snapshot readers.*
 - `src/hooks/useBarnStore.ts` must contain `saveJudgeClub`, `deleteJudgeClub`, `saveJudgeAssignment`, `deleteJudgeAssignment`, `saveJudgeExpense`, `deleteJudgeExpense` — *Store must expose outbox-tracked CRUD mutators for Judge clubs, assignments, and expenses.*
 - `src/components/JudgeNotebookScreen.tsx` must contain `JudgeNotebookScreen`, `detectJudgeDateConflicts`, `generateJudgeContractHtml`, `PrintPreviewModal` — *JudgeNotebookScreen must provide the opt-in gate, conflict alerts, financial tabs, and printable contract preview.*
 - `src/App.tsx` must contain `JudgeNotebookScreen`, `route === 'judge'` — *App router must lazy-load and mount JudgeNotebookScreen at route 'judge'.*
@@ -2766,6 +2767,64 @@ Status:     active
 1. Log a new improvement with `decidedOn` (plus `status`/`rejected` where they apply) and a new prompt revision with all three of `decidedOn`, `version`, `commitShaOrTag`.
 2. When an old entry opts into the contract, delete its ID from `LEGACY_*_ENTRY_IDS` — the pin gate fails until the list is pruned.
 3. Keep `npm run verify:prompts` in `ci.yml` beside `verify:improvements`, and run `npm run regen:ledgers` after touching a registry.
+
+## 2026-11-28 — Tier A Screens and the Backup/Export Surfaces Render-Tested
+Why:        The suite had one render-level file against 53 components and 68k lines, so a selector, a dialog gate or a save-lock regression could reach the user with every gate green. The owner asked for the Tier A screens — the ones where a rendering bug looks like data loss — and then the backup/export surfaces to be tested the same way.
+Changed:    `src/components/__tests__/tierARecoveryAndEditor.render.test.tsx`, `src/components/__tests__/backupExportSurfaces.render.test.tsx`, `src/hooks/__tests__/speciesSwitch.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/__tests__/tierARecoveryAndEditor.render.test.tsx` must contain `WipedStorageRecoveryModal`, `Confirm Restore`, `Confirm Delete` — *A recovery or delete that fires without its confirm step is the most expensive rendering regression in the app.*
+- `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `SyncStateSliceProvider`, `VaultSliceProvider`, `BUILTIN_NON_NATIVE_EXPORTERS` — *The hub reads three slice contexts; dropping one provider breaks the screen for every caller, and the exporter list is the surface users export through.*
+- `src/hooks/__tests__/speciesSwitch.render.test.tsx` must contain `selectSpeciesWorkspace`, `selectedAnimalId` — *Species isolation is the domain invariant; a switch that keeps the old selection leaks one herd into another.*
+
+**Restoration Playbook if Overwritten:**
+1. Render screens through their real slice providers and callbacks; do not mock the component under test.
+2. Assert user-visible text, roles and the callback contract, plus surfaced alerts — never whole-DOM snapshots.
+3. Tier A tests belong in jsdom files named `*.render.test.tsx`; keep pure units out of them so the slow tier stays small.
+
+## 2026-11-28 — SQLite Snapshot Readers and Mutation Helpers Split Out of the Adapter
+Why:        webSqliteAdapter.ts was still 2,609 lines and carried three unrelated jobs inside one class: connection lifecycle, reading every barn table back into a snapshot, and its own copies of the transaction envelope, batch-write and multi-row-delete loops. A new entity had to re-implement the transaction handling to add a batch save or a cascade delete.
+Changed:    `src/storage/sqliteSnapshotReaders.ts`, `src/storage/sqliteMutationHelpers.ts`, `src/storage/__tests__/sqliteSnapshotReaders.test.ts`, `src/storage/__tests__/sqliteMutationHelpers.test.ts`, `src/storage/webSqliteAdapter.ts`, `EXTRACTION_INVENTORY.md`, `docs/plans/handoff-modularity-reusability.yaml`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/sqliteSnapshotReaders.ts` must contain `readSnapshotFromDatabase`, `queryObjectsFromDb`, `lightweightPhotos` — *The lightweight-photo projection is the difference between a fast boot and a 40 MB snapshot read; it has to stay next to the readers that apply it.*
+- `src/storage/webSqliteAdapter.ts` must contain `from './sqliteSnapshotReaders'`, `deleteRowsForIds`, `writeRowsInTransaction` — *The adapter must keep delegating snapshot reads and batch mutations instead of growing a second copy of either loop.*
+
+**Restoration Playbook if Overwritten:**
+1. Snapshot reads belong in `sqliteSnapshotReaders.ts`; a new table is one query plus one mapper call there, not a new adapter method.
+2. Batch writes and multi-row deletes belong in `sqliteMutationHelpers.ts`; pass statements, do not re-open a transaction by hand.
+3. Keep the missing-table tolerance in `safeTableQuery` — older imported databases legitimately lack the newer tables.
+
+## 2026-11-28 — Handoff Closure Must Scan Every Handoff File
+Why:        Finishing one handoff was reported as `NO PENDING WORK` while `docs/plans/handoff-modularity-reusability.yaml` still had seven open steps. The workflow only ever looked at the file it was reading, so a second open handoff was invisible at the exact moment a run decided it was done.
+Changed:    `prompts/resume_backlog_plan_prompt.md`, `prompts/start_new_backlog_prompt.md`, `GEMINI.md`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `GEMINI.md` must contain `for **every** open file`, `after scanning **all** `handoff-*.yaml` files` — *The status line is the first thing a run reports; if it can name only one file, a second open handoff stays invisible.*
+- `prompts/resume_backlog_plan_prompt.md` must contain `re-scan `docs/plans/handoff-*.yaml` after every closure`, `List **every** open `handoff-*.yaml`` — *The resume path decides when a run is finished, so the all-files scan and the re-scan rule have to live there.*
+- `prompts/start_new_backlog_prompt.md` must contain `scan every `handoff-*.yaml`, not just the first`, `a finished file is not a finished directory` — *The backlog gate is the other place that can start unrelated work while a handoff is still open.*
+
+**Restoration Playbook if Overwritten:**
+1. Never report `NO PENDING WORK` from the file in hand: list `docs/plans/handoff-*.yaml` and read every `status:` block first.
+2. After closing a handoff, re-scan the directory before moving to a backlog item or ending the run.
+3. When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.
+
+## 2026-11-28 — Coverage Ratchet Raised and the CSV Exporter Executed End to End
+Why:        The coverage floors were still set against the 48/40/34/49 baseline, roughly four points under the post-render-test measurement, so a new untested module could absorb the render gains before the gate noticed. The hub tests also only proved the exporter registry rendered, never that an export produced a file.
+Changed:    `vitest.config.ts`, `src/components/__tests__/backupExportSurfaces.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `thresholds:`, `statements: 51`, `branches: 42`, `functions: 37`, `lines: 53` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.*
+- `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `downloadTextFileMock`, `Herd Roster Spreadsheet`, `getByRole('status')` — *Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.*
+
+**Restoration Playbook if Overwritten:**
+1. Re-measure before moving a floor, and keep it one point under the measured number so the ratchet stays achievable but tight.
+2. Stub only the boundary in an end-to-end UI test: mock the download call, keep the exporter registry, snapshot and CSV serializer real.
+3. Assert the artifact contract (filename, MIME type, BOM, header, a real record) rather than a snapshot of generated text.
 
 ## 2026-11-28 — Ratchet Tests That Freeze the Pinned Legacy ID Lists
 Why:        The pinned legacy lists made the opt-in gates sound, but nothing stopped the lists themselves from growing: appending a new entry ID to `LEGACY_*_ENTRY_IDS` exempts that entry from the contract without touching a verifier, so the gate could be bypassed by pinning.

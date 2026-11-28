@@ -3057,6 +3057,179 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-134',
+    title: 'Tier A Screens and the Backup/Export Surfaces Render-Tested',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The suite had one render-level file against 53 components and 68k lines, so a selector, a dialog gate or a save-lock regression could reach the user with every gate green. The owner asked for the Tier A screens — the ones where a rendering bug looks like data loss — and then the backup/export surfaces to be tested the same way.',
+    summary:
+      'Adds 26 jsdom render tests in three files. `tierARecoveryAndEditor.render.test.tsx` covers `WipedStorageRecoveryModal` (hidden without a context, restore-with-count, restore failure surfaced as an alert, Start Fresh behind an explicit confirm, rolling-snapshot restore by key), `ArchivedHerdsModal` (closed render, OPFS-unsupported explanation with a disabled toggle, name/species filtering, delete behind a confirm, restore-to-active options), `UnifiedBackupVaultPanel` (empty state, manual save with note, failed save as an alert rather than a success claim, confirm-before-restore, confirm-before-delete for rolling snapshots) and `AnimalEditorModal` (edit-mode dialog naming the animal, save of the prefilled draft, cancel without saving). `backupExportSurfaces.render.test.tsx` renders `ImportExportHubScreen` inside the conflict/vault/sync-state slice providers, asserting the exporters workspace lists the built-in formats, the section tabs switch to system backup and imports, and the engine/species context renders; plus `DiagnosticsAndSupportPanel` health scan through the real `analyzeBarnDataHealth` and the absence of the auto-repair action on a healthy barn. `speciesSwitch.render.test.tsx` switches species through the real store hook and asserts the derived slice swaps, the selection clears, and records never leak across hubs.',
+    files: [
+      'src/components/__tests__/tierARecoveryAndEditor.render.test.tsx',
+      'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+      'src/hooks/__tests__/speciesSwitch.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/__tests__/tierARecoveryAndEditor.render.test.tsx',
+        requiredSubstrings: ['WipedStorageRecoveryModal', 'Confirm Restore', 'Confirm Delete'],
+        rationale:
+          'A recovery or delete that fires without its confirm step is the most expensive rendering regression in the app.',
+      },
+      {
+        filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+        requiredSubstrings: ['SyncStateSliceProvider', 'VaultSliceProvider', 'BUILTIN_NON_NATIVE_EXPORTERS'],
+        rationale:
+          'The hub reads three slice contexts; dropping one provider breaks the screen for every caller, and the exporter list is the surface users export through.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/speciesSwitch.render.test.tsx',
+        requiredSubstrings: ['selectSpeciesWorkspace', 'selectedAnimalId'],
+        rationale:
+          'Species isolation is the domain invariant; a switch that keeps the old selection leaks one herd into another.',
+      },
+    ],
+    restorePlaybook: [
+      'Render screens through their real slice providers and callbacks; do not mock the component under test.',
+      'Assert user-visible text, roles and the callback contract, plus surfaced alerts — never whole-DOM snapshots.',
+      'Tier A tests belong in jsdom files named `*.render.test.tsx`; keep pure units out of them so the slow tier stays small.',
+    ],
+  },
+  {
+    id: 'IMP-136',
+    title: 'SQLite Snapshot Readers and Mutation Helpers Split Out of the Adapter',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'webSqliteAdapter.ts was still 2,609 lines and carried three unrelated jobs inside one class: connection lifecycle, reading every barn table back into a snapshot, and its own copies of the transaction envelope, batch-write and multi-row-delete loops. A new entity had to re-implement the transaction handling to add a batch save or a cascade delete.',
+    summary:
+      'Adds `src/storage/sqliteSnapshotReaders.ts` (`readSnapshotFromDatabase`, `queryObjectsFromDb`, `mapAnimalRow`, lightweight-photo projections, missing-table tolerance) and `src/storage/sqliteMutationHelpers.ts` (`runSqliteTransaction`, `writeRowsInTransaction`, `deleteRowsForIds`). The adapter drops 2,609 → 2,352 lines and now describes statements instead of loop-and-transaction plumbing: `saveEntityBatch` calls `writeRowsInTransaction`, and `deleteAnimalsBatch`/`deleteTasksBatch` pass their cascade SQL to `deleteRowsForIds`. New `sqliteSnapshotReaders.test.ts` and `sqliteMutationHelpers.test.ts` (10 tests) cover name ordering, malformed JSON falling back without dropping the row, lightweight payload stripping, a missing optional table, commit, rollback-and-rethrow, empty batches, and multi-statement deletes.',
+    files: [
+      'src/storage/sqliteSnapshotReaders.ts',
+      'src/storage/sqliteMutationHelpers.ts',
+      'src/storage/__tests__/sqliteSnapshotReaders.test.ts',
+      'src/storage/__tests__/sqliteMutationHelpers.test.ts',
+      'src/storage/webSqliteAdapter.ts',
+      'EXTRACTION_INVENTORY.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/sqliteSnapshotReaders.ts',
+        requiredSubstrings: ['readSnapshotFromDatabase', 'queryObjectsFromDb', 'lightweightPhotos'],
+        rationale:
+          'The lightweight-photo projection is the difference between a fast boot and a 40 MB snapshot read; it has to stay next to the readers that apply it.',
+      },
+      {
+        filePath: 'src/storage/webSqliteAdapter.ts',
+        requiredSubstrings: ["from './sqliteSnapshotReaders'", 'deleteRowsForIds', 'writeRowsInTransaction'],
+        rationale:
+          'The adapter must keep delegating snapshot reads and batch mutations instead of growing a second copy of either loop.',
+      },
+    ],
+    restorePlaybook: [
+      'Snapshot reads belong in `sqliteSnapshotReaders.ts`; a new table is one query plus one mapper call there, not a new adapter method.',
+      'Batch writes and multi-row deletes belong in `sqliteMutationHelpers.ts`; pass statements, do not re-open a transaction by hand.',
+      'Keep the missing-table tolerance in `safeTableQuery` — older imported databases legitimately lack the newer tables.',
+    ],
+  },
+  {
+    id: 'IMP-137',
+    title: 'Handoff Closure Must Scan Every Handoff File',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Finishing one handoff was reported as `NO PENDING WORK` while `docs/plans/handoff-modularity-reusability.yaml` still had seven open steps. The workflow only ever looked at the file it was reading, so a second open handoff was invisible at the exact moment a run decided it was done.',
+    summary:
+      '`prompts/resume_backlog_plan_prompt.md` and `prompts/start_new_backlog_prompt.md` now require scanning **every** `handoff-*.yaml`, name the failure mode they prevent, and treat a finished file as not a finished directory: the run re-scans `docs/plans/` after each closure and continues the next open handoff. The run-end rule in the resume prompt now says the run ends only when every open handoff and plan is empty. `GEMINI.md` emits one `PENDING HANDOFF` line per open file and reserves `NO PENDING WORK` for a directory with no open steps, with the same re-scan rule in the Resume protocol.',
+    files: [
+      'prompts/resume_backlog_plan_prompt.md',
+      'prompts/start_new_backlog_prompt.md',
+      'GEMINI.md',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'GEMINI.md',
+        requiredSubstrings: ['for **every** open file', 'after scanning **all** `handoff-*.yaml` files'],
+        rationale:
+          'The status line is the first thing a run reports; if it can name only one file, a second open handoff stays invisible.',
+      },
+      {
+        filePath: 'prompts/resume_backlog_plan_prompt.md',
+        requiredSubstrings: [
+          're-scan `docs/plans/handoff-*.yaml` after every closure',
+          'List **every** open `handoff-*.yaml`',
+        ],
+        rationale:
+          'The resume path decides when a run is finished, so the all-files scan and the re-scan rule have to live there.',
+      },
+      {
+        filePath: 'prompts/start_new_backlog_prompt.md',
+        requiredSubstrings: [
+          'scan every `handoff-*.yaml`, not just the first',
+          'a finished file is not a finished directory',
+        ],
+        rationale:
+          'The backlog gate is the other place that can start unrelated work while a handoff is still open.',
+      },
+    ],
+    restorePlaybook: [
+      'Never report `NO PENDING WORK` from the file in hand: list `docs/plans/handoff-*.yaml` and read every `status:` block first.',
+      'After closing a handoff, re-scan the directory before moving to a backlog item or ending the run.',
+      'When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.',
+    ],
+  },
+  {
+    id: 'IMP-138',
+    title: 'Coverage Ratchet Raised and the CSV Exporter Executed End to End',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The coverage floors were still set against the 48/40/34/49 baseline, roughly four points under the post-render-test measurement, so a new untested module could absorb the render gains before the gate noticed. The hub tests also only proved the exporter registry rendered, never that an export produced a file.',
+    summary:
+      'Raises the `vitest.config.ts` floors to statements 51, branches 42, functions 37 and lines 53 — one point under the re-measured 52.69 / 43.02 / 38.77 / 54.11 — and records the measurement and its rationale in the config comment. Adds an end-to-end exporter test: `backupExportSurfaces.render.test.tsx` now mocks only `downloadTextFile` from `webFileActions` (via `importOriginal`, keeping every other export real), locates the Herd Roster Spreadsheet card, clicks its export button, and asserts the download received a `.csv` filename, a `text/csv` MIME type, a UTF-8 BOM, the `Species` header and a real animal tattoo from the snapshot, then that the panel reports its artifact summary through `role="status"`.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['thresholds:', 'statements: 51', 'branches: 42', 'functions: 37', 'lines: 53'],
+        rationale:
+          'The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.',
+      },
+      {
+        filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+        requiredSubstrings: ['downloadTextFileMock', 'Herd Roster Spreadsheet', "getByRole('status')"],
+        rationale:
+          'Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.',
+      },
+    ],
+    restorePlaybook: [
+      'Re-measure before moving a floor, and keep it one point under the measured number so the ratchet stays achievable but tight.',
+      'Stub only the boundary in an end-to-end UI test: mock the download call, keep the exporter registry, snapshot and CSV serializer real.',
+      'Assert the artifact contract (filename, MIME type, BOM, header, a real record) rather than a snapshot of generated text.',
+    ],
+  },
+  {
+    id: 'IMP-139',
     title: 'Ratchet Tests That Freeze the Pinned Legacy ID Lists',
     category: 'ci-tooling',
     release: 'alpha-3',
