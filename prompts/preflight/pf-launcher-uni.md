@@ -39,10 +39,10 @@ Read `prompts/preflight/run-uni/guardrails.md` completely, enforce every Hard St
 - **Helper Scripts (Anti-Gravity / CLI):** `prompts/preflight/scripts/preflight-run-context.mjs`, `prompts/preflight/scripts/preflight-state.mjs`, `prompts/preflight/scripts/preflight-log.mjs`, `prompts/preflight/scripts/preflight-rollback.mjs`, `prompts/preflight/scripts/preflight-lint.mjs`, `prompts/preflight/scripts/preflight-reset.mjs`
 - **Handoff & Audit Log (`docs/handoff-state.json`, Schema v2):** If absent on first run, create `docs/` (if needed) and write:
   `{ "schema_version": 2, "active_branch": "<branch-name>", "target_version": "<version-tag>", "resume_cursor": null, "phase_a_scope_hash": null, "ai_studio_status": "pending", "ai_studio_completed_at": null, "ai_studio_commit_sha": null, "improvement_log_anchor": null, "antigravity_status": "pending", "antigravity_completed_at": null, "history": [], "last_error": null }`
-- **All 14 Paired Modules (`prompts/preflight/run-uni/` <-> `prompts/preflight/run-uni/read/*-readme.md`):**
+- **All 16 Paired Modules (`prompts/preflight/run-uni/` <-> `prompts/preflight/run-uni/read/*-readme.md`):**
   - *Shared Guardrails:* `guardrails.md`
   - *Phase A (`ai-studio`):* `ai.md`, `a11y.md`, `crawl-setup.md`, `a11y-check.md`, `crawl-guide.md`, `release-check.md` (Part 1), `ver-update.md`
-  - *Phase B (`antigravity`):* `backup-setup.md`, `ci-setup.md`, `backup-check.md`, `ci-guide.md`, `release-check.md` (Part 2), `audit.md`, `release-plan.md`
+  - *Phase B (`antigravity`):* `backup-setup.md`, `ci-setup.md`, `backup-check.md`, `ci-guide.md`, `modularity-check.md`, `reusability-check.md`, `release-check.md` (Part 2), `audit.md`, `release-plan.md`
 ## Cascade-Start Freshness And Resume Check (Run First On Both Platforms)
 1. Validate `docs/handoff-state.json` against `prompts/preflight/handoff-state.schema.json` (in `antigravity`, run `node prompts/preflight/scripts/preflight-run-context.mjs --branch <branch-name> --version <version-tag>` as a single-command bootstrapper, falling back to `node prompts/preflight/scripts/preflight-state.mjs` to evaluate Schema v2, UTC freshness, Phase A-scope delta, and `resume_step_id` in one compact JSON call).
 2. Skip any line marked `AGENT_SKIP_LINE` without opening its file. For `[REUSABLE]` / `[PER-RELEASE]` steps, if `history[]` already has `status: "completed"` for `<step_id>` + `<branch-name>` + `<version-tag>` + current `HEAD` (and `--force-rerun <step_id>` was not passed), skip it and resume directly at the first uncompleted or previously failed `step_id`. Passing `--force-rerun <step_id>` overrides only the duplicate guard for that `step_id` without resetting `history[]` or bypassing `ALIGNED`/`GUARDED`/stale Hard Stops.
@@ -79,6 +79,8 @@ Set `ai_studio_status: "in_progress"` in `docs/handoff-state.json`.
 - [ ] `[FIRST-TIME-SINGLE-USE]` `step_id: ci-setup` — `prompts/preflight/run-uni/ci-setup.md` -> Rewrite to `[SINGLE-USE-COMPLETED: <YYYY-MM-DD> | step_id: ci-setup | AGENT_SKIP_LINE: DO NOT READ OR CALL THIS PROMPT FILE]`.
 - [ ] `[REUSABLE]` `step_id: backup-check` — `prompts/preflight/run-uni/backup-check.md` (pre-merge backup & scope check).
 - [ ] `[REUSABLE]` `step_id: ci-guide` — `prompts/preflight/run-uni/ci-guide.md` (CI health & `dist/` smoke gate).
+- [ ] `[REUSABLE]` `step_id: modularity-check` — `prompts/preflight/run-uni/modularity-check.md` (layer, cycle and boundary audit).
+- [ ] `[REUSABLE]` `step_id: reusability-check` — `prompts/preflight/run-uni/reusability-check.md` (duplication, parameterisation and portability audit).
 - [ ] `[REUSABLE]` `step_id: release-check-p2` — `prompts/preflight/run-uni/release-check.md` (read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`).
 - [ ] `[PER-RELEASE]` `step_id: attribution-audit` — `prompts/preflight/run-uni/audit.md` (AGPL-3.0 & `THIRD_PARTY_NOTICES.md` audit).
 - [ ] `[PER-RELEASE]` `step_id: release-plan` — `prompts/preflight/run-uni/release-plan.md` (release cut, post-deploy smoke test, human-only sign-off).

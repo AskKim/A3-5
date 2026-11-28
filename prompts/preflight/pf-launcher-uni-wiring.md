@@ -20,6 +20,8 @@ This document maps each step in the **Preflight Launcher** to its source prompt 
 | ci-setup | `run-uni/ci-setup.md` | FIRST_TIME |
 | backup-check | `run-uni/backup-check.md` | REUSABLE |
 | ci-guide | `run-uni/ci-guide.md` | REUSABLE |
+| modularity-check | `run-uni/modularity-check.md` | REUSABLE |
+| reusability-check | `run-uni/reusability-check.md` | REUSABLE |
 | release-check-p2 | `run-uni/release-check.md` (Phase B) | REUSABLE |
 | attribution-audit | `run-uni/audit.md` | PER_RELEASE |
 | release-plan | `run-uni/release-plan.md` | PER_RELEASE |
