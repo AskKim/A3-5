@@ -12,7 +12,7 @@ import {
   formatLedgerHeader,
   LEDGER_FORMAT_UPDATED,
 } from '../ledgerContract';
-import { formatImprovementsMarkdown } from '../improvementRegistry';
+import { IMPROVEMENTS_REGISTRY, formatImprovementsMarkdown } from '../improvementRegistry';
 import { INVARIANT_RATIONALES } from '../improvements/rationales';
 import { formatPromptChangelogMarkdown } from '../promptRegistry';
 import type { ImprovementEntry } from '../improvements/types';
@@ -89,8 +89,8 @@ describe('ledgerContract — append-only header and entry shape', () => {
     const improvements = evaluateLedgerContract(readLedger('IMPROVEMENTS.md'), 'improvements');
     expect(improvements.violations).toEqual([]);
     expect(improvements.ok).toBe(true);
-    expect(improvements.totalEntries).toBe(122);
-    expect(improvements.contractEntries).toBe(1);
+    expect(improvements.totalEntries).toBe(IMPROVEMENTS_REGISTRY.length);
+    expect(improvements.contractEntries).toBe(IMPROVEMENTS_REGISTRY.filter((e) => e.decidedOn).length);
 
     const prompts = evaluateLedgerContract(readLedger('PROMPT_CHANGES.md'), 'prompt-changes');
     expect(prompts.violations).toEqual([]);

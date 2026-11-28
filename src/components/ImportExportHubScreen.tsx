@@ -151,6 +151,7 @@ import {
   downloadTextFile,
 } from '../utils/webFileActions';
 import { useSyncConflictSlice } from '../hooks/barnStore/syncConflictSlice';
+import { useVaultSlice } from '../hooks/barnStore/vaultSlice';
 import { ArchivedHerdsModal } from './ArchivedHerdsModal';
 import { CloudAppFolderSyncPanel } from './CloudAppFolderSyncPanel';
 import { ExternalImporterPanel } from './ExternalImporterPanel';
@@ -191,7 +192,6 @@ interface ImportExportHubScreenProps {
   ) => Promise<void>;
   onImportDeltaOperations: (ops: SyncOperation[]) => Promise<void>;
   onBuildLocalDeltaJson: () => { filename: string; content: string };
-  onRestoreRollingBackup: (key: string) => Promise<void>;
   onExportSqliteBytes: () => Promise<Uint8Array | null>;
   onInspectSqliteRestoreBytes?: (
     bytes: Uint8Array,
@@ -203,19 +203,7 @@ interface ImportExportHubScreenProps {
     targetSnapshot?: BarnDatabaseSnapshot,
     filterSpecies?: string
   ) => Promise<BarnDatabaseSnapshot>;
-  opfsSupported?: boolean;
-  opfsVaultBackups?: VaultBackupMetadata[];
-  rollingBackups?: RollingBackupMeta[];
-  archivedHerdBundles?: ArchivedHerdIndexEntry[];
-  onSaveManualOpfsVaultBackup?: (note?: string) => Promise<unknown> | void;
-  onCreateVerifiedPreUpgradeBackup?: () => Promise<{
-    verified: boolean;
-    fileName: string;
-    checksumSha256: string;
-  } | null>;
-  onRestoreOpfsVaultBackup?: (key: string) => Promise<void>;
   onDownloadOpfsVaultBackup?: (key: string) => Promise<void>;
-  onDeleteOpfsVaultBackup?: (key: string) => Promise<void>;
   onDeleteRollingBackup?: (key: string) => Promise<void>;
   onRestoreArchivedHerdBundle?: (
     archiveKey: string,
@@ -275,21 +263,12 @@ export function ImportExportHubScreen({
   onImportBackupArchive,
   onImportDeltaOperations,
   onBuildLocalDeltaJson,
-  onRestoreRollingBackup,
   onExportSqliteBytes,
   onInspectSqliteRestoreBytes,
   onImportSqliteBytes,
   deviceCapability,
   onHydrateSnapshotForExport,
-  opfsSupported = false,
-  opfsVaultBackups = [],
-  rollingBackups = [],
-  archivedHerdBundles = [],
-  onSaveManualOpfsVaultBackup,
-  onCreateVerifiedPreUpgradeBackup,
-  onRestoreOpfsVaultBackup,
   onDownloadOpfsVaultBackup,
-  onDeleteOpfsVaultBackup,
   onDeleteRollingBackup,
   onRestoreArchivedHerdBundle,
   onDownloadArchivedHerdBundle,
@@ -317,6 +296,17 @@ export function ImportExportHubScreen({
     resolveSyncConflict,
     dismissSyncConflict,
   } = useSyncConflictSlice();
+  const {
+    opfsSupported,
+    opfsVaultBackups,
+    rollingBackups,
+    archivedHerdBundles,
+    onSaveManualOpfsVaultBackup,
+    onCreateVerifiedPreUpgradeBackup,
+    onRestoreOpfsVaultBackup,
+    onDeleteOpfsVaultBackup,
+    onRestoreRollingBackup,
+  } = useVaultSlice();
   const baseId = useId();
   const [sectionView, setSectionView] = useState<ImportExportHubSection>(initialSection);
 

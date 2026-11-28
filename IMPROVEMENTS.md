@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (58 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (59 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (122)
+## Logged Improvements (123)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2604,3 +2604,18 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep `formatLedgerHeader` as the only source of the ledger header and run `npm run regen:ledgers` after every registry change.
 2. Add the ledger fields (`decidedOn`, `status`, `rejected`) to new registry entries; never hand-edit the generated ledgers.
+
+## 2026-11-28 — Vault State Moves to Its Own Slice
+Why:        The Import/Export hub accepted four vault collections and five vault actions as props and forwarded every one to a backup panel, so a single new vault snapshot re-rendered the whole hub.
+Changed:    `src/hooks/barnStore/vaultSlice.tsx`, `src/components/ImportExportHubScreen.tsx`, `src/App.tsx`, `src/domain/improvementRegistry.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/vaultSlice.tsx` must contain `VaultSliceProvider`, `useVaultSlice`, `vaultBackupCount` — *The slice is the only place the vault counts are derived; losing it hands the panels back their per-render filtering.*
+- `src/components/ImportExportHubScreen.tsx` must contain `useVaultSlice` — *The hub reads vault state from the slice; reinstating optional vault props restarts prop drilling.*
+  - Forbidden regression: `onSaveManualOpfsVaultBackup?:`, `opfsVaultBackups?:`
+
+**Restoration Playbook if Overwritten:**
+1. Wrap a consumer in `<VaultSliceProvider>` before calling `useVaultSlice()`; the hook throws outside one by design.
+2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
+3. Next slice on the same pattern: sync state (`syncOperations`, backup status), then drop the pass-through props.
