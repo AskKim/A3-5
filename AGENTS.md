@@ -286,22 +286,34 @@ Consequences for a sweep:
   from; say which workflows it will actually run, and that `deploy-pages.yml` and
   `build-android-apk.yml` are the ones worth excluding for a personal copy.
 
-### The `release` branch is a frozen presentation copy (owner decision)
+### Live hosting is off-limits unless the request says otherwise (owner decision)
 
-Only one thing is frozen: **`release` keeps serving the old version of the code** as the GitHub
-Pages site. It is the demo shown to friends, family and trusted breeder friends, and it is meant to
-look exactly as it does until the owner deliberately updates it.
+Some branches and workflows in this project serve **real people right now**, and the live copy may
+not be the one you are working in. Treat every live surface as shared production, in any repo,
+branch or dev copy you happen to be in:
 
-- **Do not** push to `release`, port fixes into it, rebase it, or change its Pages source until the
-owner says "update release". Fixes made on `main` are not to be transplanted there.
-- **`main` is unrestricted.** Normal development continues there, the improvement registry
-  included — no feature or refactor is off limits merely because `release` predates it.
-- A commit on `main` is **not live**; it reaches users only when the owner republishes `release`.
-- Sweeps must report `release` as **intentionally behind** `main`. That divergence is expected, not
-  drift to repair, and no finding should propose syncing it.
+- **Live branches stay as they are.** `release` — and any other branch that a Pages site, app-store
+  build or installer actually serves — keeps serving exactly what it serves today. Do not push to
+  it, rebase it, force-push it, port fixes into it, or delete it. Fixes made on a development branch
+  are not to be transplanted there.
+- **Hosting plumbing is live infrastructure.** `.github/workflows/deploy-pages.yml`, the deploy steps
+  in `release.yml`, the Pages source setting, the custom domain, and the site-identity / `404.html`
+  wiring are not dev scaffolding. Never delete, disable, rename, retarget, "tidy up" or edit them to
+  make a local gate pass. A repo with no Pages site, or whose Pages source is a branch, simply cannot
+  be deployed by `actions/configure-pages` + `deploy-pages`: report that setting instead of changing
+  the workflow.
+- **An explicit request is required.** Change any of the above only when the current request names it
+  ("update release", "change the Pages source", "edit deploy-pages.yml"). Working in a dev copy is
+  never permission to clean up the live path, and a failing live-side check is reported, not fixed
+  by weakening or removing it.
+- **Development branches are unrestricted.** Normal development continues here, the improvement
+  registry included — no feature or refactor is off limits merely because a live copy predates it.
+- **Nothing here is live.** A commit on this branch reaches users only when the owner republishes the
+  live branch, so sweeps report it as **intentionally behind**, not as drift to repair, and no finding
+  should propose syncing it.
 
 When the owner says "update release", the usual route is `docs/HOW_TO_UPDATE_RELEASE_FROM_MAIN.md`:
-promote `main` to `release`, then let the site republish.
+promote the development branch to `release`, then let the site republish.
 
 When a check is blocked by something changeable, name the change instead of stopping at
 "unavailable":

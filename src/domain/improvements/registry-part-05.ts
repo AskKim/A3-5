@@ -4290,9 +4290,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 61', 'branches: 51', 'functions: 47', 'lines: 63'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/storage/__tests__/pedigreeOcrGuards.test.ts',
@@ -4311,6 +4311,106 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The gallery delete is a two-step inline control: the trash button arms it and a `Remove` button performs the delete.',
       'The OCR guards need no engine: an SVG File is rejected before any decode, and a `%PDF-1.4` header with junk bytes returns `pdf_unsupported` with one `manual_empty` page.',
       'Do not try to cover raster OCR in jsdom; it needs canvas/ImageBitmap and a Tesseract worker, so it stays a browser-only path.',
+    ],
+  },
+  {
+    id: 'IMP-164',
+    title: 'Cover the Weather Client and the LAN WebRTC Transport',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The opt-in weather client sat at 6% and the generic LAN WebRTC transport at 14%: both are the kind of code that only runs when a breeder is offline or pairing two devices on the same Wi-Fi, which is exactly when a silent regression is hardest to notice.',
+    summary:
+      'Adds `weatherForecast.test.ts` (cache round-trip and location mismatch, corrupt cache, freshness window, manual and device offline, geocoding normalisation with rounded coordinates and dropped rows, HTTP failure, timeout, live payload parsing with rounded codes and clamped precipitation, empty payload, and the stale-cache fallbacks) and extends `lanWebRtcTransport.test.ts` with a fake peer connection and data channel (offer/answer/answer-apply handshake, wrong signal types, missing WebRTC, empty SDP, ICE-gathering timeout, send-before-open, chunked sends, out-of-order chunk reassembly with duplicate frames, malformed and oversized frames, channel and connection failures, incoming channel acceptance). Weather coverage goes 6% → 96% and the transport 14% → 84%; totals rise to 63.12/52.95/49.18/64.66, so the global floors move to 62/51/48/63, storage to 55/43/49/57 and engine to 72/62/79/74.',
+    files: [
+      'vitest.config.ts',
+      'src/storage/__tests__/weatherForecast.test.ts',
+      'src/engine/storage/__tests__/lanWebRtcTransport.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 51', 'functions: 48', 'lines: 63'],
+        rationale:
+          'This entry carries the current numeric floors; without them the two suites could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/storage/__tests__/weatherForecast.test.ts',
+        requiredSubstrings: ['Manual App Offline Mode', 'Location lookup failed (HTTP 503)', 'pedigree.weatherForecast.cache.v1'],
+        rationale:
+          'The manual-offline branch, the HTTP failure branch and the real cache key are the three places where a silent change would quietly break offline behaviour for users.',
+      },
+      {
+        filePath: 'src/engine/storage/__tests__/lanWebRtcTransport.test.ts',
+        requiredSubstrings: ['FakePeerConnection', 'core-lan-chunk-v1', 'LAN DataChannel is not open yet'],
+        rationale:
+          'The handshake, the chunk framing and the not-open guard are the transport contract; without them the tests would only prove the module imports.',
+      },
+    ],
+    restorePlaybook: [
+      'Stub `fetch` with a `{ ok, status, json }` object; do not use a real Response, because the client only reads those three members.',
+      'The connectivity snapshot is module state: flip `navigator.onLine` for device-offline and `setManualOfflineMode` for the manual override, and reset both in `afterEach`.',
+      'The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.',
+    ],
+  },
+  {
+    id: 'IMP-165',
+    title: 'Protect Live Hosting From Any Dev Copy, Not Just This One',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The hosting rules named one repository and one branch, so an agent working in a different dev copy could read them as “not about this tree” and delete `deploy-pages.yml`, retarget the Pages workflow or push to `release` — all of which are live, in active use by real users, and reachable from any copy that carries this repository.',
+    summary:
+      'Replaces the single-repository `release` note in `AGENTS.md` with a portable rule (“Live hosting is off-limits unless the request says otherwise”) covering live-serving branches, the Pages/release deploy workflows, the Pages source, the custom domain and the `404.html` / site-identity wiring as shared production in any repo or branch, with an explicit-request gate for changing them and an instruction to report a live-side failure rather than repair it by editing the workflow. Mirrors it as a short `## Live Hosting: Never Without A Request` section in `GEMINI.md` and as a one-line non-negotiable in `CLAUDE.md`, `.cursor/rules/project.mdc`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules` and `.roorules`, so inline agents in every supported editor see it without loading the long files.',
+    files: [
+      'AGENTS.md',
+      'GEMINI.md',
+      'CLAUDE.md',
+      '.cursor/rules/project.mdc',
+      '.github/copilot-instructions.md',
+      '.windsurfrules',
+      '.clinerules',
+      '.roorules',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'AGENTS.md',
+        requiredSubstrings: [
+          'Live hosting is off-limits unless the request says otherwise',
+          'Hosting plumbing is live infrastructure',
+          'An explicit request is required',
+          'a failing live-side check is reported, not fixed',
+        ],
+        rationale:
+          'This is the only place the rule is stated in full; without the explicit-request clause an agent working in a dev copy treats the live deploy path as scaffolding and deletes or retargets it.',
+      },
+      {
+        filePath: 'GEMINI.md',
+        requiredSubstrings: ['## Live Hosting: Never Without A Request', 'not permission to clean up the live path'],
+        rationale:
+          'GEMINI.md is loaded alongside AGENTS.md on every task, so the short form must stay to catch agents that only read the handoff rules.',
+      },
+      {
+        filePath: 'CLAUDE.md',
+        requiredSubstrings: ['Live Hosting Off-Limits'],
+        rationale:
+          'The one-line non-negotiables are what inline editors load; dropping this bullet silently narrows the rule back to the long files they never read.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the rule repo-agnostic: name `release` only as the current example of a live branch, never as the whole rule, because the live copy can be another repository, branch or dev server.',
+      'Never phrase this so a live check can be “fixed” by editing the workflow, deleting `deploy-pages.yml` or changing the Pages source; the instruction is to report the setting mismatch instead.',
+      'If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.',
     ],
   },
 ];

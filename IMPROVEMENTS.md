@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (98 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (100 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (162)
+## Logged Improvements (164)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3172,7 +3172,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/photoHomeMigration.ren
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 61`, `branches: 51`, `functions: 47`, `lines: 63` — *This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.*
 - `src/storage/__tests__/pedigreeOcrGuards.test.ts` must contain `SVG vector files are blocked for security`, `pdf_unsupported`, `manual_empty` — *The SVG refusal is a security guard and the manual-page fallback is the recovery path for an unreadable PDF; losing either assertion leaves both unverified.*
 - `src/components/__tests__/photoHomeMigration.render.test.tsx` must contain `Remove`, `Save Farm Name`, `Confirm Cross-Species Migration` — *These assert the delete confirmation gate, the first-run barn naming write and the migration review step, which are the three irreversible-looking actions in the batch.*
 
@@ -3180,3 +3180,33 @@ Status:     active
 1. The gallery delete is a two-step inline control: the trash button arms it and a `Remove` button performs the delete.
 2. The OCR guards need no engine: an SVG File is rejected before any decode, and a `%PDF-1.4` header with junk bytes returns `pdf_unsupported` with one `manual_empty` page.
 3. Do not try to cover raster OCR in jsdom; it needs canvas/ImageBitmap and a Tesseract worker, so it stays a browser-only path.
+
+## 2026-11-28 — Cover the Weather Client and the LAN WebRTC Transport
+Why:        The opt-in weather client sat at 6% and the generic LAN WebRTC transport at 14%: both are the kind of code that only runs when a breeder is offline or pairing two devices on the same Wi-Fi, which is exactly when a silent regression is hardest to notice.
+Changed:    `vitest.config.ts`, `src/storage/__tests__/weatherForecast.test.ts`, `src/engine/storage/__tests__/lanWebRtcTransport.test.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 62`, `branches: 51`, `functions: 48`, `lines: 63` — *This entry carries the current numeric floors; without them the two suites could be deleted while the gate still passed at the old, lower numbers.*
+- `src/storage/__tests__/weatherForecast.test.ts` must contain `Manual App Offline Mode`, `Location lookup failed (HTTP 503)`, `pedigree.weatherForecast.cache.v1` — *The manual-offline branch, the HTTP failure branch and the real cache key are the three places where a silent change would quietly break offline behaviour for users.*
+- `src/engine/storage/__tests__/lanWebRtcTransport.test.ts` must contain `FakePeerConnection`, `core-lan-chunk-v1`, `LAN DataChannel is not open yet` — *The handshake, the chunk framing and the not-open guard are the transport contract; without them the tests would only prove the module imports.*
+
+**Restoration Playbook if Overwritten:**
+1. Stub `fetch` with a `{ ok, status, json }` object; do not use a real Response, because the client only reads those three members.
+2. The connectivity snapshot is module state: flip `navigator.onLine` for device-offline and `setManualOfflineMode` for the manual override, and reset both in `afterEach`.
+3. The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.
+
+## 2026-11-28 — Protect Live Hosting From Any Dev Copy, Not Just This One
+Why:        The hosting rules named one repository and one branch, so an agent working in a different dev copy could read them as “not about this tree” and delete `deploy-pages.yml`, retarget the Pages workflow or push to `release` — all of which are live, in active use by real users, and reachable from any copy that carries this repository.
+Changed:    `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `.cursor/rules/project.mdc`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules`, `.roorules`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `AGENTS.md` must contain `Live hosting is off-limits unless the request says otherwise`, `Hosting plumbing is live infrastructure`, `An explicit request is required`, `a failing live-side check is reported, not fixed` — *This is the only place the rule is stated in full; without the explicit-request clause an agent working in a dev copy treats the live deploy path as scaffolding and deletes or retargets it.*
+- `GEMINI.md` must contain `## Live Hosting: Never Without A Request`, `not permission to clean up the live path` — *GEMINI.md is loaded alongside AGENTS.md on every task, so the short form must stay to catch agents that only read the handoff rules.*
+- `CLAUDE.md` must contain `Live Hosting Off-Limits` — *The one-line non-negotiables are what inline editors load; dropping this bullet silently narrows the rule back to the long files they never read.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the rule repo-agnostic: name `release` only as the current example of a live branch, never as the whole rule, because the live copy can be another repository, branch or dev server.
+2. Never phrase this so a live check can be “fixed” by editing the workflow, deleting `deploy-pages.yml` or changing the Pages source; the instruction is to report the setting mismatch instead.
+3. If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.
