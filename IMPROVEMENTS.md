@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (102 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (103 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (166)
+## Logged Improvements (167)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3225,6 +3225,19 @@ Status:     active
 1. Chrome rejects with `TypeError`, Firefox with `TypeError('NetworkError when attempting to fetch resource.')`, Safari with `TypeError('Load failed')` — the helper matches all three.
 2. Never let the connection message replace the timeout message: an `AbortError` means the request started, so the 6s timeout copy is the accurate one.
 3. Assert the cache timestamp is unchanged after a failed refresh; that is what keeps the offline strip truthful.
+
+## 2026-11-28 — Render the Weather Drawer's Failed Refresh
+Why:        IMP-166 fixed the copy in the storage layer and pinned it there, but nothing checked that the drawer actually renders that message or that the cached days survive the failure — a component change could have dropped either promise while the storage test still passed.
+Changed:    `src/components/__tests__/weatherDrawer.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/__tests__/weatherDrawer.render.test.tsx` must contain `Could not reach Open-Meteo — check your internet connection and try again.`, `new TypeError('Failed to fetch')`, `name: 'Refresh'` — *The mount test, the failing-refresh test and the exact Refresh control are the three things that make this a drawer test rather than a copy of the storage test.*
+
+**Restoration Playbook if Overwritten:**
+1. Seed `pedigree.weatherForecast.cache.v1` with a `fetchedAtIso` of now; that keeps the mount effect from fetching and makes the rendered days deterministic.
+2. Scope day assertions to the strip line (`Clear Sky · 0%`) — the selected-day details also print the label, so a bare label query matches twice.
+3. Build settings from `buildFullPredefinedSampleSnapshot().settings` and override only `weatherForecast`; BarnSettings has too many required fields to hand-write.
 
 ## 2026-11-28 — Move the Print-Stage Presenters Into the Document-Export Feature
 Why:        The coupling milestone had one presenter extraction left unbuilt: `PrintPreviewModal` (2,228 lines) carried the pure print-document composition rules itself, so any other printable surface had to import a React component to reuse them.

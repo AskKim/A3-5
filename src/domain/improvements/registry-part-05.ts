@@ -4456,6 +4456,41 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-167',
+    title: 'Render the Weather Drawer\'s Failed Refresh',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'IMP-166 fixed the copy in the storage layer and pinned it there, but nothing checked that the drawer actually renders that message or that the cached days survive the failure — a component change could have dropped either promise while the storage test still passed.',
+    summary:
+      'Adds `src/components/__tests__/weatherDrawer.render.test.tsx`, which mounts the real `BreedingCalendarPanel` with weather enabled at 44.5/-72.9 and a fresh cached bundle seeded in `localStorage`. One test proves the cached strip renders on mount (`Copper Creek`, `Clear Sky · 0%`, `Overcast · 99%`) with `fetch` never called; the other stubs `fetch` to reject with the browser `TypeError`, clicks Refresh, and asserts the plain connection copy appears, the raw `Failed to fetch` string does not, and both cached day lines are still on screen with unchanged text.',
+    files: [
+      'src/components/__tests__/weatherDrawer.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/__tests__/weatherDrawer.render.test.tsx',
+        requiredSubstrings: [
+          'Could not reach Open-Meteo — check your internet connection and try again.',
+          "new TypeError('Failed to fetch')",
+          "name: 'Refresh'",
+        ],
+        rationale:
+          'The mount test, the failing-refresh test and the exact Refresh control are the three things that make this a drawer test rather than a copy of the storage test.',
+      },
+    ],
+    restorePlaybook: [
+      'Seed `pedigree.weatherForecast.cache.v1` with a `fetchedAtIso` of now; that keeps the mount effect from fetching and makes the rendered days deterministic.',
+      'Scope day assertions to the strip line (`Clear Sky · 0%`) — the selected-day details also print the label, so a bare label query matches twice.',
+      'Build settings from `buildFullPredefinedSampleSnapshot().settings` and override only `weatherForecast`; BarnSettings has too many required fields to hand-write.',
+    ],
+  },
+  {
+    id: 'IMP-168',
     title: 'Move the Print-Stage Presenters Into the Document-Export Feature',
     category: 'stability-pwa',
     release: 'alpha-3',
