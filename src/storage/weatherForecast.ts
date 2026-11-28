@@ -28,6 +28,29 @@ import { getConnectivitySnapshot } from './storageProtection';
 const WEATHER_CACHE_LS_KEY = 'pedigree.weatherForecast.cache.v1';
 const WEATHER_REQUEST_TIMEOUT_MS = 6000;
 const WEATHER_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+const WEATHER_CONNECTION_ERROR =
+  'Could not reach Open-Meteo — check your internet connection and try again.';
+
+/**
+ * A failed `fetch` reaches the UI as `TypeError: Failed to fetch` (Chrome), `NetworkError` (Firefox) or
+ * `Load failed` (Safari), which tells a breeder nothing. Aborts keep their timeout copy; transport
+ * failures collapse into one plain connection message; anything else keeps its own message.
+ */
+function describeWeatherRequestFailure(
+  err: unknown,
+  timeoutMessage: string,
+  fallbackMessage: string
+): string {
+  if (err instanceof Error && err.name === 'AbortError') return timeoutMessage;
+  const message = err instanceof Error ? err.message : '';
+  if (
+    err instanceof TypeError ||
+    /failed to fetch|networkerror|network error|load failed|network request failed/i.test(message)
+  ) {
+    return WEATHER_CONNECTION_ERROR;
+  }
+  return message || fallbackMessage;
+}
 
 export interface WeatherLocationSearchResult {
   label: string;
@@ -154,15 +177,14 @@ export async function searchWeatherLocations(
     }
     return { results, offline: false };
   } catch (err) {
-    const isAbort = err instanceof Error && err.name === 'AbortError';
     return {
       results: [],
       offline: false,
-      error: isAbort
-        ? 'Location lookup timed out after 6 seconds.'
-        : err instanceof Error
-        ? err.message
-        : 'Could not look up weather location.',
+      error: describeWeatherRequestFailure(
+        err,
+        'Location lookup timed out after 6 seconds.',
+        'Could not look up weather location.'
+      ),
     };
   } finally {
     if (timer !== null) clearTimeout(timer);
@@ -288,15 +310,14 @@ export async function fetchWeeklyWeatherForecast(params: {
       message: '7-day forecast updated.',
     };
   } catch (err) {
-    const isAbort = err instanceof Error && err.name === 'AbortError';
     return {
       bundle: cached,
       source: 'error',
-      message: isAbort
-        ? 'Weather forecast request timed out after 6 seconds.'
-        : err instanceof Error
-        ? err.message
-        : 'Could not reach Open-Meteo weather service.',
+      message: describeWeatherRequestFailure(
+        err,
+        'Weather forecast request timed out after 6 seconds.',
+        'Could not reach Open-Meteo weather service.'
+      ),
     };
   } finally {
     if (timer !== null) clearTimeout(timer);

@@ -4413,4 +4413,45 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.',
     ],
   },
+  {
+    id: 'IMP-166',
+    title: 'Say “Could Not Reach Open-Meteo” Instead of “Failed to Fetch”',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'A browser-level network failure surfaced in the weather drawer as the raw `TypeError: Failed to fetch` for both Refresh and the city lookup, which reads like a bug in the app rather than a dropped connection.',
+    summary:
+      'Adds one `describeWeatherRequestFailure` helper in `src/storage/weatherForecast.ts`: aborts keep their existing timeout copy, `TypeError` or a `Failed to fetch` / `NetworkError` / `Load failed` / `Network request failed` message becomes “Could not reach Open-Meteo — check your internet connection and try again.”, and anything else keeps its own message. Both the geocoding search and the forecast fetch route through it, and the forecast error branch still returns the cached bundle so the last 7-day strip stays on screen. The weather suite pins the new copy through a `CONNECTION_MESSAGE` constant, asserting a `TypeError` rejection yields that message for search, and for the forecast yields `source: \'error\'` with the cached bundle intact and the stale cache not overwritten.',
+    files: [
+      'src/storage/weatherForecast.ts',
+      'src/storage/__tests__/weatherForecast.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/storage/weatherForecast.ts',
+        requiredSubstrings: [
+          'describeWeatherRequestFailure',
+          'Could not reach Open-Meteo — check your internet connection and try again.',
+        ],
+        rationale:
+          'Both catch blocks must keep routing through the helper; a direct `err.message` return would bring back the raw browser string the fix exists to remove.',
+      },
+      {
+        filePath: 'src/storage/__tests__/weatherForecast.test.ts',
+        requiredSubstrings: ['CONNECTION_MESSAGE', "new TypeError('Failed to fetch')"],
+        rationale:
+          'The tests pin the user-visible copy and the exact browser error shape that triggered the fix, so a message change is a deliberate test edit.',
+      },
+    ],
+    restorePlaybook: [
+      'Chrome rejects with `TypeError`, Firefox with `TypeError(\'NetworkError when attempting to fetch resource.\')`, Safari with `TypeError(\'Load failed\')` — the helper matches all three.',
+      'Never let the connection message replace the timeout message: an `AbortError` means the request started, so the 6s timeout copy is the accurate one.',
+      'Assert the cache timestamp is unchanged after a failed refresh; that is what keeps the offline strip truthful.',
+    ],
+  },
 ];
