@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (65 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (66 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (129)
+## Logged Improvements (130)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2667,7 +2667,7 @@ Status:     active
 
 ## 2026-11-28 — Render-Level Store Harness
 Why:        Every store test so far was a pure-function test or a key snapshot, so the loops that actually break — a real React commit, a write through the adapter, a snapshot that comes back as a new object, derived selectors and their memo re-running, and a restore replacing the dataset underneath them — had no coverage at all.
-Changed:    `src/hooks/__tests__/barnStoreIntegration.test.tsx`, `src/hooks/__tests__/support/memoryStorageAdapter.ts`, `package.json`
+Changed:    `src/hooks/__tests__/barnStoreIntegration.test.tsx`, `src/hooks/__tests__/support/memoryStorageAdapter.ts`, `src/storage/__tests__/support/inMemoryOpfs.ts`, `package.json`
 Status:     active
 
 **Automated Invariants Checked:**
@@ -2677,7 +2677,22 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep the adapter honest: every write must be visible to the next `loadSnapshot`, and the snapshot must come back as a new object.
 2. Enter a species route (`setRoute('herd')`) before asserting derived lists; non-species routes return empty lists by design.
-3. Still open in milestone 7: the OPFS archive offload loop and the sync-conflict resolve loop.
+3. Keep `fake-indexeddb/auto` imported before the store so the outbox and conflict log persist as they do in the browser.
+
+## 2026-11-28 — Checksum-Level Restore Verification
+Why:        Restores verified only row counts, so a backup that landed the right number of animals with the wrong field values passed verification and silently overwrote the barn.
+Changed:    `src/domain/snapshotChecksum.ts`, `src/domain/__tests__/snapshotChecksum.test.ts`, `src/hooks/barnStore/restoreOrchestrator.ts`, `src/hooks/barnStore/useOpfsVaultActions.ts`, `src/hooks/barnStore/useRollingBackupActions.ts`, `src/hooks/__tests__/restoreOrchestrator.test.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/snapshotChecksum.ts` must contain `computeSnapshotChecksum`, `sha256HexPure`, `VOLATILE_KEYS` — *Volatile payload exclusion is what keeps checksum verification from failing every real restore.*
+- `src/hooks/barnStore/restoreOrchestrator.ts` must contain `verifyChecksum`, `computeSnapshotChecksum`, `Restore checksum verification failed` — *A restore path without the checksum gate only proves the row count survived.*
+- `src/hooks/barnStore/useOpfsVaultActions.ts` must contain `verifyChecksum: true` — *Every restore plan must opt into the checksum check, or the default leaves it off.*
+
+**Restoration Playbook if Overwritten:**
+1. Never hash photo dataUrl payloads: the committed read is lightweight, so compare records, not bytes.
+2. A checksum mismatch must roll back exactly like a count mismatch, using the pre-restore safety snapshot.
+3. Add new volatile fields to `VOLATILE_KEYS` when a read path changes their presence.
 
 ## 2026-11-28 — Prompt Changelog Wires Up Like the Improvements Ledger
 Why:        The prompt changelog was generated like IMPROVEMENTS.md but every entry still rendered the legacy `### PRM-0NN:` block, and its status vocabulary could not name the entry that replaced it.

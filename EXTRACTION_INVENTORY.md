@@ -84,6 +84,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/domain/syncOutbox.ts` — `pedigree-domain` — Delegates outbox ops, LWW comparison, and field diffing to `@engine/primitives/genericSync`.
 - `src/domain/syncRetention.ts` — `pedigree-domain` — Pure age-plus-cap retention policy for the sync operation log.
 - `src/domain/syncConflictExpiry.ts` — `pedigree-domain` — Pure retention planner for the resolved sync-conflict review log.
+- `src/domain/snapshotChecksum.ts` — `pedigree-domain` — Canonical snapshot SHA-256 (payload/order normalised) behind restore checksum verification.
 - `src/domain/themePalette.ts` — `pedigree-domain` — Delegates palette math and CSS variable generation to `@engine/primitives/themeColor`.
 
 ### 1.3 Pedigree Domain Engines in `src/domain/` (`pedigree-domain` — 63 files)

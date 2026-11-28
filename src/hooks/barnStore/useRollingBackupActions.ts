@@ -75,6 +75,7 @@ async function restoreRollingBackupUnqueued(
       missingMessage: 'Could not load that rolling backup snapshot.',
       safetyNote: 'Pre-rolling-restore safety snapshot',
       verifyRowCounts: true,
+      verifyChecksum: true,
       successMessage: ({ snapshot }) =>
         `Restored rolling snapshot (${snapshot.animals.length} animals).`,
     },

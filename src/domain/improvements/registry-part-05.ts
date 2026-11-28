@@ -2722,10 +2722,11 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'Every store test so far was a pure-function test or a key snapshot, so the loops that actually break \u2014 a real React commit, a write through the adapter, a snapshot that comes back as a new object, derived selectors and their memo re-running, and a restore replacing the dataset underneath them \u2014 had no coverage at all.',
     summary:
-      'Milestone 7 starts with `hooks/__tests__/barnStoreIntegration.test.tsx`, a jsdom render-level harness driving `useBarnStore` through `renderHook`, and `hooks/__tests__/support/memoryStorageAdapter.ts`, a typed in-memory `StorageAdapter` that upserts and deletes by method name, cascades animal deletes to photos and care logs, and returns a deep copy per `loadSnapshot` so the hook sees the browser\'s new-object-per-reload shape. Two loops are covered: a save through the store appearing in the derived species list, and a JSON replace import serving the restored rows for the same ids and revisions (the IMP-126 guard, now proven through the store rather than the selector alone). `jsdom`, `@testing-library/react` and its `@testing-library/dom` peer are dev dependencies.',
+      'Milestone 7 starts with `hooks/__tests__/barnStoreIntegration.test.tsx`, a jsdom render-level harness driving `useBarnStore` through `renderHook`, and `hooks/__tests__/support/memoryStorageAdapter.ts`, a typed in-memory `StorageAdapter` that upserts and deletes by method name, cascades animal deletes to photos and care logs, and returns a deep copy per `loadSnapshot` so the hook sees the browser\'s new-object-per-reload shape. All four loops are covered: a save through the store appearing in the derived species list, a JSON replace import serving the restored rows for the same ids and revisions (the IMP-126 guard, proven through the store rather than the selector alone), an OPFS archive offload that writes the bundle and reloads the stub-only barn, and a peer field collision that is logged then resolved through the store. The shared in-memory OPFS tree moved to `storage/__tests__/support/inMemoryOpfs.ts` so the storage tests and the harness use one mock. `jsdom`, `@testing-library/react`, its `@testing-library/dom` peer and `fake-indexeddb` are dev dependencies.',
     files: [
       'src/hooks/__tests__/barnStoreIntegration.test.tsx',
       'src/hooks/__tests__/support/memoryStorageAdapter.ts',
+      'src/storage/__tests__/support/inMemoryOpfs.ts',
       'package.json',
     ],
     invariants: [
@@ -2745,11 +2746,57 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     restorePlaybook: [
       'Keep the adapter honest: every write must be visible to the next `loadSnapshot`, and the snapshot must come back as a new object.',
       'Enter a species route (`setRoute(\'herd\')`) before asserting derived lists; non-species routes return empty lists by design.',
-      'Still open in milestone 7: the OPFS archive offload loop and the sync-conflict resolve loop.',
+      'Keep `fake-indexeddb/auto` imported before the store so the outbox and conflict log persist as they do in the browser.',
     ],
   },
   {
     id: 'IMP-128',
+    title: 'Checksum-Level Restore Verification',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Restores verified only row counts, so a backup that landed the right number of animals with the wrong field values passed verification and silently overwrote the barn.',
+    summary:
+      'Adds `domain/snapshotChecksum.ts`: a canonical SHA-256 over the snapshot (sorted keys, collections sorted by id, photo and receipt payloads and backup bookkeeping excluded) built on the engine\'s `sha256HexPure`. `runDestructiveRestore` now takes `verifyChecksum` and, after re-reading what the adapter committed, compares the checksum as well as the counts; a mismatch rolls the previous barn back exactly like a count mismatch and throws `Restore checksum verification failed`. Both restore callers (OPFS vault and rolling) enable it. Canonicalisation is required because a committed read is a lightweight-photo read: hashing raw bytes would false-fail every successful restore.',
+    files: [
+      'src/domain/snapshotChecksum.ts',
+      'src/domain/__tests__/snapshotChecksum.test.ts',
+      'src/hooks/barnStore/restoreOrchestrator.ts',
+      'src/hooks/barnStore/useOpfsVaultActions.ts',
+      'src/hooks/barnStore/useRollingBackupActions.ts',
+      'src/hooks/__tests__/restoreOrchestrator.test.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/snapshotChecksum.ts',
+        requiredSubstrings: ['computeSnapshotChecksum', 'sha256HexPure', 'VOLATILE_KEYS'],
+        rationale:
+          'Volatile payload exclusion is what keeps checksum verification from failing every real restore.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/restoreOrchestrator.ts',
+        requiredSubstrings: ['verifyChecksum', 'computeSnapshotChecksum', 'Restore checksum verification failed'],
+        rationale:
+          'A restore path without the checksum gate only proves the row count survived.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/useOpfsVaultActions.ts',
+        requiredSubstrings: ['verifyChecksum: true'],
+        rationale:
+          'Every restore plan must opt into the checksum check, or the default leaves it off.',
+      },
+    ],
+    restorePlaybook: [
+      'Never hash photo dataUrl payloads: the committed read is lightweight, so compare records, not bytes.',
+      'A checksum mismatch must roll back exactly like a count mismatch, using the pre-restore safety snapshot.',
+      'Add new volatile fields to `VOLATILE_KEYS` when a read path changes their presence.',
+    ],
+  },
+  {
+    id: 'IMP-129',
     title: 'Prompt Changelog Wires Up Like the Improvements Ledger',
     category: 'ci-tooling',
     release: 'alpha-3',
@@ -2797,7 +2844,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     ],
   },
   {
-    id: 'IMP-129',
+    id: 'IMP-130',
     title: 'The Prompt Ledger Rejects Half-Opted-In Entries',
     category: 'ci-tooling',
     release: 'alpha-3',

@@ -5,13 +5,13 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 262
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.5%)
+- **Total Non-Test Source Modules:** 263
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (22.4%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 203 (77.5%)
-  - Domain Engines (`src/domain/`): 88
+- **Content-Specific Modules:** 204 (77.6%)
+  - Domain Engines (`src/domain/`): 89
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
@@ -110,9 +110,9 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (203)
+## 2. Content-Specific Modules (204)
 
-### Domain Engines & Compatibility Facades (`src/domain/`) (88)
+### Domain Engines & Compatibility Facades (`src/domain/`) (89)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -192,6 +192,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/shareablePedigreeCard.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/showDocuments.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/showResults.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/snapshotChecksum.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/speciesMemo.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/speciesMigration.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/suggestionsBacklog.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |

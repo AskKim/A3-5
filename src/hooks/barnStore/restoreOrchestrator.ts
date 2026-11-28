@@ -16,6 +16,7 @@ import { appPerfTimings } from '../../utils/perfTiming';
  * their own file format, and anything specific to their source (the OPFS path switches species).
  */
 import type { BarnDatabaseSnapshot } from '../../domain/models';
+import { computeSnapshotChecksum } from '../../domain/snapshotChecksum';
 import { invalidateSpeciesSelectorCache } from './speciesSelectors';
 
 /** Settings that must never ride along with a restored snapshot. */
@@ -67,6 +68,11 @@ export interface DestructiveRestorePlan<P extends RestorePayload> {
   successMessage: (payload: P) => string;
   /** Compare committed row counts with the loaded file and roll back on mismatch. */
   verifyRowCounts?: boolean;
+  /**
+   * Compare a structural checksum of the committed snapshot with the loaded one and roll back on
+   * mismatch. Catches a restore that landed the right row counts with the wrong values.
+   */
+  verifyChecksum?: boolean;
 }
 
 const rowCounts = (snapshot: BarnDatabaseSnapshot) => ({
@@ -112,32 +118,41 @@ async function runDestructiveRestoreInner<P extends RestorePayload>(
     }
 
     deps.clearPhotoCache();
-    await deps.replaceSnapshot(stripRestoredBackupBookkeeping(payload.snapshot));
+    const replacedSnapshot = stripRestoredBackupBookkeeping(payload.snapshot);
+    const expectedChecksum = plan.verifyChecksum ? computeSnapshotChecksum(replacedSnapshot) : null;
+    await deps.replaceSnapshot(replacedSnapshot);
     // The restored rows may carry the same ids and revisions as the dataset they replace.
     invalidateSpeciesSelectorCache();
     await deps.clearLocalSyncAndBackupReminderState();
     deps.clearWipedRecoveryContext();
     plan.afterReplace?.(payload);
 
-    if (plan.verifyRowCounts && deps.readCommittedSnapshot) {
+    if ((plan.verifyRowCounts || expectedChecksum) && deps.readCommittedSnapshot) {
       const committed = await deps.readCommittedSnapshot();
       const actual = committed ? rowCounts(committed) : null;
-      if (!actual || actual.animals !== expected.animals || actual.photos !== expected.photos) {
+      const countsOk =
+        !plan.verifyRowCounts ||
+        (Boolean(actual) && actual!.animals === expected.animals && actual!.photos === expected.photos);
+      const checksumOk =
+        !expectedChecksum ||
+        (committed !== null && computeSnapshotChecksum(committed) === expectedChecksum);
+      if (!countsOk || !checksumOk) {
         if (safetySnapshot) {
           await deps.replaceSnapshot(safetySnapshot);
           invalidateSpeciesSelectorCache();
           await deps.reloadFromAdapter();
         }
+        const detail = checksumOk
+          ? `${actual ? `${actual.animals} / ${actual.photos}` : 'nothing'} rows`
+          : 'the committed records do not match the file checksum';
         deps.notify(
           safetySnapshot
-            ? `Restore verification failed (expected ${expected.animals} animals / ${expected.photos} photos, found ${
-                actual ? `${actual.animals} / ${actual.photos}` : 'nothing'
-              }). Your previous barn was put back.`
-            : `Restore verification failed (expected ${expected.animals} animals / ${expected.photos} photos, found ${
-                actual ? `${actual.animals} / ${actual.photos}` : 'nothing'
-              }).`
+            ? `Restore verification failed (expected ${expected.animals} animals / ${expected.photos} photos, found ${detail}). Your previous barn was put back.`
+            : `Restore verification failed (expected ${expected.animals} animals / ${expected.photos} photos, found ${detail}).`
         );
-        throw new Error('Restore verification failed');
+        throw new Error(
+          checksumOk ? 'Restore verification failed' : 'Restore checksum verification failed'
+        );
       }
     }
 
