@@ -13,14 +13,17 @@ This readme is a **dual-audience** breakdown, the same shape as `docs/ARCHITECTU
 The preflight is a release checklist that runs itself. Instead of you ticking boxes by hand, you hand one file - `pf-launcher-uni.md` - to an AI assistant, and it works through the jobs in a fixed order and ticks each one off as it finishes.
 
 The jobs come in two blocks:
-- **Block A** - setup that only ever needs doing once (connect the repo, switch on the accessibility and crawl checks, and so on).
-- **Block B** - checks that repeat for every release (backups, CI, the release notes).
+- **Block A** - setup and audits that only need the files (connect the repo, accessibility, crawl metadata, modularity).
+- **Block B** - checks that need a real machine: a build, the CI results, a backup that was really taken.
+
+The sweep now finishes on its own, every time. The release-only jobs - the version bump, the licence audit, the release checks and the sign-off - live in a separate file, `pf-release-uni.md`, and you only open that when you are actually cutting a release.
 
 ### 2. What You Actually Do
 
 1. **Hand the launcher to AI Studio.** It does Block A, then prints a line telling you where to go next.
 2. **Hand the same file to Anti-Gravity** for Block B. If you are using **Freebuff**, skip the hand-off entirely: it is named in both blocks, so it runs straight through without stopping in between.
-3. **If a job did not finish,** do not edit the file yourself. Tell the AI *"re-arm the `<job-name>` step"*. It knows how, and the checklist stays honest.
+3. **When you are cutting a release,** open `pf-release-uni.md`. It carries the version bump, the licence audit, the release checks and the sign-off, and it stops for you exactly where a signature is required.
+4. **If a job did not finish,** do not edit the file yourself. Tell the AI *"re-arm the `<job-name>` step"*. It knows how, and the checklist stays honest.
 
 ### 3. Before You Copy This To Another Repo Or Branch
 
@@ -41,11 +44,11 @@ The launcher prints the same reminder as its very last line after `COMPLETE`, so
 
 ### What This File Is
 
-`prompts/preflight/pf-launcher-uni.md` is a pure token-lean executable modular two-platform release and setup launcher (**Phase A: AI Studio \-\> Phase B: Anti-Gravity**) paired with its wiring architecture doc (`prompts/preflight/pf-launcher-uni-wiring.md`). It is backed by `prompts/preflight/preflight.config.json` (static repo parameters), `prompts/preflight/handoff-state.schema.json` (Schema v2), `prompts/preflight/templates/pf-launcher-uni-clean.md` (pristine copy-ready template), and 6 zero-dependency Node.js helper scripts under `prompts/preflight/scripts/` (`preflight-run-context.mjs`, `preflight-state.mjs`, `preflight-log.mjs`, `preflight-rollback.mjs`, `preflight-lint.mjs`, `preflight-reset.mjs`). It defines standard Exit Banners (`ALIGNED | GUARDED | PHASE_A_COMPLETE | STALE_BLOCKED | STEP_BLOCKED | COMPLETE`) and supports Execution Flags (`--dry-run | --force-rerun <step_id>`). It features two distinct file-edit setups: permanent `AGENT_SKIP_LINE` retirement of completed single-use prompts in the launcher (never applied to reusable prompts), plus per-step state and timestamp logging in `docs/handoff-state.json` supporting cascade-start freshness checks and resume-on-restart behavior. Every prompt and guide module sits in `prompts/preflight/run-uni/`, while its matching `*-readme.md` mate sits in `prompts/preflight/run-uni/read/` (18 modules, 18 mates; `prompts/preflight/scripts/preflight-lint.mjs` fails on any manifest step whose prompt file or mate readme is missing).
+`prompts/preflight/pf-launcher-uni.md` is a pure token-lean executable modular two-platform release and setup launcher (**Phase A: AI Studio \-\> Phase B: Anti-Gravity**) paired with its wiring architecture doc (`prompts/preflight/pf-launcher-uni-wiring.md`). It is backed by `prompts/preflight/preflight.config.json` (static repo parameters), `prompts/preflight/handoff-state.schema.json` (Schema v2), `prompts/preflight/templates/pf-launcher-uni-clean.md` (pristine copy-ready template), and 6 zero-dependency Node.js helper scripts under `prompts/preflight/scripts/` (`preflight-run-context.mjs`, `preflight-state.mjs`, `preflight-log.mjs`, `preflight-rollback.mjs`, `preflight-lint.mjs`, `preflight-reset.mjs`). It defines standard Exit Banners (`ALIGNED | GUARDED | PHASE_A_COMPLETE | STALE_BLOCKED | STEP_BLOCKED | COMPLETE`) and supports Execution Flags (`--dry-run | --force-rerun <step_id>`). It features two distinct file-edit setups: permanent `AGENT_SKIP_LINE` retirement of completed single-use prompts in the launcher (never applied to reusable prompts), plus per-step state and timestamp logging in `docs/handoff-state.json` supporting cascade-start freshness checks and resume-on-restart behavior. Every prompt and guide module sits in `prompts/preflight/run-uni/`, while its matching `*-readme.md` mate sits in `prompts/preflight/run-uni/read/` (18 modules, 18 mates: 13 in the sweep, 5 in the release runner; `prompts/preflight/scripts/preflight-lint.mjs` fails on any manifest step whose prompt file or mate readme is missing).
 
 ### How The Step List Stays Honest
 
-There is exactly one step list: `prompts/preflight/manifest/preflight.manifest.json` (described by `prompts/preflight/manifest/manifest.schema.json`). `prompts/preflight/scripts/gen-preflight.mjs` renders every step-shaped thing in this folder from it — the launcher's two `PHASE_*_STEPS` blocks (keeping any already-retired `AGENT_SKIP_LINE` line verbatim by `step_id`), the module summary, the wiring table, and the pristine template — and `--check` (also wired into `preflight-lint.mjs`) fails the moment one drifts. Hand-editing a step line is pointless now: the next `npm run preflight:gen -- --write` overwrites it.
+There is exactly one step list: `prompts/preflight/manifest/preflight.manifest.json` (described by `prompts/preflight/manifest/manifest.schema.json`). `prompts/preflight/scripts/gen-preflight.mjs` renders every step-shaped thing in this folder from it — the launcher's two `PHASE_*_STEPS` blocks (keeping any already-retired `AGENT_SKIP_LINE` line verbatim by `step_id`), the module summary, the wiring table, and the pristine template — and `--check` (also wired into `preflight-lint.mjs`) fails the moment one drifts. The same run renders `pf-release-uni.md`, so the release tail cannot drift from the manifest either. Hand-editing a step line is pointless now: the next `npm run preflight:gen -- --write` overwrites it.
 
 Steps come in exactly **two** types. `FIRST_TIME` runs once and then retires itself via `AGENT_SKIP_LINE`. `REUSABLE` never retires. A step that should happen once per release is `REUSABLE`: the duplicate guard in `docs/handoff-state.json` already skips it when `history[]` holds a `completed` entry for the same branch + version + HEAD, so a separate per-release type only forced every consumer to branch on a third case.
 
@@ -57,6 +60,14 @@ Each step is also sorted by the **minimum environment it needs** — never by co
 2. Ensure `prompts/master_system_prompt.md` (`aligned`) and `prompts/preflight/run-uni/guardrails.md` (`guarded`) are in place to allow the pre-payload handshake to run.  
 3. Hand the launcher to **AI Studio** first to execute Phase A; AI Studio auto-seeds `docs/handoff-state.json`, retires completed single-use steps, logs each step, and marks Phase A complete with a timestamp. It then either prints a notice to move to the next runner or continues straight on, depending on whether its bracket names it in Phase B - a runner named in both brackets (such as `freebuff`) never stops between the blocks. If AI Studio ran in a sandbox without Git CLI (logging "sandbox-uncommitted"), copy the modified files into your local repo so Anti-Gravity can perform the automatic hash handoff and step retirement.  
 4. Hand the launcher to **Anti-Gravity** to execute Phase B; Anti-Gravity skips Phase A, verifies Phase A is complete and not stale (by timestamp, commit delta, or version change), automatically runs `node prompts/preflight/scripts/preflight-state.mjs --write-hash` and retires `scripts-lint-setup` via `AGENT_SKIP_LINE` on the first Phase B run if "sandbox-uncommitted" was logged, and runs Phase B—automatically resuming at any previously failed or incomplete step if prior work is still fresh.
+
+### The Two Runners: Sweep And Release
+
+`pf-launcher-uni.md` is the sweep. It runs for any piece of work - a refactor, a docs change, an ordinary merge - and it always reaches the end, because nothing in it needs a decision only the owner can make.
+
+`pf-release-uni.md` is the release tail, rendered from the same manifest. It holds the five steps that only make sense when publishing: `release-check-p1`, `attribution-audit`, `ver-update`, `release-check-p2` and `release-plan`. Two of those declare `human_signoff`, so `preflight-log.mjs` records `awaiting_human` rather than `completed` unless a person passes `--human-signoff "<who/how>"`.
+
+A `human_signoff` step in the sweep is a manifest validation error, not a style preference: that is exactly what used to stop every run for a signature.
 
 ### Resetting The Launcher (Agent Runbook)
 
@@ -121,4 +132,4 @@ Audit both with: `grep -c "SINGLE-USE-COMPLETED: 20" prompts/preflight/pf-launch
 - `prompts/preflight/preflight.config.json`  
 - `prompts/preflight/handoff-state.schema.json`  
 - `prompts/preflight/scripts/` (`preflight-run-context.mjs`, `preflight-state.mjs`, `preflight-log.mjs`, `preflight-rollback.mjs`, `preflight-lint.mjs`, `preflight-reset.mjs`)  
-- `prompts/preflight/run-uni/` and `prompts/preflight/run-uni/read/` (18 paired modules across Phase A and Phase B operations)
+- `prompts/preflight/run-uni/` and `prompts/preflight/run-uni/read/` (18 paired modules: 13 sweep steps and 5 release steps)

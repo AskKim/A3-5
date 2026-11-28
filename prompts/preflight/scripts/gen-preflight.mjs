@@ -27,6 +27,7 @@ const MANIFEST = `${ROOT}/manifest/preflight.manifest.json`;
 const WIRING = `${ROOT}/pf-launcher-uni-wiring.md`;
 const LAUNCHER = `${ROOT}/pf-launcher-uni.md`;
 const TEMPLATE = `${ROOT}/templates/pf-launcher-uni-clean.md`;
+const RELEASE = `${ROOT}/pf-release-uni.md`;
 
 export const PHASES = ['A', 'B'];
 // Ordered runner brackets per phase: the first entry is the preferred agent, and `freebuff` appears
@@ -37,6 +38,12 @@ export const RUNNERS = new Set(['ai-studio', 'antigravity', 'freebuff']);
 // docs/handoff-state.json already skips a REUSABLE step completed for the same branch + version +
 // HEAD, so a separate PER_RELEASE class only forced every consumer to branch on a third case.
 export const TYPES = new Set(['FIRST_TIME', 'REUSABLE']);
+// Two tracks. `preflight` is the sweep that runs for any piece of work and must always be able to
+// finish on its own; `release` is the tail that only runs when cutting a release, because it ends
+// in decisions only the owner can make. Keeping them in one manifest means neither can drift from
+// the other, and a step still cannot be listed by hand anywhere.
+export const TRACKS = new Set(['preflight', 'release']);
+export const trackOf = (step) => step.track ?? 'preflight';
 
 /** An applied retirement marker on a step line, capturing its `step_id`. */
 export const RETIRED = /^\s*-\s*\[SINGLE-USE-COMPLETED:[^\]\n]*\|\s*step_id:\s*([a-z0-9-]+)\s*\|/;
@@ -83,6 +90,14 @@ export function validateManifest(data) {
     if (typeof step.type === 'string' && !TYPES.has(step.type)) {
       errors.push(`steps[${idx}].type "${step.type}" must be ${[...TYPES].join(' | ')}`);
     }
+    if (step.track !== undefined && !TRACKS.has(step.track)) {
+      errors.push(`steps[${idx}].track "${step.track}" must be ${[...TRACKS].join(' | ')}`);
+    }
+    // A human gate in the sweep would block every ordinary run, which is the exact problem the
+    // split exists to fix, so it is only legal in the release track.
+    if (step.human_signoff === true && trackOf(step) !== 'release') {
+      errors.push(`steps[${idx}] declares human_signoff but is not in the release track`);
+    }
     if (typeof step.phase === 'string' && !PHASES.includes(step.phase)) {
       errors.push(`steps[${idx}].phase "${step.phase}" must be A | B`);
     }
@@ -94,20 +109,30 @@ export function validateManifest(data) {
   return errors;
 }
 
+/** A human-gated step says so on its own line, generated rather than repeated in the manifest. */
+function gateSuffix(step) {
+  return step.human_signoff
+    ? ' **HUMAN GATE** — logs `awaiting_human` unless a person confirms it with `--human-signoff`.'
+    : '';
+}
+
 function renderStep(step) {
   const file = `prompts/preflight/${step.file}`;
   const head = `- [ ] \`[${LABEL[step.type]}]\` \`[${step.runners.join(' | ')}]\` \`step_id: ${step.id}\` — \`${file}\``;
-  if (step.type !== 'FIRST_TIME') return `${head} (${step.instruction}).`;
+  if (step.type !== 'FIRST_TIME') return `${head} (${step.instruction}).${gateSuffix(step)}`;
   const retired = `[SINGLE-USE-COMPLETED: <YYYY-MM-DD> | step_id: ${step.id} | AGENT_SKIP_LINE: DO NOT READ OR CALL THIS PROMPT FILE]`;
-  return `${head} (${step.instruction}) -> Rewrite to \`${retired}\`.`;
+  return `${head} (${step.instruction})${gateSuffix(step)} -> Rewrite to \`${retired}\`.`;
 }
 
 function renderModuleSummary(data) {
-  const phaseA = data.steps.filter((s) => s.phase === 'A').length;
-  const phaseB = data.steps.filter((s) => s.phase === 'B').length;
+  const sweep = data.steps.filter((s) => trackOf(s) === 'preflight');
+  const release = data.steps.filter((s) => trackOf(s) === 'release');
+  const phaseA = sweep.filter((s) => s.phase === 'A').length;
+  const phaseB = sweep.filter((s) => s.phase === 'B').length;
   return (
-    `- **All ${data.steps.length + 1} Paired Modules (\`prompts/preflight/run-uni/\` <-> \`prompts/preflight/run-uni/read/*-readme.md\`):** ` +
-    `1 shared guardrail (\`guardrails.md\`) + ${data.steps.length} scheduled steps (${phaseA} Phase A, ${phaseB} Phase B). ` +
+    `- **All ${sweep.length + 1} Paired Modules (\`prompts/preflight/run-uni/\` <-> \`prompts/preflight/run-uni/read/*-readme.md\`):** ` +
+    `1 shared guardrail (\`guardrails.md\`) + ${sweep.length} sweep steps (${phaseA} Phase A, ${phaseB} Phase B). ` +
+    `${release.length} further step(s) belong to the release track and live in \`pf-release-uni.md\`. ` +
     'The authoritative table is generated into `prompts/preflight/pf-launcher-uni-wiring.md`; never list steps by hand here.'
   );
 }
@@ -134,7 +159,7 @@ export function renderLauncher(text, data) {
   let out = text;
   for (const phase of PHASES) {
     const body = data.steps
-      .filter((step) => step.phase === phase)
+      .filter((step) => trackOf(step) === 'preflight' && step.phase === phase)
       .map((step) =>
         step.type === 'FIRST_TIME' && retired.has(step.id) ? retired.get(step.id) : renderStep(step)
       )
@@ -170,7 +195,10 @@ export function renderTemplate(launcherText, data) {
 
 export function renderWiring(data) {
   const rows = data.steps
-    .map((step) => `| ${step.id} | \`${step.file}\` | ${step.type} | ${step.phase} | ${step.runners.join(' → ')} |`)
+    .map(
+      (step) =>
+        `| ${step.id} | ${trackOf(step)} | \`${step.file}\` | ${step.type} | ${step.phase} | ${step.runners.join(' → ')} |`
+    )
     .join('\n');
   return [
     '<!-- SPDX-FileCopyrightText: 2024-2026 AskKim -->',
@@ -182,8 +210,8 @@ export function renderWiring(data) {
     '> `prompts/preflight/manifest/preflight.manifest.json`. Do not edit by hand: run',
     '> `npm run preflight:gen -- --write`, and `npm run preflight:lint` fails on drift.',
     '',
-    '| Step ID | Prompt File | Type | Phase | Runners (preferred first) |',
-    '|---|---|---|---|---|',
+    '| Step ID | Track | Prompt File | Type | Phase | Runners (preferred first) |',
+    '|---|---|---|---|---|---|',
     rows,
     '',
     '## The Two Step Types',
@@ -195,6 +223,16 @@ export function renderWiring(data) {
     'There is no third class for work that happens once per release. That is a `REUSABLE` step',
     'whose duplicate guard finds a `completed` entry in `docs/handoff-state.json` for the same',
     'branch + version + HEAD and skips it with the completion timestamp.',
+    '',
+    '## The Two Tracks',
+    '',
+    '- **preflight** — the sweep in `pf-launcher-uni.md`. It runs for any piece of work, and it has',
+    '  no human gates, so it always reaches the end.',
+    '- **release** — the tail in `pf-release-uni.md`. It only runs when cutting a release, because',
+    '  it ends in decisions a person has to make. A step in this track may declare',
+    '  `human_signoff`, which `preflight-log.mjs` turns into `awaiting_human` unless',
+    '  `--human-signoff "<who/how>"` is supplied. The generator rejects a human gate on a',
+    '  `preflight` step, because that would block every ordinary run.',
     '',
     '## Phase Routing And Runner Brackets',
     '',
@@ -221,6 +259,55 @@ export function renderWiring(data) {
   ].join('\n');
 }
 
+/**
+ * The release runner. Generated rather than hand-written so the release tail cannot drift from the
+ * manifest either, and so the step list here can never disagree with the one the state writer
+ * reads when it decides whether a step carries a human gate.
+ */
+export function renderReleaseLauncher(data) {
+  const releaseSteps = data.steps.filter((step) => trackOf(step) === 'release');
+  const phaseA = releaseSteps.filter((step) => step.phase === 'A').length;
+  const phaseB = releaseSteps.length - phaseA;
+  return [
+    '<!-- SPDX-FileCopyrightText: 2024-2026 AskKim -->',
+    '<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->',
+    '',
+    '# PreFlight Release Runner',
+    '',
+    '> Generated by `prompts/preflight/scripts/gen-preflight.mjs` from',
+    '> `prompts/preflight/manifest/preflight.manifest.json`. Do not edit by hand: run',
+    '> `npm run preflight:gen -- --write`, and `npm run preflight:lint` fails on drift.',
+    '',
+    '> **Part 1 — For A Human (plain English):** This is the release tail that used to sit at the end',
+    '> of the sweep and stop every run for a signature. The sweep now finishes on its own; open this',
+    '> file only when you are actually cutting a release.',
+    '',
+    '## When To Run This',
+    '',
+    '- Only for a release: a version bump, a tag, an APK, or a Pages publish.',
+    '- Never as part of ordinary work. `pf-launcher-uni.md` is the sweep for that, and it runs to the',
+    '  end without a human gate.',
+    `- ${releaseSteps.length} steps (${phaseA} needing no local environment, ${phaseB} needing one).`,
+    '',
+    '## Steps',
+    '',
+    ...releaseSteps.map((step) => renderStep(step)),
+    '',
+    '## Human Gates',
+    '',
+    'A step marked **HUMAN GATE** cannot be closed by the runner that did the machine work.',
+    '`preflight-log.mjs` writes `awaiting_human` for it unless `--human-signoff "<who/how>"` is',
+    'passed, and it holds the resume cursor on that step rather than advancing. Only the owner can',
+    'clear one, and the release is not cut until they do.',
+    '',
+    '## Exit Contract',
+    '',
+    '- Every step `completed`, each human gate carrying a `signed_off_by`, or the release is not cut.',
+    '- `npm run preflight:lint` and `node prompts/preflight/scripts/gen-preflight.mjs --check` stay green.',
+    '',
+  ].join('\n');
+}
+
 /** Render every derived file, keyed by workspace-relative path. */
 export function renderAll() {
   const data = JSON.parse(read(MANIFEST));
@@ -231,6 +318,7 @@ export function renderAll() {
     [LAUNCHER, launcher],
     [TEMPLATE, renderTemplate(launcher, data)],
     [WIRING, renderWiring(data)],
+    [RELEASE, renderReleaseLauncher(data)],
   ]);
 }
 
