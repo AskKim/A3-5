@@ -28,5 +28,5 @@ constraints:
   - Maintain zero layer violations (scripts/layer-allowlist.json = []) and zero as any / @ts-ignore / @ts-expect-error
   - Do not modify or import /import/ staging files; keep Alpha 2 features intact with thin facades until callers migrate
 decisions: Standalone /engine extraction waits until storage alignment, useBarnStore/webSqliteAdapter split, and shim retirement complete so extracted packages require zero rewrites
-verified: tsc=pass | test=pass (focused: 10 new) | build=pending
+verified: tsc=pass | test=pass (828) | build=pass | chunks=pass | improvements=136/136 | prompts=11/11 | contract=pass
 next_action: Extract entity CRUD and import/export controllers out of src/hooks/useBarnStore.ts, then auto-wire the port objects; keep the 200-key contract snapshot unchanged.
