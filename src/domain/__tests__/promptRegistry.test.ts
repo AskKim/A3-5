@@ -123,6 +123,23 @@ describe('promptRegistry — /prompts/ changelog, invariants & recovery playbook
     ).toBe(true);
   });
 
+  it('ratchets the pinned legacy prompt IDs so the exemption list can never grow', () => {
+    // Pinning an ID is the only way past the opt-in gate, so a longer list is a quiet bypass: a new
+    // revision could be logged in the legacy shape by appending its ID here. The snapshot is a
+    // literal on purpose — adding a pin must also edit this expectation in a reviewable diff.
+    const pinnedSnapshot = [
+      'PRM-001',
+      'PRM-002',
+      'PRM-003',
+      'PRM-004',
+      'PRM-005',
+      'PRM-006',
+      'PRM-007',
+      'PRM-008',
+    ];
+    expect([...LEGACY_PROMPT_ENTRY_IDS]).toEqual(pinnedSnapshot);
+  });
+
   it('rejects `superseded` without naming the replacing entry', () => {
     const base = PROMPT_CHANGES_REGISTRY[0];
     const opted = {

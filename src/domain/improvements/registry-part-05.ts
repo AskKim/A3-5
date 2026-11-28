@@ -3193,6 +3193,81 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-138',
+    title: 'Coverage Ratchet Raised and the CSV Exporter Executed End to End',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The coverage floors were still set against the 48/40/34/49 baseline, roughly four points under the post-render-test measurement, so a new untested module could absorb the render gains before the gate noticed. The hub tests also only proved the exporter registry rendered, never that an export produced a file.',
+    summary:
+      'Raises the `vitest.config.ts` floors to statements 51, branches 42, functions 37 and lines 53 — one point under the re-measured 52.69 / 43.02 / 38.77 / 54.11 — and records the measurement and its rationale in the config comment. Adds an end-to-end exporter test: `backupExportSurfaces.render.test.tsx` now mocks only `downloadTextFile` from `webFileActions` (via `importOriginal`, keeping every other export real), locates the Herd Roster Spreadsheet card, clicks its export button, and asserts the download received a `.csv` filename, a `text/csv` MIME type, a UTF-8 BOM, the `Species` header and a real animal tattoo from the snapshot, then that the panel reports its artifact summary through `role="status"`.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['thresholds:', 'statements: 51', 'branches: 42', 'functions: 37', 'lines: 53'],
+        rationale:
+          'The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.',
+      },
+      {
+        filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
+        requiredSubstrings: ['downloadTextFileMock', 'Herd Roster Spreadsheet', "getByRole('status')"],
+        rationale:
+          'Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.',
+      },
+    ],
+    restorePlaybook: [
+      'Re-measure before moving a floor, and keep it one point under the measured number so the ratchet stays achievable but tight.',
+      'Stub only the boundary in an end-to-end UI test: mock the download call, keep the exporter registry, snapshot and CSV serializer real.',
+      'Assert the artifact contract (filename, MIME type, BOM, header, a real record) rather than a snapshot of generated text.',
+    ],
+  },
+  {
+    id: 'IMP-139',
+    title: 'Ratchet Tests That Freeze the Pinned Legacy ID Lists',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The pinned legacy lists made the opt-in gates sound, but nothing stopped the lists themselves from growing: appending a new entry ID to `LEGACY_*_ENTRY_IDS` exempts that entry from the contract without touching a verifier, so the gate could be bypassed by pinning.',
+    summary:
+      'Adds a ratchet test per registry — `ratchets the pinned legacy prompt IDs so the exemption list can never grow` and its improvement counterpart — that compares the exported pin list against a frozen expected snapshot, so any added, removed or reordered ID fails the suite. Extending an exemption now takes a deliberate, reviewable edit to the expectation and the pin list together instead of a one-line append.',
+    files: [
+      'src/domain/__tests__/promptRegistry.test.ts',
+      'src/domain/__tests__/improvementRegistry.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'src/domain/improvements/rationales.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/__tests__/promptRegistry.test.ts',
+        requiredSubstrings: ['ratchets the pinned legacy prompt IDs', 'pinnedSnapshot'],
+        rationale:
+          'The pin list is the only exemption from the opt-in; without a frozen snapshot a new PRM ID can be appended and skip the gate silently.',
+      },
+      {
+        filePath: 'src/domain/__tests__/improvementRegistry.test.ts',
+        requiredSubstrings: ['ratchets the pinned legacy improvement IDs', 'pinnedSnapshot'],
+        rationale:
+          'The improvement pins need the same ratchet, or a `decidedOn`-less entry passes simply by being added to the list.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep both ratchet tests comparing `[...LEGACY_*_ENTRY_IDS]` to a frozen snapshot with `toEqual`, not a length-only assertion.',
+      'To pin a genuinely old entry, change the snapshot and the list in one reviewable commit and state why that entry cannot opt in.',
+      'Prefer opting an entry into the contract and pruning its pin over widening an exemption.',
+    ],
+  },
+  {
+    id: 'IMP-140',
     title: 'Store Entity CRUD and Backup Import Controllers',
     category: 'stability-pwa',
     release: 'alpha-3',

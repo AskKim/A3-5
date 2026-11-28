@@ -16,8 +16,8 @@ status:
     - [DONE] useSyncConflictResolution.ts | Apply the chosen side, merge ops, mark resolved (IMP-098)
     - [DONE] useRollingBackupActions.ts | Rolling snapshot restore + delete (IMP-099)
     - [DONE] useOpfsArchiveOffload.ts | Archive animals out of the live barn (IMP-100)
-    - [DONE] entityCrudController.ts | saveEntityRecord/deleteEntityRecord over one ports bundle; cages, ledger, processing logs, youth project books, client contacts, waitlist, feed batches, wool, mileage, journals and judge records delegate to it (IMP-138)
-    - [DONE] backupImportController.ts | installImportedSnapshot owns the shared replace/merge order; JSON backup and archive imports both delegate to it (IMP-138)
+    - [DONE] entityCrudController.ts | saveEntityRecord/deleteEntityRecord over one ports bundle; cages, ledger, processing logs, youth project books, client contacts, waitlist, feed batches, wool, mileage, journals and judge records delegate to it (IMP-140)
+    - [DONE] backupImportController.ts | installImportedSnapshot owns the shared replace/merge order; JSON backup and archive imports both delegate to it (IMP-140)
     - [TODO] Next phase: give the remaining cascade actions (show legs, feed-batch allocations, reservation sale, tasks) controllers, then auto-wire the port objects
   - [TODO] src/components/* | Decouple UI screens, editors, and modals from direct src/domain/* & src/storage/* singletons behind narrow @app/* props, context hooks, and pure @features/* presenters
   - [TODO] src/domain/binaryEncoding.ts & src/domain/importers/archiveAndCsvUtils.ts | Codemod remaining callers directly onto @engine/*, retire compatibility shims, and extract generic non-domain logic left in src/domain/*
@@ -30,5 +30,5 @@ constraints:
   - Maintain zero layer violations (scripts/layer-allowlist.json = []) and zero as any / @ts-ignore / @ts-expect-error
   - Do not modify or import /import/ staging files; keep Alpha 2 features intact with thin facades until callers migrate
 decisions: Standalone /engine extraction waits until storage alignment, useBarnStore/webSqliteAdapter split, and shim retirement complete so extracted packages require zero rewrites
-verified: tsc=pass | test=pass (867) | build=pass | chunks=pass | improvements=137/137 | prompts=11/11 | contract=pass
+verified: tsc=pass | test=pass (870) | build=pass | chunks=pass | improvements=139/139 | prompts=11/11 | contract=pass
 next_action: Extract the cascade actions (show legs, feed-batch allocations, reservation sale, tasks) into controllers, then auto-wire the ~40 sub-hook port objects; keep the 200-key contract snapshot unchanged.

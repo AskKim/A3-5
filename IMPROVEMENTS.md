@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (73 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (75 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (137)
+## Logged Improvements (139)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2811,6 +2811,34 @@ Status:     active
 1. Never report `NO PENDING WORK` from the file in hand: list `docs/plans/handoff-*.yaml` and read every `status:` block first.
 2. After closing a handoff, re-scan the directory before moving to a backlog item or ending the run.
 3. When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.
+
+## 2026-11-28 — Coverage Ratchet Raised and the CSV Exporter Executed End to End
+Why:        The coverage floors were still set against the 48/40/34/49 baseline, roughly four points under the post-render-test measurement, so a new untested module could absorb the render gains before the gate noticed. The hub tests also only proved the exporter registry rendered, never that an export produced a file.
+Changed:    `vitest.config.ts`, `src/components/__tests__/backupExportSurfaces.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `thresholds:`, `statements: 51`, `branches: 42`, `functions: 37`, `lines: 53` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.*
+- `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `downloadTextFileMock`, `Herd Roster Spreadsheet`, `getByRole('status')` — *Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.*
+
+**Restoration Playbook if Overwritten:**
+1. Re-measure before moving a floor, and keep it one point under the measured number so the ratchet stays achievable but tight.
+2. Stub only the boundary in an end-to-end UI test: mock the download call, keep the exporter registry, snapshot and CSV serializer real.
+3. Assert the artifact contract (filename, MIME type, BOM, header, a real record) rather than a snapshot of generated text.
+
+## 2026-11-28 — Ratchet Tests That Freeze the Pinned Legacy ID Lists
+Why:        The pinned legacy lists made the opt-in gates sound, but nothing stopped the lists themselves from growing: appending a new entry ID to `LEGACY_*_ENTRY_IDS` exempts that entry from the contract without touching a verifier, so the gate could be bypassed by pinning.
+Changed:    `src/domain/__tests__/promptRegistry.test.ts`, `src/domain/__tests__/improvementRegistry.test.ts`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/__tests__/promptRegistry.test.ts` must contain `ratchets the pinned legacy prompt IDs`, `pinnedSnapshot` — *The pin list is the only exemption from the opt-in; without a frozen snapshot a new PRM ID can be appended and skip the gate silently.*
+- `src/domain/__tests__/improvementRegistry.test.ts` must contain `ratchets the pinned legacy improvement IDs`, `pinnedSnapshot` — *The improvement pins need the same ratchet, or a `decidedOn`-less entry passes simply by being added to the list.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep both ratchet tests comparing `[...LEGACY_*_ENTRY_IDS]` to a frozen snapshot with `toEqual`, not a length-only assertion.
+2. To pin a genuinely old entry, change the snapshot and the list in one reviewable commit and state why that entry cannot opt in.
+3. Prefer opting an entry into the contract and pruning its pin over widening an exemption.
 
 ## 2026-11-28 — Store Entity CRUD and Backup Import Controllers
 Why:        `src/hooks/useBarnStore.ts` was still 7,676 lines because every flat collection repeated the same write by hand: queue the mutation, look up the previous row, allocate a revision, persist, diff it into the outbox, reload, toast. Thirteen save/delete pairs differed only in their builder and copy, and both file imports (JSON backup and archive) carried their own copy of the same destructive install order, so a fix to one import did not reach the other.

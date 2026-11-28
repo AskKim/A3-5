@@ -1000,4 +1000,8 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'Improvements need the same pinned exemption, otherwise a new entry logged without `decidedOn` passes as grandfathered.',
   'IMP-133#.github/workflows/ci.yml#1':
     'The prompt gate has to run where merges are decided; locally-only verification let prompt drift reach main.',
+  'IMP-139#src/domain/__tests__/promptRegistry.test.ts#1':
+    'A frozen snapshot is what turns the pin list into a ratchet: appending a new PRM ID fails the suite instead of quietly bypassing the opt-in gate.',
+  'IMP-139#src/domain/__tests__/improvementRegistry.test.ts#1':
+    'Pinning a `decidedOn`-less entry must cost a deliberate snapshot edit, so the exemption cannot be widened as a shortcut.',
 };
