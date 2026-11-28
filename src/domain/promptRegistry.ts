@@ -161,11 +161,11 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
     title: 'Start New Backlog Item & Plan-Precheck Workflow',
     category: 'backlog-workflow',
     lifecycle: 'active',
-    lastEdited: '2026-11-24',
+    lastEdited: '2026-11-28',
     intent:
-      'Pick the top item from `docs/plans/suggestions-backlog.md` and drive end-to-end implementation without clobbering active plans.',
+      'Pick the top item from `docs/plans/suggestions-backlog.md` and drive end-to-end implementation without clobbering active plans or open handoffs.',
     changeSummary:
-      'Redirects immediately to `resume_backlog_plan_prompt.md` if an active plan already exists, enforces full audit/build verification, and marks completed suggestions cleanly.',
+      'Precheck now covers open handoffs as well as active plans: an unfinished `handoff-*.yaml` is continued before any new backlog item is started, and only when neither exists does the workflow pick an entry. Still redirects to `resume_backlog_plan_prompt.md` for active plans and enforces full audit/build verification.',
     trackedFiles: ['prompts/start_new_backlog_prompt.md'],
     invariants: [
       {
@@ -174,13 +174,14 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
           '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
           'suggestions-backlog.md',
           'resume_backlog_plan_prompt.md',
+          'handoff-*.yaml',
         ],
         rationale:
-          'Backlog starter prompt must stay protected and check for active plans before starting a new item.',
+          'Backlog starter prompt must stay protected and check for both active plans and open handoffs before starting a new item.',
       },
     ],
     restorePlaybook: [
-      'Restore `prompts/start_new_backlog_prompt.md` with precheck redirect to `prompts/resume_backlog_plan_prompt.md`.',
+      'Restore `prompts/start_new_backlog_prompt.md` with the open-handoff precheck and the redirect to `prompts/resume_backlog_plan_prompt.md`.',
     ],
   },
   {
@@ -189,11 +190,11 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
     title: 'Resume Active Backlog Plan Continuation Workflow',
     category: 'backlog-workflow',
     lifecycle: 'active',
-    lastEdited: '2026-11-24',
+    lastEdited: '2026-11-28',
     intent:
-      'Resume in-progress multi-step implementation plans safely after loading master governance.',
+      'Resume in-progress multi-step implementation plans or open handoffs safely after loading master governance.',
     changeSummary:
-      'Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, runs full verification, and removes finished temporary plan files.',
+      'Loads `prompts/master_system_prompt.md`, continues pending milestones in `docs/plans/`, and now resumes an open `handoff-*.yaml` when no active plan exists instead of starting a new backlog item. Runs full verification and removes finished temporary plan files.',
     trackedFiles: ['prompts/resume_backlog_plan_prompt.md'],
     invariants: [
       {
@@ -201,13 +202,14 @@ export const PROMPT_CHANGES_REGISTRY: PromptChangeEntry[] = [
         requiredSubstrings: [
           '<!-- DO_NOT_REMOVE_WITHOUT_CONFIRMATION: true -->',
           'prompts/master_system_prompt.md',
+          'handoff-*.yaml',
         ],
         rationale:
-          'Resume prompt must stay protected and always load `prompts/master_system_prompt.md` first.',
+          'Resume prompt must stay protected, load `prompts/master_system_prompt.md` first, and treat an open handoff as work to continue rather than work to replace.',
       },
     ],
     restorePlaybook: [
-      'Restore `prompts/resume_backlog_plan_prompt.md` with phase-by-phase plan continuation and delete-on-wrapup cleanup.',
+      'Restore `prompts/resume_backlog_plan_prompt.md` with phase-by-phase plan continuation, open-handoff continuation and delete-on-wrapup cleanup.',
     ],
   },
   {

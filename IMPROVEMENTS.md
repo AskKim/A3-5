@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (40 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (41 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (104)
+## Logged Improvements (105)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2162,7 +2162,7 @@ npm run lint && npm run build
 - **Tracked Files:** `src/hooks/barnStore/useRollingBackupActions.ts`, `src/hooks/__tests__/rollingBackupActions.test.ts`, `src/hooks/useBarnStore.ts`
 
 **Automated Invariants Checked:**
-- `src/hooks/barnStore/useRollingBackupActions.ts` must contain `export function useRollingBackupActions`, `ROLLING_BACKUP_STORAGE_PORT`, `stripRestoredBackupBookkeeping` — *Both restore paths must strip `lastBackupMeta` and the reminder snooze; a local copy of that cleaning step is how a restored backup immediately triggers “backup overdue” again.*
+- `src/hooks/barnStore/useRollingBackupActions.ts` must contain `export function useRollingBackupActions`, `ROLLING_BACKUP_STORAGE_PORT`, `runDestructiveRestore` — *Both restore paths must strip `lastBackupMeta` and the reminder snooze; a local copy of that cleaning step is how a restored backup immediately triggers “backup overdue” again.*
 - `src/hooks/useBarnStore.ts` must contain `from './barnStore/useRollingBackupActions'` — *Re-inlining the rolling restore would let it drift from the OPFS ordering, which is the pair users rely on when one storage backend fails.*
   - Forbidden regression: `const restoreRollingBackupByKey = useCallback(`
 - `src/hooks/__tests__/rollingBackupActions.test.ts` must contain `restores in safety order inside the mutation queue`, `keeps the selected species` — *Order is the safety contract, and the species difference from the OPFS path is deliberate — asserting it stops a future “unify these two” edit from changing behaviour.*
@@ -2268,3 +2268,21 @@ npm run lint && npm run build
 1. Preview hostnames are per-process: start the dev server with `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=<host>`, never by re-enabling blanket host acceptance.
 2. Hidden inputs still need accessible names.
 3. Quota paths must report and stay silent, never toast success.
+
+### IMP-105: Backlog Workflow Gate Now Covers Open Handoffs, Not Just Plans
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Stop a new backlog item from starting while an unfinished handoff still owns the work — the gate only looked for plans and silently ignored handoffs.
+- **Summary:** Both backlog prompts now treat an open `handoff-*.yaml` as work in progress. `start_new_backlog_prompt.md` prechecks for active plans *and* handoffs whose `status:` still contains `[WIP]`/`[TODO]`, and refuses to pick a new entry until the handoff is finished; `resume_backlog_plan_prompt.md` now continues an open handoff when no active plan exists, instead of jumping straight to a new backlog item. `docs/plans/suggestions-backlog.md` records the gate in its header note and states plainly that the file is the owner’s scratch pad, worked one entry at a time and deliberately kept near-empty between releases. PRM-003/PRM-004 gained `handoff-*.yaml` invariants so the check cannot be dropped again.
+- **Tracked Files:** `prompts/start_new_backlog_prompt.md`, `prompts/resume_backlog_plan_prompt.md`, `docs/plans/suggestions-backlog.md`, `src/domain/promptRegistry.ts`, `src/domain/promptsCatalog.ts`
+
+**Automated Invariants Checked:**
+- `prompts/start_new_backlog_prompt.md` must contain `handoff-*.yaml`, `open handoff` — *Without the handoff branch the precheck only guards plans, which is exactly how an unfinished handoff got abandoned for a fresh backlog item.*
+- `prompts/resume_backlog_plan_prompt.md` must contain `handoff-*.yaml` — *The resume path is the one that decides what to work on when no plan exists; it must see handoffs before falling through to the starter.*
+- `docs/plans/suggestions-backlog.md` must contain `no open plan and no open handoff`, `scratch pad` — *The backlog file itself has to say that it is a one-at-a-time scratch pad behind an open-work gate, or the next reader treats an empty list as an invitation.*
+
+**Restoration Playbook if Overwritten:**
+1. Both backlog prompts gate on open handoffs: continue `handoff-*.yaml` work with `[WIP]`/`[TODO]` before starting a new backlog entry.
+2. The backlog is a scratch pad, not a queue — keep the header gate note and the one-at-a-time rule intact.

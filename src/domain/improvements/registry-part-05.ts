@@ -1798,4 +1798,46 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Quota paths must report and stay silent, never toast success.',
     ],
   },
+  {
+    id: 'IMP-105',
+    title: 'Backlog Workflow Gate Now Covers Open Handoffs, Not Just Plans',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Stop a new backlog item from starting while an unfinished handoff still owns the work — the gate only looked for plans and silently ignored handoffs.',
+    summary:
+      'Both backlog prompts now treat an open `handoff-*.yaml` as work in progress. `start_new_backlog_prompt.md` prechecks for active plans *and* handoffs whose `status:` still contains `[WIP]`/`[TODO]`, and refuses to pick a new entry until the handoff is finished; `resume_backlog_plan_prompt.md` now continues an open handoff when no active plan exists, instead of jumping straight to a new backlog item. `docs/plans/suggestions-backlog.md` records the gate in its header note and states plainly that the file is the owner’s scratch pad, worked one entry at a time and deliberately kept near-empty between releases. PRM-003/PRM-004 gained `handoff-*.yaml` invariants so the check cannot be dropped again.',
+    files: [
+      'prompts/start_new_backlog_prompt.md',
+      'prompts/resume_backlog_plan_prompt.md',
+      'docs/plans/suggestions-backlog.md',
+      'src/domain/promptRegistry.ts',
+      'src/domain/promptsCatalog.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'prompts/start_new_backlog_prompt.md',
+        requiredSubstrings: ['handoff-*.yaml', 'open handoff'],
+        rationale:
+          'Without the handoff branch the precheck only guards plans, which is exactly how an unfinished handoff got abandoned for a fresh backlog item.',
+      },
+      {
+        filePath: 'prompts/resume_backlog_plan_prompt.md',
+        requiredSubstrings: ['handoff-*.yaml'],
+        rationale:
+          'The resume path is the one that decides what to work on when no plan exists; it must see handoffs before falling through to the starter.',
+      },
+      {
+        filePath: 'docs/plans/suggestions-backlog.md',
+        requiredSubstrings: ['no open plan and no open handoff', 'scratch pad'],
+        rationale:
+          'The backlog file itself has to say that it is a one-at-a-time scratch pad behind an open-work gate, or the next reader treats an empty list as an invitation.',
+      },
+    ],
+    restorePlaybook: [
+      'Both backlog prompts gate on open handoffs: continue `handoff-*.yaml` work with `[WIP]`/`[TODO]` before starting a new backlog entry.',
+      'The backlog is a scratch pad, not a queue — keep the header gate note and the one-at-a-time rule intact.',
+    ],
+  },
 ];

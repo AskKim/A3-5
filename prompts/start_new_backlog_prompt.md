@@ -9,15 +9,18 @@
 
 ## Objectives
 
-1. **Check for Existing Active Plan (Precheck)**
-   - Inspect `docs/plans/` for `docs/plans/active-backlog-plan.md` (or any other active plan file in `docs/plans/` excluding `docs/plans/suggestions-backlog.md`).
-   - **If an existing active plan file is found:** Do **not** overwrite it. Stop this workflow immediately and read/execute `prompts/resume_backlog_plan_prompt.md` instead.
+1. **Check for Existing Open Work (Precheck)**
+   - Inspect `docs/plans/` for an active plan file: `docs/plans/active-backlog-plan.md` (or any other active `.md` plan in `docs/plans/` excluding `docs/plans/suggestions-backlog.md`) whose steps still contain `[WIP]` or `[TODO]`.
+   - Inspect `docs/plans/` for open handoffs: any `handoff-*.yaml` whose `status:` block still contains `[WIP]` or `[TODO]`.
+   - **If an open handoff is found:** Do **not** start a new backlog item and do **not** overwrite the handoff. Continue that handoff's `next_action` until every step is `[DONE]`, then return to this workflow.
+   - **If an active plan file is found:** Do **not** overwrite it. Stop this workflow immediately and read/execute `prompts/resume_backlog_plan_prompt.md` instead.
+   - **Only when neither exists** may a new backlog entry be started. The backlog is a deliberate one-at-a-time scratch pad, not a queue to drain in parallel.
 
 2. **Load & Internalize Master System Prompt**
    - Read `prompts/master_system_prompt.md` completely and internalize all execution, architecture, type safety, and coding invariants before taking any action.
 
 3. **Select First Priority Backlog Entry**
-   - Open `docs/plans/suggestions-backlog.md` and select the first (highest-priority) remaining entry.
+   - Open `docs/plans/suggestions-backlog.md` and select the first (highest-priority) remaining entry. The file is intentionally kept near-empty between releases: it holds one worked item at a time, not a wish list.
 
 4. **Develop Implementation Plan**
    - Draft a concrete implementation plan at `docs/plans/active-backlog-plan.md` for the selected backlog entry.
