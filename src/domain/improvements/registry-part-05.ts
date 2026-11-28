@@ -3191,4 +3191,53 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.',
     ],
   },
+  {
+    id: 'IMP-138',
+    title: 'Store Entity CRUD and Backup Import Controllers',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      '`src/hooks/useBarnStore.ts` was still 7,676 lines because every flat collection repeated the same write by hand: queue the mutation, look up the previous row, allocate a revision, persist, diff it into the outbox, reload, toast. Thirteen save/delete pairs differed only in their builder and copy, and both file imports (JSON backup and archive) carried their own copy of the same destructive install order, so a fix to one import did not reach the other.',
+    summary:
+      'Adds `src/hooks/barnStore/entityCrudController.ts` (`saveEntityRecord` / `deleteEntityRecord` over one `EntityCrudPorts` bundle: serial queue, revision allocation, field-level outbox diff with `ignoreFields` and create-only `outboxRow`, reload, toast, failure report) and `src/hooks/barnStore/backupImportController.ts` (`installImportedSnapshot` owning the shared replace/merge order: safety snapshot, photo-cache purge, conflict attention flags and alert, stripped backup bookkeeping, sync-state and recovery-context reset, reload). Cages, ledger entries, processing logs, youth project books, client contacts, waitlist entries, feed batches, wool harvests, mileage logs, journal entries and judge clubs/assignments/expenses now delegate to the CRUD controller; both imports delegate to the installer. `useBarnStore.ts` drops 7,676 → 6,986 lines with the 200-key contract snapshot unchanged, plus 16 new tests (`entityCrudController.test.ts`, `backupImportController.test.ts`). Collections with cross-entity effects (show legs, feed-batch allocations, reservation occupancy) and the ~40 hand-wired sub-hook ports stay in the store for the next slice.',
+    files: [
+      'src/hooks/barnStore/entityCrudController.ts',
+      'src/hooks/barnStore/backupImportController.ts',
+      'src/hooks/__tests__/entityCrudController.test.ts',
+      'src/hooks/__tests__/backupImportController.test.ts',
+      'src/hooks/useBarnStore.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'docs/plans/handoff-modularity-reusability.yaml',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/entityCrudController.ts',
+        requiredSubstrings: ['saveEntityRecord', 'deleteEntityRecord', '__delete__'],
+        rationale:
+          'Every flat collection must write through this one path; a collection that hand-rolls its own queue/revision/outbox order is how the copies drifted apart.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['saveEntityRecord', 'deleteEntityRecord', 'installImportedSnapshot'],
+        rationale:
+          'The store must keep delegating to the controllers rather than re-growing inline CRUD bodies or a second import install order.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/backupImportController.ts',
+        requiredSubstrings: ['installImportedSnapshot', 'stripRestoredBackupBookkeeping', 'clearLocalSyncAndBackupReminderState'],
+        rationale:
+          'A destructive replace must always take the safety snapshot, strip backup bookkeeping and reset sync state; that order only stays correct while there is one implementation of it.',
+      },
+    ],
+    restorePlaybook: [
+      'A new flat collection gets a spec (`readRows`, `build`, `persist`, `describe`, `failureLabel`) and a `useCallback` pair over `entityCrudPorts`; do not copy the old inline body.',
+      'Collections whose save touches other rows (show legs, feed-batch allocations, reservation occupancy) keep their own action until they get a controller that also owns the cascade.',
+      'A new file format imports through `installImportedSnapshot`; decode it, then pass `mode` and the safety note, and word the toast in the caller.',
+    ],
+  },
 ];

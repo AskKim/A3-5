@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (72 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (73 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (136)
+## Logged Improvements (137)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2811,3 +2811,18 @@ Status:     active
 1. Never report `NO PENDING WORK` from the file in hand: list `docs/plans/handoff-*.yaml` and read every `status:` block first.
 2. After closing a handoff, re-scan the directory before moving to a backlog item or ending the run.
 3. When a new prompt is added to this workflow, give it the same all-files scan rather than a single-file check.
+
+## 2026-11-28 — Store Entity CRUD and Backup Import Controllers
+Why:        `src/hooks/useBarnStore.ts` was still 7,676 lines because every flat collection repeated the same write by hand: queue the mutation, look up the previous row, allocate a revision, persist, diff it into the outbox, reload, toast. Thirteen save/delete pairs differed only in their builder and copy, and both file imports (JSON backup and archive) carried their own copy of the same destructive install order, so a fix to one import did not reach the other.
+Changed:    `src/hooks/barnStore/entityCrudController.ts`, `src/hooks/barnStore/backupImportController.ts`, `src/hooks/__tests__/entityCrudController.test.ts`, `src/hooks/__tests__/backupImportController.test.ts`, `src/hooks/useBarnStore.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `docs/plans/handoff-modularity-reusability.yaml`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/entityCrudController.ts` must contain `saveEntityRecord`, `deleteEntityRecord`, `__delete__` — *Every flat collection must write through this one path; a collection that hand-rolls its own queue/revision/outbox order is how the copies drifted apart.*
+- `src/hooks/useBarnStore.ts` must contain `saveEntityRecord`, `deleteEntityRecord`, `installImportedSnapshot` — *The store must keep delegating to the controllers rather than re-growing inline CRUD bodies or a second import install order.*
+- `src/hooks/barnStore/backupImportController.ts` must contain `installImportedSnapshot`, `stripRestoredBackupBookkeeping`, `clearLocalSyncAndBackupReminderState` — *A destructive replace must always take the safety snapshot, strip backup bookkeeping and reset sync state; that order only stays correct while there is one implementation of it.*
+
+**Restoration Playbook if Overwritten:**
+1. A new flat collection gets a spec (`readRows`, `build`, `persist`, `describe`, `failureLabel`) and a `useCallback` pair over `entityCrudPorts`; do not copy the old inline body.
+2. Collections whose save touches other rows (show legs, feed-batch allocations, reservation occupancy) keep their own action until they get a controller that also owns the cascade.
+3. A new file format imports through `installImportedSnapshot`; decode it, then pass `mode` and the safety note, and word the toast in the caller.
