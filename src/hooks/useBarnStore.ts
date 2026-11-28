@@ -316,7 +316,7 @@ export type WorkspaceRoute =
   | 'judge'
   | 'importExport'
   | 'settings'
-  | 'techyStuff'
+  | 'development'
   | 'prompts'
   | 'suggestions';
 
@@ -363,7 +363,7 @@ const NON_SPECIES_ROUTES = new Set<WorkspaceRoute>([
   'home',
   'settings',
   'importExport',
-  'techyStuff',
+  'development',
   'prompts',
   'suggestions',
 ]);

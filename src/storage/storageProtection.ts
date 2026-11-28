@@ -17,7 +17,7 @@ import {
 import type {
   DiagnosticQuotaOperationKind,
   StorageQuotaEvaluationResult,
-} from '../domain/techyStuffGuardrails';
+} from '../domain/developmentGuardrails';
 import type { IPlatformBridge, PlatformContainerInfo } from '@engine/bridge';
 import { isQuotaExceededError } from '@engine/storage/browserProbes';
 import { logDiagnosticEvent } from './crashLogger';
@@ -1009,7 +1009,7 @@ export async function verifyStorageQuotaForDiagnosticAction(options: {
   requiresOpfsPreferred?: boolean;
 }): Promise<DiagnosticQuotaPreflightResult> {
   const [{ evaluateStorageQuotaForOperation }, statusSnapshot] = await Promise.all([
-    import('../domain/techyStuffGuardrails'),
+    import('../domain/developmentGuardrails'),
     checkStorageStatus(),
   ]);
   const opfsSupported = isOpfsSupported();

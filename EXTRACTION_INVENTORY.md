@@ -154,7 +154,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/domain/supportBundle.ts` — `pedigree-domain` — Diagnostics support bundle serializer.
 - `src/domain/syncAndExports.ts` — `pedigree-domain` — Barn JSON backup export/import and sync helpers.
 - `src/domain/taskMaster.ts` — `pedigree-domain` — Barn chore recurrence and task scheduling engine.
-- `src/domain/techyStuffGuardrails.ts` — `pedigree-domain` — Advanced developer tools guardrails and safety checks.
+- `src/domain/developmentGuardrails.ts` — `pedigree-domain` — Advanced developer tools guardrails and safety checks.
 - `src/domain/upgradeGate.ts` — `pedigree-domain` — Schema migration gate and version comparison checks.
 - `src/domain/woolFiber.ts` — `pedigree-domain` — Wool/fiber harvest yield and micron tracking.
 

@@ -17,9 +17,9 @@ import {
   validateLogRetentionDaysOverride,
   validatePwaUpdatePolicyOverride,
   validateSupportRecipientEmail,
-} from '../techyStuffGuardrails';
+} from '../developmentGuardrails';
 
-describe('techyStuffGuardrails — quota preflight, strict sanitization & destructive safeguards', () => {
+describe('developmentGuardrails — quota preflight, strict sanitization & destructive safeguards', () => {
   it('allows healthy storage budgets, warns above 80%, and blocks critical quota writes', () => {
     const healthy = evaluateStorageQuotaForOperation({
       operation: 'support_bundle_zip',

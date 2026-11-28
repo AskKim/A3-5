@@ -44,7 +44,7 @@ import { PlatformBridgeProvider } from '@app/PlatformBridgeContext';
 import type { IPlatformBridge } from '@engine/bridge';
 import { AsyncErrorToastHost } from './components/AsyncErrorToastHost';
 import { HomeSpeciesScreen } from './components/HomeSpeciesScreen';
-import { TechyStuffErrorBoundary } from './components/TechyStuffErrorBoundary';
+import { DevelopmentErrorBoundary } from './components/DevelopmentErrorBoundary';
 import { formatSystemTaskTitle } from './domain/calendarExport';
 import {
   createDefaultVetDocsFolderMeta,
@@ -126,9 +126,9 @@ const SettingsAndSyncScreen = lazyNamedRoute<
   ComponentProps<typeof import('./components/SettingsAndSyncScreen')['SettingsAndSyncScreen']>
 >(() => import('./components/SettingsAndSyncScreen'), 'SettingsAndSyncScreen', 'Settings');
 
-const TechyStuffScreen = lazyNamedRoute<
-  ComponentProps<typeof import('./components/TechyStuffScreen')['TechyStuffScreen']>
->(() => import('./components/TechyStuffScreen'), 'TechyStuffScreen', 'Development');
+const DevelopmentScreen = lazyNamedRoute<
+  ComponentProps<typeof import('./components/DevelopmentScreen')['DevelopmentScreen']>
+>(() => import('./components/DevelopmentScreen'), 'DevelopmentScreen', 'Development');
 
 const PromptsDirectoryScreen = lazyNamedRoute<
   ComponentProps<typeof import('./components/PromptsDirectoryScreen')['PromptsDirectoryScreen']>
@@ -190,7 +190,7 @@ const ROUTE_LABELS: Record<WorkspaceRoute, string> = {
   judge: "Judge's Notebook",
   importExport: 'Import / Export Hub',
   settings: 'Settings',
-  techyStuff: 'Development',
+  development: 'Development',
   prompts: 'Prompts Directory',
   suggestions: 'Suggestion Backlog',
 };
@@ -225,8 +225,8 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
   const hasOpenModal = openDomModalCount > 0;
   const [importExportInitialSection, setImportExportInitialSection] =
     useState<ImportExportHubSection>('all');
-  const [returnRouteFromPrompts, setReturnRouteFromPrompts] = useState<'settings' | 'techyStuff'>(
-    'techyStuff'
+  const [returnRouteFromPrompts, setReturnRouteFromPrompts] = useState<'settings' | 'development'>(
+    'development'
   );
   const [healthReferenceSection, setHealthReferenceSection] = useState<
     'all' | 'wikis' | 'pdfs' | null
@@ -594,9 +594,9 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
           </div>
         </div>
         <AsyncErrorToastHost
-          onOpenDiagnostics={() => store.setRoute('techyStuff')}
+          onOpenDiagnostics={() => store.setRoute('development')}
           onOpenBackups={() => openImportExportHub('backup')}
-          isOnSettingsRoute={store.route === 'techyStuff'}
+          isOnSettingsRoute={store.route === 'development'}
           isOnBackupsRoute={store.route === 'importExport'}
         />
       </main>
@@ -686,7 +686,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
           {!isOnline && (
             <button
               type="button"
-              onClick={() => setRoute('techyStuff')}
+              onClick={() => setRoute('development')}
               title={
                 connectivity.reason === 'manual_offline'
                   ? 'Manual App Offline Mode enabled — click to manage in Development'
@@ -1370,7 +1370,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
         {route !== 'home' &&
           route !== 'settings' &&
           route !== 'importExport' &&
-          route !== 'techyStuff' &&
+          route !== 'development' &&
           route !== 'prompts' &&
           route !== 'suggestions' && (
           <div className="bg-[var(--barn-surface)] border border-[var(--barn-border)] rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
@@ -1915,7 +1915,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
             opfsVaultBackups={store.opfsVaultBackups}
             rollingBackups={store.rollingBackups}
             onOpenImportExportHub={openImportExportHub}
-            onOpenTechyStuff={() => setRoute('techyStuff')}
+            onOpenDevelopment={() => setRoute('development')}
             onOpenPromptsDirectory={() => {
               setReturnRouteFromPrompts('settings');
               setRoute('prompts');
@@ -1928,12 +1928,12 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
           />
         )}
 
-        {route === 'techyStuff' && (
-          <TechyStuffErrorBoundary
+        {route === 'development' && (
+          <DevelopmentErrorBoundary
             onExitToSettings={() => setRoute('settings')}
             onExitToHome={() => setRoute('home')}
           >
-            <TechyStuffScreen
+            <DevelopmentScreen
               snapshot={snapshot}
               engineName={store.engineName}
               storageStatus={store.storageStatus}
@@ -1950,7 +1950,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
               onBackToSettings={() => setRoute('settings')}
               onOpenImportExportHub={openImportExportHub}
               onOpenPromptsDirectory={() => {
-                setReturnRouteFromPrompts('techyStuff');
+                setReturnRouteFromPrompts('development');
                 setRoute('prompts');
               }}
               onOpenSuggestionsBacklog={() => setRoute('suggestions')}
@@ -1981,23 +1981,23 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
                 void store.restoreFactoryDefaults();
               }}
             />
-          </TechyStuffErrorBoundary>
+          </DevelopmentErrorBoundary>
         )}
         {route === 'prompts' && (
-          <TechyStuffErrorBoundary
+          <DevelopmentErrorBoundary
             onExitToSettings={() => setRoute('settings')}
             onExitToHome={() => setRoute('home')}
           >
-            <PromptsDirectoryScreen onBackToTechyStuff={() => setRoute(returnRouteFromPrompts)} />
-          </TechyStuffErrorBoundary>
+            <PromptsDirectoryScreen onBackToDevelopment={() => setRoute(returnRouteFromPrompts)} />
+          </DevelopmentErrorBoundary>
         )}
         {route === 'suggestions' && (
-          <TechyStuffErrorBoundary
+          <DevelopmentErrorBoundary
             onExitToSettings={() => setRoute('settings')}
             onExitToHome={() => setRoute('home')}
           >
-            <SuggestionsBacklogScreen onBackToTechyStuff={() => setRoute('techyStuff')} />
-          </TechyStuffErrorBoundary>
+            <SuggestionsBacklogScreen onBackToDevelopment={() => setRoute('development')} />
+          </DevelopmentErrorBoundary>
         )}
             </Suspense>
           </RouteErrorBoundary>
@@ -2006,7 +2006,7 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
         {/* Quiet Desktop Keyboard Shortcuts Hint Footer */}
         {route !== 'settings' &&
           route !== 'importExport' &&
-          route !== 'techyStuff' &&
+          route !== 'development' &&
           route !== 'prompts' &&
           route !== 'suggestions' && (
           <footer className="hidden md:flex items-center justify-between gap-4 pt-3 pb-1 border-t border-[var(--barn-border)]/60 text-[11px] text-[var(--barn-muted)]">
@@ -2337,9 +2337,9 @@ export default function App({ bridge, storageAdapter }: AppProps = {}) {
       )}
 
       <AsyncErrorToastHost
-        onOpenDiagnostics={() => setRoute('techyStuff')}
+        onOpenDiagnostics={() => setRoute('development')}
         onOpenBackups={() => openImportExportHub('backup')}
-        isOnSettingsRoute={route === 'techyStuff'}
+        isOnSettingsRoute={route === 'development'}
         isOnBackupsRoute={route === 'importExport'}
       />
 

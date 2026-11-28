@@ -239,7 +239,7 @@ export interface SettingsAndSyncScreenProps {
   opfsVaultBackups?: VaultBackupMetadata[];
   rollingBackups?: RollingBackupMeta[];
   onOpenImportExportHub?: (section?: ImportExportHubSection) => void;
-  onOpenTechyStuff?: () => void;
+  onOpenDevelopment?: () => void;
   onOpenHealthReference?: (section?: 'all' | 'wikis' | 'pdfs') => void;
   onOpenHelpDocs?: () => void;
   onOpenPromptsDirectory?: () => void;
@@ -272,7 +272,7 @@ export function SettingsAndSyncScreen({
   opfsVaultBackups = [],
   rollingBackups = [],
   onOpenImportExportHub,
-  onOpenTechyStuff,
+  onOpenDevelopment,
   onOpenHealthReference,
   onOpenHelpDocs,
   onOpenPromptsDirectory,
@@ -837,10 +837,10 @@ export function SettingsAndSyncScreen({
                   </button>
                 )}
 
-                {onOpenTechyStuff && (
+                {onOpenDevelopment && (
                   <button
                     type="button"
-                    onClick={onOpenTechyStuff}
+                    onClick={onOpenDevelopment}
                     className="min-h-[40px] px-3.5 py-1.5 rounded-xl border border-[var(--barn-border)] bg-[var(--barn-canvas)] hover:bg-[var(--barn-subtle)] text-xs font-semibold text-[var(--barn-ink)] inline-flex items-center gap-1.5 transition-colors shadow-2xs"
                     title="Open Development Developer & Diagnostic Console"
                   >
@@ -2637,7 +2637,7 @@ export function SettingsAndSyncScreen({
           isOpen={showInternalAboutModal}
           onClose={() => setShowInternalAboutModal(false)}
           onOpenHelpDocs={onOpenHelpDocs}
-          onOpenTechyStuff={onOpenTechyStuff}
+          onOpenDevelopment={onOpenDevelopment}
           onOpenPromptsDirectory={handleOpenPromptsTrigger}
           onOpenImportExportHub={onOpenImportExportHub ? () => onOpenImportExportHub('all') : undefined}
         />
@@ -2674,7 +2674,7 @@ export function SettingsAndSyncScreen({
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
-            <PromptsDirectoryScreen onBackToTechyStuff={() => setShowPromptsModal(false)} />
+            <PromptsDirectoryScreen onBackToDevelopment={() => setShowPromptsModal(false)} />
           </div>
         </div>
       )}

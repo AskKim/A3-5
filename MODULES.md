@@ -137,6 +137,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/cloudAppFolderSync.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/csvExport.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/dataHealthCheck.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
+| `src/domain/developmentGuardrails.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/deviceCapability.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/economicsLedger.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/encryptedExport.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
@@ -199,7 +200,6 @@ npx tsx scripts/list-modules.ts --check
 | `src/domain/syncOutbox.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/syncRetention.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/taskMaster.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
-| `src/domain/techyStuffGuardrails.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/themePalette.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/upgradeGate.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
 | `src/domain/woolFiber.ts` | Domain-specific business logic, catalog, or Alpha 2 compatibility facade. |
@@ -301,6 +301,8 @@ npx tsx scripts/list-modules.ts --check
 | `src/components/ColoredGenotypeDisplay.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/ColorGeneticsNotice.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/CrashErrorBoundary.tsx` | Content-specific React screen, panel, or modal component. |
+| `src/components/DevelopmentErrorBoundary.tsx` | Content-specific React screen, panel, or modal component. |
+| `src/components/DevelopmentScreen.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/DeviceCapabilityCard.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/DiagnosticsAndSupportPanel.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/EconomicsLedgerScreen.tsx` | Content-specific React screen, panel, or modal component. |
@@ -331,8 +333,6 @@ npx tsx scripts/list-modules.ts --check
 | `src/components/SpeciesMemoScreen.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/SpeciesMigrationModal.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/SuggestionsBacklogScreen.tsx` | Content-specific React screen, panel, or modal component. |
-| `src/components/TechyStuffErrorBoundary.tsx` | Content-specific React screen, panel, or modal component. |
-| `src/components/TechyStuffScreen.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/UnifiedBackupVaultPanel.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/WipedStorageRecoveryModal.tsx` | Content-specific React screen, panel, or modal component. |
 | `src/components/WoolHarvestPanel.tsx` | Content-specific React screen, panel, or modal component. |

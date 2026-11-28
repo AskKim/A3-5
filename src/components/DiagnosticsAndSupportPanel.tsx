@@ -74,7 +74,7 @@ import {
   isDestructiveActionConfirmationValid,
   validateLogRetentionDaysOverride,
   validateSupportRecipientEmail,
-} from '../domain/techyStuffGuardrails';
+} from '../domain/developmentGuardrails';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
 import {
   checkStorageStatus,
@@ -1076,7 +1076,7 @@ export function DiagnosticsAndSupportPanel({
                   level: 'info',
                   category: 'lifecycle',
                   message: 'Manual diagnostic test log recorded from Development',
-                  details: { route: 'techyStuff', animalCount: snapshot.animals.length },
+                  details: { route: 'development', animalCount: snapshot.animals.length },
                 });
                 void refreshDiagnostics();
               }}

@@ -30,7 +30,7 @@ export interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenHelpDocs?: () => void;
-  onOpenTechyStuff?: () => void;
+  onOpenDevelopment?: () => void;
   onOpenPromptsDirectory?: () => void;
   onOpenImportExportHub?: () => void;
 }
@@ -39,7 +39,7 @@ export function AboutModal({
   isOpen,
   onClose,
   onOpenHelpDocs,
-  onOpenTechyStuff,
+  onOpenDevelopment,
   onOpenPromptsDirectory,
   onOpenImportExportHub,
 }: AboutModalProps) {
@@ -178,12 +178,12 @@ export function AboutModal({
               </button>
             )}
 
-            {onOpenTechyStuff && (
+            {onOpenDevelopment && (
               <button
                 type="button"
                 onClick={() => {
                   onClose();
-                  onOpenTechyStuff();
+                  onOpenDevelopment();
                 }}
                 className="p-3 rounded-xl border border-[var(--barn-border)] bg-[var(--barn-canvas)] hover:bg-[var(--barn-subtle)] text-left flex items-center justify-between gap-2 group transition-colors"
               >

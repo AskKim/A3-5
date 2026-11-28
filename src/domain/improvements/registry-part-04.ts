@@ -39,7 +39,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       'src/utils/useAccessibleDialog.ts',
       'src/components/AnimalPhotoGallery.tsx',
       'src/components/CrashErrorBoundary.tsx',
-      'src/components/TechyStuffErrorBoundary.tsx',
+      'src/components/DevelopmentErrorBoundary.tsx',
       'src/storage/__tests__/postImportHardening.test.ts',
     ],
     invariants: [
@@ -756,22 +756,22 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
     category: 'diagnostics-sync',
     source: 'session',
     summary:
-      'Reorganizes "The Techy Stuff" (`TechyStuffScreen.tsx`) with an always-open title header containing an "Open All Sections / Collapse All Sections" toggle, 4 segmented workspace tabs (`Storage & OPFS`, `Runtime & Sync`, `Logs & Support`, `Maintenance & Resets`), and 15 individually collapsible subunits (`createDefaultSubunitOpenMap(false)` — including the host telemetry bar, the permanent non-closeable 5-tier comparison matrix `data-permanent-tier-hierarchy="true"`, and modular `DiagnosticsAndSupportPanel` `visibleSections` + `collapsible` cards). Surfaces previously unexposed storage and runtime utilities: read-only OPFS `/tmp`/`/backups`/`/archives` inspector (`inspectOpfsNamespaces`), OPFS canary & orphan sweep controls, Prior-Use Sentinel & prune sync warning status, 20-collection `computeSnapshotCollectionFootprint`, 14-signal browser compatibility matrix, idle Archive Worker heap reclaim, live IDB/BroadcastChannel/WebLocks/OPFS handle counters (`getTrackedActiveResourceCounts`, `getActiveOpfsHandleCount`), Freeze Queue controls, clock skew causality & release manifest diff, Sync Outbox/Cloud breaker status, and Native Bridge event log.',
+      'Reorganizes "The Development" (`DevelopmentScreen.tsx`) with an always-open title header containing an "Open All Sections / Collapse All Sections" toggle, 4 segmented workspace tabs (`Storage & OPFS`, `Runtime & Sync`, `Logs & Support`, `Maintenance & Resets`), and 15 individually collapsible subunits (`createDefaultSubunitOpenMap(false)` — including the host telemetry bar, the permanent non-closeable 5-tier comparison matrix `data-permanent-tier-hierarchy="true"`, and modular `DiagnosticsAndSupportPanel` `visibleSections` + `collapsible` cards). Surfaces previously unexposed storage and runtime utilities: read-only OPFS `/tmp`/`/backups`/`/archives` inspector (`inspectOpfsNamespaces`), OPFS canary & orphan sweep controls, Prior-Use Sentinel & prune sync warning status, 20-collection `computeSnapshotCollectionFootprint`, 14-signal browser compatibility matrix, idle Archive Worker heap reclaim, live IDB/BroadcastChannel/WebLocks/OPFS handle counters (`getTrackedActiveResourceCounts`, `getActiveOpfsHandleCount`), Freeze Queue controls, clock skew causality & release manifest diff, Sync Outbox/Cloud breaker status, and Native Bridge event log.',
     userIntent:
       'Optimize the developer page, identify and surface unadded useful internal tools, organize the workspace into clean tabbed and collapsible subunits with a header Open All toggle to improve UI/UX.',
     files: [
-      'src/domain/techyStuffGuardrails.ts',
-      'src/domain/__tests__/techyStuffGuardrails.test.ts',
+      'src/domain/developmentGuardrails.ts',
+      'src/domain/__tests__/developmentGuardrails.test.ts',
       'src/storage/storageProbes.ts',
       'src/storage/opfsTempStream.ts',
       'src/storage/opfsStorage.ts',
       'src/components/DiagnosticsAndSupportPanel.tsx',
-      'src/components/TechyStuffScreen.tsx',
+      'src/components/DevelopmentScreen.tsx',
       'src/App.tsx',
     ],
     invariants: [
       {
-        filePath: 'src/domain/techyStuffGuardrails.ts',
+        filePath: 'src/domain/developmentGuardrails.ts',
         requiredSubstrings: [
           'DEVELOPER_CONSOLE_TABS',
           'DEVELOPER_CONSOLE_SUBUNIT_IDS',
@@ -797,7 +797,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
         requiredSubstrings: ['visibleSections', 'collapsible'],
       },
       {
-        filePath: 'src/components/TechyStuffScreen.tsx',
+        filePath: 'src/components/DevelopmentScreen.tsx',
         requiredSubstrings: [
           'DEVELOPER_CONSOLE_TABS',
           'DEVELOPER_CONSOLE_SUBUNIT_IDS',
@@ -818,9 +818,9 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       },
     ],
     restorePlaybook: [
-      'Restore `DEVELOPER_CONSOLE_TABS`, `DEVELOPER_CONSOLE_SUBUNIT_IDS`, `createDefaultSubunitOpenMap`, `normalizeDeveloperConsoleTab`, and `computeSnapshotCollectionFootprint` in `src/domain/techyStuffGuardrails.ts`.',
+      'Restore `DEVELOPER_CONSOLE_TABS`, `DEVELOPER_CONSOLE_SUBUNIT_IDS`, `createDefaultSubunitOpenMap`, `normalizeDeveloperConsoleTab`, and `computeSnapshotCollectionFootprint` in `src/domain/developmentGuardrails.ts`.',
       'Restore `getTrackedActiveResourceCounts` in `src/storage/storageProbes.ts`, plus `getActiveOpfsHandleCount`, `getActiveTempFiles`, and `inspectOpfsNamespaces` in `src/storage/opfsTempStream.ts` and `src/storage/opfsStorage.ts`.',
-      'Restore `visibleSections` and `collapsible` props in `src/components/DiagnosticsAndSupportPanel.tsx`, the collapsible 15-subunit tabbed workspace layout + header Open All toggle + telemetry cards in `src/components/TechyStuffScreen.tsx`, and live sync props in `src/App.tsx`.',
+      'Restore `visibleSections` and `collapsible` props in `src/components/DiagnosticsAndSupportPanel.tsx`, the collapsible 15-subunit tabbed workspace layout + header Open All toggle + telemetry cards in `src/components/DevelopmentScreen.tsx`, and live sync props in `src/App.tsx`.',
     ],
   },
   {
@@ -831,7 +831,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
     userIntent:
       'Prepare Community Pedigree from Alpha to release with zero new features by fixing highest-risk CI, storage, security, and cold-start bundle bottlenecks while guaranteeing bootability.',
     summary:
-      'Restores clean `.env.example` (IMP-008/IMP-052); scopes `NODE_ENV: production` strictly to the Vite build step in `.github/workflows/build-android-apk.yml` so `npm install` never skips `devDependencies` (`vitest`, `tsx`, `typescript`, `vite-plugin-pwa`); adds `status.json` to Android `PedigreeAssetPathHandler.kt` `Cache-Control: no-cache`; implements `executeIdbWriteWithQuotaRecovery` in `src/storage/webSqliteAdapter.ts` to purge OPFS `/tmp` and non-essential fallback caches and retry once on `QuotaExceededError`; hardens `#barn-print-stage` in `src/components/PrintPreviewModal.tsx` with `sanitizePrintStageHtml` + DOM node/attribute scrubbing; decouples `src/domain/backupVault.ts` from `backupArchive.ts` via direct `./binaryEncoding` imports (eliminating Vite `[INEFFECTIVE_DYNAMIC_IMPORT]` warnings); converts cold imports (`geneticsEngine`, `syncAndExports`, `weatherForecast`) in `src/hooks/useBarnStore.ts` and `improvementRegistry` (~206 kB) in `src/components/DiagnosticsAndSupportPanel.tsx` to on-demand dynamic imports; and refines Rolldown `codeSplitting` groups with `includeDependenciesRecursively: false` in `vite.config.ts`, cutting `index-*.js` from 645 kB to 350 kB (-45.8%) and `TechyStuffScreen` from 339 kB to 136 kB (-59.9%) with zero Vite >500 kB chunk warnings.',
+      'Restores clean `.env.example` (IMP-008/IMP-052); scopes `NODE_ENV: production` strictly to the Vite build step in `.github/workflows/build-android-apk.yml` so `npm install` never skips `devDependencies` (`vitest`, `tsx`, `typescript`, `vite-plugin-pwa`); adds `status.json` to Android `PedigreeAssetPathHandler.kt` `Cache-Control: no-cache`; implements `executeIdbWriteWithQuotaRecovery` in `src/storage/webSqliteAdapter.ts` to purge OPFS `/tmp` and non-essential fallback caches and retry once on `QuotaExceededError`; hardens `#barn-print-stage` in `src/components/PrintPreviewModal.tsx` with `sanitizePrintStageHtml` + DOM node/attribute scrubbing; decouples `src/domain/backupVault.ts` from `backupArchive.ts` via direct `./binaryEncoding` imports (eliminating Vite `[INEFFECTIVE_DYNAMIC_IMPORT]` warnings); converts cold imports (`geneticsEngine`, `syncAndExports`, `weatherForecast`) in `src/hooks/useBarnStore.ts` and `improvementRegistry` (~206 kB) in `src/components/DiagnosticsAndSupportPanel.tsx` to on-demand dynamic imports; and refines Rolldown `codeSplitting` groups with `includeDependenciesRecursively: false` in `vite.config.ts`, cutting `index-*.js` from 645 kB to 350 kB (-45.8%) and `DevelopmentScreen` from 339 kB to 136 kB (-59.9%) with zero Vite >500 kB chunk warnings.',
     files: [
       '.env.example',
       '.github/workflows/build-android-apk.yml',
@@ -899,11 +899,11 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
     userIntent:
       'Fix mobile Chrome Preview iframe Aw Snap crashes on startup by eliminating excessive dev-mode JS parse memory and inline source map bloat.',
     summary:
-      'Adds dev-only `devInlineSourcemapStripPlugin` (stripping ~9.5 MB of base64 inline sourcemaps from served JS/CSS responses) and `devLucideDirectImportPlugin` + `optimizeDeps.exclude: [\'lucide-react\']` (rewriting `lucide-react` barrel imports to direct per-icon ESM files and eliminating the 3.72 MB monolithic icon bundle and 504 dep re-optimization errors) in `vite.config.ts`, while deferring `syncAndExports` imports in `CrashErrorBoundary.tsx` and `TechyStuffErrorBoundary.tsx` to click handlers—cutting dev boot payload from 13.52 MB to 3.05 MB (-77.4%) with zero production build changes.',
+      'Adds dev-only `devInlineSourcemapStripPlugin` (stripping ~9.5 MB of base64 inline sourcemaps from served JS/CSS responses) and `devLucideDirectImportPlugin` + `optimizeDeps.exclude: [\'lucide-react\']` (rewriting `lucide-react` barrel imports to direct per-icon ESM files and eliminating the 3.72 MB monolithic icon bundle and 504 dep re-optimization errors) in `vite.config.ts`, while deferring `syncAndExports` imports in `CrashErrorBoundary.tsx` and `DevelopmentErrorBoundary.tsx` to click handlers—cutting dev boot payload from 13.52 MB to 3.05 MB (-77.4%) with zero production build changes.',
     files: [
       'vite.config.ts',
       'src/components/CrashErrorBoundary.tsx',
-      'src/components/TechyStuffErrorBoundary.tsx',
+      'src/components/DevelopmentErrorBoundary.tsx',
     ],
     invariants: [
       {
@@ -920,14 +920,14 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
         forbiddenSubstrings: ["from '../domain/syncAndExports'"],
       },
       {
-        filePath: 'src/components/TechyStuffErrorBoundary.tsx',
+        filePath: 'src/components/DevelopmentErrorBoundary.tsx',
         requiredSubstrings: ["import('../domain/syncAndExports')"],
         forbiddenSubstrings: ["from '../domain/syncAndExports'"],
       },
     ],
     restorePlaybook: [
       'Keep `devLucideDirectImportPlugin()`, `devInlineSourcemapStripPlugin()`, and `optimizeDeps.exclude: [\'lucide-react\']` in `vite.config.ts`.',
-      'Keep dynamic `import(\'../domain/syncAndExports\')` inside crash log download handlers in `CrashErrorBoundary.tsx` and `TechyStuffErrorBoundary.tsx`.',
+      'Keep dynamic `import(\'../domain/syncAndExports\')` inside crash log download handlers in `CrashErrorBoundary.tsx` and `DevelopmentErrorBoundary.tsx`.',
     ],
   },
   {

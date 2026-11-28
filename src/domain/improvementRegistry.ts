@@ -87,7 +87,7 @@ export const IMPROVEMENTS_REGISTRY: ImprovementEntry[] = [
  */
 export const BOOT_ENTRY_LOCK_CHECKSUMS: Readonly<Record<string, string>> = {
   'src/main.tsx': 'b77239b90e2ab0ca96469ccd8692531d17fddc73267cc9aab3a3638a49a663dc',
-  'src/App.tsx': '81a00a19ea40cbb1c18352b5485b56e2b64e8b72303f4c0425af126f9a7db902',
+  'src/App.tsx': '999f6a697a98ebe1c7a57badbe2aaca9b3182f54e335e9dc53f6110e391ec759',
   'index.html': '24c1318b3c01e635fbd3152c3294d9d469243ad0e2fa7708a68c64c0d9dda4d0',
 };
 

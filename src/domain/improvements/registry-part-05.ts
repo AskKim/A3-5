@@ -21,7 +21,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'Close all remaining modularity gaps after Phase 1 DI rollout: decouple src/utils/*, remove all concrete pedigreeBridge imports from components/utils/storage, route iOS WKWebView SQLite persistence through NativeBridgeStorageAdapter, fix double back-handler registration, and harden automated layer tests.',
     summary:
-      'Decouples `src/utils/lazyRoute.tsx` (`app_chunk_reload_ts`, `--ui-*` CSS aliases in `src/index.css`, injectable diagnostic hooks), `src/utils/webFileActions.ts` (`configureWebFileBridge`), `src/utils/webPdfActions.ts` -> `src/app/pedigreePdfActions.ts`, and `src/utils/googleCalendarClient.ts` -> `src/app/pedigreeCalendarClient.ts` so 100% of `src/utils/` is domain-free; adds `PlatformBridgeContext` (`usePlatformBridge()`) and extends `IPlatformBridge` with optional diagnostic/dev-panel/container hooks, migrating `PrintPreviewModal`, `HealthReferencePanel`, `SettingsAndSyncScreen`, `DiagnosticsAndSupportPanel`, `TechyStuffScreen`, and `storageProtection.ts` off concrete `pedigreeBridge`; fixes duplicate back-handler registration in `createPedigreeBridgePlatformAdapter`; adds an optional `backingStore?: IStorageAdapter` seam to `WebSqliteAdapter` wired via `createPedigreeDomainStorageAdapter` in `pedigreeAppWiring.ts` so iOS `WKWebView` routes SQLite persistence through `NativeBridgeStorageAdapter`; decouples `CrashErrorBoundary` from direct `WebSqliteAdapter` construction; and upgrades `modularLayerArchitecture.test.ts` with dynamic core/utils scanning, relative cross-feature import detection, and zero concrete `pedigreeBridge` enforcement.',
+      'Decouples `src/utils/lazyRoute.tsx` (`app_chunk_reload_ts`, `--ui-*` CSS aliases in `src/index.css`, injectable diagnostic hooks), `src/utils/webFileActions.ts` (`configureWebFileBridge`), `src/utils/webPdfActions.ts` -> `src/app/pedigreePdfActions.ts`, and `src/utils/googleCalendarClient.ts` -> `src/app/pedigreeCalendarClient.ts` so 100% of `src/utils/` is domain-free; adds `PlatformBridgeContext` (`usePlatformBridge()`) and extends `IPlatformBridge` with optional diagnostic/dev-panel/container hooks, migrating `PrintPreviewModal`, `HealthReferencePanel`, `SettingsAndSyncScreen`, `DiagnosticsAndSupportPanel`, `DevelopmentScreen`, and `storageProtection.ts` off concrete `pedigreeBridge`; fixes duplicate back-handler registration in `createPedigreeBridgePlatformAdapter`; adds an optional `backingStore?: IStorageAdapter` seam to `WebSqliteAdapter` wired via `createPedigreeDomainStorageAdapter` in `pedigreeAppWiring.ts` so iOS `WKWebView` routes SQLite persistence through `NativeBridgeStorageAdapter`; decouples `CrashErrorBoundary` from direct `WebSqliteAdapter` construction; and upgrades `modularLayerArchitecture.test.ts` with dynamic core/utils scanning, relative cross-feature import detection, and zero concrete `pedigreeBridge` enforcement.',
     files: [
       'src/index.css',
       'src/utils/lazyRoute.tsx',
@@ -43,7 +43,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'src/components/SettingsAndSyncScreen.tsx',
       'src/components/PrintPreviewModal.tsx',
       'src/components/DiagnosticsAndSupportPanel.tsx',
-      'src/components/TechyStuffScreen.tsx',
+      'src/components/DevelopmentScreen.tsx',
       'src/domain/__tests__/modularLayerArchitecture.test.ts',
       'EXTRACTION_INVENTORY.md',
     ],
@@ -287,7 +287,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     userIntent:
       'Improve the UI/UX of the settings page by condensing logically related items into shared subunits in logical order, adding title text, and providing links to prompts, about, developer, and help pages.',
     summary:
-      'Reorganizes `SettingsAndSyncScreen.tsx` into 8 clean, logically ordered subunits beneath a prominent page header and quick-jump navigation bar linking to Prompts (`onOpenPromptsDirectory`), About (`AboutModal.tsx`), Developer (`onOpenTechyStuff`), and Help & Husbandry Guides (`onOpenHelpDocs`); groups Farm Identity, Species Setup, Measurement Units, Appearance Studio, Calendar Alarms, Storage & Image Compression, Backup & Installation, and System Resources; and coordinates return routing from `PromptsDirectoryScreen` in `src/App.tsx`.',
+      'Reorganizes `SettingsAndSyncScreen.tsx` into 8 clean, logically ordered subunits beneath a prominent page header and quick-jump navigation bar linking to Prompts (`onOpenPromptsDirectory`), About (`AboutModal.tsx`), Developer (`onOpenDevelopment`), and Help & Husbandry Guides (`onOpenHelpDocs`); groups Farm Identity, Species Setup, Measurement Units, Appearance Studio, Calendar Alarms, Storage & Image Compression, Backup & Installation, and System Resources; and coordinates return routing from `PromptsDirectoryScreen` in `src/App.tsx`.',
     files: [
       'src/components/SettingsAndSyncScreen.tsx',
       'src/components/AboutModal.tsx',
@@ -2292,14 +2292,14 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     release: 'alpha-3',
     source: 'session',
     userIntent:
-      '“The Techy Stuff” started life as a section title inside Settings and got carried over as the page name when the section became its own screen. The page is the development and diagnostics console; it should say so.',
+      '“The Development” started life as a section title inside Settings and got carried over as the page name when the section became its own screen. The page is the development and diagnostics console; it should say so.',
     summary:
-      'Every user-visible label now reads **Development**: the route title and lazy-route label in `src/App.tsx`, the Settings launcher tooltip, the two offline/probe hints, the weather panel’s pointer, the About modal entry, the back links from the Prompts Directory and the Suggestions Backlog, the diagnostics log message, the isolated error panel heading and the screen’s own update-policy toast. Internal identifiers (`techyStuff` route key, `TechyStuffScreen`, `onOpenTechyStuff`, `TechyStuffErrorBoundary`) are unchanged, so the registry’s structural invariants still hold. Because the route label lives in the boot-locked `src/App.tsx`, the owner’s explicit request made this a sanctioned boot-entry edit: `BOOT_ENTRY_LOCK_CHECKSUMS` was regenerated for `src/App.tsx` in the same commit.',
+      'Every user-visible label now reads **Development**: the route title and lazy-route label in `src/App.tsx`, the Settings launcher tooltip, the two offline/probe hints, the weather panel’s pointer, the About modal entry, the back links from the Prompts Directory and the Suggestions Backlog, the diagnostics log message, the isolated error panel heading and the screen’s own update-policy toast. Internal identifiers (`development` route key, `DevelopmentScreen`, `onOpenDevelopment`, `DevelopmentErrorBoundary`) are unchanged, so the registry’s structural invariants still hold. Because the route label lives in the boot-locked `src/App.tsx`, the owner’s explicit request made this a sanctioned boot-entry edit: `BOOT_ENTRY_LOCK_CHECKSUMS` was regenerated for `src/App.tsx` in the same commit.',
     files: [
       'src/App.tsx',
       'src/domain/improvementRegistry.ts',
-      'src/components/TechyStuffScreen.tsx',
-      'src/components/TechyStuffErrorBoundary.tsx',
+      'src/components/DevelopmentScreen.tsx',
+      'src/components/DevelopmentErrorBoundary.tsx',
       'src/components/SettingsAndSyncScreen.tsx',
       'src/components/AboutModal.tsx',
       'src/components/PromptsDirectoryScreen.tsx',
@@ -2310,22 +2310,67 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'src/App.tsx',
-        requiredSubstrings: ["techyStuff: 'Development'"],
-        forbiddenSubstrings: ['The Techy Stuff'],
+        requiredSubstrings: ["development: 'Development'"],
+        forbiddenSubstrings: ['The Development'],
         rationale:
           'The old settings-section title was the page name by accident; keeping it out of the route table is the point of this entry.',
       },
       {
-        filePath: 'src/components/TechyStuffScreen.tsx',
+        filePath: 'src/components/DevelopmentScreen.tsx',
         requiredSubstrings: ['Development'],
-        forbiddenSubstrings: ['The Techy Stuff'],
+        forbiddenSubstrings: ['The Development'],
         rationale:
           'User-visible copy must not reintroduce the section title as a page name.',
       },
     ],
     restorePlaybook: [
-      'The page is “Development”; the route key and component names stay `techyStuff` / `TechyStuffScreen`.',
+      'The page is “Development”; the route key and component names were renamed in IMP-119.',
       'Renaming user-visible copy in `src/App.tsx` requires regenerating its boot-entry checksum in the same commit.',
+    ],
+  },
+  {
+    id: 'IMP-119',
+    title: 'Development Rename Reaches Files, Symbols and the Route Key',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Renaming only the labels left the old settings-section name everywhere else — file names, component names, prop names, the route key, the guardrails module and the crash-dump filename — so the codebase still called the page by the wrong name.',
+    summary:
+      'The rename is complete rather than cosmetic: `TechyStuffScreen.tsx` → `DevelopmentScreen.tsx`, `TechyStuffErrorBoundary.tsx` → `DevelopmentErrorBoundary.tsx`, `domain/techyStuffGuardrails.ts` → `domain/developmentGuardrails.ts` (test included), `onOpenTechyStuff` → `onOpenDevelopment`, `onBackToTechyStuff` → `onBackToDevelopment`, and the `techyStuff` route key → `development` across the route table, `WorkspaceRoute`, the settings launcher and the isolated boundary mounts. The crash-dump filename became `pedigree-development-fault-*.txt`. Registry text, rationales, the extraction inventory and the generated docs were rewritten to match, and `src/App.tsx`’s boot-entry checksum was regenerated again in the same commit. One fallout fix: the OPFS multi-vault restore test legitimately takes ~6s in a full parallel suite, so `vitest.config.ts` now sets a 15s test timeout instead of letting a slow machine fail the build.',
+    files: [
+      'src/components/DevelopmentScreen.tsx',
+      'src/components/DevelopmentErrorBoundary.tsx',
+      'src/domain/developmentGuardrails.ts',
+      'src/domain/__tests__/developmentGuardrails.test.ts',
+      'src/App.tsx',
+      'src/domain/improvementRegistry.ts',
+      'vitest.config.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/components/DevelopmentScreen.tsx',
+        requiredSubstrings: ['DevelopmentScreen'],
+        rationale:
+          'The screen file anchors the rename; if it disappears the rest of the renames are dangling.',
+      },
+      {
+        filePath: 'src/domain/developmentGuardrails.ts',
+        requiredSubstrings: ['evaluateStorageQuotaForOperation'],
+        rationale:
+          'The guardrails module carries the page policy; it must stay findable under the new name.',
+      },
+      {
+        filePath: 'src/App.tsx',
+        requiredSubstrings: ['DevelopmentScreen'],
+        forbiddenSubstrings: ['techyStuff'],
+        rationale:
+          'The route key was the last place the old section title survived in code.',
+      },
+    ],
+    restorePlaybook: [
+      'The page, its files and its route key are all “development”; only historical changelog prose may still name the old section.',
+      'Any rename touching `src/App.tsx` must regenerate its boot-entry checksum in the same commit.',
     ],
   },
 ];

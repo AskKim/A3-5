@@ -360,18 +360,18 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'All printable, shareable, and streamed browser exports stage via OPFS /tmp when supported and clean up deterministically.',
   'IMP-032#src/storage/offThreadWorkerClient.ts#1':
     'Off-thread worker bridge streams ZIP chunks straight to OPFS /tmp and falls back gracefully without Worker or OPFS.',
-  'IMP-033#src/domain/techyStuffGuardrails.ts#1':
+  'IMP-033#src/domain/developmentGuardrails.ts#1':
     'Pure TS developer guardrails module must stay DOM-free and enforce quota evaluations, strict input validation/sanitization, and confirmation phrases.',
   'IMP-033#src/storage/storageProtection.ts#1':
     'Browser storage adapter must execute OPFS + IndexedDB quota pre-flight checks and log low-headroom diagnostics.',
-  'IMP-033#src/components/TechyStuffErrorBoundary.tsx#1':
+  'IMP-033#src/components/DevelopmentErrorBoundary.tsx#1':
     'Developer & Troubleshooting screen must stay isolated in a dedicated Error Boundary so faulty diagnostics cannot crash herd/breeding views.',
-  'IMP-033#src/components/TechyStuffScreen.tsx#1':
-    'The Techy Stuff screen must include a permanent non-closeable Tier/Memory Hierarchy block and multi-step armed safeguards for destructive actions.',
+  'IMP-033#src/components/DevelopmentScreen.tsx#1':
+    'The Development screen must include a permanent non-closeable Tier/Memory Hierarchy block and multi-step armed safeguards for destructive actions.',
   'IMP-033#src/components/SettingsAndSyncScreen.tsx#1':
-    'Settings must link cleanly to The Techy Stuff while keeping routine barn preferences and original DeviceCapabilityCard intact.',
+    'Settings must link cleanly to The Development while keeping routine barn preferences and original DeviceCapabilityCard intact.',
   'IMP-033#src/App.tsx#1':
-    'Root shell must lazy-load TechyStuffScreen inside Suspense + TechyStuffErrorBoundary.',
+    'Root shell must lazy-load DevelopmentScreen inside Suspense + DevelopmentErrorBoundary.',
   'IMP-034#src/domain/barnBench.ts#1':
     'Pure TS Barn Bench queue builder, commit planner, and auto-advance selector must remain DOM-free and species-isolated.',
   'IMP-034#src/storage/webSqliteAdapter.ts#1':
@@ -740,7 +740,7 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'Cloud App-Folder Sync panel must provide opt-in provider/token controls, tight-storage chunk indicators, and circuit breaker reset actions.',
   'IMP-060#src/App.tsx#1':
     'App shell must display the persistent global 403/507 quota circuit breaker warning banner and wire cloud sync state into ImportExportHubScreen and SettingsAndSyncScreen.',
-  'IMP-061#src/domain/techyStuffGuardrails.ts#1':
+  'IMP-061#src/domain/developmentGuardrails.ts#1':
     'Pure TypeScript developer console tab registry, 15-subunit collapsible state helpers, and 20-collection snapshot footprint calculator must remain DOM-free.',
   'IMP-061#src/storage/storageProbes.ts#1':
     'Storage probes must expose live IDB connection/transaction, BroadcastChannel, and Web Lock resource counts for runtime inspection.',
@@ -748,10 +748,10 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'OPFS storage adapter must expose read-only namespace inspection across /tmp, /backups, and /archives alongside live OPFS handle counters.',
   'IMP-061#src/components/DiagnosticsAndSupportPanel.tsx#1':
     'DiagnosticsAndSupportPanel must support section filtering (`all`, `logs-and-support`, `maintenance`) and optional collapsible outer wrapping without breaking standalone rendering.',
-  'IMP-061#src/components/TechyStuffScreen.tsx#1':
-    'TechyStuffScreen must keep the title header open with an Open All Sections toggle, make all 15 subunits collapsible, and surface OPFS inspection, snapshot footprint, browser compatibility matrix, and live handle telemetry.',
+  'IMP-061#src/components/DevelopmentScreen.tsx#1':
+    'DevelopmentScreen must keep the title header open with an Open All Sections toggle, make all 15 subunits collapsible, and surface OPFS inspection, snapshot footprint, browser compatibility matrix, and live handle telemetry.',
   'IMP-061#src/App.tsx#1':
-    'App shell must pass live sync outbox operations and backup sync folder status into TechyStuffScreen.',
+    'App shell must pass live sync outbox operations and backup sync folder status into DevelopmentScreen.',
   'IMP-062#.github/workflows/build-android-apk.yml#1':
     'Android APK CI must install devDependencies without NODE_ENV=production and apply NODE_ENV=production strictly to the Vite production build step.',
   'IMP-062#android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PedigreeAssetPathHandler.kt#1':
@@ -763,15 +763,15 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
   'IMP-062#src/domain/backupVault.ts#1':
     'backupVault.ts must import binary encoding helpers directly from binaryEncoding.ts instead of pulling backupArchive.ts into the startup graph.',
   'IMP-062#src/components/DiagnosticsAndSupportPanel.tsx#1':
-    'DiagnosticsAndSupportPanel must lazy-load the 200+ kB improvementRegistry manifest on demand instead of bloating TechyStuffScreen.',
+    'DiagnosticsAndSupportPanel must lazy-load the 200+ kB improvementRegistry manifest on demand instead of bloating DevelopmentScreen.',
   'IMP-062#vite.config.ts#1':
     'Rolldown codeSplitting must isolate app storage, backup, domain, and registry chunks with includeDependenciesRecursively: false so no chunk exceeds 500 kB.',
   'IMP-063#vite.config.ts#1':
     'Dev preview must strip multi-megabyte base64 inline sourcemaps and resolve lucide-react icons directly without pre-bundling all 1,600+ icons so mobile Chrome preview iframes do not OOM.',
   'IMP-063#src/components/CrashErrorBoundary.tsx#1':
     'CrashErrorBoundary mounts at root and must load formatTimestampedBackupSlug dynamically on click rather than eagerly pulling syncAndExports into startup.',
-  'IMP-063#src/components/TechyStuffErrorBoundary.tsx#1':
-    'TechyStuffErrorBoundary mounts in App.tsx and must load formatTimestampedBackupSlug dynamically on click rather than eagerly pulling syncAndExports into startup.',
+  'IMP-063#src/components/DevelopmentErrorBoundary.tsx#1':
+    'DevelopmentErrorBoundary mounts in App.tsx and must load formatTimestampedBackupSlug dynamically on click rather than eagerly pulling syncAndExports into startup.',
   'IMP-064#index.html#1':
     'index.html must maintain canonical, OpenGraph, Twitter card, and Schema.org structured data for SEO.',
   'IMP-064#public/robots.txt#1':

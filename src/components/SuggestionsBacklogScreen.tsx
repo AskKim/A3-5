@@ -65,7 +65,7 @@ function readBundledBacklogMarkdown(): string {
 }
 
 export interface SuggestionsBacklogScreenProps {
-  onBackToTechyStuff: () => void;
+  onBackToDevelopment: () => void;
 }
 
 interface IdeaCaptureComposerProps {
@@ -348,7 +348,7 @@ const BacklogSectionsView = memo(function BacklogSectionsView({
   );
 });
 
-export function SuggestionsBacklogScreen({ onBackToTechyStuff }: SuggestionsBacklogScreenProps) {
+export function SuggestionsBacklogScreen({ onBackToDevelopment }: SuggestionsBacklogScreenProps) {
   const searchId = useId();
   const exportLock = useAsyncSubmitLock({ postSettleCooldownMs: 250 });
   const feedbackTimerRef = useRef<number | null>(null);
@@ -537,7 +537,7 @@ export function SuggestionsBacklogScreen({ onBackToTechyStuff }: SuggestionsBack
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto max-w-full">
             <button
               type="button"
-              onClick={onBackToTechyStuff}
+              onClick={onBackToDevelopment}
               className="min-h-[44px] sm:min-h-[38px] max-w-full px-3.5 py-2 rounded-xl border border-[var(--barn-border)] bg-[var(--barn-canvas)] hover:bg-[var(--barn-subtle)] text-xs font-semibold inline-flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />

@@ -18,13 +18,13 @@ import {
 } from '../storage/crashLogger';
 import { downloadTextFile } from '../utils/webFileActions';
 
-interface TechyStuffErrorBoundaryProps {
+interface DevelopmentErrorBoundaryProps {
   children: React.ReactNode;
   onExitToSettings: () => void;
   onExitToHome: () => void;
 }
 
-interface TechyStuffErrorBoundaryState {
+interface DevelopmentErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   componentStack: string;
@@ -33,11 +33,11 @@ interface TechyStuffErrorBoundaryState {
   exportFeedback: string | null;
 }
 
-export class TechyStuffErrorBoundary extends React.Component<
-  TechyStuffErrorBoundaryProps,
-  TechyStuffErrorBoundaryState
+export class DevelopmentErrorBoundary extends React.Component<
+  DevelopmentErrorBoundaryProps,
+  DevelopmentErrorBoundaryState
 > {
-  constructor(props: TechyStuffErrorBoundaryProps) {
+  constructor(props: DevelopmentErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
@@ -49,7 +49,7 @@ export class TechyStuffErrorBoundary extends React.Component<
     };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<TechyStuffErrorBoundaryState> {
+  static getDerivedStateFromError(error: Error): Partial<DevelopmentErrorBoundaryState> {
     return {
       hasError: true,
       error,
@@ -83,7 +83,7 @@ export class TechyStuffErrorBoundary extends React.Component<
       ]);
       const summary = await getDiagnosticSummary(entries);
       const report = formatSupportReportText(entries, summary, null);
-      const filename = `pedigree-techy-stuff-fault-${formatTimestampedBackupSlug()}.txt`;
+      const filename = `pedigree-development-fault-${formatTimestampedBackupSlug()}.txt`;
       await downloadTextFile(filename, report, 'text/plain');
       this.setState({
         exportBusy: false,

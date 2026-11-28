@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Pure TypeScript Guardrails for "The Techy Stuff" Developer & Troubleshooting View.
+ * Pure TypeScript guardrails for the Development & Troubleshooting screen.
  *
  * Implements:
  * - Strict TypeScript runtime validation & input sanitization for diagnostic triggers,

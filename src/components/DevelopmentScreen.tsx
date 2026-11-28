@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * "Development" Developer & Troubleshooting Console (`src/components/TechyStuffScreen.tsx`).
+ * "Development" Developer & Troubleshooting Console (`src/components/DevelopmentScreen.tsx`).
  *
  * Organized into four focused operational workspaces (plus an "All Panels" view)
  * beneath a compact host telemetry bar and the permanent 5-Tier Capability Reference:
@@ -85,7 +85,7 @@ import {
   isDestructiveActionConfirmationValid,
   validateDiagnosticTriggerInput,
   validatePwaUpdatePolicyOverride,
-} from '../domain/techyStuffGuardrails';
+} from '../domain/developmentGuardrails';
 import { CURRENT_APP_VERSION } from '../domain/upgradeGate';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
 import type { PlatformDiagnosticEvent } from '@engine/bridge';
@@ -148,7 +148,7 @@ import { downloadTextChunks } from '../utils/webFileActions';
 import { DiagnosticsAndSupportPanel } from './DiagnosticsAndSupportPanel';
 import type { ImportExportHubSection } from './ImportExportHubScreen';
 
-export interface TechyStuffScreenProps {
+export interface DevelopmentScreenProps {
   snapshot: BarnDatabaseSnapshot;
   engineName: string;
   storageStatus: StorageProtectionStatus | null;
@@ -209,7 +209,7 @@ export interface TechyStuffScreenProps {
   onRestoreFactoryDefaults: () => Promise<void> | void;
 }
 
-export function TechyStuffScreen({
+export function DevelopmentScreen({
   snapshot,
   engineName,
   storageStatus,
@@ -247,7 +247,7 @@ export function TechyStuffScreen({
   onSeedAllSpecies,
   onClearAllRecords,
   onRestoreFactoryDefaults,
-}: TechyStuffScreenProps) {
+}: DevelopmentScreenProps) {
   const baseId = useId();
   const connectivity = useConnectivityStatus();
   const pwaUpdate = usePwaUpdateStatus();
@@ -536,7 +536,7 @@ export function TechyStuffScreen({
       category: result.value.category,
       message: result.value.message,
       details: {
-        source: 'techyStuff_manual_trigger',
+        source: 'development_manual_trigger',
         tier: assessment.tier,
         opfsSupported,
         ...(result.value.note ? { note: result.value.note } : {}),
@@ -1437,7 +1437,7 @@ export function TechyStuffScreen({
                         onClick={() =>
                           void preUpgradeBackupLock.runLocked(async () => {
                             setPreUpgradeFeedback(null);
-                            await onSaveManualOpfsVaultBackup('Manual Techy Stuff Vault snapshot');
+                            await onSaveManualOpfsVaultBackup('Manual Development Vault snapshot');
                             await refreshOpfsInspector();
                             setPreUpgradeFeedback('Saved manual OPFS Vault snapshot.');
                           })

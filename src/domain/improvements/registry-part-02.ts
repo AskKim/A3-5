@@ -1049,19 +1049,19 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
   },
   {
     id: 'IMP-033',
-    title: '"The Techy Stuff" Developer & Troubleshooting Screen, Permanent Tier Hierarchy & Production Guardrails',
+    title: '"The Development" Developer & Troubleshooting Screen, Permanent Tier Hierarchy & Production Guardrails',
     category: 'diagnostics-sync',
     source: 'session',
     userIntent:
-      'Relocate advanced, non-routine operational controls out of Settings into a dedicated lazy-loaded "The Techy Stuff" developer screen with a permanent non-closeable Tier/Memory Hierarchy block, isolated error boundary, OPFS/IDB quota pre-flight checks, strict input sanitization, and multi-step destructive safeguards.',
+      'Relocate advanced, non-routine operational controls out of Settings into a dedicated lazy-loaded "The Development" developer screen with a permanent non-closeable Tier/Memory Hierarchy block, isolated error boundary, OPFS/IDB quota pre-flight checks, strict input sanitization, and multi-step destructive safeguards.',
     summary:
-      'Introduces lazy-loaded `TechyStuffScreen` wrapped in an isolated `TechyStuffErrorBoundary`; relocates Storage Protection, Connectivity Governor, App Update Policy & Release Gate, `DiagnosticsAndSupportPanel`, and Destructive Reset Lab controls out of `SettingsAndSyncScreen` while preserving original `DeviceCapabilityCard` & Home hierarchy banners intact; embeds a permanent, non-closeable copy of the 5-tier Device Tier & Memory Hierarchy guidelines (`data-permanent-tier-hierarchy="true"`); and enforces pure TS validation/sanitization & OPFS/IDB quota pre-flight checks (`techyStuffGuardrails.ts`, `verifyStorageQuotaForDiagnosticAction`) plus multi-step armed phrase safeguards.',
+      'Introduces lazy-loaded `DevelopmentScreen` wrapped in an isolated `DevelopmentErrorBoundary`; relocates Storage Protection, Connectivity Governor, App Update Policy & Release Gate, `DiagnosticsAndSupportPanel`, and Destructive Reset Lab controls out of `SettingsAndSyncScreen` while preserving original `DeviceCapabilityCard` & Home hierarchy banners intact; embeds a permanent, non-closeable copy of the 5-tier Device Tier & Memory Hierarchy guidelines (`data-permanent-tier-hierarchy="true"`); and enforces pure TS validation/sanitization & OPFS/IDB quota pre-flight checks (`developmentGuardrails.ts`, `verifyStorageQuotaForDiagnosticAction`) plus multi-step armed phrase safeguards.',
     files: [
-      'src/domain/techyStuffGuardrails.ts',
-      'src/domain/__tests__/techyStuffGuardrails.test.ts',
+      'src/domain/developmentGuardrails.ts',
+      'src/domain/__tests__/developmentGuardrails.test.ts',
       'src/storage/storageProtection.ts',
-      'src/components/TechyStuffErrorBoundary.tsx',
-      'src/components/TechyStuffScreen.tsx',
+      'src/components/DevelopmentErrorBoundary.tsx',
+      'src/components/DevelopmentScreen.tsx',
       'src/components/DiagnosticsAndSupportPanel.tsx',
       'src/components/SettingsAndSyncScreen.tsx',
       'src/hooks/useBarnStore.ts',
@@ -1069,7 +1069,7 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
     ],
     invariants: [
       {
-        filePath: 'src/domain/techyStuffGuardrails.ts',
+        filePath: 'src/domain/developmentGuardrails.ts',
         requiredSubstrings: [
           'evaluateStorageQuotaForOperation',
           'validateDiagnosticTriggerInput',
@@ -1083,13 +1083,13 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
         requiredSubstrings: ['verifyStorageQuotaForDiagnosticAction'],
       },
       {
-        filePath: 'src/components/TechyStuffErrorBoundary.tsx',
-        requiredSubstrings: ['TechyStuffErrorBoundary', 'recordReactCrash'],
+        filePath: 'src/components/DevelopmentErrorBoundary.tsx',
+        requiredSubstrings: ['DevelopmentErrorBoundary', 'recordReactCrash'],
       },
       {
-        filePath: 'src/components/TechyStuffScreen.tsx',
+        filePath: 'src/components/DevelopmentScreen.tsx',
         requiredSubstrings: [
-          'TechyStuffScreen',
+          'DevelopmentScreen',
           'data-permanent-tier-hierarchy="true"',
           'DEVICE_CAPABILITY_TIER_LIST',
           'destructiveArmed',
@@ -1097,17 +1097,17 @@ export const REGISTRY_PART_02: ImprovementEntry[] = [
       },
       {
         filePath: 'src/components/SettingsAndSyncScreen.tsx',
-        requiredSubstrings: ['onOpenTechyStuff', 'DeviceCapabilityCard'],
+        requiredSubstrings: ['onOpenDevelopment', 'DeviceCapabilityCard'],
       },
       {
         filePath: 'src/App.tsx',
-        requiredSubstrings: ['TechyStuffScreen', 'TechyStuffErrorBoundary', "route === 'techyStuff'"],
+        requiredSubstrings: ['DevelopmentScreen', 'DevelopmentErrorBoundary', "route === 'development'"],
       },
     ],
     restorePlaybook: [
-      'Restore `src/domain/techyStuffGuardrails.ts` and `verifyStorageQuotaForDiagnosticAction` in `src/storage/storageProtection.ts`.',
-      'Restore `src/components/TechyStuffErrorBoundary.tsx` and `src/components/TechyStuffScreen.tsx` with its permanent `data-permanent-tier-hierarchy="true"` section and `destructiveArmed` phrase gates.',
-      'Keep `techyStuff` in `WorkspaceRoute` (`useBarnStore.ts`), `SettingsAndSyncScreen.tsx` launcher (`onOpenTechyStuff`), and lazy boundary mount in `src/App.tsx`.',
+      'Restore `src/domain/developmentGuardrails.ts` and `verifyStorageQuotaForDiagnosticAction` in `src/storage/storageProtection.ts`.',
+      'Restore `src/components/DevelopmentErrorBoundary.tsx` and `src/components/DevelopmentScreen.tsx` with its permanent `data-permanent-tier-hierarchy="true"` section and `destructiveArmed` phrase gates.',
+      'Keep `development` in `WorkspaceRoute` (`useBarnStore.ts`), `SettingsAndSyncScreen.tsx` launcher (`onOpenDevelopment`), and lazy boundary mount in `src/App.tsx`.',
     ],
   },
   {
