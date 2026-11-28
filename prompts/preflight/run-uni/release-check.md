@@ -29,7 +29,7 @@
 
 # Half 2 - Checks That Need This Machine (`release-check-p2`)
 
-- **Sweep freshness:** `node prompts/preflight/scripts/preflight-run-context.mjs --branch <branch-name> --version <version-tag>` reports `ai_studio_status: completed`, no scope delta, and under `stale_hours`.
+- **Sweep freshness:** `node prompts/preflight/scripts/preflight-state.mjs --require-sweep --branch <branch-name> --version <version-tag>` reports `sweep.missing: []`, and `blocked_reasons` holds none of `sweep_incomplete`, `phase_a_stale`, `phase_a_scope_delta`, `branch_mismatch` or `version_mismatch`. Read `blocked_reasons`, not just the exit code.
 - **Full gate:** `npm run verify` (includes `lint`, `test`, `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`, `verify:coverage`) must exit 0. Report the exact failing gate and its first error line; never report a gate as passing that you did not run.
 - **Build and chunk graph:** `npm run build` then `npm run verify:chunks` - a new circular chunk import is a release blocker, not a warning.
 - **Pages subpath build:** `npm run build -- --base="/<repo-name>/"`, assert `dist/robots.txt`, `dist/sitemap.xml`, `dist/404.html`, and subpath asset/manifest references; then rebuild at root so `dist/` is left in root form.
