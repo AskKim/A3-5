@@ -169,6 +169,14 @@ export function DiagnosticsAndSupportPanel({
   const [recipientEmailError, setRecipientEmailError] = useState<string | null>(null);
   const actionLock = useAsyncSubmitLock();
   const busyAction = actionLock.isSubmitting;
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   const [emergencyTraceCount, setEmergencyTraceCount] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [quotaWarningGate, setQuotaWarningGate] = useState<{
@@ -240,6 +248,11 @@ export function DiagnosticsAndSupportPanel({
   const refreshDiagnostics = useCallback(async () => {
     const list = await listDiagnosticLogs();
     const sum = await getDiagnosticSummary(list);
+    // The mount refresh, the log subscription and the 15s interval all land here. If the panel is
+    // unmounted while those reads are in flight, setting state afterwards makes React schedule an
+    // update against a torn-down document (`window is not defined` in jsdom). Drop the result
+    // instead of rendering it into a component that no longer exists.
+    if (!isMountedRef.current) return;
     setEntries(list);
     setEmergencyTraceCount(readEmergencySessionTrace().length);
     setSummary(sum);

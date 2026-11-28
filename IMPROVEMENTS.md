@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (78 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (79 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (142)
+## Logged Improvements (143)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2901,3 +2901,16 @@ Status:     active
 1. Keep `isRealCalendarDate` in `src/domain/ledgerContract.ts` and call it from both gates whenever `decidedOn` is set.
 2. Resolve `supersededBy` against the entries being validated; a replacement must be an entry in the same registry.
 3. Extend the boundary tests with any new date rule rather than deleting the impossible-month and missing-day cases.
+
+## 2026-11-28 — Diagnostics Panel Drops In-Flight Refreshes After Unmount
+Why:        CI kept failing the render tests with `ReferenceError: window is not defined` from a state update dispatched by `DiagnosticsAndSupportPanel`, so a suite that passes locally would go red on an unrelated commit — the failure looked like the ledger work and was not.
+Changed:    `src/components/DiagnosticsAndSupportPanel.tsx`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/DiagnosticsAndSupportPanel.tsx` must contain `isMountedRef`, `if (!isMountedRef.current) return` — *The awaits in `refreshDiagnostics` can resolve after unmount; without this guard the update is dispatched into a document that no longer exists.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the `isMountedRef` check after the awaits in `refreshDiagnostics`, before any `setState` call.
+2. Treat a post-teardown state update as a component bug, not a test-ordering problem: fix the guard instead of skipping, retrying or serialising the test.
+3. New async handlers that set state after an await need the same check if they can outlive the panel.

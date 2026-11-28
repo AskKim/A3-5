@@ -1014,4 +1014,6 @@ export const INVARIANT_RATIONALES: ImprovementRationaleMap = {
     'The impossible month, the missing February day and the leap day are the boundary cases; deleting them lets a shape-only check return unnoticed.',
   'IMP-143#src/domain/__tests__/improvementRegistry.test.ts#1':
     'The improvement gate needs its own boundary test because it is a separate implementation from the prompt gate.',
+  'IMP-144#src/components/DiagnosticsAndSupportPanel.tsx#1':
+    'A diagnostics refresh that outlives the panel must not dispatch an update; otherwise the failure surfaces as an unrelated CI red on whichever commit happened to run next.',
 };
