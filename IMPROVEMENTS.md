@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (92 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (93 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (156)
+## Logged Improvements (157)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3095,3 +3095,18 @@ Status:     active
 1. Mount panels against `buildFullPredefinedSampleSnapshot()` and a local `activeDataFrom()` helper rather than hand-building species data; the sample barn already exercises the populated branches.
 2. When a summary block is gated on a non-empty collection, pass a minimal typed record (see the wool harvest fixture) instead of asserting on the hidden block.
 3. Clear-notes flows need both states: the confirmation prompt after the first click and the executed save after the second.
+
+## 2026-11-28 — Lazy-Load the Home Species Screen Off the Boot Bundle
+Why:        Every workspace route was already code-split except the one every launch renders first: `HomeSpeciesScreen` was still a static import in the boot-locked shell, so its tables, cards and species summaries were parsed and compiled as part of the entry chunk on every cold start, including launches that jump straight to a species workspace.
+Changed:    `src/App.tsx`, `src/domain/improvementRegistry.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/App.tsx` must contain `HomeSpeciesScreen = lazyNamedRoute`, `RouteLoadingFallback label={ROUTE_LABELS.home}` — *A static home import puts the largest remaining screen back in the entry chunk; the route must keep its lazy declaration and its own skeleton fallback.*
+  - Forbidden regression: `import { HomeSpeciesScreen } from './components/HomeSpeciesScreen';`
+- `src/domain/improvementRegistry.ts` must contain `'src/App.tsx': '0906bc56` — *The boot-entry lock only protects the shell while its checksum matches the file; a shell edit that forgets to regenerate this line fails the boot-lock test.*
+
+**Restoration Playbook if Overwritten:**
+1. Declare a view with `lazyNamedRoute` and render it inside `RouteErrorBoundary` + `Suspense`, never with a static import in `src/App.tsx`.
+2. Any sanctioned edit to `src/main.tsx`, `src/App.tsx` or `index.html` must regenerate its SHA-256 in `BOOT_ENTRY_LOCK_CHECKSUMS` in the same commit.
+3. Measure the entry chunk before and after (`ls -l dist/assets/index-*.js`); do not add per-view `codeSplitting.groups` entries, because grouping a screen module pulls its shared dependencies into a chunk cycle.
