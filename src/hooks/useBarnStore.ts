@@ -321,6 +321,10 @@ import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
 import { useAnimalsCrud, type AnimalsCrudAdapter } from './barnStore/useAnimalsCrud';
 import { usePhotoMutations, type PhotoMutationAdapter } from './barnStore/usePhotoMutations';
 import { useBreeding, type BreedingAdapter } from './barnStore/useBreeding';
+import {
+  useSpeciesProfileActions,
+  type SpeciesProfileAdapter,
+} from './barnStore/useSpeciesProfileActions';
 import { planSyncConflictRetention } from '../domain/syncConflictExpiry';
 import { planSyncOperationRetention } from '../domain/syncRetention';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
@@ -356,6 +360,7 @@ export type WorkspaceRoute =
   | 'suggestions';
 
 export type { BreedingTaskCheckoffAction } from './barnStore/useBreeding';
+export type { SpeciesProfileAdapter } from './barnStore/useSpeciesProfileActions';
 
 export interface ActiveSpeciesData {
   speciesProfile: SpeciesProfile;
@@ -2047,214 +2052,21 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [enqueueStoreMutation, updateSettingsInternal, notify]
   );
 
-  const saveSpeciesProfile = useCallback(
-    async (profile: SpeciesProfile): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const ts = getAdjustedNowIsoUtc();
-        const existing = currentSnapshot?.speciesProfiles.find((sp) => sp.id === profile.id);
-        try {
-          if (existing) {
-            const rev = nextEntityRev(existing.id, existing._rev);
-            const clean: SpeciesProfile = {
-              ...profile,
-              sortOrder: profile.sortOrder ?? existing.sortOrder ?? 0,
-              name: profile.name.trim(),
-              defaultAnimalPrefix: (profile.defaultAnimalPrefix || '').trim(),
-              memoText: sanitizeSpeciesMemo(profile.memoText ?? existing.memoText ?? ''),
-              memoUpdatedAt: profile.memoUpdatedAt ?? existing.memoUpdatedAt ?? '',
-              breedOverrides: normalizeBreedScheduleOverrides(profile.breedOverrides),
-              targetWeightCurve: normalizeTargetWeightCurve(
-                profile.targetWeightCurve ?? existing.targetWeightCurve
-              ),
-              _rev: rev,
-              createdAt: profile.createdAt || existing.createdAt || ts,
-              updatedAt: ts,
-            };
-
-            const renamed =
-              currentSnapshot && !isSameSpecies(existing.name, clean.name);
-            if (renamed && currentSnapshot) {
-              const oldName = existing.name;
-              const newName = clean.name;
-              const oldKey = oldName.trim().toLowerCase();
-              const newKey = newName.trim().toLowerCase();
-
-              const nextDismissedTaskGroups = {
-                ...(currentSnapshot.settings.dismissedTaskGroupKeys || {}),
-              };
-              if (oldKey in nextDismissedTaskGroups) {
-                nextDismissedTaskGroups[newKey] = nextDismissedTaskGroups[oldKey];
-                delete nextDismissedTaskGroups[oldKey];
-              }
-              const nextDismissedMemos = {
-                ...(currentSnapshot.settings.dismissedMemoAlertSignatures || {}),
-              };
-              if (oldKey in nextDismissedMemos) {
-                nextDismissedMemos[newKey] = nextDismissedMemos[oldKey];
-                delete nextDismissedMemos[oldKey];
-              }
-
-              const renamedSnapshot: BarnDatabaseSnapshot = {
-                ...currentSnapshot,
-                settings: {
-                  ...currentSnapshot.settings,
-                  defaultSpecies: isSameSpecies(currentSnapshot.settings.defaultSpecies, oldName)
-                    ? newName
-                    : currentSnapshot.settings.defaultSpecies,
-                  pinnedLandingSpecies: isSameSpecies(
-                    currentSnapshot.settings.pinnedLandingSpecies,
-                    oldName
-                  )
-                    ? newName
-                    : currentSnapshot.settings.pinnedLandingSpecies,
-                  dismissedTaskGroupKeys: nextDismissedTaskGroups,
-                  dismissedMemoAlertSignatures: nextDismissedMemos,
-                  updatedAt: ts,
-                },
-                speciesProfiles: currentSnapshot.speciesProfiles.map((sp) =>
-                  sp.id === clean.id ? clean : sp
-                ),
-                animals: currentSnapshot.animals.map((a) =>
-                  isSameSpecies(a.species, oldName) ? { ...a, species: newName, updatedAt: ts } : a
-                ),
-                animalPhotos: (currentSnapshot.animalPhotos ?? []).map((p) =>
-                  isSameSpecies(p.species, oldName) ? { ...p, species: newName, updatedAt: ts } : p
-                ),
-                cages: currentSnapshot.cages.map((c) =>
-                  isSameSpecies(c.species, oldName) ? { ...c, species: newName, updatedAt: ts } : c
-                ),
-                breedings: currentSnapshot.breedings.map((b) =>
-                  isSameSpecies(b.species, oldName) ? { ...b, species: newName, updatedAt: ts } : b
-                ),
-                tasks: currentSnapshot.tasks.map((t) =>
-                  isSameSpecies(t.species, oldName) ? { ...t, species: newName, updatedAt: ts } : t
-                ),
-                careLogs: currentSnapshot.careLogs.map((l) =>
-                  isSameSpecies(l.species, oldName) ? { ...l, species: newName, updatedAt: ts } : l
-                ),
-                shows: currentSnapshot.shows.map((s) =>
-                  isSameSpecies(s.species, oldName) ? { ...s, species: newName, updatedAt: ts } : s
-                ),
-                feedBatches: (currentSnapshot.feedBatches ?? []).map((fb) =>
-                  isSameSpecies(fb.species, oldName) ? { ...fb, species: newName, updatedAt: ts } : fb
-                ),
-                feedAllocations: (currentSnapshot.feedAllocations ?? []).map((fa) =>
-                  isSameSpecies(fa.species, oldName) ? { ...fa, species: newName, updatedAt: ts } : fa
-                ),
-                ledgerEntries: (currentSnapshot.ledgerEntries ?? []).map((le) =>
-                  isSameSpecies(le.species, oldName) ? { ...le, species: newName, updatedAt: ts } : le
-                ),
-                processingLogs: (currentSnapshot.processingLogs ?? []).map((pl) =>
-                  isSameSpecies(pl.species, oldName) ? { ...pl, species: newName, updatedAt: ts } : pl
-                ),
-                youthProjectBooks: (currentSnapshot.youthProjectBooks ?? []).map((yp) =>
-                  isSameSpecies(yp.species, oldName) ? { ...yp, species: newName, updatedAt: ts } : yp
-                ),
-                clientContacts: (currentSnapshot.clientContacts ?? []).map((c) =>
-                  isSameSpecies(c.species, oldName) ? { ...c, species: newName, updatedAt: ts } : c
-                ),
-                waitlistEntries: (currentSnapshot.waitlistEntries ?? []).map((w) =>
-                  isSameSpecies(w.species, oldName) ? { ...w, species: newName, updatedAt: ts } : w
-                ),
-                animalReservations: (currentSnapshot.animalReservations ?? []).map((r) =>
-                  isSameSpecies(r.species, oldName) ? { ...r, species: newName, updatedAt: ts } : r
-                ),
-                woolHarvests: (currentSnapshot.woolHarvests ?? []).map((w) =>
-                  isSameSpecies(w.species, oldName) ? { ...w, species: newName, updatedAt: ts } : w
-                ),
-                mileageLogs: (currentSnapshot.mileageLogs ?? []).map((m) =>
-                  isSameSpecies(m.species, oldName) ? { ...m, species: newName, updatedAt: ts } : m
-                ),
-                journalEntries: (currentSnapshot.journalEntries ?? []).map((j) =>
-                  isSameSpecies(j.species, oldName) ? { ...j, species: newName, updatedAt: ts } : j
-                ),
-                judgeClubs: (currentSnapshot.judgeClubs ?? []).map((c) =>
-                  isSameSpecies(c.species, oldName) ? { ...c, species: newName, updatedAt: ts } : c
-                ),
-                judgeAssignments: (currentSnapshot.judgeAssignments ?? []).map((a) =>
-                  isSameSpecies(a.species, oldName) ? { ...a, species: newName, updatedAt: ts } : a
-                ),
-                judgeExpenses: (currentSnapshot.judgeExpenses ?? []).map((e) =>
-                  isSameSpecies(e.species, oldName) ? { ...e, species: newName, updatedAt: ts } : e
-                ),
-              };
-              await adapterRef.current!.replaceSnapshot(renamedSnapshot);
-              if (isSameSpecies(activeSpeciesName, oldName)) {
-                setActiveSpeciesName(newName);
-              }
-            } else {
-              await adapterRef.current!.saveSpeciesProfile(clean);
-            }
-
-            await recordOutboxOps(
-              diffEntityFieldsToOperations({
-                entityType: 'species',
-                previous: existing,
-                next: clean,
-                deviceId,
-                nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
-                recordRev: rev,
-              })
-            );
-            await reloadFromAdapter();
-            notify(
-              renamed
-                ? `Renamed ${existing.name} to ${clean.name} across all barn records.`
-                : `${clean.name} schedule saved.`
-            );
-          } else {
-            const currentList = currentSnapshot?.speciesProfiles ?? [];
-            const newId = profile.id || `species-${generateUuid()}`;
-            const rev = nextEntityRev(newId, profile._rev);
-            const cleanNew: SpeciesProfile = {
-              ...profile,
-              id: newId,
-              sortOrder: currentList.length,
-              name: profile.name.trim(),
-              defaultAnimalPrefix: (profile.defaultAnimalPrefix || '').trim(),
-              memoText: sanitizeSpeciesMemo(profile.memoText ?? ''),
-              memoUpdatedAt: profile.memoUpdatedAt ?? '',
-              breedOverrides: normalizeBreedScheduleOverrides(profile.breedOverrides),
-              targetWeightCurve: normalizeTargetWeightCurve(profile.targetWeightCurve),
-              _rev: rev,
-              createdAt: profile.createdAt || ts,
-              updatedAt: ts,
-            };
-            await adapterRef.current!.saveSpeciesProfile(cleanNew);
-            await recordOutboxOps(
-              diffEntityFieldsToOperations({
-                entityType: 'species',
-                previous: undefined,
-                next: cleanNew,
-                deviceId,
-                nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
-                recordRev: rev,
-              })
-            );
-            await reloadFromAdapter();
-            notify(`${cleanNew.name} added to your barn.`);
-          }
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save ${profile.name} species schedule`, err);
-          return false;
-        }
-      });
-    },
-    [
-      activeSpeciesName,
-      deviceId,
-      enqueueStoreMutation,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
+  const { saveSpeciesProfile } = useSpeciesProfileActions({
+    enqueueStoreMutation,
+    snapshotRef,
+    getAdapter: () => adapterRef.current!,
+    deviceId,
+    nextEntityRev,
+    allocateNextLogicalCounter,
+    nowIsoUtc: getAdjustedNowIsoUtc,
+    recordOutboxOps,
+    reloadFromAdapter,
+    notify,
+    reportPersistenceFailure,
+    activeSpeciesName,
+    setActiveSpeciesName,
+  });
 
   const updateSpeciesTargetWeightCurve = useCallback(
     async (speciesId: string, curve: TargetWeightPoint[]): Promise<boolean> => {

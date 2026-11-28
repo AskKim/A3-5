@@ -3683,4 +3683,46 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep numeric coverage floors pinned in the newest ratchet entry only; older entries should guard the shape of the ratchet, not its historical values.',
     ],
   },
+  {
+    id: 'IMP-149',
+    title: 'Lift the Species Profile Save Out of useBarnStore',
+    category: 'species-ux',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      '`useBarnStore` was still a 6,743-line function with no internal seam, so a change to the species editor paid the cost of the whole file and every branch touched the same merge surface. The species save was the largest self-contained workflow left in it (209 lines) and the one with the most branchy rename cascade inside.',
+    summary:
+      '`src/hooks/barnStore/useSpeciesProfileActions.ts` now owns `saveSpeciesProfile`: a React-free `saveSpeciesProfileAction(deps, profile)` plus a `useSpeciesProfileActions(deps)` wrapper that memoises on the same scalar dependencies the inline callback used. The slice takes the adapter lazily through `getAdapter()` (the ref is still empty while the store boots), receives `nowIsoUtc` instead of importing the storage clock, and imports only the domain normalisers it needs. `useBarnStore.ts` drops from 6,743 to 6,556 lines and keeps assembling the same 200-key return literal, so `barnStoreContract.keys.json` is untouched. Four new tests cover the plain save, the rename cascade (one snapshot replace that moves animals/settings and re-keys dismissed groups), creation of a new profile, and the persistence-failure path.',
+    files: [
+      'src/hooks/barnStore/useSpeciesProfileActions.ts',
+      'src/hooks/useBarnStore.ts',
+      'src/hooks/__tests__/speciesProfileActions.test.ts',
+      'src/hooks/barnStore/README.md',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+      'EXTRACTION_INVENTORY.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ['useSpeciesProfileActions'],
+        rationale:
+          'The species save must stay in its own slice; the hook is a composer and must not take the rename cascade back inline.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/barnStoreContract.keys.json',
+        requiredSubstrings: ['saveSpeciesProfile'],
+        rationale:
+          'The public key stays part of the frozen 200-key surface even though its implementation now lives in barnStore/.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep `speciesProfileAction` React-free and pass adapter access as `getAdapter()`; the adapter ref is null during the first render.',
+      'Do not move the `return {` literal out of `useBarnStore` in the same change as a slice move — `barnStoreContract.test.ts` locates it by text and would report a missing literal instead of a diff.',
+      'Run the contract test and `npm run verify` after any species rename change; the cascade must still happen in one `replaceSnapshot`.',
+    ],
+  },
 ];

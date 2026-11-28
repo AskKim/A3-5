@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (83 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (84 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (147)
+## Logged Improvements (148)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2971,3 +2971,17 @@ Status:     active
 1. When a screen renders tab-gated sections, assert the heading and the interactive controls rather than text that only appears on a non-default tab.
 2. For an importer, test the malformed export arms: quoted commas, BOM/CRLF, duplicate ids and unmatched pedigree names are where the branches live.
 3. Keep numeric coverage floors pinned in the newest ratchet entry only; older entries should guard the shape of the ratchet, not its historical values.
+
+## 2026-11-28 — Lift the Species Profile Save Out of useBarnStore
+Why:        `useBarnStore` was still a 6,743-line function with no internal seam, so a change to the species editor paid the cost of the whole file and every branch touched the same merge surface. The species save was the largest self-contained workflow left in it (209 lines) and the one with the most branchy rename cascade inside.
+Changed:    `src/hooks/barnStore/useSpeciesProfileActions.ts`, `src/hooks/useBarnStore.ts`, `src/hooks/__tests__/speciesProfileActions.test.ts`, `src/hooks/barnStore/README.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/useBarnStore.ts` must contain `useSpeciesProfileActions` — *The species save must stay in its own slice; the hook is a composer and must not take the rename cascade back inline.*
+- `src/hooks/__tests__/barnStoreContract.keys.json` must contain `saveSpeciesProfile` — *The public key stays part of the frozen 200-key surface even though its implementation now lives in barnStore/.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `speciesProfileAction` React-free and pass adapter access as `getAdapter()`; the adapter ref is null during the first render.
+2. Do not move the `return {` literal out of `useBarnStore` in the same change as a slice move — `barnStoreContract.test.ts` locates it by text and would report a missing literal instead of a diff.
+3. Run the contract test and `npm run verify` after any species rename change; the cascade must still happen in one `replaceSnapshot`.
