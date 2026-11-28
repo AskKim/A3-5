@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-BASE=/home/antigravity/AskKim/Pedigree/prompts/preflight
+# Resolve the target from this script's own location so any clone works.
+BASE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 declare -A files=(
   [1CHn5xT3LkLSYes9S4huT-hM1bxJQgcWYs95HJwP9jSw]=handoff-state.schema.json.md
