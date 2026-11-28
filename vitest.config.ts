@@ -28,15 +28,15 @@ export default defineConfig({
       // files count): st 59.91, br 50.12, fn 45.66, ln 61.36. Floors sit a point under the measured
       // values so a new untested module fails the gate instead of quietly diluting the gains.
       thresholds: {
-        statements: 59,
-        branches: 49,
-        functions: 45,
+        statements: 60,
+        branches: 50,
+        functions: 46,
         lines: 61,
         // Per-area floors stop one area's gains paying for another's gaps: components are the
         // thinnest shell (27.6% st) and domain the most mature (85.3% st), so a global average
         // alone would let new untested screens ride on tested domain code.
         'src/domain/**': { statements: 84, branches: 69, functions: 84, lines: 86 },
-        'src/components/**': { statements: 28, branches: 22, functions: 18, lines: 29 },
+        'src/components/**': { statements: 31, branches: 24, functions: 19, lines: 32 },
         'src/storage/**': { statements: 53, branches: 40, functions: 48, lines: 55 },
         'src/hooks/**': { statements: 45, branches: 33, functions: 44, lines: 46 },
         'src/engine/**': { statements: 69, branches: 60, functions: 75, lines: 71 },
