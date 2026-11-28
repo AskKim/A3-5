@@ -4250,9 +4250,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 60', 'branches: 51', 'functions: 47', 'lines: 62'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/reportsJournalBench.render.test.tsx',
@@ -4265,6 +4265,51 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The reports category filter is a labelled `<select>`; the header line (`Rabbit Only · N reports · Unit: …`) is split across spans, so assert it against `document.body.textContent`.',
       'The bench disables both save buttons until a draft exists, so a commit test must type a weight into the `Weight Check (…)` field first.',
       'Journal rating is a select (`5★ Only`), but colour categories are toggle buttons; query them by their pressed state rather than by role alone.',
+    ],
+  },
+  {
+    id: 'IMP-163',
+    title: 'Mount the Photo Gallery, Home Hub and Migration Modal, and Guard the OCR Scanner',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The animal photo gallery, the first-run home screen and the cross-species migration modal were the last three component modules at zero executable statements, and the offline pedigree scanner was at 2% because nothing exercised its file guards.',
+    summary:
+      'Adds `photoHomeMigration.render.test.tsx` (gallery footprint summary and primary promotion, full-size viewer stepping and closing, inline delete confirmation; home barn naming and species-hub opening across all 11 sample cards; migration configure → confirm step) and `pedigreeOcrGuards.test.ts` (an SVG upload is refused with the security message, a PDF with no text or embedded scan degrades to one manual-entry page with the requested species and unit). Coverage rises to 62.63/52.60/48.90/64.17, so the global floors move to 61/51/47/63, the component floors to 35/28/23/36 and the storage branch floor to 41. Real page OCR stays uncovered on purpose: it needs a raster image and a browser engine that jsdom does not provide.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/photoHomeMigration.render.test.tsx',
+      'src/storage/__tests__/pedigreeOcrGuards.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 61', 'branches: 51', 'functions: 47', 'lines: 63'],
+        rationale:
+          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/storage/__tests__/pedigreeOcrGuards.test.ts',
+        requiredSubstrings: ['SVG vector files are blocked for security', 'pdf_unsupported', 'manual_empty'],
+        rationale:
+          'The SVG refusal is a security guard and the manual-page fallback is the recovery path for an unreadable PDF; losing either assertion leaves both unverified.',
+      },
+      {
+        filePath: 'src/components/__tests__/photoHomeMigration.render.test.tsx',
+        requiredSubstrings: ['Remove', 'Save Farm Name', 'Confirm Cross-Species Migration'],
+        rationale:
+          'These assert the delete confirmation gate, the first-run barn naming write and the migration review step, which are the three irreversible-looking actions in the batch.',
+      },
+    ],
+    restorePlaybook: [
+      'The gallery delete is a two-step inline control: the trash button arms it and a `Remove` button performs the delete.',
+      'The OCR guards need no engine: an SVG File is rejected before any decode, and a `%PDF-1.4` header with junk bytes returns `pdf_unsupported` with one `manual_empty` page.',
+      'Do not try to cover raster OCR in jsdom; it needs canvas/ImageBitmap and a Tesseract worker, so it stays a browser-only path.',
     ],
   },
 ];
