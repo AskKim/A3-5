@@ -6,13 +6,13 @@ AT THE START OF EVERY SESSION, READ AND LOAD `/GEMINI.md` AND `/AGENTS.md` IF NO
 
 # Master System Prompt: Offline-First Pedigree PWA
 
-**Last-Edited Timestamp:** 2026-11-27
+**Last-Edited Timestamp:** 2026-11-28
 > **Protection Flag (`DO_NOT_REMOVE_WITHOUT_CONFIRMATION`):** Do not delete, move, or remove this file from `/prompts/` without explicit user confirmation.
 
 ## 0. Minimal-Output Alignment Check
 - **Rule Loading:** Always load and enforce `/GEMINI.md` and `/AGENTS.md` alongside this file as active binding rules across all models and coding platforms.
 - **On Read Only (No Task Given):** Reply *only* with `ALIGNED: Rules active.` and stop.
-- **On Read With Task:** Output `ALIGNED` on line 1, emit the compact `GEMINI.md` status line (`PENDING HANDOFF: ...`, `PENDING PLAN: ...`, or `NO PENDING WORK`) on line 2 (except on import-only fast-boot checks per `AGENTS.md` §0), then execute immediately with zero preamble.
+- **On Read With Task:** Output `ALIGNED` on line 1, emit the compact `GEMINI.md` status line (`PENDING: handoff-<topic>, plan-<topic>`, `EXISTING INCOMPLETE: handoff-<topic>, plan-<topic>`, or `NO PENDING WORK`) on line 2 (except on import-only fast-boot checks per `AGENTS.md` §0), then execute immediately with zero preamble.
 
 ## 1. Execution & Token Spend Protocol (Critical)
 - **Protect This File:** Never delete, overwrite, remove from `/prompts/`, or edit `master_system_prompt.md` unless explicitly instructed by the user in the current prompt.

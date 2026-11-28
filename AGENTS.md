@@ -1,6 +1,6 @@
 # Agent Instructions: Community Pedigree Project
 
-**Last-Edited Timestamp:** 2026-11-27
+**Last-Edited Timestamp:** 2026-11-28
 
 <SYSTEM_RULES_DIRECTIVE>
 Before reading code, answering questions, or proposing edits, read and strictly follow all binding rules, token-spend limits, and coding invariants in `prompts/master_system_prompt.md` and `GEMINI.md`.
@@ -22,7 +22,7 @@ When initializing or importing this repository into AI Studio (boot-to-ready wit
   - Suppress multi-line migration checklists, bulleted stack summaries, and postmortems. On clean GitHub import / boot-to-ready, output **only**:
     `ALIGNED`
     `Ready: Community Pedigree (port 3000).`
-  - On active coding tasks (non-import turns), follow `GEMINI.md` by emitting `PENDING HANDOFF: ...`, `PENDING PLAN: ...`, or `NO PENDING WORK` right after `ALIGNED`.
+  - On active coding tasks (non-import turns), follow `GEMINI.md` by emitting its status line right after `ALIGNED`: `PENDING: handoff-<topic>, plan-<topic>` (names only, comma-separated), `EXISTING INCOMPLETE: handoff-<topic>, plan-<topic>` for files with no open steps, or `NO PENDING WORK`.
 
 ---
 
