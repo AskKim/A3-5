@@ -4,7 +4,7 @@
   "target_version": "0.1.0-alpha.3",
   "resume_cursor": {
     "phase": "B",
-    "next_step_id": "backup-setup"
+    "next_step_id": "backup-check"
   },
   "phase_a_scope_hash": "e880f750e57ca672af86a300422cd47c34facbdae97ba63bc394a3c462175b1d",
   "ai_studio_status": "completed",
@@ -148,6 +148,16 @@
       "platform": "freebuff",
       "status": "completed",
       "completed_at": "2026-11-28T12:09:56Z",
+      "touched_files": []
+    },
+    {
+      "step_id": "backup-setup",
+      "branch": "freebuff/ae0e1ce3853e2d9932e8688e",
+      "version": "0.1.0-alpha.3",
+      "head_sha": "ecbae618f5d2dafdb924a9141f6a23e49e0e6ee8",
+      "platform": "freebuff",
+      "status": "completed",
+      "completed_at": "2026-11-28T12:23:15Z",
       "touched_files": []
     }
   ],
