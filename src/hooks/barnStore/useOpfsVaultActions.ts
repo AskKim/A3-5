@@ -179,6 +179,7 @@ export async function restoreOpfsVaultBackupUnqueued(
       missingMessage: 'Could not read or verify that OPFS backup file.',
       safetyNote: 'Pre-vault-restore safety snapshot',
       verifyRowCounts: true,
+      verifyChecksum: true,
       afterReplace: (payload) =>
         deps.setActiveSpeciesName(payload.migrated.snapshot.settings.defaultSpecies || 'Rabbit'),
       successMessage: (payload) => {

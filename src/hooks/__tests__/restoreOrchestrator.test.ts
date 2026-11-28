@@ -164,6 +164,50 @@ describe('runDestructiveRestore', () => {
     expect(after).not.toBe(before);
   });
 
+  it('passes when the committed records match the file checksum', async () => {
+    const { deps } = makeDeps();
+    await runDestructiveRestore(
+      deps,
+      { ...plan, verifyRowCounts: true, verifyChecksum: true },
+      async () => ({ snapshot: snapshotOf(3) })
+    );
+    expect(deps.readCommittedSnapshot).toHaveBeenCalledTimes(1);
+    expect(deps.notify).toHaveBeenCalledWith('Restored 3 animals.');
+  });
+
+  it('rolls back when the row counts match but the records do not', async () => {
+    const previous = snapshotOf(2);
+    const tampered = {
+      ...snapshotOf(3),
+      animals: Array.from({ length: 3 }, (_, i) => ({ id: `a${i}`, name: 'tampered' })),
+    } as unknown as BarnDatabaseSnapshot;
+    const { deps } = makeDeps({
+      snapshotRef: { current: previous },
+      readCommittedSnapshot: vi.fn(async () => tampered),
+    });
+
+    await expect(
+      runDestructiveRestore(
+        deps,
+        { ...plan, verifyRowCounts: true, verifyChecksum: true },
+        async () => ({ snapshot: snapshotOf(3) })
+      )
+    ).rejects.toThrow('Restore checksum verification failed');
+
+    const replacedValues = (deps.replaceSnapshot as unknown as ReturnType<typeof vi.fn>).mock.calls.map(
+      (c) => (c[0] as BarnDatabaseSnapshot).animals.length
+    );
+    expect(replacedValues).toEqual([3, 2]);
+    expect(deps.notify).toHaveBeenCalledWith(expect.stringContaining('Your previous barn was put back.'));
+    expect(deps.notify).toHaveBeenCalledWith(expect.stringContaining('checksum'));
+  });
+
+  it('skips the checksum read when the plan does not ask for it', async () => {
+    const { deps } = makeDeps();
+    await runDestructiveRestore(deps, plan, async () => ({ snapshot: snapshotOf(3) }));
+    expect(deps.readCommittedSnapshot).not.toHaveBeenCalled();
+  });
+
   it('reports a thrown write and rethrows it', async () => {
     const err = new Error('quota exceeded');
     const { deps } = makeDeps({
