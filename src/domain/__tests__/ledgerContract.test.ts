@@ -71,6 +71,30 @@ const contractPrompt: PromptChangeEntry = {
   status: 'active',
 };
 
+const firstPromptVersion: PromptChangeEntry = {
+  id: 'PRM-009',
+  promptFile: 'prompts/preflight/run-uni/modularity-check.md',
+  title: 'A first kept prompt version needs no Supersedes line',
+  category: 'architecture-audit',
+  lifecycle: 'active',
+  lastEdited: '2026-11-28',
+  intent: 'A newly created prompt has no previous version to replace.',
+  changeSummary: 'Renders the contract block without a Supersedes line.',
+  trackedFiles: ['PROMPT_CHANGES.md'],
+  invariants: [
+    {
+      filePath: 'PROMPT_CHANGES.md',
+      requiredSubstrings: ['append-only'],
+      rationale: 'Placeholder invariant for the formatting test.',
+    },
+  ],
+  restorePlaybook: ['Regenerate from `src/domain/promptRegistry.ts`.'],
+  decidedOn: '2026-11-28',
+  version: 'v1',
+  commitShaOrTag: 'abc1234',
+  status: 'active',
+};
+
 function withContractEntry(body: string): string {
   return [
     ...formatLedgerHeader('improvements'),
@@ -259,6 +283,33 @@ describe('ledgerContract — append-only header and entry shape', () => {
         v.issue.includes('does not match the documented shape')
       )
     ).toBe(true);
+  });
+
+  it('renders and accepts a first prompt version with no Supersedes line', () => {
+    const generated = formatPromptChangelogMarkdown([firstPromptVersion]);
+    const body = generated
+      .split('\n')
+      .slice(formatLedgerHeader('prompt-changes').length)
+      .join('\n');
+
+    expect(generated).toContain(
+      '## modularity-check v1 — A first kept prompt version needs no Supersedes line'
+    );
+    expect(body).not.toContain('Supersedes:');
+    const report = evaluateLedgerContract(generated, 'prompt-changes');
+    expect(report.violations).toEqual([]);
+    expect(report.contractEntries).toBe(1);
+  });
+
+  it('accepts the improvements-style `superseded by <entry>` prompt status', () => {
+    const superseded: PromptChangeEntry = {
+      ...firstPromptVersion,
+      status: 'superseded',
+      supersededBy: 'PRM-010',
+    };
+    const generated = formatPromptChangelogMarkdown([superseded]);
+    expect(generated).toContain('Status:     superseded by PRM-010');
+    expect(evaluateLedgerContract(generated, 'prompt-changes').ok).toBe(true);
   });
 
   it('validates the prompt-specific Prompt and Supersedes fields', () => {

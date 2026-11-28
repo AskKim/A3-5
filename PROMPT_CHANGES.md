@@ -10,7 +10,7 @@
 #   Why:        what was wrong with the previous version
 #   Changed:    what this edit did
 #   Rejected:   what else was tried and why it lost
-#   Supersedes: <previous version> — why it was replaced
+#   Supersedes: <previous version> — why it was replaced (omit for a first version)
 #   Status:     active | reverted | superseded
 #
 # Escalation: if Rejected needs more than two lines, promote that entry to

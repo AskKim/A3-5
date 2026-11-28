@@ -59,7 +59,7 @@ const SHAPE_BLOCK: Record<LedgerKind, readonly string[]> = {
     '#   Why:        what was wrong with the previous version',
     '#   Changed:    what this edit did',
     '#   Rejected:   what else was tried and why it lost',
-    '#   Supersedes: <previous version> — why it was replaced',
+    '#   Supersedes: <previous version> — why it was replaced (omit for a first version)',
     '#   Status:     active | reverted | superseded',
   ],
 };
@@ -125,7 +125,7 @@ const HEADER_FRAGMENTS: Record<LedgerKind, readonly string[]> = {
 
 const REQUIRED_FIELDS: Record<LedgerKind, readonly string[]> = {
   improvements: ['Why', 'Changed', 'Status'],
-  'prompt-changes': ['Prompt', 'Why', 'Changed', 'Supersedes', 'Status'],
+  'prompt-changes': ['Prompt', 'Why', 'Changed', 'Status'],
 };
 
 /** Contract headings: `## 2026-11-28 — title` / `## core_hygiene v3 — summary`. */
@@ -143,7 +143,7 @@ const FIELD_LINE = /^(Prompt|Why|Changed|Rejected|Supersedes|Status):[ \t]*(.*)$
 
 const STATUS_PATTERN: Record<LedgerKind, RegExp> = {
   improvements: /^(?:active|reverted|superseded by \S.*)$/,
-  'prompt-changes': /^(?:active|reverted|superseded)$/,
+  'prompt-changes': /^(?:active|reverted|superseded(?: by \S.*)?)$/,
 };
 
 /** A ledger value that names at least one file with an extension. */
@@ -291,9 +291,7 @@ export function evaluateLedgerContract(
       violations.push({
         heading: entry.heading,
         issue: `invalid Status "${status}" — expected ${
-          kind === 'improvements'
-            ? 'active | reverted | superseded by <entry>'
-            : 'active | reverted | superseded'
+          'active | reverted | superseded by <entry>'
         }`,
       });
     }

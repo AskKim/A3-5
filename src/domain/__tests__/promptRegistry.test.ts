@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPromptRecoveryJson,
   evaluatePromptInvariants,
+  findLedgerOptInViolations,
   formatPromptChangelogMarkdown,
   PROMPT_CHANGES_REGISTRY,
 } from '../promptRegistry';
@@ -59,5 +60,57 @@ describe('promptRegistry — /prompts/ changelog, invariants & recovery playbook
     const parsed = JSON.parse(json) as { format: string; totalEntries: number };
     expect(parsed.format).toBe('community-pedigree-prompt-changelog');
     expect(parsed.totalEntries).toBe(PROMPT_CHANGES_REGISTRY.length);
+  });
+
+  it('rejects a half-opted-in entry instead of silently rendering it as legacy', () => {
+    const base = PROMPT_CHANGES_REGISTRY[0];
+
+    const halfOpted = findLedgerOptInViolations([
+      { ...base, id: 'PRM-901', decidedOn: '2026-11-28', version: 'v5' },
+    ]);
+    expect(halfOpted).toHaveLength(1);
+    expect(halfOpted[0].issue).toContain('commitShaOrTag');
+
+    const ledgerFieldsOnly = findLedgerOptInViolations([
+      { ...base, id: 'PRM-902', status: 'superseded', supersededBy: 'PRM-001' },
+    ]);
+    expect(ledgerFieldsOnly).toHaveLength(1);
+    expect(ledgerFieldsOnly[0].issue).toContain('decidedOn');
+
+    expect(
+      findLedgerOptInViolations([
+        {
+          ...base,
+          id: 'PRM-903',
+          decidedOn: '2026-11-28',
+          version: 'v5',
+          commitShaOrTag: 'abc1234',
+        },
+      ])
+    ).toEqual([]);
+
+    expect(findLedgerOptInViolations([{ ...base, id: 'PRM-904' }])).toEqual([]);
+    expect(findLedgerOptInViolations()).toEqual([]);
+  });
+
+  it('rejects `superseded` without naming the replacing entry', () => {
+    const base = PROMPT_CHANGES_REGISTRY[0];
+    const opted = {
+      decidedOn: '2026-11-28',
+      version: 'v5',
+      commitShaOrTag: 'abc1234',
+    } as const;
+
+    const orphaned = findLedgerOptInViolations([
+      { ...base, id: 'PRM-905', ...opted, status: 'superseded' },
+    ]);
+    expect(orphaned).toHaveLength(1);
+    expect(orphaned[0].issue).toContain('supersededBy');
+
+    expect(
+      findLedgerOptInViolations([
+        { ...base, id: 'PRM-906', ...opted, status: 'superseded', supersededBy: 'PRM-003' },
+      ])
+    ).toEqual([]);
   });
 });

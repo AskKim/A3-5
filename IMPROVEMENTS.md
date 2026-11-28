@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (60 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (62 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (124)
+## Logged Improvements (126)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2634,3 +2634,31 @@ Status:     active
 1. Wrap a consumer in `<SyncStateSliceProvider>` before calling `useSyncStateSlice()`; the hook throws outside one by design.
 2. Keep `useBarnStore` returning every key it did before the split — slices are additional ways in, not removals.
 3. Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.
+
+## 2026-11-28 — Prompt Changelog Wires Up Like the Improvements Ledger
+Why:        The prompt changelog was generated like IMPROVEMENTS.md but every entry still rendered the legacy `### PRM-0NN:` block, and its status vocabulary could not name the entry that replaced it.
+Changed:    `src/domain/promptRegistry.ts`, `src/domain/ledgerContract.ts`, `src/domain/__tests__/ledgerContract.test.ts`, `src/domain/__tests__/promptRegistry.test.ts`, `PROMPT_CHANGES.md`
+Rejected:   Requiring `Supersedes` as the opt-in condition. It reads well for a revision but makes the contract branch unreachable for a first kept version, so no prompt entry could ever render the documented shape.
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/promptRegistry.ts` must contain `supersededBy`, `entry.decidedOn && entry.version`, `superseded by ${entry.supersededBy}` — *Prompts must opt in without a Supersedes line and keep the shared `superseded by <entry>` status, or the two ledgers diverge again.*
+- `src/domain/ledgerContract.ts` must contain `'prompt-changes': ['Prompt', 'Why', 'Changed', 'Status']`, `superseded(?: by \S.*)?`, `omit for a first version` — *The shape gate must require only the fields every kept prompt version has, and the header must say Supersedes is optional.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the prompt opt-in at `decidedOn` + `version` + `commitShaOrTag`; add `Supersedes` only when a previous kept version exists.
+2. When a prompt version is replaced, set `status: superseded` with `supersededBy` naming the replacing entry, then run `npm run regen:ledgers`.
+
+## 2026-11-28 — The Prompt Ledger Rejects Half-Opted-In Entries
+Why:        An entry that set `decidedOn` but not `version` or `commitShaOrTag` rendered as a legacy `### PRM-` block with no failure, so a change could look logged while only part of it was.
+Changed:    `src/domain/promptRegistry.ts`, `scripts/verify-prompts.ts`, `src/domain/__tests__/promptRegistry.test.ts`
+Rejected:   Relying on review to catch it. The bug this closes was a field combination the formatter ignored in silence, so a check that only runs when someone notices cannot be the gate.
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/promptRegistry.ts` must contain `findLedgerOptInViolations`, `LEDGER_OPT_IN_FIELDS`, `supersededBy` — *The formatter falls back to the legacy block whenever the opt-in is incomplete; without this check that fallback is silent again.*
+- `scripts/verify-prompts.ts` must contain `findLedgerOptInViolations`, `half-opted-in` — *A helper nothing calls is not a gate — the prompt verifier must run it and fail on it.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `findLedgerOptInViolations` called from `scripts/verify-prompts.ts` and in its pass condition, not just imported.
+2. Log a prompt version with all three opt-in fields, or with none at all.

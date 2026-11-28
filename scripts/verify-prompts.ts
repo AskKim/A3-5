@@ -12,6 +12,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
   evaluatePromptInvariants,
+  findLedgerOptInViolations,
   formatPromptChangelogMarkdown,
   PROMPT_CHANGES_REGISTRY,
 } from '../src/domain/promptRegistry';
@@ -42,6 +43,7 @@ async function main() {
   );
 
   const report = evaluatePromptInvariants(filesByPath, PROMPT_CHANGES_REGISTRY);
+  const optInViolations = findLedgerOptInViolations(PROMPT_CHANGES_REGISTRY);
 
   console.log(
     `[verify:prompts] Checked ${report.totalEntries} prompt revisions across ${report.totalFilesChecked} files.`
@@ -66,7 +68,12 @@ async function main() {
       ? []
       : evaluateLedgerFreshness(ledgerMarkdown, formatPromptChangelogMarkdown());
 
-  if (report.ok && ledgerViolations.length === 0 && freshnessViolations.length === 0) {
+  if (
+    report.ok &&
+    ledgerViolations.length === 0 &&
+    optInViolations.length === 0 &&
+    freshnessViolations.length === 0
+  ) {
     console.log(
       `[verify:prompts] PASS — all ${report.passedCount}/${report.totalEntries} prompt invariants are intact.`
     );
@@ -77,6 +84,9 @@ async function main() {
     );
     console.log(
       `[verify:prompts] Ledger freshness: ${LEDGER_PATH} matches a fresh render of src/domain/promptRegistry.ts (${ledgerReport.totalEntries} entries).`
+    );
+    console.log(
+      '[verify:prompts] Ledger opt-in: every prompt entry is either fully legacy or fully contract-shaped.'
     );
     process.exit(0);
   }
@@ -105,6 +115,20 @@ async function main() {
     }
     console.error(
       '    Restore the header from `formatLedgerHeader(\'prompt-changes\')` in src/domain/ledgerContract.ts and shape new entries as documented there.'
+    );
+  }
+
+  if (optInViolations.length > 0) {
+    console.error(
+      `[verify:prompts] FAIL — ${optInViolations.length} half-opted-in prompt entr${
+        optInViolations.length === 1 ? 'y' : 'ies'
+      } in src/domain/promptRegistry.ts:`
+    );
+    for (const v of optInViolations) {
+      console.error(`  - [${v.entryId}] ${v.title}: ${v.issue}`);
+    }
+    console.error(
+      '    Fix: set all of decidedOn, version and commitShaOrTag, or remove them and stay legacy.'
     );
   }
 

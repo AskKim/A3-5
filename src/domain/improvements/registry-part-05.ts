@@ -2623,4 +2623,90 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Remaining milestone 5 work is rev-keyed memoised selectors for the derived lists; no store key may be dropped.',
     ],
   },
+  {
+    id: 'IMP-125',
+    title: 'Prompt Changelog Wires Up Like the Improvements Ledger',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    rejected:
+      'Requiring `Supersedes` as the opt-in condition. It reads well for a revision but makes the contract branch unreachable for a first kept version, so no prompt entry could ever render the documented shape.',
+    userIntent:
+      'The prompt changelog was generated like IMPROVEMENTS.md but every entry still rendered the legacy `### PRM-0NN:` block, and its status vocabulary could not name the entry that replaced it.',
+    summary:
+      '`PromptChangeEntry` now opts into the contract shape on `decidedOn` + `version` + `commitShaOrTag` alone, renders `Supersedes:` only when the entry has a previous version, and renders `Status: superseded by <entry>` through a new `supersededBy` field — the same shape and status vocabulary the improvement ledger uses, with `Prompt:`/`Supersedes:` as the prompt-specific fields. `evaluateLedgerContract` drops `Supersedes` from the prompt required fields (it stays validated for shape whenever present) and accepts `superseded by <entry>` there.',
+    files: [
+      'src/domain/promptRegistry.ts',
+      'src/domain/ledgerContract.ts',
+      'src/domain/__tests__/ledgerContract.test.ts',
+      'src/domain/__tests__/promptRegistry.test.ts',
+      'PROMPT_CHANGES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/promptRegistry.ts',
+        requiredSubstrings: [
+          'supersededBy',
+          'entry.decidedOn && entry.version',
+          'superseded by ${entry.supersededBy}',
+        ],
+        rationale:
+          'Prompts must opt in without a Supersedes line and keep the shared `superseded by <entry>` status, or the two ledgers diverge again.',
+      },
+      {
+        filePath: 'src/domain/ledgerContract.ts',
+        requiredSubstrings: [
+          "'prompt-changes': ['Prompt', 'Why', 'Changed', 'Status']",
+          'superseded(?: by \\S.*)?',
+          'omit for a first version',
+        ],
+        rationale:
+          'The shape gate must require only the fields every kept prompt version has, and the header must say Supersedes is optional.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep the prompt opt-in at `decidedOn` + `version` + `commitShaOrTag`; add `Supersedes` only when a previous kept version exists.',
+      'When a prompt version is replaced, set `status: superseded` with `supersededBy` naming the replacing entry, then run `npm run regen:ledgers`.',
+    ],
+  },
+  {
+    id: 'IMP-126',
+    title: 'The Prompt Ledger Rejects Half-Opted-In Entries',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    rejected:
+      'Relying on review to catch it. The bug this closes was a field combination the formatter ignored in silence, so a check that only runs when someone notices cannot be the gate.',
+    userIntent:
+      'An entry that set `decidedOn` but not `version` or `commitShaOrTag` rendered as a legacy `### PRM-` block with no failure, so a change could look logged while only part of it was.',
+    summary:
+      '`findLedgerOptInViolations` in `src/domain/promptRegistry.ts` reports any entry that sets a ledger field without all three opt-in fields (`decidedOn`, `version`, `commitShaOrTag`), and any `status: superseded` entry that does not name its replacement in `supersededBy`; `npm run verify:prompts` fails with the missing field names. Entries with no ledger fields stay legacy and pass, so the eight existing prompt entries are untouched.',
+    files: [
+      'src/domain/promptRegistry.ts',
+      'scripts/verify-prompts.ts',
+      'src/domain/__tests__/promptRegistry.test.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/promptRegistry.ts',
+        requiredSubstrings: ['findLedgerOptInViolations', 'LEDGER_OPT_IN_FIELDS', 'supersededBy'],
+        rationale:
+          'The formatter falls back to the legacy block whenever the opt-in is incomplete; without this check that fallback is silent again.',
+      },
+      {
+        filePath: 'scripts/verify-prompts.ts',
+        requiredSubstrings: ['findLedgerOptInViolations', 'half-opted-in'],
+        rationale:
+          'A helper nothing calls is not a gate — the prompt verifier must run it and fail on it.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep `findLedgerOptInViolations` called from `scripts/verify-prompts.ts` and in its pass condition, not just imported.',
+      'Log a prompt version with all three opt-in fields, or with none at all.',
+    ],
+  },
 ];

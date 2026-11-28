@@ -52,18 +52,80 @@ export interface PromptChangeEntry {
   invariants: PromptInvariant[];
   restorePlaybook: string[];
   /**
-   * Append-only ledger contract (`src/domain/ledgerContract.ts`). When `decidedOn`, `version`,
-   * `commitShaOrTag`, and `supersedes` are all set, the formatter emits the documented
+   * Append-only ledger contract (`src/domain/ledgerContract.ts`). When `decidedOn`, `version` and
+   * `commitShaOrTag` are all set, the formatter emits the documented
    * `## <prompt-name> <version> — summary` block instead of the legacy `### PRM-0NN:` block.
-   * Entries missing them stay legacy and are never rewritten.
+   * `supersedes` is optional because a first kept version has nothing to replace. Entries missing
+   * the three opt-in fields stay legacy and are never rewritten.
    */
   decidedOn?: string;
   version?: string;
   commitShaOrTag?: string;
   supersedes?: string;
   status?: LedgerEntryStatus;
+  /** Rendered as `superseded by <entry>` when `status` is `superseded`. */
+  supersededBy?: string;
   /** The alternative tried and why it lost; omit when there was none. */
   rejected?: string;
+}
+
+export interface PromptLedgerOptInViolation {
+  entryId: string;
+  title: string;
+  issue: string;
+}
+
+/** Ledger fields that the formatter only renders for a contract-shaped entry. */
+const LEDGER_ENTRY_FIELDS = [
+  'decidedOn',
+  'version',
+  'commitShaOrTag',
+  'supersedes',
+  'supersededBy',
+  'status',
+  'rejected',
+] as const;
+
+const LEDGER_OPT_IN_FIELDS = ['decidedOn', 'version', 'commitShaOrTag'] as const;
+
+/**
+ * Rejects entries the formatter would silently render as incomplete: any entry that sets a ledger
+ * field without all three opt-in fields (`decidedOn`, `version`, `commitShaOrTag`), and any
+ * `status: superseded` entry with no `supersededBy`. `formatPromptChangelogMarkdown` falls back to
+ * the legacy `### PRM-0NN:` block for a half-opted-in entry, so without this gate an author could
+ * believe a change was logged when only part of it was.
+ */
+export function findLedgerOptInViolations(
+  entries: readonly PromptChangeEntry[] = PROMPT_CHANGES_REGISTRY
+): PromptLedgerOptInViolation[] {
+  const violations: PromptLedgerOptInViolation[] = [];
+
+  for (const entry of entries) {
+    const present = LEDGER_ENTRY_FIELDS.filter((field) => entry[field] !== undefined);
+    if (present.length === 0) continue;
+
+    if (entry.status === 'superseded' && !entry.supersededBy) {
+      violations.push({
+        entryId: entry.id,
+        title: entry.title,
+        issue:
+          'sets `status: superseded` without `supersededBy` — the replacing entry would be lost; name it, or use active/reverted',
+      });
+    }
+
+    const missing = LEDGER_OPT_IN_FIELDS.filter((field) => entry[field] === undefined);
+    if (missing.length === 0) continue;
+
+    violations.push({
+      entryId: entry.id,
+      title: entry.title,
+      issue: `sets ${present.join(', ')} but is missing ${missing.join(
+        ', '
+      )} — the formatter would silently render the legacy block; set all of decidedOn, version and commitShaOrTag, or none`,
+    });
+  }
+
+  return violations;
 }
 
 export interface PromptDriftViolation {
@@ -479,8 +541,9 @@ export function formatPromptChangelogMarkdown(
   ];
 
   for (const entry of entries) {
-    if (entry.decidedOn && entry.version && entry.commitShaOrTag && entry.supersedes) {
+    if (entry.decidedOn && entry.version && entry.commitShaOrTag) {
       const promptName = entry.promptFile.replace(/^.*\//, '').replace(/\.md$/, '');
+      const status = entry.status ?? 'active';
       lines.push(`## ${promptName} ${entry.version} — ${entry.title}`);
       lines.push(`Prompt:     ${entry.promptFile} @ ${entry.commitShaOrTag}`);
       lines.push(`Why:        ${entry.intent}`);
@@ -488,8 +551,16 @@ export function formatPromptChangelogMarkdown(
       if (entry.rejected) {
         lines.push(`Rejected:   ${entry.rejected}`);
       }
-      lines.push(`Supersedes: ${entry.supersedes}`);
-      lines.push(`Status:     ${entry.status ?? 'active'}`);
+      if (entry.supersedes) {
+        lines.push(`Supersedes: ${entry.supersedes}`);
+      }
+      lines.push(
+        `Status:     ${
+          status === 'superseded' && entry.supersededBy
+            ? `superseded by ${entry.supersededBy}`
+            : status
+        }`
+      );
       lines.push('');
       lines.push('**Protected Invariants:**');
       for (const inv of entry.invariants) {
