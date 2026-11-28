@@ -39,7 +39,7 @@ import {
   normalizeFlexibleDateIso,
   parseDelimitedTable,
   parseFlexibleWeightToGrams,
-} from './archiveAndCsvUtils';
+} from '@engine/codecs/archiveAndCsvUtils';
 import {
   AnimalImportConflict,
   buildAnimalContradictions,

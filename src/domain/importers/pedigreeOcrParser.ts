@@ -31,7 +31,7 @@ import {
   SpeciesProfile,
   WeightUnit,
 } from '../models';
-import { normalizeFlexibleDateIso, parseFlexibleWeightToGrams } from './archiveAndCsvUtils';
+import { normalizeFlexibleDateIso, parseFlexibleWeightToGrams } from '@engine/codecs/archiveAndCsvUtils';
 import {
   AnimalImportConflict,
   buildAnimalContradictions,

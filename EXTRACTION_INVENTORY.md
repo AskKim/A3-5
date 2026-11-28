@@ -31,12 +31,11 @@ The following startup/entry files are locked during NEON modularization to prese
 
 ---
 
-## 1. `src/engine/` & `src/domain/` File-by-File Inventory (109 Non-Test Files: 31 in `src/engine/`, 78 in `src/domain/`)
+## 1. `src/engine/` & `src/domain/` File-by-File Inventory (118 Non-Test Files: 31 in `src/engine/`, 87 in `src/domain/`)
 
-### 1.1 Content-Agnostic Engine Modules (`extractable-core` — 31 files in `src/engine/` + 2 compatibility shims in `src/domain/`)
+### 1.1 Content-Agnostic Engine Modules (`extractable-core` — 31 files in `src/engine/`; the two `src/domain/` compatibility shims were retired in IMP-142)
 - `src/engine/index.ts` — `extractable-core` — Top-level modular engine entry barrel exposing strictly domain-free primitives, codecs, bridge, storage, and sync surfaces.
 - `src/engine/binaryEncoding.ts` — `extractable-core` — Pure byte, UTF-8, and base64 encoding/decoding utilities.
-- `src/domain/binaryEncoding.ts` — `pedigree-domain` — Compatibility shim re-exporting `@engine/binaryEncoding` (remove after import codemod).
 - `src/engine/codecs/index.ts` — `extractable-core` — Pure codecs sub-module barrel (`binaryEncoding`, `qrCodec`, `pdfDocumentExtractor`, `archiveAndCsvUtils`).
 - `src/engine/sync/index.ts` — `extractable-core` — Pure sync and integrity sub-module barrel (`genericSync`, `crypto`).
 - `src/engine/primitives/index.ts` — `extractable-core` — Pure primitives barrel export.
@@ -66,7 +65,6 @@ The following startup/entry files are locked during NEON modularization to prese
 - `src/engine/storage/resilientStorageAdapter.ts` — `extractable-core` — Multi-tier resilient storage orchestrator with strict iOS native bridge routing and SHA-256/FNV-1a portable bundle export/restore.
 - `src/engine/codecs/archiveAndCsvUtils.ts` — `extractable-core` — Pure archive unpacking, delimited CSV/TSV parsing, encoding detection, and file normalization helpers delegating to `@engine/primitives/*`.
 - `src/engine/codecs/textFormats.ts` — `extractable-core` — Shared RFC-4180 CSV cell escaping and RFC-5545 iCalendar text/alarm encoders used by both `@features/*` and domain facades.
-- `src/domain/importers/archiveAndCsvUtils.ts` — `pedigree-domain` — Compatibility shim re-exporting `@engine/codecs/archiveAndCsvUtils` (remove after import codemod).
 
 ### 1.2 Alpha 2 Compatibility Facades in `src/domain/` (`pedigree-domain` — 13 files)
 These files preserve 100% of Alpha 2 public exports and domain defaults while delegating core algorithms to `@engine/primitives/*`:
@@ -306,8 +304,8 @@ here so the inventory keeps matching the tree without rewriting the sections abo
 
 ### 8.1 `src/engine/` additions (all `extractable-core`)
 
-- `binaryEncoding.ts` — the encoding helpers moved down from `src/domain/`; the domain path is now a
-  compatibility shim.
+- `binaryEncoding.ts` — the encoding helpers moved down from `src/domain/`; the domain shim was
+  retired in IMP-142 once every caller imported `@engine/binaryEncoding` directly.
 - `primitives/boundedCache.ts`, `primitives/deviceCapabilityCore.ts` — bounded LRU and hardware-tier
   policy lifted out of `src/storage/`.
 - `storage/browserStorageAdapters.ts` — memory and IndexedDB adapters.

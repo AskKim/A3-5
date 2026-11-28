@@ -872,7 +872,7 @@ export const REGISTRY_PART_04: ImprovementEntry[] = [
       },
       {
         filePath: 'src/domain/backupVault.ts',
-        requiredSubstrings: ["from './binaryEncoding'"],
+        requiredSubstrings: ["from '@engine/binaryEncoding'"],
       },
       {
         filePath: 'src/components/DiagnosticsAndSupportPanel.tsx',

@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (76 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (78 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (140)
+## Logged Improvements (142)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -1407,7 +1407,7 @@ npm run lint && npm run build
 - `android-wrapper/app/src/main/java/org/askkim/pedigree/wrapper/PedigreeAssetPathHandler.kt` must contain `resolvedPath == "status.json"` — *Android WebView asset handler must serve status.json with Cache-Control: no-cache alongside version.json.*
 - `src/storage/webSqliteAdapter.ts` must contain `executeIdbWriteWithQuotaRecovery`, `purgeOpfsTmp` — *Primary IndexedDB writes must catch QuotaExceededError, purge OPFS /tmp and non-essential fallback caches, and retry once before failing.*
 - `src/components/PrintPreviewModal.tsx` must contain `sanitizePrintStageHtml` — *Print stage DOM mounting must strip executable tags, inline event handlers, and dangerous URLs before inserting HTML into #barn-print-stage.*
-- `src/domain/backupVault.ts` must contain `from './binaryEncoding'` — *backupVault.ts must import binary encoding helpers directly from binaryEncoding.ts instead of pulling backupArchive.ts into the startup graph.*
+- `src/domain/backupVault.ts` must contain `from '@engine/binaryEncoding'` — *backupVault.ts must import binary encoding helpers directly from binaryEncoding.ts instead of pulling backupArchive.ts into the startup graph.*
 - `src/components/DiagnosticsAndSupportPanel.tsx` must contain `loadImprovementRegistryModule`, `import('../domain/improvementRegistry')` — *DiagnosticsAndSupportPanel must lazy-load the 200+ kB improvementRegistry manifest on demand instead of bloating DevelopmentScreen.*
 - `vite.config.ts` must contain `storage-sqlite`, `core-backups`, `improvement-registry`, `includeDependenciesRecursively: false` — *Rolldown codeSplitting must isolate app storage, backup, domain, and registry chunks with includeDependenciesRecursively: false so no chunk exceeds 500 kB.*
 
@@ -2854,6 +2854,36 @@ Status:     active
 1. A new flat collection gets a spec (`readRows`, `build`, `persist`, `describe`, `failureLabel`) and a `useCallback` pair over `entityCrudPorts`; do not copy the old inline body.
 2. Collections whose save touches other rows (show legs, feed-batch allocations, reservation occupancy) keep their own action until they get a controller that also owns the cascade.
 3. A new file format imports through `installImportedSnapshot`; decode it, then pass `mode` and the safety note, and word the toast in the caller.
+
+## 2026-11-28 — Barn Store Cascade Controllers and One Shared Slice-Port Bundle
+Why:        The remaining store actions that touch more than one row (show legs, feed-batch allocations, reservation waitlist sync, task calendar export) still hand-rolled the whole queue/diff/reload sequence, and every one of the nine `use*` slices was wired by hand with the same ten capabilities — a capability added at one call site could be silently missing at another.
+Changed:    `src/hooks/barnStore/entityCrudController.ts`, `src/hooks/barnStore/slicePorts.ts`, `src/hooks/__tests__/slicePorts.test.ts`, `src/hooks/__tests__/entityCrudController.test.ts`, `src/hooks/useBarnStore.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `docs/plans/handoff-modularity-reusability.yaml`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/slicePorts.ts` must contain `SliceCorePorts`, `SLICE_CORE_PORT_KEYS`, `createSliceCorePorts` — *The shared bundle and its key list are the wiring contract; a slice that needs a new shared capability must take it from here, not from the store.*
+- `src/hooks/barnStore/entityCrudController.ts` must contain `EntitySaveCascadeContext`, `EntityDeleteCascadeContext`, `afterSave` — *Cascades must run inside the same queue slot and operations batch as the row that caused them, or a crash between the two writes leaves related rows permanently out of step.*
+- `src/hooks/useBarnStore.ts` must contain `sliceCorePorts`, `applyShowLegDeltas` — *The store must keep spreading the shared bundle into every slice and keep show leg maths in one helper used by both save and delete.*
+
+**Restoration Playbook if Overwritten:**
+1. An action that writes related rows belongs on the controller with a `cascade`; that is how the related rows share the primary row timestamp, revision allocation and outbox batch.
+2. Never wire a slice by hand: spread `sliceCorePorts` and add only that slice's own capabilities.
+3. A slice that needs a new shared capability adds it to `SliceCorePorts` and `SLICE_CORE_PORT_KEYS`; the test tuple then fails until every slice agrees on the shape.
+
+## 2026-11-28 — Retire the Domain Binary/Archive Compatibility Shims
+Why:        `src/domain/binaryEncoding.ts` and `src/domain/importers/archiveAndCsvUtils.ts` were eight-line re-export shims kept alive for six callers plus three tests. They advertised the engine path as optional, so new code could keep importing through the domain and quietly re-couple the domain layer to what was meant to be the extracted engine surface.
+Changed:    `src/domain/binaryEncoding.ts`, `src/domain/importers/archiveAndCsvUtils.ts`, `src/domain/importers/herdBossImporter.ts`, `src/domain/importers/pedigreeOcrParser.ts`, `src/domain/importers/universalPedigreeImporter.ts`, `src/domain/importers/csvColumnMapper.ts`, `src/domain/backupVault.ts`, `src/domain/backupArchive.ts`, `EXTRACTION_INVENTORY.md`, `IMPROVEMENTS.md`, `MODULES.md`, `src/domain/improvements/registry-part-04.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/backupVault.ts` must contain `from '@engine/binaryEncoding'` — *The vault must import encoding helpers straight from the engine module; the domain re-export that used to sit in between is gone.*
+- `src/domain/importers/universalPedigreeImporter.ts` must contain `from '@engine/codecs/archiveAndCsvUtils'` — *Importers read archive/CSV helpers from the engine codec module, which is what makes the domain layer droppable later.*
+- `EXTRACTION_INVENTORY.md` must contain `retired in IMP-142` — *The inventory must not advertise deleted shims as available entry points.*
+
+**Restoration Playbook if Overwritten:**
+1. Import `@engine/binaryEncoding` and `@engine/codecs/archiveAndCsvUtils` directly; do not recreate a domain re-export.
+2. Before deleting a shim, codemod every caller (production and test) in one change; a partially migrated shim is worse than none.
+3. Update the inventory and any registry invariant that names the old path in the same change, or the ledger advertises a file that no longer exists.
 
 ## 2026-11-28 — Ledger Gates Reject Impossible Dates and Dangling Replacements
 Why:        The gates checked that the ledger fields were present but never what they said: `decidedOn: 2026-13-45` rendered an impossible heading and passed both verifiers, and a `supersededBy: PRM-999` typo was accepted even though no such entry exists, so the replacing entry could never be found.
