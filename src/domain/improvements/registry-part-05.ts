@@ -3834,9 +3834,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 58', 'branches: 49', 'functions: 44', 'lines: 60'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: per-area thresholds for components and storage must keep existing, because without them the two suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/components/__tests__/developmentConsole.render.test.tsx',
@@ -4046,6 +4046,44 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-157',
+    title: 'Mount the Memo, Wool, Mileage and Founder Species Panels',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Four species workspaces that breeders open routinely — the memo pad, the wool harvest panel, the mileage/tax panel and the founder & heritability panel — carried zero executable statements, so their summaries and form transitions were only ever checked by opening the app by hand.',
+    summary:
+      'Adds `speciesPanels.render.test.tsx`, which mounts each panel against the predefined sample barn: the memo pad saves edited notes on blur, renders them in the formatted view and clears them only through the confirmation gate; the wool panel shows the lifetime totals and 90-day pass badge for a real clip and opens then cancels the harvest form; the mileage panel opens and closes the trip modal; the founder panel renders the heritability cards and switches to the founder-loss ledger table. Coverage rises past 60/50/46/62, so the global floors move to 59/49/45/61 and the component floors to 28/22/18/29.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/speciesPanels.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 59', 'branches: 49', 'functions: 45', 'lines: 61'],
+        rationale:
+          'This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/speciesPanels.render.test.tsx',
+        requiredSubstrings: ['Confirm Clear', 'Founder-Loss Ledger', 'Save Harvest'],
+        rationale:
+          'These three assertions are the only proof that the clear-notes gate, the tab switch and the harvest form actually render; dropping them would leave the suite counting mounts instead of behaviour.',
+      },
+    ],
+    restorePlaybook: [
+      'Mount panels against `buildFullPredefinedSampleSnapshot()` and a local `activeDataFrom()` helper rather than hand-building species data; the sample barn already exercises the populated branches.',
+      'When a summary block is gated on a non-empty collection, pass a minimal typed record (see the wool harvest fixture) instead of asserting on the hidden block.',
+      'Clear-notes flows need both states: the confirmation prompt after the first click and the executed save after the second.',
+    ],
+  },
+  {
+    id: 'IMP-158',
     title: 'Prove the Framework Layers Stand Alone Before Any /engine Extraction',
     category: 'ci-tooling',
     release: 'alpha-3',
