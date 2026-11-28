@@ -4,7 +4,7 @@
   "target_version": "0.1.0-alpha.3",
   "resume_cursor": {
     "phase": "B",
-    "next_step_id": "release-plan"
+    "next_step_id": "release-check-p2"
   },
   "phase_a_scope_hash": "e880f750e57ca672af86a300422cd47c34facbdae97ba63bc394a3c462175b1d",
   "ai_studio_status": "completed",
@@ -186,7 +186,7 @@
       "version": "0.1.0-alpha.3",
       "head_sha": "7b5084a3fc098c811535cee37da5ba1b4722600a",
       "platform": "freebuff",
-      "status": "completed",
+      "status": "awaiting_human",
       "completed_at": "2026-11-28T12:43:46Z",
       "touched_files": []
     }

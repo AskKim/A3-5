@@ -36,19 +36,34 @@ const cleanError = errorMsg
   : null;
 const nextStep = getArg('--next');
 // Phase comes from the manifest, never from a platform guess: freebuff legitimately runs both.
-function manifestPhase(id) {
+function manifestStep(id) {
   try {
     const manifest = JSON.parse(readFileSync('prompts/preflight/manifest/preflight.manifest.json', 'utf8'));
-    return manifest.steps?.find((step) => step.id === id)?.phase ?? null;
+    return manifest.steps?.find((step) => step.id === id) ?? null;
   } catch {
     return null;
   }
 }
-const phase = getArg('--phase') ?? manifestPhase(stepId);
+const step = manifestStep(stepId);
+const phase = getArg('--phase') ?? step?.phase ?? null;
+// A step that carries a human gate cannot be closed by the runner that did the machine work.
+// Logging it `completed` without --human-signoff records `awaiting_human` instead, which the
+// state reader does not count as done, so the phase (and the release) stays open until a person
+// actually confirms it. This exists because release-check-p2 was once filed complete with its
+// human-assisted post-merge smoke never performed.
+const humanSignoff = getArg('--human-signoff');
+let effectiveStatus = status;
+if (status === 'completed' && step?.human_signoff && !humanSignoff) {
+  effectiveStatus = 'awaiting_human';
+  console.log(
+    `AWAITING_HUMAN [${stepId}]: this step declares a human gate. Nothing was marked complete. ` +
+      'Re-run with --human-signoff "<who/how>" once a person has done it.'
+  );
+}
 
 if (!stepId || !['completed', 'failed', 'skipped'].includes(status) || !PLATFORMS.includes(platform)) {
   console.error(
-    'Usage: node prompts/preflight/scripts/preflight-log.mjs --step <id> --status completed|failed|skipped --platform ai-studio|antigravity|freebuff [--files a,b] [--error "<msg>"] [--next <id>] [--deferred-gates verify:layers,npm-test]'
+    'Usage: node prompts/preflight/scripts/preflight-log.mjs --step <id> --status completed|failed|skipped --platform ai-studio|antigravity|freebuff [--files a,b] [--error "<msg>"] [--next <id>] [--deferred-gates verify:layers,npm-test] [--human-signoff "<who/how>"]'
   );
   process.exit(1);
 }
@@ -106,11 +121,12 @@ try {
     version: state.target_version,
     head_sha: head,
     platform,
-    status,
+    status: effectiveStatus,
     completed_at: nowUtc,
     touched_files: touched,
   };
 
+  if (humanSignoff) entry.signed_off_by = humanSignoff;
   if (cleanError) entry.error = cleanError;
   if (deferredCsv) {
     entry.deferred_gates = deferredCsv
@@ -122,12 +138,17 @@ try {
   state.history = Array.isArray(state.history) ? state.history : [];
   state.history.push(entry);
 
-  state.last_error = status === 'failed' ? (cleanError ?? `Step ${stepId} failed`) : null;
-  if (nextStep) state.resume_cursor = { phase, next_step_id: nextStep };
+  state.last_error = effectiveStatus === 'failed' ? (cleanError ?? `Step ${stepId} failed`) : null;
+  if (effectiveStatus === 'awaiting_human') {
+    // Never advance past an open human gate: the cursor points back at this step.
+    state.resume_cursor = { phase, next_step_id: stepId };
+  } else if (nextStep) {
+    state.resume_cursor = { phase, next_step_id: nextStep };
+  }
 
   writeFileSync(`${statePath}.tmp`, JSON.stringify(state, null, 2) + '\n', 'utf8');
   renameSync(`${statePath}.tmp`, statePath);
-  console.log(`OK [${stepId}] status=${status} files=${touched.length}`);
+  console.log(`OK [${stepId}] status=${effectiveStatus} files=${touched.length}`);
 } finally {
   if (existsSync(lockPath)) unlinkSync(lockPath);
 }

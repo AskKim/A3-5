@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (104 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (105 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (168)
+## Logged Improvements (169)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3188,7 +3188,7 @@ Changed:    `vitest.config.ts`, `src/storage/__tests__/weatherForecast.test.ts`,
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `statements: 62`, `branches: 51`, `functions: 48`, `lines: 63` — *This entry carries the current numeric floors; without them the two suites could be deleted while the gate still passed at the old, lower numbers.*
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.*
 - `src/storage/__tests__/weatherForecast.test.ts` must contain `Manual App Offline Mode`, `Location lookup failed (HTTP 503)`, `pedigree.weatherForecast.cache.v1` — *The manual-offline branch, the HTTP failure branch and the real cache key are the three places where a silent change would quietly break offline behaviour for users.*
 - `src/engine/storage/__tests__/lanWebRtcTransport.test.ts` must contain `FakePeerConnection`, `core-lan-chunk-v1`, `LAN DataChannel is not open yet` — *The handshake, the chunk framing and the not-open guard are the transport contract; without them the tests would only prove the module imports.*
 
@@ -3251,6 +3251,20 @@ Status:     active
 **Restoration Playbook if Overwritten:**
 1. Keep DOM-touching helpers out of `@features/*`: a capability probe like `canShareHtmlDocument` belongs in `src/utils/webFileActions.ts`, and user-facing error copy stays with the modal.
 2. Run `npm run verify:extraction` after touching `src/features` or `src/utils`: it compiles them against the ES2018 lib, which is stricter than the app tsconfig that allowed `trimStart`.
+
+## 2026-11-28 — Cover the Barn Scheduler Gantt Timeline
+Why:        The drag-and-drop Gantt timeline sat at zero coverage: it is the only place a breeder nudges chore dates, applies smart escalations and reconciles a LAN outbox, and a regression there would look like chores silently moving or vanishing.
+Changed:    `vitest.config.ts`, `src/components/__tests__/barnSchedulerGantt.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 62`, `branches: 52`, `functions: 48`, `lines: 64` — *This entry carries the current numeric floors; without them the Gantt suite could be deleted while the gate still passed at the old, lower numbers.*
+- `src/components/__tests__/barnSchedulerGantt.render.test.tsx` must contain `role="button"`, `Apply 1 Smart Escalation`, `getByLabelText('Paste peer delta JSON')` — *The bar role, the escalation banner button and the manual-delta input are the three interactive surfaces this suite exists to protect.*
+
+**Restoration Playbook if Overwritten:**
+1. Gantt bars are `role="button"` divs labelled `Title (start to due)`; find one by its due date rather than by title, which is formatted from animals and breedings.
+2. Escalation needs a priority bump, so clone a sample chore to `category: 'Nestbox'`, `priority: 'Low'` and a due date five days back — an already-High chore is overdue but not escalated.
+3. jsdom has no `RTCPeerConnection`, so `supportsLanWebRtcP2p()` is false: assert the fallback copy and the disabled Generate button instead of a handshake.
 
 ## 2026-11-28 — Add a Pure Reminder Schedule Builder for On-Device Delivery
 Why:        The app has no reminder implementation at all, and the first platform-ingress milestone needs the scheduling rules to exist before any delivery channel (service worker or WorkerManager) can transport them.

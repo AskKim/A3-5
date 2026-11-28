@@ -150,7 +150,8 @@
       "type": "REUSABLE",
       "phase": "B",
       "runners": ["antigravity", "freebuff"],
-      "instruction": "read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`",
+      "human_signoff": true,
+      "instruction": "read ONLY `<!-- PHASE_B_START -->` through `<!-- PHASE_B_END -->`; HUMAN GATE - its post-merge smoke is human-assisted, so it logs `awaiting_human` unless a person confirms it with --human-signoff",
       "description": "Phase-B release sanity check."
     },
     {
@@ -159,7 +160,8 @@
       "type": "REUSABLE",
       "phase": "B",
       "runners": ["antigravity", "freebuff"],
-      "instruction": "release cut, post-deploy smoke test, human-only sign-off",
+      "human_signoff": true,
+      "instruction": "release cut, post-deploy smoke test, human-only sign-off; HUMAN GATE - the sign-off is listed, never performed, so it logs `awaiting_human` unless a person confirms it with --human-signoff",
       "description": "Final release plan and sign-off."
     }
   ]

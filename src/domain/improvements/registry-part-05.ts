@@ -4335,9 +4335,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 62', 'branches: 51', 'functions: 48', 'lines: 63'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the two suites could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/storage/__tests__/weatherForecast.test.ts',
@@ -4539,6 +4539,48 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
   },
   {
     id: 'IMP-169',
+    title: 'Cover the Barn Scheduler Gantt Timeline',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The drag-and-drop Gantt timeline sat at zero coverage: it is the only place a breeder nudges chore dates, applies smart escalations and reconciles a LAN outbox, and a regression there would look like chores silently moving or vanishing.',
+    summary:
+      'Adds `barnSchedulerGantt.render.test.tsx`, mounting the real component against the predefined sample barn: the empty-filter copy, timeline bars with the click-to-inspect panel, `Move +1d` reschedule with its shifted due date, Done/Reopen and delete calls, a Low-priority five-day-late nestbox chore that escalates to High so the banner and `Apply N Smart Escalations` run, the 14/21/30-day window and grouping toggles, unresolved outbox collisions with keep/use-other/dismiss callbacks, a malformed manual delta rejected with an alert and a valid one merged through `onReconcileOutboxOps`, and the no-WebRTC fallback copy. Coverage goes 0% → 46.8%, totals to 63.46/53.35/49.67/65.03, so the global floors move to 62/52/48/64 and components to 36/29/24/38.',
+    files: [
+      'vitest.config.ts',
+      'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 52', 'functions: 48', 'lines: 64'],
+        rationale:
+          'This entry carries the current numeric floors; without them the Gantt suite could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/components/__tests__/barnSchedulerGantt.render.test.tsx',
+        requiredSubstrings: [
+          "role=\"button\"",
+          'Apply 1 Smart Escalation',
+          "getByLabelText('Paste peer delta JSON')",
+        ],
+        rationale:
+          'The bar role, the escalation banner button and the manual-delta input are the three interactive surfaces this suite exists to protect.',
+      },
+    ],
+    restorePlaybook: [
+      'Gantt bars are `role="button"` divs labelled `Title (start to due)`; find one by its due date rather than by title, which is formatted from animals and breedings.',
+      'Escalation needs a priority bump, so clone a sample chore to `category: \'Nestbox\'`, `priority: \'Low\'` and a due date five days back — an already-High chore is overdue but not escalated.',
+      'jsdom has no `RTCPeerConnection`, so `supportsLanWebRtcP2p()` is false: assert the fallback copy and the disabled Generate button instead of a handshake.',
+    ],
+  },
+  {
+    id: 'IMP-170',
     title: 'Add a Pure Reminder Schedule Builder for On-Device Delivery',
     category: 'workflow-polish',
     release: 'alpha-3',
