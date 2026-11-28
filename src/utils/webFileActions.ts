@@ -701,3 +701,21 @@ export async function copyTextWithFallback(
   return 'unsupported';
 }
 
+/**
+ * Whether this host can hand an `.HTM` document to the OS share sheet. A native wrapper always can
+ * (its bridge owns the share step); a browser needs both `navigator.share` and `navigator.canShare`
+ * to accept a file probe.
+ */
+export function canShareHtmlDocument(filename: string, isNativeWrapper: boolean): boolean {
+  if (isNativeWrapper) {
+    return true;
+  }
+  if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') return false;
+  if (typeof navigator.canShare !== 'function') return false;
+  try {
+    const probe = new File(['<html></html>'], filename, { type: 'text/html' });
+    return navigator.canShare({ files: [probe] });
+  } catch {
+    return false;
+  }
+}

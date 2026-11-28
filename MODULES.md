@@ -5,12 +5,12 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 289
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 59 (20.4%)
+- **Total Non-Test Source Modules:** 290
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 60 (20.7%)
   - Core Foundation (`src/engine/`): 31
-  - Non-Content Features (`src/features/`): 17
+  - Non-Content Features (`src/features/`): 18
   - Reusable Utilities (`src/utils/`): 11
-- **Content-Specific Modules:** 230 (79.6%)
+- **Content-Specific Modules:** 230 (79.3%)
   - Domain Engines (`src/domain/`): 87
   - App Composition & Configs (`src/app/`): 29
   - Storage Adapters & Workers (`src/storage/`): 29
@@ -32,7 +32,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 1. Core / Foundation / Non-Content-Specific Modules (59)
+## 1. Core / Foundation / Non-Content-Specific Modules (60)
 
 ### Core Engine / Foundation (`src/engine/`, `@engine/*`) (31)
 
@@ -70,7 +70,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/engine/storage/storageAdapter.interface.ts` | Content-agnostic core primitive, codec, bridge, or storage foundation module. |
 | `src/engine/sync/index.ts` | Content-agnostic core primitive, codec, bridge, or storage foundation module. |
 
-### Non-Content-Specific Feature Modules (`src/features/`, `@features/*`) (17)
+### Non-Content-Specific Feature Modules (`src/features/`, `@features/*`) (18)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
@@ -85,6 +85,7 @@ npx tsx scripts/list-modules.ts --check
 | `src/features/csv-importer/types.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/document-export/htmlPrintPackage.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/document-export/index.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
+| `src/features/document-export/printStagePresenters.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/featureModule.interface.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/ics-calendar/icsBuilder.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |
 | `src/features/ics-calendar/index.ts` | Isolated, content-agnostic reusable feature module (`IFeatureModule` / decoupled service). |

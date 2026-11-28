@@ -1,0 +1,20 @@
+goal: Deepen the platform layers that already exist — storage resilience, schema migrations, bridge conformance, update governor, precache/chunk budgets and coverage floors — with zero new user-facing features and no dependency changes
+status:
+  - [TODO] src/storage/__tests__/quotaRecovery.test.ts | Fault-injection matrix over `sqliteIdbPersistence.ts` and `opfsStorage.ts`: QuotaExceededError at each write step, mid-transaction IndexedDB abort, rejected OPFS handle, `navigator.locks` timeout. Measure existing coverage first and only add cases that are not already asserted.
+  - [TODO] src/storage/__tests__/schemaMigrations.test.ts | Forward-only migration matrix from every historical `user_version` to current, each with a fixture and the pre-reset dump path; fails when a version has no fixture instead of skipping.
+  - [TODO] src/engine/bridge/__tests__/bridgeConformance.test.ts | One contract spec run against a fake native object: requestId correlation, origin rejection, timeout expiry, legacy WebView (<116) base64 fallback, two-frame ArrayBuffer, back-handler priority order. `verify:android` and the iOS contract then point at the same spec.
+  - [TODO] src/storage/__tests__/pwaUpdateManager.test.ts | Exhaustive governor state machine: auto/notify/pinned x multi-tab controller election x offline/uncached gate x single-reload handshake, including the two-tab race that must not reload twice.
+  - [TODO] scripts/verify-chunk-graph.ts + scripts/*.json | Promote soft budgets to hard ratchets measured from the current build: precache asset count and per-chunk byte ceiling, chunk-edge budget, and a boot-critical chunk allowlist so a new cycle or a fat boot chunk fails CI.
+  - [TODO] src/storage/crashLogger.ts + src/app/ports/diagnostics.ts | Support-bundle redaction test (no emails, phone numbers, absolute paths or passphrases) plus a retention test through the ring buffer's memory-pressure path.
+  - [TODO] vitest.config.ts | Raise each floor to its measured value after the suites land — global and per area (domain/components/storage/hooks/engine) — so one area's gains can never subsidise another's gaps.
+  - [TODO] docs/ + registry | MODULES.md / EXTRACTION_INVENTORY.md sync, IMP-### entry per finished milestone, `npm run regen:ledgers`, and one short engineering note listing each new gate and what it fails on.
+constraints:
+  - Build order — this handoff is SECOND and is blocked until `docs/plans/handoff-platform-ingress.yaml` is fully [DONE] and deleted. Do not start it alongside or before that file: the coverage floors, precache/chunk ratchets and bridge conformance spec here must be measured against the post-ingress tree, not a baseline the first handoff is still changing.
+  - No new user-facing features, no UI copy or layout changes, no dependency additions, upgrades or swaps.
+  - Do not start the standalone `/engine` package and do not retitle `src/engine` (owner decision); the remaining [WIP] presenter extraction in handoff-modularity-reusability stays out of scope here.
+  - Boot-locked entry files untouched; zero type escapes; `scripts/layer-allowlist.json` stays `[]` and `scripts/ui-storage-coupling-budget.json` stays empty.
+  - Every new test must exercise shipped code paths; never weaken an assertion, skip a case or set a tolerance just to go green — a gate that cannot fail closed does not ship.
+  - `npm run verify`, `npm run build` and `npm run verify:chunks` stay green after each milestone.
+decisions: Depth lands as gates and adversarial tests rather than refactors, so the Alpha 2 baseline stays provably intact while the failure modes get covered.
+verified: tsc=pending | test=pending | build=pending
+next_action: Only after handoff-platform-ingress is closed — src/storage/__tests__/quotaRecovery.test.ts — read the existing quota suite first (it already covers some recovery paths), then add only the missing QuotaExceededError injection points, since this is the one failure mode with recovery code and no adversarial proof.

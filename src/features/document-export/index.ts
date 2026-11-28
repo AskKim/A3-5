@@ -9,3 +9,4 @@
  */
 
 export * from './htmlPrintPackage';
+export * from './printStagePresenters';

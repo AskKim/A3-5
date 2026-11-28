@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canShareHtmlDocument,
   detectDocumentPrintOrientation,
   extractScopedPrintCssFromRawCss,
   sanitizePrintStageHtml,
   scopePrintSelectorList,
-} from '../PrintPreviewModal';
+} from '@features/document-export';
+import { canShareHtmlDocument } from '../../utils/webFileActions';
 
 describe('PrintPreviewModal pure CSS scoping, orientation & native share helpers', () => {
   it('enables Share .HTM whenever running inside native Android/iOS wrapper even without navigator.share', () => {
@@ -13,7 +13,7 @@ describe('PrintPreviewModal pure CSS scoping, orientation & native share helpers
   });
 
   it('scopes html and body selectors cleanly to #barn-print-stage', () => {
-    expect(scopePrintSelectorList('html, body, .card, body .header')).toBe(
+    expect(scopePrintSelectorList('html, body, .card, body .header', '#barn-print-stage')).toBe(
       '#barn-print-stage, #barn-print-stage, #barn-print-stage .card, #barn-print-stage .header'
     );
   });
@@ -30,7 +30,7 @@ describe('PrintPreviewModal pure CSS scoping, orientation & native share helpers
         .toolbar-only { display: block; }
       }
     `;
-    const extracted = extractScopedPrintCssFromRawCss(css);
+    const extracted = extractScopedPrintCssFromRawCss(css, '#barn-print-stage');
     expect(extracted.pageRules).toEqual(['@page { size: letter landscape; margin: 0.35in; }']);
     const joined = extracted.scopedRules.join('\n');
     expect(joined).toContain('.page-break { break-after: page; page-break-after: always; }');

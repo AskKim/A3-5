@@ -4,11 +4,8 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  formatPrintPreviewFileError,
-  isPrintPreviewAbortError,
-  runPrintPreviewFileAction,
-} from '../PrintPreviewModal';
+import { isPrintPreviewAbortError } from '@features/document-export';
+import { formatPrintPreviewFileError, runPrintPreviewFileAction } from '../PrintPreviewModal';
 import {
   getActiveAsyncErrorToasts,
   resetAsyncErrorToastsForTests,
