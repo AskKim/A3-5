@@ -16,6 +16,12 @@ import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const SRC = path.join(ROOT, 'src');
 const ALLOWLIST_PATH = path.join(ROOT, 'scripts', 'layer-allowlist.json');
+/**
+ * Burn-down ledger for the UI decoupling milestone: components that still load a storage module at
+ * runtime. Unlike the layer allowlist this is not a permanent exemption list — the set may only
+ * shrink. A new edge fails the audit; a cleared edge must be pruned in the same change.
+ */
+const UI_COUPLING_BUDGET_PATH = path.join(ROOT, 'scripts', 'ui-storage-coupling-budget.json');
 
 type Layer =
   | 'engine'
@@ -106,6 +112,26 @@ function extractSpecifiers(text: string): string[] {
   return specs;
 }
 
+/**
+ * Import/export statements that load a module at runtime. Bare `import type` statements are erased at
+ * compile time, so a component may name a storage type without acquiring a runtime dependency on it.
+ */
+function extractRuntimeSpecifiers(text: string): string[] {
+  const specs: string[] = [];
+  const withoutComments = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  const staticRe =
+    /(?:^|\n)\s*(?:import|export)\s+(?!type\s)(?:[\s\S]*?\bfrom\s+)?['"]([^'"]+)['"]/g;
+  let match: RegExpExecArray | null;
+  while ((match = staticRe.exec(withoutComments)) !== null) {
+    specs.push(match[1]);
+  }
+  const dynamicRe = /(?:^|[^'"`])\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  while ((match = dynamicRe.exec(withoutComments)) !== null) {
+    specs.push(match[1]);
+  }
+  return specs;
+}
+
 function resolveSpecifier(fromRel: string, spec: string): string | null {
   if (spec.startsWith('.')) {
     return path.posix.normalize(path.posix.join(path.posix.dirname(fromRel), spec));
@@ -124,6 +150,7 @@ function featureOf(rel: string): string | null {
 }
 
 const violations = new Set<string>();
+const uiStorageEdges = new Set<string>();
 
 for (const file of walk(SRC)) {
   const rel = path.relative(ROOT, file).split(path.sep).join('/');
@@ -161,6 +188,21 @@ for (const file of walk(SRC)) {
     }
   }
 
+  // UI components talk to storage through `src/app` ports (an injected capability with a browser
+  // implementation) instead of importing the singleton modules directly. Type-only imports are
+  // fine: they are erased and create no runtime dependency.
+  if (layer === 'components') {
+    for (const spec of extractRuntimeSpecifiers(text)) {
+      const target = resolveSpecifier(rel, spec);
+      if (!target) continue;
+      if (layerOf(target) === 'storage') {
+        uiStorageEdges.add(
+          `${rel} -> ${target} [components must not import storage singletons; inject an @app port]`
+        );
+      }
+    }
+  }
+
   if ((layer === 'engine' || layer === 'features') && !DOM_EXEMPT.test(rel)) {
     const code = text
       .split('\n')
@@ -187,6 +229,37 @@ if (process.argv.includes('--write-allowlist')) {
   process.exit(0);
 }
 
+if (process.argv.includes('--write-ui-budget')) {
+  fs.writeFileSync(
+    UI_COUPLING_BUDGET_PATH,
+    `${JSON.stringify([...uiStorageEdges].sort(), null, 2)}\n`
+  );
+  console.log(`[verify:layers] Wrote ${uiStorageEdges.size} component→storage coupling edge(s).`);
+  process.exit(0);
+}
+
+const couplingBudget = new Set<string>(
+  fs.existsSync(UI_COUPLING_BUDGET_PATH)
+    ? (JSON.parse(fs.readFileSync(UI_COUPLING_BUDGET_PATH, 'utf8')) as string[])
+    : []
+);
+const couplingGrowth = [...uiStorageEdges].filter((v) => !couplingBudget.has(v)).sort();
+const couplingCleared = [...couplingBudget].filter((v) => !uiStorageEdges.has(v)).sort();
+
+if (couplingGrowth.length > 0) {
+  console.error(
+    `[verify:layers] FAIL — ${couplingGrowth.length} new component→storage coupling(s); add an @app port instead:`
+  );
+  for (const v of couplingGrowth) console.error(`  + ${v}`);
+}
+if (couplingCleared.length > 0) {
+  console.error(
+    `[verify:layers] FAIL — ${couplingCleared.length} burn-down edge(s) cleared; prune scripts/ui-storage-coupling-budget.json (--write-ui-budget):`
+  );
+  for (const v of couplingCleared) console.error(`  - ${v}`);
+}
+if (couplingGrowth.length > 0 || couplingCleared.length > 0) process.exit(1);
+
 const fresh = [...violations].filter((v) => !allowlist.has(v)).sort();
 const stale = [...allowlist].filter((v) => !violations.has(v)).sort();
 
@@ -201,5 +274,5 @@ if (stale.length > 0) {
 if (fresh.length > 0 || stale.length > 0) process.exit(1);
 
 console.log(
-  `[verify:layers] PASS — ${violations.size} allowlisted legacy violation(s), 0 new.`
+  `[verify:layers] PASS — ${violations.size} allowlisted legacy violation(s), 0 new; component→storage coupling ${uiStorageEdges.size}/${couplingBudget.size} (burn-down only).`
 );

@@ -29,8 +29,8 @@ import {
 } from '../domain/deviceCapability';
 import { formatByteSizePure } from '../domain/imageOptimizationSpec';
 import { BackupSyncStatus } from '../storage/localSyncChannels';
-import { OpfsPruneSyncWarning } from '../storage/opfsStorage';
-import { RollingBackupMeta } from '../storage/storageProtection';
+import type { OpfsPruneSyncWarning } from '../storage/opfsStorage';
+import type { RollingBackupMeta } from '../storage/storageProtection';
 
 interface UnifiedBackupVaultPanelProps {
   opfsSupported: boolean;

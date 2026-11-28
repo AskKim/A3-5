@@ -31,7 +31,7 @@ import {
   getTierStoragePolicy,
 } from '../domain/deviceCapability';
 import { BarnSettings } from '../domain/models';
-import { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
+import type { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
 
 interface DeviceCapabilityCardProps {
   location: 'home' | 'settings';

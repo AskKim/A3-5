@@ -11,7 +11,7 @@
  * These tests drive that loop against the in-memory adapter.
  */
 import 'fake-indexeddb/auto';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Animal } from '../../domain/models';
 import { buildFullPredefinedSampleSnapshot } from '../../domain/sampleData';
@@ -23,6 +23,8 @@ import { useBarnStore } from '../useBarnStore';
 import { createMemoryStorageAdapter } from './support/memoryStorageAdapter';
 
 afterEach(() => {
+  // Unmount before jsdom teardown so deferred React work cannot run without a window.
+  cleanup();
   setOpfsRootResolverForTest(null);
 });
 

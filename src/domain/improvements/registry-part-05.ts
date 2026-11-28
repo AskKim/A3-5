@@ -3211,9 +3211,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['thresholds:', 'statements: 51', 'branches: 42', 'functions: 37', 'lines: 53'],
+        requiredSubstrings: ['thresholds:', 'statements: 57', 'branches: 47', 'functions: 43', 'lines: 58'],
         rationale:
-          'The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.',
+          'The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance. These tokens track the latest ratchet, raised with IMP-146.',
       },
       {
         filePath: 'src/components/__tests__/backupExportSurfaces.render.test.tsx',
@@ -3512,6 +3512,100 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Keep the `isMountedRef` check after the awaits in `refreshDiagnostics`, before any `setState` call.',
       'Treat a post-teardown state update as a component bug, not a test-ordering problem: fix the guard instead of skipping, retrying or serialising the test.',
       'New async handlers that set state after an await need the same check if they can outlive the panel.',
+    ],
+  },
+  {
+    id: 'IMP-145',
+    title: 'Measure Component→Storage Coupling and Move the Install Prompt Behind an @app Port',
+    category: 'stability-pwa',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The modularity handoff requires the layer checks to cover components and storage, but nothing measured how many UI files still load a storage module at runtime, so the UI decoupling milestone had no denominator and could regress silently. The install button and offline banner were also the simplest example of a presentational header component reaching into `src/storage/storageProtection` for the PWA prompt and connectivity.',
+    summary:
+      '`scripts/audit-layers.ts` now counts component→storage runtime imports (type-only imports are erased, so they are exempt) and checks them against `scripts/ui-storage-coupling-budget.json`, a burn-down ledger that may only shrink: a new edge fails the audit, and a cleared edge must be pruned. `scripts/layer-allowlist.json` stays empty, so no legacy exception list was introduced. The counted baseline is 50 edges across 24 component files, and `PWAInstallButton`/`OfflineIndicator` now read `useInstallPromptPort()` from `src/app/ports/installPrompt.tsx`, which owns the storage import and can be replaced through `InstallPromptPortProvider` in a test.',
+    files: [
+      'scripts/audit-layers.ts',
+      'scripts/ui-storage-coupling-budget.json',
+      'scripts/layer-allowlist.json',
+      'src/app/ports/installPrompt.tsx',
+      'src/components/PWAInstallButton.tsx',
+      'src/components/DeviceCapabilityCard.tsx',
+      'src/components/UnifiedBackupVaultPanel.tsx',
+      'src/components/BarnSchedulerGantt.tsx',
+      'src/components/CloudAppFolderSyncPanel.tsx',
+      'src/components/HealthReferencePanel.tsx',
+      'src/components/SettingsAndSyncScreen.tsx',
+      'src/components/WipedStorageRecoveryModal.tsx',
+      'src/components/__tests__/pwaInstallPort.render.test.tsx',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+      'MODULES.md',
+    ],
+    invariants: [
+      {
+        filePath: 'scripts/audit-layers.ts',
+        requiredSubstrings: ['ui-storage-coupling-budget.json'],
+        rationale:
+          'The burn-down ledger must stay wired into the layer audit; unwiring it would let component coupling creep back unmeasured.',
+      },
+      {
+        filePath: 'src/components/PWAInstallButton.tsx',
+        requiredSubstrings: ['useInstallPromptPort'],
+        rationale:
+          'The install button must consume the @app port rather than importing the storage layer directly.',
+      },
+    ],
+    restorePlaybook: [
+      'A component that needs storage behaviour takes an `@app/ports/*` capability (context hook with a browser default plus a provider) or a narrow prop — never a direct `../storage/*` import.',
+      'Type-only imports from storage are allowed: they are erased at compile time and create no runtime edge.',
+      'After migrating a seam run `npx tsx scripts/audit-layers.ts --write-ui-budget` so the ledger records the smaller set; never edit the budget upward.',
+    ],
+  },
+  {
+    id: 'IMP-146',
+    title: 'Coverage Expansion: Domain Normalizers, Workspace Screens and Store Actions',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'Only the model layer and a handful of render surfaces were tested while 76 files carried zero executable coverage, so the app\'s largest screens, the JSON sanitizer defaults and the store mutations could regress without a single failing test. The floors also allowed one area\'s gains to pay for another\'s gaps.',
+    summary:
+      'Adds eight focused test files and ratchets the gate to statements 57, branches 47, functions 43, lines 58 with per-area floors for domain, components, storage, hooks and engine. Coverage moved from 52.75/43.09/38.86/54.17 to 58.03/48.59/44.02/59.38: table-driven normalizer tests for every `models.ts` coercion (including fallbacks and clamps), a messy-backup parse test that drives the JSON sanitizer defaults and both CRM reports, jsdom mounts for the herd, species hub, economics, breeding, pedigree, CRM and print-preview screens against the full sample barn, store mutation tests through the injected memory adapter, and LAN transport capability/controller tests. Each ratchet batch landed with the tests that earned it instead of after the fact.',
+    files: [
+      'vitest.config.ts',
+      'src/domain/__tests__/modelsNormalizers.test.ts',
+      'src/domain/__tests__/crmReportsAndBackupSanitization.test.ts',
+      'src/components/__tests__/clientCrm.render.test.tsx',
+      'src/components/__tests__/screensSmoke.render.test.tsx',
+      'src/components/__tests__/printPreview.render.test.tsx',
+      'src/hooks/__tests__/barnStoreActions.test.tsx',
+      'src/engine/storage/__tests__/lanWebRtcTransport.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 57', 'src/domain/**', 'src/components/**', 'src/hooks/**'],
+        rationale:
+          'Global floors plus per-area floors are what stop a new untested screen from riding on the tested domain layer; a missing area floor reopens that trade.',
+      },
+      {
+        filePath: 'src/components/__tests__/screensSmoke.render.test.tsx',
+        requiredSubstrings: ['HerdScreen', 'SpeciesDashboardScreen', 'EconomicsLedgerScreen', 'BreedingScreen', 'PedigreeScreen'],
+        rationale:
+          'These five screens carried the bulk of the zero-coverage statements; a mount that silently disappears would take thousands of statements back to unexecuted.',
+      },
+    ],
+    restorePlaybook: [
+      'Measure with the json-summary reporter, rank files by missing statements, and spend the next batch on the area floor that is furthest below its measurement.',
+      'For pure domain code, test the fallback and clamp arms the happy path never reaches; that is where the branch coverage sits.',
+      'Mount large screens with real fixture data and at least one interaction, not a bare heading assertion, or statements rise while branches stay flat.',
+      'Exercise store mutations through the injected memory adapter instead of extracting the hook; the adapter is the existing seam.',
     ],
   },
 ];

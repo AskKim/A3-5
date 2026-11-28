@@ -83,7 +83,7 @@ import {
 } from '../domain/themePalette';
 import { sanitizeSafeRasterImageDataUrl } from '../domain/inputSanitization';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
-import { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
+import type { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
 import { optimizeImageFile } from '../storage/webImageOptimizer';
 import {
   RollingBackupMeta,
