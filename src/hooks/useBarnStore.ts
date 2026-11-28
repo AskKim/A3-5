@@ -7676,6 +7676,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     reloadFromAdapter,
     refreshVaultAndArchives,
     enqueueStoreMutation,
+    readCommittedSnapshot: () =>
+      adapterRef.current!.loadSnapshot({ lightweightPhotos: true }),
   });
 
   const {
@@ -7704,6 +7706,8 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     refreshStorageStatus,
     recordBackupExport,
     enqueueStoreMutation,
+    readCommittedSnapshot: () =>
+      adapterRef.current!.loadSnapshot({ lightweightPhotos: true }),
   });
 
   const createAndVerifyPreUpgradeBackup = useCallback(async (): Promise<{

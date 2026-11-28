@@ -17,7 +17,7 @@ import {
   deleteRollingSnapshotBackup,
   loadRollingSnapshotBackup,
 } from '../../storage/storageProtection';
-import { stripRestoredBackupBookkeeping } from './useOpfsVaultActions';
+import { runDestructiveRestore } from './restoreOrchestrator';
 
 /** The rolling-vault primitives this slice calls. */
 export interface RollingBackupStoragePort {
@@ -43,6 +43,8 @@ export interface RollingBackupDeps {
   reloadFromAdapter: () => Promise<void>;
   refreshVaultAndArchives: () => Promise<void>;
   enqueueStoreMutation: <T>(task: () => Promise<T>) => Promise<T>;
+  /** Reads back what the adapter committed; enables post-restore row-count verification. */
+  readCommittedSnapshot?: () => Promise<BarnDatabaseSnapshot | null>;
   /** Test seam; production leaves this unset to use the real rolling-vault module. */
   storage?: RollingBackupStoragePort;
 }
@@ -54,26 +56,33 @@ async function restoreRollingBackupUnqueued(
   deps: RollingBackupDeps,
   key: string
 ): Promise<void> {
-  const currentSnapshot = deps.snapshotRef.current;
-  try {
-    const snap = await resolveStorage(deps).loadRollingSnapshotBackup(key);
-    if (!snap) {
-      deps.notify('Could not load that rolling backup snapshot.');
-      return;
+  await runDestructiveRestore(
+    {
+      snapshotRef: deps.snapshotRef,
+      wipedRecoveryDetected: deps.wipedRecoveryDetected,
+      saveSafetyRollingBackup: deps.saveSafetyRollingBackup,
+      clearPhotoCache: deps.clearPhotoCache,
+      replaceSnapshot: deps.replaceSnapshot,
+      clearLocalSyncAndBackupReminderState: deps.clearLocalSyncAndBackupReminderState,
+      clearWipedRecoveryContext: deps.clearWipedRecoveryContext,
+      reloadFromAdapter: deps.reloadFromAdapter,
+      readCommittedSnapshot: deps.readCommittedSnapshot,
+      notify: deps.notify,
+      reportPersistenceFailure: deps.reportPersistenceFailure,
+    },
+    {
+      action: 'restore rolling snapshot',
+      missingMessage: 'Could not load that rolling backup snapshot.',
+      safetyNote: 'Pre-rolling-restore safety snapshot',
+      verifyRowCounts: true,
+      successMessage: ({ snapshot }) =>
+        `Restored rolling snapshot (${snapshot.animals.length} animals).`,
+    },
+    async () => {
+      const snap = await resolveStorage(deps).loadRollingSnapshotBackup(key);
+      return snap ? { snapshot: snap } : null;
     }
-    if (currentSnapshot && !deps.wipedRecoveryDetected && currentSnapshot.animals.length > 0) {
-      await deps.saveSafetyRollingBackup(currentSnapshot, 'Pre-rolling-restore safety snapshot');
-    }
-    deps.clearPhotoCache();
-    await deps.replaceSnapshot(stripRestoredBackupBookkeeping(snap));
-    await deps.clearLocalSyncAndBackupReminderState();
-    deps.clearWipedRecoveryContext();
-    await deps.reloadFromAdapter();
-    deps.notify(`Restored rolling snapshot (${snap.animals.length} animals).`);
-  } catch (err) {
-    deps.reportPersistenceFailure('restore rolling snapshot', err);
-    throw err;
-  }
+  );
 }
 
 /** Restore a rolling snapshot, serialised with every other store mutation. */
@@ -110,6 +119,7 @@ export function useRollingBackupActions(deps: RollingBackupDeps): RollingBackupA
     reloadFromAdapter,
     refreshVaultAndArchives,
     enqueueStoreMutation,
+    readCommittedSnapshot,
     storage,
   } = deps;
 
@@ -126,6 +136,7 @@ export function useRollingBackupActions(deps: RollingBackupDeps): RollingBackupA
     reloadFromAdapter,
     refreshVaultAndArchives,
     enqueueStoreMutation,
+    readCommittedSnapshot,
     storage,
   };
 
@@ -143,6 +154,7 @@ export function useRollingBackupActions(deps: RollingBackupDeps): RollingBackupA
       reloadFromAdapter,
       notify,
       reportPersistenceFailure,
+      readCommittedSnapshot,
       storage,
     ]
   );

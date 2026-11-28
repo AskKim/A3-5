@@ -1542,7 +1542,7 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
         requiredSubstrings: [
           'export function useRollingBackupActions',
           'ROLLING_BACKUP_STORAGE_PORT',
-          'stripRestoredBackupBookkeeping',
+          'runDestructiveRestore',
         ],
         rationale:
           'Both restore paths must strip `lastBackupMeta` and the reminder snooze; a local copy of that cleaning step is how a restored backup immediately triggers “backup overdue” again.',
@@ -1705,6 +1705,97 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Animal mutations live in `barnStore/useAnimalsCrud.ts`; the store supplies a memoised adapter facade and the refs.',
       'Every animal row write needs a matching `diffEntityFieldsToOperations` call with the same `_rev` and timestamp.',
       'Deletes take a safety rolling snapshot before any unlink or removal.',
+    ],
+  },
+  {
+    id: 'IMP-103',
+    title: 'One Destructive-Restore Orchestrator With Verified Rollback',
+    category: 'backup-safety',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Make it impossible for a restore path to skip the safety snapshot or reorder the steps that protect a live barn.',
+    summary:
+      'Adds `src/hooks/barnStore/restoreOrchestrator.ts` and points both the OPFS vault and rolling IndexedDB restores at it. The orchestrator owns the order once — load and refuse, safety snapshot (skipped after a wiped recovery or with an empty barn), photo-cache clear, replace with backup bookkeeping stripped, sync-state clear, recovery-context clear, source hook, verification, reload, toast. It also adds the step every path lacked: after the replace it re-reads the committed snapshot and compares animal and photo counts with the file; on a mismatch it puts the safety snapshot back, toasts what was expected versus found, and fails the restore instead of leaving a half-loaded barn. `stripRestoredBackupBookkeeping` now lives with the orchestrator, so the two slices no longer import each other. Recorded as ADR `docs/decisions/0001-destructive-restore.md`; 9 orchestrator tests cover ordering, both safety-snapshot skips, verification match, rollback and write failure.',
+    files: [
+      'src/hooks/barnStore/restoreOrchestrator.ts',
+      'src/hooks/__tests__/restoreOrchestrator.test.ts',
+      'src/hooks/barnStore/useOpfsVaultActions.ts',
+      'src/hooks/barnStore/useRollingBackupActions.ts',
+      'docs/decisions/0001-destructive-restore.md',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/restoreOrchestrator.ts',
+        requiredSubstrings: [
+          'export async function runDestructiveRestore',
+          'verifyRowCounts',
+          'Your previous barn was put back.',
+        ],
+        rationale:
+          'Verification without a rollback is worse than none: it detects a bad restore and still leaves the user with it.',
+      },
+      {
+        filePath: 'src/hooks/barnStore/useOpfsVaultActions.ts',
+        requiredSubstrings: ['runDestructiveRestore'],
+        forbiddenSubstrings: ['const cleanedVaultSnap'],
+        rationale:
+          'The OPFS path must not clean and replace on its own again — that is how the two restore paths drifted apart the first time.',
+      },
+      {
+        filePath: 'docs/decisions/0001-destructive-restore.md',
+        requiredSubstrings: ['Every destructive restore goes through one orchestrator', 'verify the committed row counts'],
+        rationale:
+          'The ordering is a contract, and an ADR is what stops a future path from quietly doing it differently.',
+      },
+    ],
+    restorePlaybook: [
+      'All restores go through `runDestructiveRestore`; callers only decode their format and add source-specific steps.',
+      'Keep the safety snapshot before the replace and keep the count verification plus rollback after it.',
+      'A new restore source gets the net for free — do not copy the sequence.',
+    ],
+  },
+  {
+    id: 'IMP-104',
+    title: 'Sweep Hardening: Quota Tests, Import A11y, No Blanket Host Allow',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Close the small, concrete gaps the full sweep found instead of leaving them as report findings.',
+    summary:
+      'Three sweep fixes. (1) Quota-failure coverage: new tests drive `QuotaExceededError` through animal save, batch delete and archive offload, asserting the failure is reported and that no success toast or reload happens. (2) Accessibility: the hidden backup file input in `WipedStorageRecoveryModal` now has `aria-label="Choose a backup file to recover from"`, so strict audits and automation see a named control. (3) Dev-server exposure: `vite.config.ts` no longer uses `allowedHosts: true`; localhost is allowed by default and preview hostnames come from `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS` for the process that needs them, so the blanket any-Host acceptance is gone.',
+    files: [
+      'src/hooks/__tests__/animalsCrud.test.ts',
+      'src/hooks/__tests__/opfsArchiveOffload.test.ts',
+      'src/components/WipedStorageRecoveryModal.tsx',
+      'vite.config.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'vite.config.ts',
+        requiredSubstrings: ['__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS'],
+        forbiddenSubstrings: ['allowedHosts: true'],
+        rationale:
+          'A blanket host allow lets any hostname reach the dev server; the env allowlist is the supported way to admit a preview origin.',
+      },
+      {
+        filePath: 'src/components/WipedStorageRecoveryModal.tsx',
+        requiredSubstrings: ['aria-label="Choose a backup file to recover from"'],
+        rationale:
+          'The input is visually hidden, so the label is the only thing that names it for assistive tech.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/animalsCrud.test.ts',
+        requiredSubstrings: ['surfaces a quota failure instead of claiming the animal was saved'],
+        rationale:
+          'Storage-full is a normal state on a phone; the save path must report it rather than toast success over a failed write.',
+      },
+    ],
+    restorePlaybook: [
+      'Preview hostnames are per-process: start the dev server with `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=<host>`, never by re-enabling blanket host acceptance.',
+      'Hidden inputs still need accessible names.',
+      'Quota paths must report and stay silent, never toast success.',
     ],
   },
 ];

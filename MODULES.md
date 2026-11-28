@@ -5,17 +5,17 @@ Excludes `*.test.ts*` and `__tests__/` files.
 
 ## Summary
 
-- **Total Non-Test Source Modules:** 250
-- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (23.2%)
+- **Total Non-Test Source Modules:** 251
+- **Core / Foundation / Non-Content-Specific Features & Utilities:** 58 (23.1%)
   - Core Foundation (`src/engine/`): 31
   - Non-Content Features (`src/features/`): 17
   - Reusable Utilities (`src/utils/`): 10
-- **Content-Specific Modules:** 192 (76.8%)
+- **Content-Specific Modules:** 193 (76.9%)
   - Domain Engines (`src/domain/`): 85
   - App Composition & Configs (`src/app/`): 9
   - Storage Adapters & Workers (`src/storage/`): 27
   - Native Bridge (`src/native/`): 1
-  - State Store Hook (`src/hooks/`): 14
+  - State Store Hook (`src/hooks/`): 15
   - UI Screens & Modals (`src/components/`): 53
   - Root Entry & Styles (`src/`): 3
 
@@ -109,7 +109,7 @@ npx tsx scripts/list-modules.ts --check
 
 ---
 
-## 2. Content-Specific Modules (192)
+## 2. Content-Specific Modules (193)
 
 ### Domain Engines & Compatibility Facades (`src/domain/`) (85)
 
@@ -253,12 +253,13 @@ npx tsx scripts/list-modules.ts --check
 | --- | --- |
 | `src/native/pedigreeBridge.ts` | Content-specific native Android/iOS WebView container bridge (`pedigreeNative`), consumed via `@engine/bridge` contracts. |
 
-### Content-Specific State Controller Hook (`src/hooks/`) (14)
+### Content-Specific State Controller Hook (`src/hooks/`) (15)
 
 | Module Path | Purpose / Notes |
 | --- | --- |
 | `src/hooks/barnStore/backupReminder.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/photoCacheBudget.ts` | Content-specific application state hook. |
+| `src/hooks/barnStore/restoreOrchestrator.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/storeFacades.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/useAlertDismissals.ts` | Content-specific application state hook. |
 | `src/hooks/barnStore/useAnimalsCrud.ts` | Content-specific application state hook. |

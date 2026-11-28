@@ -25,6 +25,7 @@ import {
   readOpfsVaultBackupBlob,
   saveOpfsVaultBackup,
 } from '../../storage/opfsStorage';
+import { runDestructiveRestore } from './restoreOrchestrator';
 import { saveRollingSnapshotBackup } from '../../storage/storageProtection';
 import { downloadBlobDirect } from '../../utils/webFileActions';
 
@@ -60,19 +61,7 @@ export function describeOpfsVaultBackup(
   return backups.find((backup) => backup.key === key || backup.fileName === key) ?? null;
 }
 
-/** Settings that must never ride along with a restored snapshot. */
-export function stripRestoredBackupBookkeeping(
-  snapshot: BarnDatabaseSnapshot
-): BarnDatabaseSnapshot {
-  return {
-    ...snapshot,
-    settings: {
-      ...snapshot.settings,
-      lastBackupMeta: undefined,
-      backupReminderSnoozedUntilMs: undefined,
-    },
-  };
-}
+export { stripRestoredBackupBookkeeping } from './restoreOrchestrator';
 
 /** Migration suffix shown after a restore that had to upgrade the file's schema. */
 export function formatRestoreMigrationNote(
@@ -106,6 +95,8 @@ export interface OpfsVaultDeps {
   refreshStorageStatus: () => void | Promise<unknown>;
   recordBackupExport: (kind: 'json', fileName: string) => Promise<void>;
   enqueueStoreMutation: <T>(task: () => Promise<T>) => Promise<T>;
+  /** Reads back what the adapter committed; enables post-restore row-count verification. */
+  readCommittedSnapshot?: () => Promise<BarnDatabaseSnapshot | null>;
   /** Test seam; production leaves this unset to use the real OPFS modules. */
   storage?: OpfsVaultStoragePort;
 }
@@ -169,33 +160,43 @@ export async function restoreOpfsVaultBackupUnqueued(
   deps: OpfsVaultDeps,
   key: string
 ): Promise<void> {
-  const currentSnapshot = deps.snapshotRef.current;
-  try {
-    const loaded = await resolveStorage(deps).loadOpfsVaultBackup(key, currentSnapshot?.settings);
-    if (!loaded) {
-      deps.notify('Could not read or verify that OPFS backup file.');
-      return;
+  await runDestructiveRestore(
+    {
+      snapshotRef: deps.snapshotRef,
+      wipedRecoveryDetected: deps.wipedRecoveryDetected,
+      saveSafetyRollingBackup: deps.saveSafetyRollingBackup,
+      clearPhotoCache: deps.clearPhotoCache,
+      replaceSnapshot: deps.replaceSnapshot,
+      clearLocalSyncAndBackupReminderState: deps.clearLocalSyncAndBackupReminderState,
+      clearWipedRecoveryContext: deps.clearWipedRecoveryContext,
+      reloadFromAdapter: deps.reloadFromAdapter,
+      readCommittedSnapshot: deps.readCommittedSnapshot,
+      notify: deps.notify,
+      reportPersistenceFailure: deps.reportPersistenceFailure,
+    },
+    {
+      action: 'restore OPFS vault backup',
+      missingMessage: 'Could not read or verify that OPFS backup file.',
+      safetyNote: 'Pre-vault-restore safety snapshot',
+      verifyRowCounts: true,
+      afterReplace: (payload) =>
+        deps.setActiveSpeciesName(payload.migrated.snapshot.settings.defaultSpecies || 'Rabbit'),
+      successMessage: (payload) => {
+        const migrated = payload.migrated;
+        return `Restored ${migrated.snapshot.animals.length} animals & ${(migrated.snapshot.animalPhotos ?? []).length} photos from OPFS Vault${formatRestoreMigrationNote(
+          migrated.migratedFromVersion,
+          migrated.schemaVersion
+        )}.`;
+      },
+    },
+    async () => {
+      const loaded = await resolveStorage(deps).loadOpfsVaultBackup(
+        key,
+        deps.snapshotRef.current?.settings
+      );
+      return loaded ? { snapshot: loaded.migrated.snapshot, migrated: loaded.migrated } : null;
     }
-    const migrated = loaded.migrated;
-    if (currentSnapshot && !deps.wipedRecoveryDetected && currentSnapshot.animals.length > 0) {
-      await deps.saveSafetyRollingBackup(currentSnapshot, 'Pre-vault-restore safety snapshot');
-    }
-    deps.clearPhotoCache();
-    await deps.replaceSnapshot(stripRestoredBackupBookkeeping(migrated.snapshot));
-    await deps.clearLocalSyncAndBackupReminderState();
-    deps.clearWipedRecoveryContext();
-    deps.setActiveSpeciesName(migrated.snapshot.settings.defaultSpecies || 'Rabbit');
-    await deps.reloadFromAdapter();
-    deps.notify(
-      `Restored ${migrated.snapshot.animals.length} animals & ${(migrated.snapshot.animalPhotos ?? []).length} photos from OPFS Vault${formatRestoreMigrationNote(
-        migrated.migratedFromVersion,
-        migrated.schemaVersion
-      )}.`
-    );
-  } catch (err) {
-    deps.reportPersistenceFailure('restore OPFS vault backup', err);
-    throw err;
-  }
+  );
 }
 
 /** Restore a vault backup, serialised with every other store mutation. */
@@ -263,6 +264,7 @@ export function useOpfsVaultActions(deps: OpfsVaultDeps): OpfsVaultActions {
     refreshStorageStatus,
     recordBackupExport,
     enqueueStoreMutation,
+    readCommittedSnapshot,
     storage,
   } = deps;
 
@@ -286,6 +288,7 @@ export function useOpfsVaultActions(deps: OpfsVaultDeps): OpfsVaultActions {
     refreshStorageStatus,
     recordBackupExport,
     enqueueStoreMutation,
+    readCommittedSnapshot,
     storage,
   };
 
@@ -352,6 +355,7 @@ export function useOpfsVaultActions(deps: OpfsVaultDeps): OpfsVaultActions {
       reloadFromAdapter,
       notify,
       reportPersistenceFailure,
+      readCommittedSnapshot,
       storage,
     ]
   );

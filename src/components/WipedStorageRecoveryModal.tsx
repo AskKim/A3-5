@@ -319,6 +319,7 @@ export function WipedStorageRecoveryModal({
             ref={fileInputRef}
             type="file"
             accept=".json,.zip,.sqlite,.db,.sqlite3,application/json,application/zip"
+            aria-label="Choose a backup file to recover from"
             className="hidden"
             onChange={(e) => {
               void handleFileUpload(e.target.files?.[0]);

@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (38 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (40 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (102)
+## Logged Improvements (104)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2228,3 +2228,43 @@ npm run lint && npm run build
 1. Animal mutations live in `barnStore/useAnimalsCrud.ts`; the store supplies a memoised adapter facade and the refs.
 2. Every animal row write needs a matching `diffEntityFieldsToOperations` call with the same `_rev` and timestamp.
 3. Deletes take a safety rolling snapshot before any unlink or removal.
+
+### IMP-103: One Destructive-Restore Orchestrator With Verified Rollback
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Backups & Safety (`backup-safety`)
+- **Origin:** Session Improvement
+- **User Goal:** Make it impossible for a restore path to skip the safety snapshot or reorder the steps that protect a live barn.
+- **Summary:** Adds `src/hooks/barnStore/restoreOrchestrator.ts` and points both the OPFS vault and rolling IndexedDB restores at it. The orchestrator owns the order once — load and refuse, safety snapshot (skipped after a wiped recovery or with an empty barn), photo-cache clear, replace with backup bookkeeping stripped, sync-state clear, recovery-context clear, source hook, verification, reload, toast. It also adds the step every path lacked: after the replace it re-reads the committed snapshot and compares animal and photo counts with the file; on a mismatch it puts the safety snapshot back, toasts what was expected versus found, and fails the restore instead of leaving a half-loaded barn. `stripRestoredBackupBookkeeping` now lives with the orchestrator, so the two slices no longer import each other. Recorded as ADR `docs/decisions/0001-destructive-restore.md`; 9 orchestrator tests cover ordering, both safety-snapshot skips, verification match, rollback and write failure.
+- **Tracked Files:** `src/hooks/barnStore/restoreOrchestrator.ts`, `src/hooks/__tests__/restoreOrchestrator.test.ts`, `src/hooks/barnStore/useOpfsVaultActions.ts`, `src/hooks/barnStore/useRollingBackupActions.ts`, `docs/decisions/0001-destructive-restore.md`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/restoreOrchestrator.ts` must contain `export async function runDestructiveRestore`, `verifyRowCounts`, `Your previous barn was put back.` — *Verification without a rollback is worse than none: it detects a bad restore and still leaves the user with it.*
+- `src/hooks/barnStore/useOpfsVaultActions.ts` must contain `runDestructiveRestore` — *The OPFS path must not clean and replace on its own again — that is how the two restore paths drifted apart the first time.*
+  - Forbidden regression: `const cleanedVaultSnap`
+- `docs/decisions/0001-destructive-restore.md` must contain `Every destructive restore goes through one orchestrator`, `verify the committed row counts` — *The ordering is a contract, and an ADR is what stops a future path from quietly doing it differently.*
+
+**Restoration Playbook if Overwritten:**
+1. All restores go through `runDestructiveRestore`; callers only decode their format and add source-specific steps.
+2. Keep the safety snapshot before the replace and keep the count verification plus rollback after it.
+3. A new restore source gets the net for free — do not copy the sequence.
+
+### IMP-104: Sweep Hardening: Quota Tests, Import A11y, No Blanket Host Allow
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** CI & Tooling (`ci-tooling`)
+- **Origin:** Session Improvement
+- **User Goal:** Close the small, concrete gaps the full sweep found instead of leaving them as report findings.
+- **Summary:** Three sweep fixes. (1) Quota-failure coverage: new tests drive `QuotaExceededError` through animal save, batch delete and archive offload, asserting the failure is reported and that no success toast or reload happens. (2) Accessibility: the hidden backup file input in `WipedStorageRecoveryModal` now has `aria-label="Choose a backup file to recover from"`, so strict audits and automation see a named control. (3) Dev-server exposure: `vite.config.ts` no longer uses `allowedHosts: true`; localhost is allowed by default and preview hostnames come from `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS` for the process that needs them, so the blanket any-Host acceptance is gone.
+- **Tracked Files:** `src/hooks/__tests__/animalsCrud.test.ts`, `src/hooks/__tests__/opfsArchiveOffload.test.ts`, `src/components/WipedStorageRecoveryModal.tsx`, `vite.config.ts`
+
+**Automated Invariants Checked:**
+- `vite.config.ts` must contain `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS` — *A blanket host allow lets any hostname reach the dev server; the env allowlist is the supported way to admit a preview origin.*
+  - Forbidden regression: `allowedHosts: true`
+- `src/components/WipedStorageRecoveryModal.tsx` must contain `aria-label="Choose a backup file to recover from"` — *The input is visually hidden, so the label is the only thing that names it for assistive tech.*
+- `src/hooks/__tests__/animalsCrud.test.ts` must contain `surfaces a quota failure instead of claiming the animal was saved` — *Storage-full is a normal state on a phone; the save path must report it rather than toast success over a failed write.*
+
+**Restoration Playbook if Overwritten:**
+1. Preview hostnames are per-process: start the dev server with `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=<host>`, never by re-enabling blanket host acceptance.
+2. Hidden inputs still need accessible names.
+3. Quota paths must report and stay silent, never toast success.

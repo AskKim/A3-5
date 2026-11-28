@@ -143,6 +143,21 @@ describe('offloadAnimalsToOpfsArchiveUnqueued', () => {
     expect(port.saveOpfsHerdArchive).not.toHaveBeenCalled();
   });
 
+  it('reports a quota failure from the archive write and leaves the barn intact', async () => {
+    const quotaErr = Object.assign(new Error('QuotaExceededError'), { name: 'QuotaExceededError' });
+    const port = makePort({ saveOpfsHerdArchive: vi.fn(async () => Promise.reject(quotaErr)) });
+    const { deps } = makeDeps({ storage: port });
+
+    await expect(offloadAnimalsToOpfsArchiveUnqueued(deps, ['a1'])).resolves.toBeNull();
+
+    expect(deps.replaceSnapshot).not.toHaveBeenCalled();
+    expect(deps.notify).not.toHaveBeenCalled();
+    expect(deps.reportPersistenceFailure).toHaveBeenCalledWith(
+      'offload animals to OPFS /archives',
+      quotaErr
+    );
+  });
+
   it('reports a failure and returns null instead of throwing', async () => {
     const err = new Error('zip failed');
     const { deps } = makeDeps({

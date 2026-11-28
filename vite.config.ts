@@ -550,7 +550,8 @@ export default defineConfig(() => {
     server: {
       host: '0.0.0.0',
       port: 3000,
-      allowedHosts: true as const,
+      // No blanket host allow: localhost is permitted by default and extra preview hosts are
+      // admitted per process through `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS`.
       fs: {
         deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', 'import', 'import/**', 'old', 'old/**'],
       },

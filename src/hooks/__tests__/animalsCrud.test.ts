@@ -142,6 +142,18 @@ describe('saveAnimalAction', () => {
     await expect(saveAnimalAction(deps, draft)).resolves.toBeNull();
     expect(deps.reportPersistenceFailure).toHaveBeenCalledWith('save New Doe', expect.any(Error));
   });
+
+  it('surfaces a quota failure instead of claiming the animal was saved', async () => {
+    const quotaErr = Object.assign(new Error('QuotaExceededError'), { name: 'QuotaExceededError' });
+    const { deps } = makeDeps();
+    (deps.adapter.saveAnimal as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(quotaErr);
+
+    await expect(saveAnimalAction(deps, draft)).resolves.toBeNull();
+
+    expect(deps.reportPersistenceFailure).toHaveBeenCalledWith('save New Doe', quotaErr);
+    expect(deps.notify).not.toHaveBeenCalled();
+    expect(deps.reloadFromAdapter).not.toHaveBeenCalled();
+  });
 });
 
 describe('archiveAnimalsAction', () => {
@@ -221,6 +233,19 @@ describe('deleteAnimalsBatchAction', () => {
       Record<string, unknown>
     >;
     expect(ops.some((op) => Object.values(op).includes('__delete__'))).toBe(true);
+  });
+
+  it('reports a quota failure during delete and keeps the toast silent', async () => {
+    const quotaErr = Object.assign(new Error('QuotaExceededError'), { name: 'QuotaExceededError' });
+    const { deps } = makeDeps();
+    (deps.adapter.deleteAnimalsBatch as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      quotaErr
+    );
+
+    await deleteAnimalsBatchAction(deps, ['a1']);
+
+    expect(deps.reportPersistenceFailure).toHaveBeenCalledWith('delete selected animal(s)', quotaErr);
+    expect(deps.notify).not.toHaveBeenCalled();
   });
 
   it('reports a failure without pretending the delete succeeded', async () => {
