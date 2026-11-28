@@ -180,6 +180,7 @@ lockfile is stale or a dependency change is intentional.
 | 9 | Build (root) | `npm run build` |
 | 9b | Chunk graph | `npm run verify:chunks` — must run after `npm run build`; fails on any new circular chunk import (ratchet in `scripts/chunk-cycle-allowlist.json`) |
 | 10 | Pages subpath build | `npm run build -- --base="/<repo-name>/"` then assert `dist/robots.txt`, `dist/sitemap.xml`, manifest `start_url`/`scope`/`id` of `./`, subpath asset + manifest references in `index.html`; re-run the root build afterwards to leave `dist/` in root form |
+| 10b | Site identity | `npm run verify:site-identity -- --base="/<repo-name>/"` — run on step 10's subpath build, before the root rebuild; fails when the canonical link, the `robots.txt` sitemap URL, the `sitemap.xml` `<loc>` or the `404.html` redirect (meta refresh, script redirect or fallback link) disagrees with `--base`. `deploy-pages.yml` runs the same gate under Bun: `bun scripts/verify-site-identity.ts --base="…"` |
 
 Guardrails to assert: `import/`, `export/`, `upload/`, `old/` exist with `.gitkeep`;
 `prompts/master_system_prompt.md` exists; no `from 'import/` or `from 'old/` in `src/`
