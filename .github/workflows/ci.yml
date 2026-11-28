@@ -45,6 +45,9 @@ jobs:
       - name: Run domain unit tests
         run: npm test
 
+      - name: Enforce the coverage floor
+        run: npm run verify:coverage
+
       - name: Verify App Improvements Registry
         run: npm run verify:improvements
 
@@ -56,6 +59,12 @@ jobs:
 
       - name: Verify no finished handoff or plan files linger
         run: npm run verify:plans
+
+      - name: Verify module catalog, Android wrapper and store contract
+        run: |
+          npm run verify:modules
+          npm run verify:android
+          npm run verify:contract
 
       - name: Verify layer boundaries and engine typecheck
         run: |

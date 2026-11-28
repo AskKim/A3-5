@@ -4290,9 +4290,9 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
     invariants: [
       {
         filePath: 'vitest.config.ts',
-        requiredSubstrings: ['statements: 61', 'branches: 51', 'functions: 47', 'lines: 63'],
+        requiredSubstrings: ['thresholds:', "'src/components/**'", "'src/storage/**'"],
         rationale:
-          'This entry carries the current numeric floors; without them the two new suites could be deleted while the gate still passed at the old, lower numbers.',
+          'A later entry pins the current numbers, so this one only guards the shape: the per-area thresholds must keep existing, or the suites could be deleted while the global gate still passed.',
       },
       {
         filePath: 'src/storage/__tests__/pedigreeOcrGuards.test.ts',
@@ -4311,6 +4311,51 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The gallery delete is a two-step inline control: the trash button arms it and a `Remove` button performs the delete.',
       'The OCR guards need no engine: an SVG File is rejected before any decode, and a `%PDF-1.4` header with junk bytes returns `pdf_unsupported` with one `manual_empty` page.',
       'Do not try to cover raster OCR in jsdom; it needs canvas/ImageBitmap and a Tesseract worker, so it stays a browser-only path.',
+    ],
+  },
+  {
+    id: 'IMP-164',
+    title: 'Cover the Weather Client and the LAN WebRTC Transport',
+    category: 'diagnostics-sync',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The opt-in weather client sat at 6% and the generic LAN WebRTC transport at 14%: both are the kind of code that only runs when a breeder is offline or pairing two devices on the same Wi-Fi, which is exactly when a silent regression is hardest to notice.',
+    summary:
+      'Adds `weatherForecast.test.ts` (cache round-trip and location mismatch, corrupt cache, freshness window, manual and device offline, geocoding normalisation with rounded coordinates and dropped rows, HTTP failure, timeout, live payload parsing with rounded codes and clamped precipitation, empty payload, and the stale-cache fallbacks) and extends `lanWebRtcTransport.test.ts` with a fake peer connection and data channel (offer/answer/answer-apply handshake, wrong signal types, missing WebRTC, empty SDP, ICE-gathering timeout, send-before-open, chunked sends, out-of-order chunk reassembly with duplicate frames, malformed and oversized frames, channel and connection failures, incoming channel acceptance). Weather coverage goes 6% → 96% and the transport 14% → 84%; totals rise to 63.12/52.95/49.18/64.66, so the global floors move to 62/51/48/63, storage to 55/43/49/57 and engine to 72/62/79/74.',
+    files: [
+      'vitest.config.ts',
+      'src/storage/__tests__/weatherForecast.test.ts',
+      'src/engine/storage/__tests__/lanWebRtcTransport.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'IMPROVEMENTS.md',
+    ],
+    invariants: [
+      {
+        filePath: 'vitest.config.ts',
+        requiredSubstrings: ['statements: 62', 'branches: 51', 'functions: 48', 'lines: 63'],
+        rationale:
+          'This entry carries the current numeric floors; without them the two suites could be deleted while the gate still passed at the old, lower numbers.',
+      },
+      {
+        filePath: 'src/storage/__tests__/weatherForecast.test.ts',
+        requiredSubstrings: ['Manual App Offline Mode', 'Location lookup failed (HTTP 503)', 'pedigree.weatherForecast.cache.v1'],
+        rationale:
+          'The manual-offline branch, the HTTP failure branch and the real cache key are the three places where a silent change would quietly break offline behaviour for users.',
+      },
+      {
+        filePath: 'src/engine/storage/__tests__/lanWebRtcTransport.test.ts',
+        requiredSubstrings: ['FakePeerConnection', 'core-lan-chunk-v1', 'LAN DataChannel is not open yet'],
+        rationale:
+          'The handshake, the chunk framing and the not-open guard are the transport contract; without them the tests would only prove the module imports.',
+      },
+    ],
+    restorePlaybook: [
+      'Stub `fetch` with a `{ ok, status, json }` object; do not use a real Response, because the client only reads those three members.',
+      'The connectivity snapshot is module state: flip `navigator.onLine` for device-offline and `setManualOfflineMode` for the manual override, and reset both in `afterEach`.',
+      'The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.',
     ],
   },
 ];
