@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (100 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (102 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (164)
+## Logged Improvements (166)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -3196,6 +3196,35 @@ Status:     active
 1. Stub `fetch` with a `{ ok, status, json }` object; do not use a real Response, because the client only reads those three members.
 2. The connectivity snapshot is module state: flip `navigator.onLine` for device-offline and `setManualOfflineMode` for the manual override, and reset both in `afterEach`.
 3. The WebRTC tests never open a socket: a fake peer connection whose `iceGatheringState` is `complete` resolves the gather wait immediately, and `iceGatherTimeoutMs: 5` exercises the timeout path.
+
+## 2026-11-28 — Protect Live Hosting From Any Dev Copy, Not Just This One
+Why:        The hosting rules named one repository and one branch, so an agent working in a different dev copy could read them as “not about this tree” and delete `deploy-pages.yml`, retarget the Pages workflow or push to `release` — all of which are live, in active use by real users, and reachable from any copy that carries this repository.
+Changed:    `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `.cursor/rules/project.mdc`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules`, `.roorules`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `AGENTS.md` must contain `Live hosting is off-limits unless the request says otherwise`, `Hosting plumbing is live infrastructure`, `An explicit request is required`, `a failing live-side check is reported, not fixed` — *This is the only place the rule is stated in full; without the explicit-request clause an agent working in a dev copy treats the live deploy path as scaffolding and deletes or retargets it.*
+- `GEMINI.md` must contain `## Live Hosting: Never Without A Request`, `not permission to clean up the live path` — *GEMINI.md is loaded alongside AGENTS.md on every task, so the short form must stay to catch agents that only read the handoff rules.*
+- `CLAUDE.md` must contain `Live Hosting Off-Limits` — *The one-line non-negotiables are what inline editors load; dropping this bullet silently narrows the rule back to the long files they never read.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the rule repo-agnostic: name `release` only as the current example of a live branch, never as the whole rule, because the live copy can be another repository, branch or dev server.
+2. Never phrase this so a live check can be “fixed” by editing the workflow, deleting `deploy-pages.yml` or changing the Pages source; the instruction is to report the setting mismatch instead.
+3. If a repository genuinely has no live deployment, that is a fact to report — it is not a licence to delete the deploy plumbing.
+
+## 2026-11-28 — Say “Could Not Reach Open-Meteo” Instead of “Failed to Fetch”
+Why:        A browser-level network failure surfaced in the weather drawer as the raw `TypeError: Failed to fetch` for both Refresh and the city lookup, which reads like a bug in the app rather than a dropped connection.
+Changed:    `src/storage/weatherForecast.ts`, `src/storage/__tests__/weatherForecast.test.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/storage/weatherForecast.ts` must contain `describeWeatherRequestFailure`, `Could not reach Open-Meteo — check your internet connection and try again.` — *Both catch blocks must keep routing through the helper; a direct `err.message` return would bring back the raw browser string the fix exists to remove.*
+- `src/storage/__tests__/weatherForecast.test.ts` must contain `CONNECTION_MESSAGE`, `new TypeError('Failed to fetch')` — *The tests pin the user-visible copy and the exact browser error shape that triggered the fix, so a message change is a deliberate test edit.*
+
+**Restoration Playbook if Overwritten:**
+1. Chrome rejects with `TypeError`, Firefox with `TypeError('NetworkError when attempting to fetch resource.')`, Safari with `TypeError('Load failed')` — the helper matches all three.
+2. Never let the connection message replace the timeout message: an `AbortError` means the request started, so the 6s timeout copy is the accurate one.
+3. Assert the cache timestamp is unchanged after a failed refresh; that is what keeps the offline strip truthful.
 
 ## 2026-11-28 — Move the Print-Stage Presenters Into the Document-Export Feature
 Why:        The coupling milestone had one presenter extraction left unbuilt: `PrintPreviewModal` (2,228 lines) carried the pure print-document composition rules itself, so any other printable surface had to import a React component to reuse them.
