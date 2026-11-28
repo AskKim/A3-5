@@ -1840,4 +1840,52 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'The backlog is a scratch pad, not a queue — keep the header gate note and the one-at-a-time rule intact.',
     ],
   },
+  {
+    id: 'IMP-106',
+    title: 'Photo Mutations Moved Into `usePhotoMutations`',
+    category: 'workflow-polish',
+    release: 'alpha-3',
+    source: 'session',
+    userIntent:
+      'Keep the four photo writes together, because the easy mistakes are all photo-specific: two primaries, wrong sort order, or binary payloads leaking into the sync log.',
+    summary:
+      'Milestone 1 continuation: `src/hooks/barnStore/usePhotoMutations.ts` now owns adding optimized photos, changing the primary cover, retitling and deleting. Behaviour is unchanged — appends after existing `sortOrder`, only the first photo becomes primary when none exists, every sibling gets a `_rev` bump when the cover changes, sync operations are metadata-only (`stripPhotoBlobsForSync`, `ignoreFields` on `dataUrl`/`thumbnailDataUrl`), and deleting the primary promotes the next sibling by sort order. Captions stay silent on success; deleting toasts `Photo removed.`. The store passes a memoised adapter facade, so the callbacks keep their identity across renders. `useBarnStore.ts` 8,731 → 8,531 lines; 11 new unit tests; the 200-key contract snapshot is untouched.',
+    files: [
+      'src/hooks/barnStore/usePhotoMutations.ts',
+      'src/hooks/__tests__/photoMutations.test.ts',
+      'src/hooks/useBarnStore.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/hooks/barnStore/usePhotoMutations.ts',
+        requiredSubstrings: [
+          'export function usePhotoMutations',
+          'stripPhotoBlobsForSync',
+          'isPrimary: !hasPrimary && idx === 0',
+        ],
+        rationale:
+          'Photo binaries must never enter the sync log, and the primary rule must stay one-per-animal — both are silent corruption when they drift.',
+      },
+      {
+        filePath: 'src/hooks/useBarnStore.ts',
+        requiredSubstrings: ["from './barnStore/usePhotoMutations'"],
+        forbiddenSubstrings: ['const deleteAnimalPhoto = useCallback('],
+        rationale:
+          'Re-inlining delete would separate the primary-promotion step from the delete, leaving an animal with no cover photo.',
+      },
+      {
+        filePath: 'src/hooks/__tests__/photoMutations.test.ts',
+        requiredSubstrings: [
+          'promotes the next sibling when the primary is deleted',
+          'never creates a second primary',
+        ],
+        rationale:
+          'Those two are the invariants a future “simplify photos” edit is most likely to break.',
+      },
+    ],
+    restorePlaybook: [
+      'Photo writes live in `barnStore/usePhotoMutations.ts`; the store supplies the adapter facade, cache helpers and mutation queue.',
+      'Keep sync operations metadata-only and keep exactly one primary per animal.',
+    ],
+  },
 ];

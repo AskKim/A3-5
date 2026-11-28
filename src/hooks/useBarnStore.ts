@@ -293,6 +293,7 @@ import { useSyncConflictResolution } from './barnStore/useSyncConflictResolution
 import { useRollingBackupActions } from './barnStore/useRollingBackupActions';
 import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
 import { useAnimalsCrud, type AnimalsCrudAdapter } from './barnStore/useAnimalsCrud';
+import { usePhotoMutations, type PhotoMutationAdapter } from './barnStore/usePhotoMutations';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
 
 export type WorkspaceRoute =
@@ -2799,237 +2800,36 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
-  const addOptimizedAnimalPhotos = useCallback(
-    async (
-      animal: Animal,
-      payloads: Array<OptimizedImagePayload & { caption?: string }>
-    ): Promise<number> => {
-      if (payloads.length === 0) return 0;
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const ts = getAdjustedNowIsoUtc();
-        const existingPhotos = (currentSnapshot?.animalPhotos ?? []).filter(
-          (p) => p.animalId === animal.id
-        );
-        const hasPrimary = existingPhotos.some((p) => p.isPrimary);
-
-        let origSum = 0;
-        let storedSum = 0;
-
-        const records: AnimalPhoto[] = payloads.map((pay, idx) => {
-          origSum += pay.originalBytes;
-          storedSum += pay.storedBytes;
-          return {
-            id: generateUuid(),
-            species: animal.species,
-            animalId: animal.id,
-            isPrimary: !hasPrimary && idx === 0,
-            sortOrder: existingPhotos.length + idx,
-            caption: (pay.caption || '').trim(),
-            originalFileName: pay.originalFileName,
-            mimeType: pay.mimeType,
-            width: pay.width,
-            height: pay.height,
-            originalBytes: pay.originalBytes,
-            storedBytes: pay.storedBytes,
-            thumbnailDataUrl: pay.thumbnailDataUrl,
-            dataUrl: pay.dataUrl,
-            _rev: 1,
-            createdAt: ts,
-            updatedAt: ts,
-          };
-        });
-
-        try {
-          await adapterRef.current!.saveAnimalPhotosBatch(records);
-          for (const rec of records) {
-            rememberPhoto(photoCacheRef, rec.id, rec.dataUrl);
-          }
-          // Metadata-only delta sync (binary blobs travel via .ZIP backups)
-          await recordOutboxOps(
-            records.map((rec) =>
-              createOutboxOperation({
-                entityType: 'photo',
-                entityUuid: rec.id,
-                deviceId,
-                logicalCounter: allocateNextLogicalCounter(),
-                fieldName: '__create__',
-                newValue: stripPhotoBlobsForSync(rec),
-                timestamp: ts,
-                recordRev: rec._rev ?? 1,
-              })
-            )
-          );
-          await reloadFromAdapter();
-
-          const totalAfter = existingPhotos.length + records.length;
-          const pct = calculateSavingsPercent(origSum, storedSum);
-          notify(
-            pct > 0
-              ? `Added ${records.length} photo${records.length === 1 ? '' : 's'} to ${
-                  animal.name
-                } (${formatByteSizePure(origSum)} → ${formatByteSizePure(storedSum)} · saved ${pct}%).`
-              : `Added ${records.length} photo${records.length === 1 ? '' : 's'} to ${animal.name}.`
-          );
-          return totalAfter;
-        } catch (err) {
-          reportPersistenceFailure(`save photo(s) for ${animal.name}`, err);
-          throw err;
-        }
-      });
-    },
-    [enqueueStoreMutation, deviceId, recordOutboxOps, reloadFromAdapter, notify, reportPersistenceFailure]
+  // Stable adapter facade so the photo callbacks keep their identity across renders.
+  const photoMutationAdapter = useMemo<PhotoMutationAdapter>(
+    () => ({
+      saveAnimalPhotosBatch: (photos) => adapterRef.current!.saveAnimalPhotosBatch(photos),
+      saveAnimalPhoto: (photo) => adapterRef.current!.saveAnimalPhoto(photo),
+      deleteAnimalPhoto: (photoId) => adapterRef.current!.deleteAnimalPhoto(photoId),
+    }),
+    []
   );
 
-  const setPrimaryAnimalPhoto = useCallback(
-    async (animalId: string, photoId: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const ts = getAdjustedNowIsoUtc();
-        const targetPhotos = (currentSnapshot.animalPhotos ?? []).filter(
-          (p) => p.animalId === animalId
-        );
-        if (targetPhotos.length === 0) return;
-
-        const prevById = new Map(targetPhotos.map((p) => [p.id, p]));
-        const updated = targetPhotos.map((p) => ({
-          ...p,
-          isPrimary: p.id === photoId,
-          _rev: nextEntityRev(p.id, p._rev),
-          updatedAt: ts,
-        }));
-        try {
-          await adapterRef.current!.saveAnimalPhotosBatch(updated);
-          const photoOps = updated.flatMap((nextPhoto) =>
-            diffEntityFieldsToOperations({
-              entityType: 'photo',
-              previous: prevById.get(nextPhoto.id),
-              next: nextPhoto,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              ignoreFields: ['dataUrl', 'thumbnailDataUrl'],
-              timestamp: ts,
-              recordRev: nextPhoto._rev,
-            })
-          );
-          await recordOutboxOps(photoOps);
-          await reloadFromAdapter();
-          notify('Primary cover photo updated (available for pedigrees).');
-        } catch (err) {
-          reportPersistenceFailure('update primary cover photo', err);
-        }
-      });
-    },
-    [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, notify, reportPersistenceFailure]
-  );
-
-  const updateAnimalPhotoCaption = useCallback(
-    async (photoId: string, caption: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const found = (currentSnapshot.animalPhotos ?? []).find((p) => p.id === photoId);
-        if (!found) return;
-        const ts = getAdjustedNowIsoUtc();
-        const nextPhoto: AnimalPhoto = {
-          ...found,
-          caption: caption.trim(),
-          _rev: nextEntityRev(found.id, found._rev),
-          updatedAt: ts,
-        };
-        try {
-          await adapterRef.current!.saveAnimalPhoto(nextPhoto);
-          await recordOutboxOps(
-            diffEntityFieldsToOperations({
-              entityType: 'photo',
-              previous: found,
-              next: nextPhoto,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              ignoreFields: ['dataUrl', 'thumbnailDataUrl'],
-              timestamp: ts,
-              recordRev: nextPhoto._rev,
-            })
-          );
-          await reloadFromAdapter();
-        } catch (err) {
-          reportPersistenceFailure('update photo caption', err);
-        }
-      });
-    },
-    [enqueueStoreMutation, deviceId, nextEntityRev, recordOutboxOps, reloadFromAdapter, reportPersistenceFailure]
-  );
-
-  const deleteAnimalPhoto = useCallback(
-    async (photoId: string) => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        if (!currentSnapshot) return;
-        const all = currentSnapshot.animalPhotos ?? [];
-        const target = all.find((p) => p.id === photoId);
-        const ts = getAdjustedNowIsoUtc();
-        try {
-          await adapterRef.current!.deleteAnimalPhoto(photoId);
-          forgetPhoto(photoCacheRef, photoId);
-          const ops: SyncOperation[] = [
-            createOutboxOperation({
-              entityType: 'photo',
-              entityUuid: photoId,
-              deviceId,
-              logicalCounter: allocateNextLogicalCounter(),
-              fieldName: '__delete__',
-              newValue: true,
-              timestamp: ts,
-              recordRev: nextEntityRev(photoId, target?._rev),
-            }),
-          ];
-
-          if (target && target.isPrimary) {
-            const siblings = all
-              .filter((p) => p.animalId === target.animalId && p.id !== photoId)
-              .sort((a, b) => a.sortOrder - b.sortOrder);
-            if (siblings.length > 0) {
-              const promoted: AnimalPhoto = {
-                ...siblings[0],
-                isPrimary: true,
-                _rev: nextEntityRev(siblings[0].id, siblings[0]._rev),
-                updatedAt: ts,
-              };
-              await adapterRef.current!.saveAnimalPhoto(promoted);
-              ops.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'photo',
-                  previous: siblings[0],
-                  next: promoted,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  ignoreFields: ['dataUrl', 'thumbnailDataUrl'],
-                  timestamp: ts,
-                  recordRev: promoted._rev,
-                })
-              );
-            }
-          }
-          await recordOutboxOps(ops);
-          await reloadFromAdapter();
-          notify('Photo removed.');
-        } catch (err) {
-          reportPersistenceFailure('delete photo', err);
-        }
-      });
-    },
-    [
-      enqueueStoreMutation,
-      deviceId,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
-
+  const {
+    addOptimizedAnimalPhotos,
+    setPrimaryAnimalPhoto,
+    updateAnimalPhotoCaption,
+    deleteAnimalPhoto,
+  } = usePhotoMutations({
+    enqueueStoreMutation,
+    snapshotRef,
+    adapter: photoMutationAdapter,
+    deviceId,
+    nextEntityRev,
+    allocateNextLogicalCounter,
+    nowIsoUtc: getAdjustedNowIsoUtc,
+    recordOutboxOps,
+    reloadFromAdapter,
+    notify,
+    reportPersistenceFailure,
+    rememberPhoto: (photoId, dataUrl) => rememberPhoto(photoCacheRef, photoId, dataUrl),
+    forgetPhoto: (photoId) => forgetPhoto(photoCacheRef, photoId),
+  });
   const saveCage = useCallback(
     async (
       cageDraft: Omit<CageLocation, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }

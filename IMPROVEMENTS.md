@@ -8,7 +8,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (41 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (42 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -25,7 +25,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (105)
+## Logged Improvements (106)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2286,3 +2286,22 @@ npm run lint && npm run build
 **Restoration Playbook if Overwritten:**
 1. Both backlog prompts gate on open handoffs: continue `handoff-*.yaml` work with `[WIP]`/`[TODO]` before starting a new backlog entry.
 2. The backlog is a scratch pad, not a queue — keep the header gate note and the one-at-a-time rule intact.
+
+### IMP-106: Photo Mutations Moved Into `usePhotoMutations`
+
+- **Release Milestone:** Alpha 3 (`alpha-3`)
+- **Category:** Workflow & UI Polish (`workflow-polish`)
+- **Origin:** Session Improvement
+- **User Goal:** Keep the four photo writes together, because the easy mistakes are all photo-specific: two primaries, wrong sort order, or binary payloads leaking into the sync log.
+- **Summary:** Milestone 1 continuation: `src/hooks/barnStore/usePhotoMutations.ts` now owns adding optimized photos, changing the primary cover, retitling and deleting. Behaviour is unchanged — appends after existing `sortOrder`, only the first photo becomes primary when none exists, every sibling gets a `_rev` bump when the cover changes, sync operations are metadata-only (`stripPhotoBlobsForSync`, `ignoreFields` on `dataUrl`/`thumbnailDataUrl`), and deleting the primary promotes the next sibling by sort order. Captions stay silent on success; deleting toasts `Photo removed.`. The store passes a memoised adapter facade, so the callbacks keep their identity across renders. `useBarnStore.ts` 8,731 → 8,531 lines; 11 new unit tests; the 200-key contract snapshot is untouched.
+- **Tracked Files:** `src/hooks/barnStore/usePhotoMutations.ts`, `src/hooks/__tests__/photoMutations.test.ts`, `src/hooks/useBarnStore.ts`
+
+**Automated Invariants Checked:**
+- `src/hooks/barnStore/usePhotoMutations.ts` must contain `export function usePhotoMutations`, `stripPhotoBlobsForSync`, `isPrimary: !hasPrimary && idx === 0` — *Photo binaries must never enter the sync log, and the primary rule must stay one-per-animal — both are silent corruption when they drift.*
+- `src/hooks/useBarnStore.ts` must contain `from './barnStore/usePhotoMutations'` — *Re-inlining delete would separate the primary-promotion step from the delete, leaving an animal with no cover photo.*
+  - Forbidden regression: `const deleteAnimalPhoto = useCallback(`
+- `src/hooks/__tests__/photoMutations.test.ts` must contain `promotes the next sibling when the primary is deleted`, `never creates a second primary` — *Those two are the invariants a future “simplify photos” edit is most likely to break.*
+
+**Restoration Playbook if Overwritten:**
+1. Photo writes live in `barnStore/usePhotoMutations.ts`; the store supplies the adapter facade, cache helpers and mutation queue.
+2. Keep sync operations metadata-only and keep exactly one primary per animal.
