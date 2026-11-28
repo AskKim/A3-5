@@ -16,7 +16,7 @@
  */
 
 import { nowIsoUtc } from './models';
-import { formatLedgerHeader, type LedgerEntryStatus } from './ledgerContract';
+import { formatLedgerHeader, isRealCalendarDate, type LedgerEntryStatus } from './ledgerContract';
 
 export type PromptChangeCategory =
   | 'system-governance'
@@ -120,6 +120,7 @@ export function findLedgerOptInViolations(
 ): PromptLedgerOptInViolation[] {
   const violations: PromptLedgerOptInViolation[] = [];
   const pinned = new Set(LEGACY_PROMPT_ENTRY_IDS);
+  const knownIds = new Set(entries.map((entry) => entry.id));
 
   for (const entry of entries) {
     if (entry.status === 'superseded' && !entry.supersededBy) {
@@ -128,6 +129,22 @@ export function findLedgerOptInViolations(
         title: entry.title,
         issue:
           'sets `status: superseded` without `supersededBy` — the replacing entry would be lost; name it, or use active/reverted',
+      });
+    }
+
+    if (entry.decidedOn && !isRealCalendarDate(entry.decidedOn)) {
+      violations.push({
+        entryId: entry.id,
+        title: entry.title,
+        issue: `sets decidedOn "${entry.decidedOn}", which is not a real calendar date — use YYYY-MM-DD; the ledger heading is rendered from it`,
+      });
+    }
+
+    if (entry.supersededBy && !knownIds.has(entry.supersededBy)) {
+      violations.push({
+        entryId: entry.id,
+        title: entry.title,
+        issue: `names ${entry.supersededBy} in supersededBy, which is not a registry entry — point it at the entry that actually replaced this one`,
       });
     }
 

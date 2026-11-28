@@ -128,13 +128,13 @@ async function main() {
     console.error(
       `[verify:improvements] FAIL — ${optInViolations.length} improvement ledger opt-in violation${
         optInViolations.length === 1 ? '' : 's'
-      } in src/domain/improvementRegistry.ts:`
+      } (unpinned legacy, or an invalid ledger value) in src/domain/improvementRegistry.ts:`
     );
     for (const v of optInViolations) {
       console.error(`  - [${v.entryId}] ${v.title}: ${v.issue}`);
     }
     console.error(
-      '    Fix: a new entry sets `decidedOn` (plus `status`/`rejected` where relevant); only LEGACY_IMPROVEMENT_ENTRY_IDS may stay legacy.'
+      '    Fix: a new entry sets `decidedOn` (plus `status`/`rejected` where relevant); only LEGACY_IMPROVEMENT_ENTRY_IDS may stay legacy. `decidedOn` must be a real YYYY-MM-DD calendar date, and `supersededBy` must name an existing entry.'
     );
   }
 

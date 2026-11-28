@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (74 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (75 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (138)
+## Logged Improvements (139)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2839,3 +2839,20 @@ Status:     active
 1. Keep both ratchet tests comparing `[...LEGACY_*_ENTRY_IDS]` to a frozen snapshot with `toEqual`, not a length-only assertion.
 2. To pin a genuinely old entry, change the snapshot and the list in one reviewable commit and state why that entry cannot opt in.
 3. Prefer opting an entry into the contract and pruning its pin over widening an exemption.
+
+## 2026-11-28 — Ledger Gates Reject Impossible Dates and Dangling Replacements
+Why:        The gates checked that the ledger fields were present but never what they said: `decidedOn: 2026-13-45` rendered an impossible heading and passed both verifiers, and a `supersededBy: PRM-999` typo was accepted even though no such entry exists, so the replacing entry could never be found.
+Changed:    `src/domain/ledgerContract.ts`, `src/domain/promptRegistry.ts`, `src/domain/improvementRegistry.ts`, `src/domain/__tests__/promptRegistry.test.ts`, `src/domain/__tests__/improvementRegistry.test.ts`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/domain/ledgerContract.ts` must contain `isRealCalendarDate`, `Date.UTC` — *A regex-shaped date is not a real date; only a UTC round-trip rejects an impossible month or day while keeping leap days valid.*
+- `src/domain/promptRegistry.ts` must contain `isRealCalendarDate`, `knownIds` — *The prompt gate has to validate the value it renders into the heading and resolve `supersededBy`, or a typo becomes a permanent dangling reference.*
+- `src/domain/improvementRegistry.ts` must contain `isRealCalendarDate`, `knownIds` — *The improvement gate needs the same two checks; otherwise only one ledger rejects impossible dates and dangling replacements.*
+- `src/domain/__tests__/promptRegistry.test.ts` must contain `rejects an impossible decidedOn`, `real calendar date` — *The rejection has to be asserted, not assumed: the impossible month, the missing February day and the leap day pin the boundary.*
+- `src/domain/__tests__/improvementRegistry.test.ts` must contain `rejects an impossible decidedOn`, `real calendar date` — *Both gates are separate functions, so each needs its own value-validation test rather than one shared expectation.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `isRealCalendarDate` in `src/domain/ledgerContract.ts` and call it from both gates whenever `decidedOn` is set.
+2. Resolve `supersededBy` against the entries being validated; a replacement must be an entry in the same registry.
+3. Extend the boundary tests with any new date rule rather than deleting the impossible-month and missing-day cases.

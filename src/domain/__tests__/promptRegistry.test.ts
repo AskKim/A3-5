@@ -74,6 +74,7 @@ describe('promptRegistry — /prompts/ changelog, invariants & recovery playbook
     expect(halfOpted[0].issue).toContain('commitShaOrTag');
 
     const ledgerFieldsOnly = findLedgerOptInViolations([
+      PROMPT_CHANGES_REGISTRY.find((entry) => entry.id === 'PRM-001')!,
       { ...base, id: 'PRM-902', status: 'superseded', supersededBy: 'PRM-001' },
     ]);
     expect(ledgerFieldsOnly).toHaveLength(1);
@@ -156,7 +157,48 @@ describe('promptRegistry — /prompts/ changelog, invariants & recovery playbook
 
     expect(
       findLedgerOptInViolations([
+        PROMPT_CHANGES_REGISTRY.find((entry) => entry.id === 'PRM-003')!,
         { ...base, id: 'PRM-906', ...opted, status: 'superseded', supersededBy: 'PRM-003' },
+      ])
+    ).toEqual([]);
+  });
+
+  it('rejects an impossible decidedOn and a supersededBy that names no entry', () => {
+    const base = PROMPT_CHANGES_REGISTRY[0];
+    const opted = {
+      decidedOn: '2026-11-28',
+      version: 'v5',
+      commitShaOrTag: 'abc1234',
+    } as const;
+
+    const impossibleMonth = findLedgerOptInViolations([
+      { ...base, id: 'PRM-907', ...opted, decidedOn: '2026-13-45' },
+    ]);
+    expect(impossibleMonth).toHaveLength(1);
+    expect(impossibleMonth[0].issue).toContain('real calendar date');
+
+    // Shaped like a date, but February never had 30 days.
+    expect(
+      findLedgerOptInViolations([{ ...base, id: 'PRM-908', ...opted, decidedOn: '2026-02-30' }])[0]
+        .issue
+    ).toContain('real calendar date');
+
+    // A real leap day is a valid entry date.
+    expect(
+      findLedgerOptInViolations([{ ...base, id: 'PRM-909', ...opted, decidedOn: '2028-02-29' }])
+    ).toEqual([]);
+
+    const dangling = findLedgerOptInViolations([
+      { ...base, id: 'PRM-910', ...opted, status: 'superseded', supersededBy: 'PRM-999' },
+    ]);
+    expect(dangling).toHaveLength(1);
+    expect(dangling[0].issue).toContain('PRM-999');
+
+    // The replacement resolves only when it is actually in the registry.
+    expect(
+      findLedgerOptInViolations([
+        { ...base, id: 'PRM-911', ...opted },
+        { ...base, id: 'PRM-912', ...opted, status: 'superseded', supersededBy: 'PRM-911' },
       ])
     ).toEqual([]);
   });

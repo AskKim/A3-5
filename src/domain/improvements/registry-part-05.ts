@@ -3266,4 +3266,63 @@ export const REGISTRY_PART_05: ImprovementEntry[] = [
       'Prefer opting an entry into the contract and pruning its pin over widening an exemption.',
     ],
   },
+  {
+    id: 'IMP-140',
+    title: 'Ledger Gates Reject Impossible Dates and Dangling Replacements',
+    category: 'ci-tooling',
+    release: 'alpha-3',
+    source: 'session',
+    decidedOn: '2026-11-28',
+    status: 'active',
+    userIntent:
+      'The gates checked that the ledger fields were present but never what they said: `decidedOn: 2026-13-45` rendered an impossible heading and passed both verifiers, and a `supersededBy: PRM-999` typo was accepted even though no such entry exists, so the replacing entry could never be found.',
+    summary:
+      'Adds `isRealCalendarDate` to `src/domain/ledgerContract.ts` (UTC round-trip, so `2026-13-45` and `2026-02-30` fail while a real leap day passes) and uses it in both opt-in gates. Each gate now also resolves `supersededBy` against the registry it is validating, so a replacement that names no entry is reported instead of being rendered as fact. Both checks live beside the existing violation list, so `verify:improvements` and `verify:prompts` fail with the entry ID and the offending value.',
+    files: [
+      'src/domain/ledgerContract.ts',
+      'src/domain/promptRegistry.ts',
+      'src/domain/improvementRegistry.ts',
+      'src/domain/__tests__/promptRegistry.test.ts',
+      'src/domain/__tests__/improvementRegistry.test.ts',
+      'src/domain/improvements/registry-part-05.ts',
+      'src/domain/improvements/rationales.ts',
+    ],
+    invariants: [
+      {
+        filePath: 'src/domain/ledgerContract.ts',
+        requiredSubstrings: ['isRealCalendarDate', 'Date.UTC'],
+        rationale:
+          'A regex-shaped date is not a real date; only a UTC round-trip rejects an impossible month or day while keeping leap days valid.',
+      },
+      {
+        filePath: 'src/domain/promptRegistry.ts',
+        requiredSubstrings: ['isRealCalendarDate', 'knownIds'],
+        rationale:
+          'The prompt gate has to validate the value it renders into the heading and resolve `supersededBy`, or a typo becomes a permanent dangling reference.',
+      },
+      {
+        filePath: 'src/domain/improvementRegistry.ts',
+        requiredSubstrings: ['isRealCalendarDate', 'knownIds'],
+        rationale:
+          'The improvement gate needs the same two checks; otherwise only one ledger rejects impossible dates and dangling replacements.',
+      },
+      {
+        filePath: 'src/domain/__tests__/promptRegistry.test.ts',
+        requiredSubstrings: ['rejects an impossible decidedOn', 'real calendar date'],
+        rationale:
+          'The rejection has to be asserted, not assumed: the impossible month, the missing February day and the leap day pin the boundary.',
+      },
+      {
+        filePath: 'src/domain/__tests__/improvementRegistry.test.ts',
+        requiredSubstrings: ['rejects an impossible decidedOn', 'real calendar date'],
+        rationale:
+          'Both gates are separate functions, so each needs its own value-validation test rather than one shared expectation.',
+      },
+    ],
+    restorePlaybook: [
+      'Keep `isRealCalendarDate` in `src/domain/ledgerContract.ts` and call it from both gates whenever `decidedOn` is set.',
+      'Resolve `supersededBy` against the entries being validated; a replacement must be an entry in the same registry.',
+      'Extend the boundary tests with any new date rule rather than deleting the impossible-month and missing-day cases.',
+    ],
+  },
 ];

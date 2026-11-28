@@ -225,6 +225,45 @@ describe('improvementRegistry — anti-wipeout tracking & drift verification', (
     expect(findImprovementLedgerPinViolations()).toEqual([]);
   });
 
+  it('rejects an impossible decidedOn and a supersededBy that names no entry', () => {
+    const base = IMPROVEMENTS_REGISTRY[0];
+    const opted = { decidedOn: '2026-11-28' } as const;
+
+    const impossibleMonth = findImprovementLedgerOptInViolations([
+      { ...base, id: 'IMP-933', ...opted, decidedOn: '2026-13-45' },
+    ]);
+    expect(impossibleMonth).toHaveLength(1);
+    expect(impossibleMonth[0].issue).toContain('real calendar date');
+
+    // Shaped like a date, but February never had 30 days.
+    expect(
+      findImprovementLedgerOptInViolations([
+        { ...base, id: 'IMP-934', ...opted, decidedOn: '2026-02-30' },
+      ])[0].issue
+    ).toContain('real calendar date');
+
+    // A real leap day is a valid entry date.
+    expect(
+      findImprovementLedgerOptInViolations([
+        { ...base, id: 'IMP-935', ...opted, decidedOn: '2028-02-29' },
+      ])
+    ).toEqual([]);
+
+    const dangling = findImprovementLedgerOptInViolations([
+      { ...base, id: 'IMP-936', ...opted, status: 'superseded', supersededBy: 'IMP-999' },
+    ]);
+    expect(dangling).toHaveLength(1);
+    expect(dangling[0].issue).toContain('IMP-999');
+
+    // The replacement resolves only when it is actually in the registry.
+    expect(
+      findImprovementLedgerOptInViolations([
+        { ...base, id: 'IMP-937', ...opted },
+        { ...base, id: 'IMP-938', ...opted, status: 'superseded', supersededBy: 'IMP-937' },
+      ])
+    ).toEqual([]);
+  });
+
   it('keeps the pinned legacy improvement IDs honest against the registry', () => {
     expect(LEGACY_IMPROVEMENT_ENTRY_IDS).toHaveLength(121);
 
