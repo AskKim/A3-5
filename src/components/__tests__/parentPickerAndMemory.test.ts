@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Animal } from '../../domain/models';
-import { computeVirtualWindow } from '../useVirtualWindow';
+import { computeVirtualWindow } from '../../utils/useVirtualWindow';
 
 const reactHarness = vi.hoisted(() => {
   interface HookState {
@@ -141,7 +141,7 @@ vi.mock('lucide-react', () => ({
   X: () => null,
 }));
 
-import { SearchableParentPicker } from '../../components/SearchableParentPicker';
+import { SearchableParentPicker } from '../SearchableParentPicker';
 
 interface VNodeLike {
   type: unknown;

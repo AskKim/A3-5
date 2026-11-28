@@ -21,12 +21,13 @@
     "verify:layers": "tsx scripts/audit-layers.ts",
     "verify:extraction": "tsx scripts/rehearse-engine-extraction.ts",
     "verify:android": "tsx scripts/verify-android.ts",
-    "verify": "npm run lint && npm test && npm run verify:improvements && npm run verify:prompts && npm run verify:modules && npm run verify:layers && npm run verify:engine && npm run verify:extraction && npm run verify:android && npm run verify:dual-audience && npm run verify:contract && npm run verify:coverage",
+    "verify": "npm run lint && npm test && npm run verify:improvements && npm run verify:prompts && npm run verify:modules && npm run verify:layers && npm run verify:engine && npm run verify:extraction && npm run verify:android && npm run verify:dual-audience && npm run verify:contract && npm run verify:plans && npm run verify:coverage",
     "preflight": "node prompts/preflight/scripts/preflight-run-context.mjs",
     "preflight:gen": "node prompts/preflight/scripts/gen-preflight.mjs",
     "preflight:lint": "node prompts/preflight/scripts/preflight-lint.mjs",
     "verify:chunks": "tsx scripts/verify-chunk-graph.ts",
     "verify:contract": "tsx scripts/verify-contract-changelog.ts",
+    "verify:plans": "tsx scripts/verify-plans.ts",
     "verify:coverage": "vitest run --coverage",
     "verify:site-identity": "tsx scripts/verify-site-identity.ts",
     "regen:ledgers": "tsx scripts/regen-ledgers.ts --write"
@@ -35,7 +36,7 @@
     "@tailwindcss/vite": "^4.3.5",
     "@vitejs/plugin-react": "^6.3.0",
     "fflate": "^0.8.3",
-    "lucide-react": "^1.81.0",
+    "lucide-react": "^1.83.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "sql.js": "^1.17.0",
@@ -49,7 +50,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/sql.js": "^1.16.1",
-    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/coverage-v8": "^5.1.2",
     "fake-indexeddb": "^6.2.8",
     "jsdom": "^31.0.1",
     "tailwindcss": "^4.3.3",
@@ -57,5 +58,10 @@
     "typescript": "^7.0.2",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "workbox-build": {
+      "glob": "^14.0.6"
+    }
   }
 }

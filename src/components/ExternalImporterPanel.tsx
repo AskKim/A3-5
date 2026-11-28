@@ -76,10 +76,10 @@ import {
   PREDEFINED_SPECIES_PRESETS,
 } from '../domain/models';
 import {
-  BatchImportPhotoProgress,
-  optimizeStagedImporterPhotos,
-} from '../storage/webImageOptimizer';
-import { parseExternalImportOffThread } from '../storage/offThreadWorkerClient';
+  getImageOptimizerPort,
+  type BatchImportPhotoProgress,
+} from '../app/ports/imageOptimizer';
+import { parseExternalImportOffThread } from '../app/ports/offThreadWorkerClient';
 import {
   formatReadableByteLimit,
   MAX_CSV_TEXT_BYTES,
@@ -594,7 +594,7 @@ export function ExternalImporterPanel({
           total: preview.stagedPhotos.length,
           savedBytesSoFar: 0,
         });
-        const batchResult = await optimizeStagedImporterPhotos(
+        const batchResult = await getImageOptimizerPort().optimizeStagedImporterPhotos(
           preview.stagedPhotos,
           importPreset,
           (prog) => setPhotoProgress(prog)

@@ -43,7 +43,7 @@ import {
 import {
   PedigreeScanSessionResult,
   scanPedigreeDocumentFile,
-} from '../storage/pedigreeOcrScanner';
+} from '../app/ports/pedigreeOcrScanner';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 
 interface PedigreeOcrScannerPanelProps {

@@ -1,7 +1,7 @@
 Before reading code, answering questions, or proposing edits, read and strictly follow all binding rules in `prompts/master_system_prompt.md`, `GEMINI.md`, and `AGENTS.md`.
 
 ## Quick Non-Negotiables (For Inline / Read-Only / Fast Context)
-- **Startup Check:** On active coding tasks, emit `ALIGNED` followed by `PENDING HANDOFF: <path> — <goal>` / `PENDING PLAN: <path> — <goal>` or `NO PENDING WORK` (`docs/plans/`, excluding `suggestions-backlog.md`).
+- **Startup Check:** On active coding tasks, emit `ALIGNED` followed by `PENDING: handoff-<topic>, plan-<topic>` (names only, comma-separated), `EXISTING INCOMPLETE: ...` for files with no open steps, or `NO PENDING WORK` (`docs/plans/`, excluding `suggestions-backlog.md`).
 - **React PWA Only:** Core app (`src/`, `index.html`, `vite.config.ts`, `package.json`) MUST stay React + Vite + TypeScript (ES2018 target). `android-wrapper/` is strictly a thin Kotlin WebView shell—never rewrite the PWA in Kotlin.
 - **Three-Layer Boundaries:** `@engine/*` (`src/engine/` — zero livestock/pedigree terms, zero DOM outside `bridge/` & `storage/`), `@features/*` (`src/features/` — zero cross-feature sibling imports), `@domain/*` (`src/domain/` — pure TS, zero DOM), `@app/*` (`src/app/` — composition root). Never import from `/import/` or `/old/`.
 - **Strict Safety & Dates:** Never use `as any`, `@ts-ignore`, or `@ts-expect-error`. Store pure calendar dates as `"YYYY-MM-DD"` strings and compute offsets via `Date.UTC(y, m, d + offset)`. Protect `src/main.tsx`, `src/App.tsx`, `index.html` (`BOOT_ENTRY_LOCK_CHECKSUMS`) and `/prompts/` files.

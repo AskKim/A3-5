@@ -54,6 +54,9 @@ jobs:
       - name: Verify dual-audience headers on src modules
         run: npm run verify:dual-audience
 
+      - name: Verify no finished handoff or plan files linger
+        run: npm run verify:plans
+
       - name: Verify layer boundaries and engine typecheck
         run: |
           npm run verify:layers

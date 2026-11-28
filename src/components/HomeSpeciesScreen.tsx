@@ -52,7 +52,7 @@ import {
   todayDateIso,
 } from '../domain/models';
 import { WorkspaceRoute } from '../hooks/useBarnStore';
-import type { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
+import type { DeviceCapabilityController } from '../app/ports/deviceCapabilityDetector';
 import { DeviceCapabilityCard } from './DeviceCapabilityCard';
 import type { ImportExportHubSection } from './ImportExportHubScreen';
 

@@ -6,13 +6,13 @@ AT THE START OF EVERY SESSION, READ AND LOAD `/GEMINI.md` AND `/AGENTS.md` IF NO
 
 # Master System Prompt: Offline-First Pedigree PWA
 
-**Last-Edited Timestamp:** 2026-11-27
+**Last-Edited Timestamp:** 2026-11-28
 > **Protection Flag (`DO_NOT_REMOVE_WITHOUT_CONFIRMATION`):** Do not delete, move, or remove this file from `/prompts/` without explicit user confirmation.
 
 ## 0. Minimal-Output Alignment Check
 - **Rule Loading:** Always load and enforce `/GEMINI.md` and `/AGENTS.md` alongside this file as active binding rules across all models and coding platforms.
 - **On Read Only (No Task Given):** Reply *only* with `ALIGNED: Rules active.` and stop.
-- **On Read With Task:** Output `ALIGNED` on line 1, emit the compact `GEMINI.md` status line (`PENDING HANDOFF: ...`, `PENDING PLAN: ...`, or `NO PENDING WORK`) on line 2 (except on import-only fast-boot checks per `AGENTS.md` §0), then execute immediately with zero preamble.
+- **On Read With Task:** Output `ALIGNED` on line 1, emit the compact `GEMINI.md` status line (`PENDING: handoff-<topic>, plan-<topic>`, `EXISTING INCOMPLETE: handoff-<topic>, plan-<topic>`, or `NO PENDING WORK`) on line 2 (except on import-only fast-boot checks per `AGENTS.md` §0), then execute immediately with zero preamble.
 
 ## 1. Execution & Token Spend Protocol (Critical)
 - **Protect This File:** Never delete, overwrite, remove from `/prompts/`, or edit `master_system_prompt.md` unless explicitly instructed by the user in the current prompt.
@@ -24,7 +24,7 @@ AT THE START OF EVERY SESSION, READ AND LOAD `/GEMINI.md` AND `/AGENTS.md` IF NO
 - **Zero Invention:** Verify npm packages in `package.json` and APIs/types against the codebase. Never invent schemas or rabbitry/genetics rules (e.g., ARBA standards, allele logic, chore offsets); ask if missing.
 - **Circuit Breaker:** If a test, typecheck, or build fails twice on the same error, stop, report the trace, and await instruction.
 - **Zero Postmortems:** No completion summaries or change explanations unless requested. End tasks with *only* `Complete: [Task Name]` (only append `EXISTING INCOMPLETE: ...` if *other* pending files remain in `docs/plans/` per `GEMINI.md`; never repeat the startup `NO PENDING WORK` check).
-- **Plan Lifecycle (Delete on Wrap-Up):** Delete temporary active plan files in `docs/plans/` once all objectives and verification checks pass (never archive finished plans; keep `docs/plans/suggestions-backlog.md`).
+- **Plan Lifecycle (Delete on Wrap-Up):** Delete temporary active plan files in `docs/plans/` once all objectives and verification checks pass (never archive finished plans; keep `docs/plans/suggestions-backlog.md`). Deletion is the default: a finished `handoff-*`/`plan-*` file is deleted in the run that finishes it, and one found already finished at startup is deleted then rather than reported again. Keep a finished file only when the owner explicitly says to.
 - **Flag Uncertainty:** Mark unverified browser quirks/edge cases inline with `// UNVERIFIED: [reason]`.
 
 ## 2. Architecture & Type Safety

@@ -14,11 +14,7 @@
 
 import { AlertTriangle, Download, Home, RefreshCw, Settings, ShieldAlert } from 'lucide-react';
 import React from 'react';
-import {
-  getDiagnosticSummary,
-  listDiagnosticLogs,
-  recordReactCrash,
-} from '../storage/crashLogger';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
 import { downloadTextFile } from '../utils/webFileActions';
 
 interface DevelopmentErrorBoundaryProps {
@@ -62,7 +58,7 @@ export class DevelopmentErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     const compStack = info.componentStack || '';
-    recordReactCrash(error, compStack);
+    getDiagnosticsPort().recordReactCrash(error, compStack);
     this.setState({ componentStack: compStack });
   }
 
@@ -80,11 +76,11 @@ export class DevelopmentErrorBoundary extends React.Component<
     this.setState({ exportBusy: true, exportFeedback: null });
     try {
       const [entries, { formatSupportReportText }, { formatTimestampedBackupSlug }] = await Promise.all([
-        listDiagnosticLogs(),
+        getDiagnosticsPort().listDiagnosticLogs(),
         import('../domain/supportBundle'),
         import('../domain/syncAndExports'),
       ]);
-      const summary = await getDiagnosticSummary(entries);
+      const summary = await getDiagnosticsPort().getDiagnosticSummary(entries);
       const report = formatSupportReportText(entries, summary, null);
       const filename = `pedigree-development-fault-${formatTimestampedBackupSlug()}.txt`;
       await downloadTextFile(filename, report, 'text/plain');

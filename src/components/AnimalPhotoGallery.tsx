@@ -37,9 +37,9 @@ import {
   validateUploadFileSize,
 } from '../domain/inputSanitization';
 import { Animal, AnimalPhoto } from '../domain/models';
-import { logDiagnosticEvent } from '../storage/crashLogger';
-import { revokeBlobUrlIfNeeded } from '../storage/photoHydration';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
+import { revokeBlobUrlIfNeeded } from '../app/ports/photoHydration';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 
 interface AnimalPhotoGalleryProps {
@@ -184,7 +184,7 @@ export function AnimalPhotoGallery({
           return next;
         });
       } catch (err) {
-        logDiagnosticEvent({
+        getDiagnosticsPort().logDiagnosticEvent({
           level: 'warn',
           category: 'media',
           message: `Failed to load full-resolution photo "${targetId}"`,
@@ -285,7 +285,7 @@ export function AnimalPhotoGallery({
       for (let i = 0; i < files.length; i++) {
         setOptimizeStatus(`Optimizing ${i + 1} of ${files.length} (${preset.maxDimension}px)...`);
         try {
-          const result = await optimizeImageFile(files[i], preset.id);
+          const result = await getImageOptimizerPort().optimizeImageFile(files[i], preset.id);
           optimizedBatch.push(result);
         } catch {
           failedNames.push(files[i].name);

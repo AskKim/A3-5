@@ -70,7 +70,7 @@ import { ActiveSpeciesData } from '../hooks/useBarnStore';
 import {
   captureFeedTagWithPreCompressionOcr,
   FeedTagCaptureResult,
-} from '../storage/feedTagOcr';
+} from '../app/ports/feedTagOcr';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import { useAsyncKeyedLock, useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import { copyTextWithFallback, downloadTextFile } from '../utils/webFileActions';

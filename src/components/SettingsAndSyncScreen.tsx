@@ -86,13 +86,13 @@ import {
 } from '../domain/themePalette';
 import { sanitizeSafeRasterImageDataUrl } from '../domain/inputSanitization';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
-import { DeviceCapabilityController } from '../storage/deviceCapabilityDetector';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import type { DeviceCapabilityController } from '../app/ports/deviceCapabilityDetector';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import {
   RollingBackupMeta,
   StorageProtectionStatus,
   usePWAInstall,
-} from '../storage/storageProtection';
+} from '../app/ports/storageProtection';
 import type { GoogleCalendarOption } from '../utils/googleCalendarClient';
 import { DeviceCapabilityCard } from './DeviceCapabilityCard';
 import { ImageCompressionNotice } from './ImageCompressionNotice';
@@ -547,7 +547,7 @@ export function SettingsAndSyncScreen({
     setLogoError(null);
     setLogoUploading(true);
     try {
-      const optimized = await optimizeImageFile(file, 'compact');
+      const optimized = await getImageOptimizerPort().optimizeImageFile(file, 'compact');
       const nextUrl = sanitizeSafeRasterImageDataUrl(
         optimized.thumbnailDataUrl || optimized.dataUrl
       );

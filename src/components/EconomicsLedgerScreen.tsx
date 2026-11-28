@@ -79,7 +79,7 @@ import {
   YouthProjectFeedLogEntry,
 } from '../domain/models';
 import { ActiveSpeciesData } from '../hooks/useBarnStore';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import { useAsyncKeyedLock, useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import { downloadTextFile } from '../utils/webFileActions';
@@ -578,7 +578,7 @@ export function EconomicsLedgerScreen({
     setLedgerError(null);
     setReceiptBusy(true);
     try {
-      const optimized = await optimizeImageFile(file, 'compact');
+      const optimized = await getImageOptimizerPort().optimizeImageFile(file, 'compact');
       const safeFull = sanitizeSafeRasterImageDataUrl(optimized.dataUrl);
       const safeThumb = sanitizeSafeRasterImageDataUrl(optimized.thumbnailDataUrl);
       if (!safeFull) {

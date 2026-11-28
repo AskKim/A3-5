@@ -190,7 +190,7 @@ export function findImprovementLedgerPinViolations(
  */
 export const BOOT_ENTRY_LOCK_CHECKSUMS: Readonly<Record<string, string>> = {
   'src/main.tsx': 'b77239b90e2ab0ca96469ccd8692531d17fddc73267cc9aab3a3638a49a663dc',
-  'src/App.tsx': 'ace3a08c41f404410023f882abb9d5b14109ca3d848a7b0222716cb0d34a5abd',
+  'src/App.tsx': '0906bc564a330495f3ce8ba5552db8ad449a5a6a99d636cf13cfbc7d517513aa',
   'index.html': 'eb33934974173a0d046a33d41f4584420d9d2886e9bbac5707b80611dc12066d',
 };
 

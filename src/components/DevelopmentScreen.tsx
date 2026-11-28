@@ -97,19 +97,19 @@ import {
   PausedBackgroundJob,
   resumePausedBackgroundJob,
   subscribePausedBackgroundJobs,
-} from '../storage/backgroundFreezeCoordinator';
-import { logDiagnosticEvent } from '../storage/crashLogger';
+} from '../app/ports/backgroundFreezeCoordinator';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
 import {
   detectCurrentBrowserCompatibility,
   DeviceCapabilityController,
-} from '../storage/deviceCapabilityDetector';
+} from '../app/ports/deviceCapabilityDetector';
 import {
   type BackupSyncStatus,
   getCurrentTabId,
   loadAllSyncConflictsFromIdb,
   loadAllSyncOperationsFromIdb,
-} from '../storage/localSyncChannels';
-import { terminateIdleArchiveWorker } from '../storage/offThreadWorkerClient';
+} from '../app/ports/localSyncChannels';
+import { terminateIdleArchiveWorker } from '../app/ports/offThreadWorkerClient';
 import {
   clearOpfsPruneSyncWarning,
   flushOpfsBackupsToSyncFolder,
@@ -123,18 +123,18 @@ import {
   readPriorUseSentinel,
   runOpfsExportCanary,
   sweepOrphanedOpfsTmpOnBoot,
-} from '../storage/opfsStorage';
+} from '../app/ports/opfsStorage';
 import {
   PwaUpdatePolicy,
   usePwaUpdateStatus,
-} from '../storage/pwaUpdateManager';
+} from '../app/ports/pwaUpdateManager';
 import {
   getTrackedActiveResourceCounts,
   probeBroadcastChannelSupport,
   probeLocalStorageSupport,
   getSafeSessionStorage,
   getSafeWebLocks,
-} from '../storage/storageProbes';
+} from '../app/ports/storageProbes';
 import {
   CLOCK_DRIFT_WARNING_THRESHOLD_MS,
   DiagnosticQuotaPreflightResult,
@@ -145,7 +145,7 @@ import {
   StorageProtectionStatus,
   useConnectivityStatus,
   verifyStorageQuotaForDiagnosticAction,
-} from '../storage/storageProtection';
+} from '../app/ports/storageProtection';
 import { useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import { downloadTextChunks } from '../utils/webFileActions';
 import { DiagnosticsAndSupportPanel } from './DiagnosticsAndSupportPanel';
@@ -511,7 +511,7 @@ export function DevelopmentScreen({
       return;
     }
     pwaUpdate.setPolicy(check.policy);
-    logDiagnosticEvent({
+    getDiagnosticsPort().logDiagnosticEvent({
       level: 'info',
       category: 'lifecycle',
       message: `PWA update policy changed to "${check.policy}" via Development`,
@@ -534,7 +534,7 @@ export function DevelopmentScreen({
       return;
     }
 
-    logDiagnosticEvent({
+    getDiagnosticsPort().logDiagnosticEvent({
       level: result.value.level,
       category: result.value.category,
       message: result.value.message,
@@ -618,7 +618,7 @@ export function DevelopmentScreen({
         await onClearLocalSyncAndReminderState();
         setSyncResetPhrase('');
         await refreshSyncCounters();
-        logDiagnosticEvent({
+        getDiagnosticsPort().logDiagnosticEvent({
           level: 'warn',
           category: 'storage',
           message: 'Developer manually cleared local sync outbox & backup reminder metadata',

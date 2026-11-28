@@ -48,13 +48,8 @@ import {
 } from '../domain/pedigreePrintStyles';
 import type { PedigreePrintOptions } from '../domain/syncAndExports';
 import { usePlatformBridge } from '@app/PlatformBridgeContext';
-import {
-  dismissAsyncErrorToast,
-  emitAsyncErrorToast,
-  isMemoryLikeError,
-  logDiagnosticEvent,
-} from '../storage/crashLogger';
-import { optimizeImageFile } from '../storage/webImageOptimizer';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
+import { getImageOptimizerPort } from '../app/ports/imageOptimizer';
 import { useAccessibleDialog } from '../utils/useAccessibleDialog';
 import {
   copyTextWithFallback,
@@ -294,15 +289,15 @@ export async function runPrintPreviewFileAction(params: {
       return false;
     }
     const formatted = formatPrintPreviewFileError(params.action, params.filename, err);
-    const memoryLike = isMemoryLikeError(err);
-    logDiagnosticEvent({
+    const memoryLike = getDiagnosticsPort().isMemoryLikeError(err);
+    getDiagnosticsPort().logDiagnosticEvent({
       level: 'error',
       category: memoryLike ? 'memory' : 'storage',
       message: `${formatted.title}: ${formatted.detail}`,
       error: err,
       details: { action: params.action, filename: params.filename },
     });
-    const toast = emitAsyncErrorToast({
+    const toast = getDiagnosticsPort().emitAsyncErrorToast({
       title: formatted.title,
       detail: formatted.detail,
       severity: 'error',
@@ -709,7 +704,7 @@ export function PrintPreviewModal({
   const dismissFileActionError = useCallback(() => {
     setFileActionError(null);
     if (lastFileToastIdRef.current) {
-      dismissAsyncErrorToast(lastFileToastIdRef.current);
+      getDiagnosticsPort().dismissAsyncErrorToast(lastFileToastIdRef.current);
       lastFileToastIdRef.current = null;
     }
   }, []);
@@ -776,7 +771,7 @@ export function PrintPreviewModal({
     dismissFileActionError();
     setLogoUploading(true);
     try {
-      const optimized = await optimizeImageFile(file, 'compact');
+      const optimized = await getImageOptimizerPort().optimizeImageFile(file, 'compact');
       const nextUrl = sanitizeSafeRasterImageDataUrl(
         optimized.thumbnailDataUrl || optimized.dataUrl
       );
@@ -1263,7 +1258,7 @@ export function PrintPreviewModal({
                       err instanceof Error && err.message.trim()
                         ? err.message.trim()
                         : 'Clipboard permission denied.';
-                    logDiagnosticEvent({
+                    getDiagnosticsPort().logDiagnosticEvent({
                       level: 'warn',
                       category: 'storage',
                       message: `Could not copy print preview summary: ${detail}`,

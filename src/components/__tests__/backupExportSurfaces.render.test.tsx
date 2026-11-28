@@ -34,10 +34,27 @@ vi.mock('../../utils/webFileActions', async (importOriginal) => {
   };
 });
 
+// `readEmergencySessionTrace` is the first call inside the guarded tail of `refreshDiagnostics`, so
+// observing it proves whether a refresh that settled after unmount was applied or dropped. React
+// itself cannot show this: an update on an unmounted root is a silent no-op.
+const readEmergencyTraceSpy = vi.fn();
+
+vi.mock('../../storage/crashLogger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../storage/crashLogger')>();
+  return {
+    ...actual,
+    readEmergencySessionTrace: () => {
+      readEmergencyTraceSpy();
+      return actual.readEmergencySessionTrace();
+    },
+  };
+});
+
 afterEach(() => {
   // Unmount before jsdom teardown so deferred React work cannot run without a window.
   cleanup();
   downloadTextFileMock.mockClear();
+  readEmergencyTraceSpy.mockClear();
   vi.restoreAllMocks();
 });
 
@@ -216,5 +233,23 @@ describe('DiagnosticsAndSupportPanel export & repair entry points', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: /Auto-Repair/i })).toBeNull()
     );
+  });
+
+  it('drops a diagnostics refresh that resolves after the panel unmounts', async () => {
+    // CI failed this file with `window is not defined`: the mount refresh awaited its log reads,
+    // the panel unmounted first, and the late result was applied into a torn-down jsdom document.
+    // Unmounting in the same tick keeps those reads in flight, so this asserts the refresh is
+    // dropped rather than applied — the behaviour that used to dispatch the fatal update.
+    readEmergencyTraceSpy.mockClear();
+
+    const { unmount } = renderDiagnostics();
+    unmount();
+
+    // Two macrotasks: the first lets the deferred log reads settle, the second catches anything
+    // they scheduled behind them.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(readEmergencyTraceSpy).not.toHaveBeenCalled();
   });
 });

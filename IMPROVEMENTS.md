@@ -23,7 +23,7 @@ and follow the restoration playbook below.
 ## Release Milestone Classification
 
 - **Alpha 2 (v0.1.0-alpha.2 — Released Baseline):** `IMP-001` through `IMP-064` (64 improvements).
-- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (78 improvements).
+- **Alpha 3 (v0.1.0-alpha.3 — Active Deliverables):** `IMP-065` onwards (94 improvements).
 
 ## Quick Verification & Recovery Commands
 
@@ -40,7 +40,7 @@ npm run lint && npm run build
 
 ---
 
-## Logged Improvements (142)
+## Logged Improvements (158)
 
 ### IMP-001: Backup Freshness Tracking, Reminders & Clean Human-Readable Exports
 
@@ -2365,11 +2365,11 @@ npm run lint && npm run build
 - **Origin:** Session Improvement
 - **User Goal:** A handoff run asked to go milestone to milestone stopped after each green verification instead of continuing, because the closure ritual read like the end of the work.
 - **Summary:** The handoff now states its own execution policy: registering, verifying and committing a milestone is a checkpoint, not a turn boundary. After a checkpoint the run continues straight into the next milestone with no confirmation and no hand-back, and it ends only when the remaining list is empty or the run budget is exhausted — at which point the stop is reported as budget, with what landed and what remains. Missing tooling for a later milestone (coverage provider, jsdom harness, SDK) is added when needed and reported as a limitation instead of ending the run early. The resume prompt carries the same rule in an *Execution Continuity* section, and its “work remains ongoing” branch now says to continue rather than stop, with PRM-004 enforcing the phrase so the rule cannot be quietly dropped.
-- **Tracked Files:** `docs/plans/handoff-barn-store-improvements.yaml`, `prompts/resume_backlog_plan_prompt.md`, `src/domain/promptRegistry.ts`, `src/domain/promptsCatalog.ts`
+- **Tracked Files:** `GEMINI.md`, `prompts/resume_backlog_plan_prompt.md`, `src/domain/promptRegistry.ts`, `src/domain/promptsCatalog.ts`
 
 **Automated Invariants Checked:**
 - `prompts/resume_backlog_plan_prompt.md` must contain `checkpoint, not a turn boundary`, `Execution Continuity`, `only acceptable reason to stop with work left` — *Without the continuity rule the resume workflow hands back after every verified milestone — the exact behaviour this entry exists to prevent.*
-- `docs/plans/handoff-barn-store-improvements.yaml` must contain `execution_policy`, `checkpoint, not a turn boundary` — *The rule has to live in the handoff the run is following, not only in a prompt someone may not reload.*
+- `GEMINI.md` must contain `execution_policy`, `checkpoint, not a turn boundary` — *The rule has to live in the always-loaded rules, not in a single handoff: a finished handoff is deleted, so a rule parked only in one disappears with it.*
 
 **Restoration Playbook if Overwritten:**
 1. A milestone closure is a checkpoint: register, verify, commit, then start the next milestone in the same run.
@@ -2818,7 +2818,7 @@ Changed:    `vitest.config.ts`, `src/components/__tests__/backupExportSurfaces.r
 Status:     active
 
 **Automated Invariants Checked:**
-- `vitest.config.ts` must contain `thresholds:`, `statements: 51`, `branches: 42`, `functions: 37`, `lines: 53` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance.*
+- `vitest.config.ts` must contain `thresholds:`, `src/domain/**`, `src/components/**`, `src/hooks/**` — *The ratchet is the only thing that stops an untested module from diluting the render and storage gains; a floor left below the measurement is a silent allowance. These tokens track the latest ratchet, raised with IMP-146.*
 - `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `downloadTextFileMock`, `Herd Roster Spreadsheet`, `getByRole('status')` — *Only a click that reaches the download layer proves the exporter runs; asserting the registry list alone would pass with every exporter broken.*
 
 **Restoration Playbook if Overwritten:**
@@ -2901,3 +2901,224 @@ Status:     active
 1. Keep `isRealCalendarDate` in `src/domain/ledgerContract.ts` and call it from both gates whenever `decidedOn` is set.
 2. Resolve `supersededBy` against the entries being validated; a replacement must be an entry in the same registry.
 3. Extend the boundary tests with any new date rule rather than deleting the impossible-month and missing-day cases.
+
+## 2026-11-28 — Diagnostics Panel Drops In-Flight Refreshes After Unmount
+Why:        CI kept failing the render tests with `ReferenceError: window is not defined` from a state update dispatched by `DiagnosticsAndSupportPanel`, so a suite that passes locally would go red on an unrelated commit — the failure looked like the ledger work and was not.
+Changed:    `src/components/DiagnosticsAndSupportPanel.tsx`, `src/components/__tests__/backupExportSurfaces.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `src/domain/improvements/rationales.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/DiagnosticsAndSupportPanel.tsx` must contain `isMountedRef`, `if (!isMountedRef.current) return` — *The awaits in `refreshDiagnostics` can resolve after unmount; without this guard the update is dispatched into a document that no longer exists.*
+- `src/components/__tests__/backupExportSurfaces.render.test.tsx` must contain `drops a diagnostics refresh that resolves after the panel unmounts`, `readEmergencyTraceSpy` — *That call sits inside the guarded tail of `refreshDiagnostics`, so a spy on it is the only signal React exposes: an update on an unmounted root is a silent no-op.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the `isMountedRef` check after the awaits in `refreshDiagnostics`, before any `setState` call.
+2. Treat a post-teardown state update as a component bug, not a test-ordering problem: fix the guard instead of skipping, retrying or serialising the test.
+3. New async handlers that set state after an await need the same check if they can outlive the panel.
+
+## 2026-11-28 — Measure Component→Storage Coupling and Move the Install Prompt Behind an @app Port
+Why:        The modularity handoff requires the layer checks to cover components and storage, but nothing measured how many UI files still load a storage module at runtime, so the UI decoupling milestone had no denominator and could regress silently. The install button and offline banner were also the simplest example of a presentational header component reaching into `src/storage/storageProtection` for the PWA prompt and connectivity.
+Changed:    `scripts/audit-layers.ts`, `scripts/ui-storage-coupling-budget.json`, `scripts/layer-allowlist.json`, `src/app/ports/installPrompt.tsx`, `src/components/PWAInstallButton.tsx`, `src/components/DeviceCapabilityCard.tsx`, `src/components/UnifiedBackupVaultPanel.tsx`, `src/components/BarnSchedulerGantt.tsx`, `src/components/CloudAppFolderSyncPanel.tsx`, `src/components/HealthReferencePanel.tsx`, `src/components/SettingsAndSyncScreen.tsx`, `src/components/WipedStorageRecoveryModal.tsx`, `src/components/__tests__/pwaInstallPort.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/audit-layers.ts` must contain `ui-storage-coupling-budget.json` — *The burn-down ledger must stay wired into the layer audit; unwiring it would let component coupling creep back unmeasured.*
+- `src/components/PWAInstallButton.tsx` must contain `useInstallPromptPort` — *The install button must consume the @app port rather than importing the storage layer directly.*
+
+**Restoration Playbook if Overwritten:**
+1. A component that needs storage behaviour takes an `@app/ports/*` capability (context hook with a browser default plus a provider) or a narrow prop — never a direct `../storage/*` import.
+2. Type-only imports from storage are allowed: they are erased at compile time and create no runtime edge.
+3. After migrating a seam run `npx tsx scripts/audit-layers.ts --write-ui-budget` so the ledger records the smaller set; never edit the budget upward.
+
+## 2026-11-28 — Coverage Expansion: Domain Normalizers, Workspace Screens and Store Actions
+Why:        Only the model layer and a handful of render surfaces were tested while 76 files carried zero executable coverage, so the app's largest screens, the JSON sanitizer defaults and the store mutations could regress without a single failing test. The floors also allowed one area's gains to pay for another's gaps.
+Changed:    `vitest.config.ts`, `src/domain/__tests__/modelsNormalizers.test.ts`, `src/domain/__tests__/crmReportsAndBackupSanitization.test.ts`, `src/components/__tests__/clientCrm.render.test.tsx`, `src/components/__tests__/screensSmoke.render.test.tsx`, `src/components/__tests__/printPreview.render.test.tsx`, `src/hooks/__tests__/barnStoreActions.test.tsx`, `src/engine/storage/__tests__/lanWebRtcTransport.test.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `thresholds:`, `src/domain/**`, `src/components/**`, `src/hooks/**` — *Global floors plus per-area floors are what stop a new untested screen from riding on the tested domain layer; a missing area floor reopens that trade.*
+- `src/components/__tests__/screensSmoke.render.test.tsx` must contain `HerdScreen`, `SpeciesDashboardScreen`, `EconomicsLedgerScreen`, `BreedingScreen`, `PedigreeScreen` — *These five screens carried the bulk of the zero-coverage statements; a mount that silently disappears would take thousands of statements back to unexecuted.*
+
+**Restoration Playbook if Overwritten:**
+1. Measure with the json-summary reporter, rank files by missing statements, and spend the next batch on the area floor that is furthest below its measurement.
+2. For pure domain code, test the fallback and clamp arms the happy path never reaches; that is where the branch coverage sits.
+3. Mount large screens with real fixture data and at least one interaction, not a bare heading assertion, or statements rise while branches stay flat.
+4. Exercise store mutations through the injected memory adapter instead of extracting the hook; the adapter is the existing seam.
+
+## 2026-11-28 — Move the Offline Ideas Backlog Behind an @app Port
+Why:        The suggestions screen is a developer screen with no persistence logic of its own, yet it imported `loadCapturedIdeas`, `saveCapturedIdea`, `deleteCapturedIdea` and `clearCapturedIdeas` straight out of `src/storage/capturedIdeasStore`. That was the largest single dependency a screen carried into the storage layer, and it could not be tested without the real offline stores.
+Changed:    `src/app/ports/ideasBacklog.tsx`, `src/components/SuggestionsBacklogScreen.tsx`, `src/components/__tests__/suggestionsIdeasPort.render.test.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/SuggestionsBacklogScreen.tsx` must contain `useIdeasBacklogPort` — *The screen must keep reading the offline idea list through the @app port rather than importing capturedIdeasStore directly.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep the idea store behind `IdeasBacklogPort`; a new screen operation becomes a method on the port with the browser default, not a direct storage import.
+2. Check the burn-down ledger after the edit (`npx tsx scripts/audit-layers.ts`) and regenerate it with `--write-ui-budget` only when it shrank.
+3. Assert the screen contract through an injected port so the test does not depend on IndexedDB/OPFS being present.
+
+## 2026-11-28 — Coverage Ratchet Raised Again With Feed, Judge, Editor and Importer Tests
+Why:        The remaining zero-coverage workspace screens (feed inventory, judge notebook) and the partially covered animal editor and HerdBoss importer were the largest cheap gaps left after IMP-146, and the global floors still sat a full point below the measured values.
+Changed:    `vitest.config.ts`, `src/components/__tests__/screensSmoke.render.test.tsx`, `src/components/__tests__/animalEditor.render.test.tsx`, `src/domain/__tests__/herdBossImporter.test.ts`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `thresholds:`, `src/components/**`, `src/domain/**` — *The ratchet is the only automated guard that the feed/judge/editor/importer gains cannot be spent by an untested module; the numeric floors live in the newest ratchet entry.*
+- `src/components/__tests__/animalEditor.render.test.tsx` must contain `Save ${speciesProfile.name}`, `Cancel`, `onSave` — *The editor is the only write path for animal records; a suite that stops asserting the save draft or the cancel path would leave that path unverified.*
+
+**Restoration Playbook if Overwritten:**
+1. When a screen renders tab-gated sections, assert the heading and the interactive controls rather than text that only appears on a non-default tab.
+2. For an importer, test the malformed export arms: quoted commas, BOM/CRLF, duplicate ids and unmatched pedigree names are where the branches live.
+3. Keep numeric coverage floors pinned in the newest ratchet entry only; older entries should guard the shape of the ratchet, not its historical values.
+
+## 2026-11-28 — Lift the Species Profile Save Out of useBarnStore
+Why:        `useBarnStore` was still a 6,743-line function with no internal seam, so a change to the species editor paid the cost of the whole file and every branch touched the same merge surface. The species save was the largest self-contained workflow left in it (209 lines) and the one with the most branchy rename cascade inside.
+Changed:    `src/hooks/barnStore/useSpeciesProfileActions.ts`, `src/hooks/useBarnStore.ts`, `src/hooks/__tests__/speciesProfileActions.test.ts`, `src/hooks/barnStore/README.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/useBarnStore.ts` must contain `useSpeciesProfileActions` — *The species save must stay in its own slice; the hook is a composer and must not take the rename cascade back inline.*
+- `src/hooks/__tests__/barnStoreContract.keys.json` must contain `saveSpeciesProfile` — *The public key stays part of the frozen 200-key surface even though its implementation now lives in barnStore/.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep `speciesProfileAction` React-free and pass adapter access as `getAdapter()`; the adapter ref is null during the first render.
+2. Do not move the `return {` literal out of `useBarnStore` in the same change as a slice move — `barnStoreContract.test.ts` locates it by text and would report a missing literal instead of a diff.
+3. Run the contract test and `npm run verify` after any species rename change; the cascade must still happen in one `replaceSnapshot`.
+
+## 2026-11-28 — Give useBarnStore Section Banners and Move the Inline Return Closures Out
+Why:        After the slice work, `useBarnStore` was still one unbroken 6.5k-line function: a reader had no way to see the seams while scrolling, and the frozen 200-key return literal still carried four closures (`clearStatusMessage`, `clearErrorMessage`, `dismissImportConflictAlert`, `locateConflictsInHerd`) instead of listing the keys a slice already built.
+Changed:    `src/hooks/useBarnStore.ts`, `src/hooks/barnStore/storeNoticeActions.ts`, `src/hooks/barnStore/useReservationSale.ts`, `src/hooks/__tests__/storeNoticeActions.test.ts`, `src/hooks/__tests__/reservationSale.test.ts`, `src/hooks/barnStore/README.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/hooks/useBarnStore.ts` must contain `createStoreNoticeActions`, `useReservationSale` — *The notice closures and the sale workflow must stay in their slices; recreating them inline would put the `return {` literal back in the business of building behaviour.*
+- `src/hooks/__tests__/barnStoreContract.keys.json` must contain `clearStatusMessage`, `locateConflictsInHerd`, `completeReservationSale` — *These keys survived a move of their implementation, which is exactly what the frozen snapshot is there to prove.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep section banners as `// ====` blocks directly above the first declaration of a section; they are parsing-neutral and the contract test ignores them.
+2. Notice actions are factories over the store setters, memoised on those setters, so the returned identities stay stable across renders.
+3. A sale completion must still collect every entity diff and call `recordOutboxOps` once, after all four writes.
+
+## 2026-11-28 — Route the Crash Surfaces Through an Injectable Diagnostics Port
+Why:        The three surfaces that exist to survive a crash (`CrashErrorBoundary`, `DevelopmentErrorBoundary`, `AsyncErrorToastHost`) each imported the crash logger, the freeze coordinator or the off-thread bundle builder directly, so the recovery UI could not be rendered or exercised without the real offline log stores.
+Changed:    `src/app/ports/diagnostics.ts`, `src/components/CrashErrorBoundary.tsx`, `src/components/DevelopmentErrorBoundary.tsx`, `src/components/AsyncErrorToastHost.tsx`, `src/components/__tests__/diagnosticsPort.render.test.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/AsyncErrorToastHost.tsx` must contain `getDiagnosticsPort` — *The toast host must keep reading notices through the port; a direct crashLogger import would restore the UI→storage edge and bypass the injectable.*
+- `src/components/CrashErrorBoundary.tsx` must contain `getDiagnosticsPort` — *A class error boundary cannot use a React context, so its diagnostics must go through the module-level port that tests can replace.*
+
+**Restoration Playbook if Overwritten:**
+1. Add a capability to `DiagnosticsPort` with its storage binding in the port file, not by importing storage in the component.
+2. Swap the port only through `setDiagnosticsPort` and always `resetDiagnosticsPort()` in test cleanup, since the module-level port outlives a test file.
+3. After the edit check `npx tsx scripts/audit-layers.ts`; regenerate the ledger with `--write-ui-budget` only when the edge count fell.
+
+## 2026-11-28 — Developer Console and External Importer Render Coverage
+Why:        The developer console carried 341 statements with zero executable coverage and the external importer panel sat at 24% even though both are screens a breeder opens to recover from a bad import or a storage problem.
+Changed:    `vitest.config.ts`, `src/components/__tests__/developmentConsole.render.test.tsx`, `src/components/__tests__/externalImporterPanel.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `thresholds:`, `'src/components/**'`, `'src/storage/**'` — *A later entry pins the current numbers, so this one only guards the shape: per-area thresholds for components and storage must keep existing, because without them the two suites could be deleted while the global gate still passed.*
+- `src/components/__tests__/developmentConsole.render.test.tsx` must contain `Arm Destructive Controls`, `PURGE TMP`, `onPurgeOpfsTmp` — *The phrase gate is the only thing between an operator and a wiped barn; a suite that stops asserting the lock, the wrong-phrase arm and the executed purge would leave that guard unverified.*
+- `src/components/__tests__/externalImporterPanel.render.test.tsx` must contain `parseExternalImportOffThread`, `onCommitImport` — *Imports are the only way external records enter the barn; the stub keeps the test on the panel contract, and the commit assertion is what proves the parsed preview is what gets merged.*
+
+**Restoration Playbook if Overwritten:**
+1. For a screen with tab-gated workspaces, click every tab and assert its tabpanel; a single default-tab mount leaves the other workspaces unexecuted.
+2. For a phrase-gated destructive action, assert three states: locked (no input), armed with a wrong phrase (button disabled), armed with the exact phrase (callback fires).
+3. Stub the off-thread parser rather than mocking the whole panel; the staging tray, review queue and merge button are the panel code worth covering.
+
+## 2026-11-28 — Fail the Verify Suite on a Finished Handoff or Plan File
+Why:        Finished plans and handoffs were meant to be deleted as they finished, but nothing enforced it: a completed handoff stayed in `docs/plans/` and came back on every startup as an `EXISTING INCOMPLETE:` notice, so the rule lived only in prose.
+Changed:    `scripts/verify-plans.ts`, `package.json`, `.github/workflows/ci.yml`, `AGENTS.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/verify-plans.ts` must contain `[WIP]`, `git rm docs/plans/`, `process.exit(1)` — *Removing the failure path or the printed fix would let a finished file pass silently again, which is exactly the state this entry exists to prevent.*
+- `package.json` must contain `npm run verify:plans` — *The gate only protects the suite while it is inside `npm run verify`; a standalone script nobody calls catches nothing.*
+
+**Restoration Playbook if Overwritten:**
+1. A `handoff-*`/`plan-*` file with no `[WIP]`/`[TODO]` line is finished: delete it instead of leaving it for the next startup notice.
+2. Keep the gate inside `npm run verify` and as its own CI step; on failure it reports the file name and the `git rm` fix.
+
+## 2026-11-28 — Drain the Diagnostics Panel and Photo Compression Through @app Ports
+Why:        `DiagnosticsAndSupportPanel` made twenty direct crash-logger calls and seven photo surfaces compressed uploads by importing `webImageOptimizer`, so the support bundle builder and every editor depended on storage modules they cannot render without.
+Changed:    `src/app/ports/diagnostics.ts`, `src/app/ports/imageOptimizer.ts`, `src/components/DiagnosticsAndSupportPanel.tsx`, `src/components/AnimalEditorModal.tsx`, `src/components/AnimalPhotoGallery.tsx`, `src/components/EconomicsLedgerScreen.tsx`, `src/components/PrintPreviewModal.tsx`, `src/components/SettingsAndSyncScreen.tsx`, `src/components/SpeciesDashboardScreen.tsx`, `src/components/ExternalImporterPanel.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/DiagnosticsAndSupportPanel.tsx` must contain `getDiagnosticsPort` — *Every log read/write in the panel must go through the port; a direct crashLogger import would restore the UI→storage edge.*
+- `src/components/AnimalEditorModal.tsx` must contain `getImageOptimizerPort` — *Photo compression is a capability, not a storage call: the editor must keep using the injectable optimiser.*
+
+**Restoration Playbook if Overwritten:**
+1. A storage-backed capability goes into an @app port with its storage binding in the port file; the component only imports the port.
+2. Keep the module-level injectables (`get*Port` / `set*Port` / `reset*Port`) symmetric so tests can restore them in cleanup.
+3. Regenerate the coupling ledger with `--write-ui-budget` only after `audit-layers.ts` shows a smaller set, and never raise it.
+
+## 2026-11-28 — Move the Remaining Screen Crash-Logger Calls Onto the Diagnostics Port
+Why:        Four more screens still imported the crash logger directly: the developer console and the photo gallery for `logDiagnosticEvent`, the import hub for `emitAsyncErrorToast`, and the print preview for the dismiss/isMemory/log quartet.
+Changed:    `src/app/ports/diagnostics.ts`, `src/components/DevelopmentScreen.tsx`, `src/components/ImportExportHubScreen.tsx`, `src/components/PrintPreviewModal.tsx`, `src/components/AnimalPhotoGallery.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/components/ImportExportHubScreen.tsx` must contain `getDiagnosticsPort` — *The import hub raises async-error toasts; it must do so through the port rather than importing the log store.*
+- `src/components/PrintPreviewModal.tsx` must contain `getDiagnosticsPort` — *Print failures are logged and toasted through the port, which keeps the modal renderable in tests without the offline log store.*
+
+**Restoration Playbook if Overwritten:**
+1. Add the capability to the port first, then replace the call sites; never leave one component importing both the port and the storage module.
+2. Keep `browserDiagnosticsPort` complete: a missing binding is a compile error, which is the intended failure mode.
+
+## 2026-11-28 — Close the Component→Storage Coupling Ledger at Zero
+Why:        The last 31 component→storage runtime edges still sat in the two hub screens and a handful of single-capability stragglers, so `scripts/ui-storage-coupling-budget.json` could never reach empty and the `/engine` extraction was blocked behind it.
+Changed:    `src/app/ports/storageProtection.ts`, `src/app/ports/localSyncChannels.ts`, `src/app/ports/offThreadWorkerClient.ts`, `src/app/ports/opfsStorage.ts`, `src/app/ports/deviceCapabilityDetector.ts`, `src/app/ports/backgroundFreezeCoordinator.ts`, `src/app/ports/pwaUpdateManager.ts`, `src/app/ports/storageProbes.ts`, `src/app/ports/photoHydration.ts`, `src/app/ports/weatherForecast.ts`, `src/app/ports/vetDocsFolder.ts`, `src/app/ports/feedTagOcr.ts`, `src/app/ports/pedigreeOcrScanner.ts`, `src/app/ports/passphraseCrypto.ts`, `src/app/ports/p2pLanChannel.ts`, `src/app/ports/webSqliteMaintenance.ts`, `src/components/DevelopmentScreen.tsx`, `src/components/ImportExportHubScreen.tsx`, `scripts/ui-storage-coupling-budget.json`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `MODULES.md`, `EXTRACTION_INVENTORY.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/ui-storage-coupling-budget.json` must contain `[]` — *The ledger is a ratchet: an empty array is the finished state, and any new edge belongs in an @app port instead.*
+- `src/components/DevelopmentScreen.tsx` must contain `../app/ports/` — *The developer console reads storage, OPFS, worker and PWA state through ports, so it renders in tests without the storage layer.*
+
+**Restoration Playbook if Overwritten:**
+1. Never import `src/storage/*` from `src/components/*` at runtime: add the capability to an `@app/ports` module and import that instead (type-only imports are already exempt).
+2. Regenerate the ledger with `npx tsx scripts/audit-layers.ts --write-ui-budget` after a migration; an empty file is the goal, and `verify:layers` fails if the file is stale in either direction.
+
+## 2026-11-28 — Mount the Memo, Wool, Mileage and Founder Species Panels
+Why:        Four species workspaces that breeders open routinely — the memo pad, the wool harvest panel, the mileage/tax panel and the founder & heritability panel — carried zero executable statements, so their summaries and form transitions were only ever checked by opening the app by hand.
+Changed:    `vitest.config.ts`, `src/components/__tests__/speciesPanels.render.test.tsx`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `vitest.config.ts` must contain `statements: 59`, `branches: 49`, `functions: 45`, `lines: 61` — *This entry carries the current numeric floors; without them the new suite could be deleted while the gate still passed at the old, lower numbers.*
+- `src/components/__tests__/speciesPanels.render.test.tsx` must contain `Confirm Clear`, `Founder-Loss Ledger`, `Save Harvest` — *These three assertions are the only proof that the clear-notes gate, the tab switch and the harvest form actually render; dropping them would leave the suite counting mounts instead of behaviour.*
+
+**Restoration Playbook if Overwritten:**
+1. Mount panels against `buildFullPredefinedSampleSnapshot()` and a local `activeDataFrom()` helper rather than hand-building species data; the sample barn already exercises the populated branches.
+2. When a summary block is gated on a non-empty collection, pass a minimal typed record (see the wool harvest fixture) instead of asserting on the hidden block.
+3. Clear-notes flows need both states: the confirmation prompt after the first click and the executed save after the second.
+
+## 2026-11-28 — Lazy-Load the Home Species Screen Off the Boot Bundle
+Why:        Every workspace route was already code-split except the one every launch renders first: `HomeSpeciesScreen` was still a static import in the boot-locked shell, so its tables, cards and species summaries were parsed and compiled as part of the entry chunk on every cold start, including launches that jump straight to a species workspace.
+Changed:    `src/App.tsx`, `src/domain/improvementRegistry.ts`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`
+Status:     active
+
+**Automated Invariants Checked:**
+- `src/App.tsx` must contain `HomeSpeciesScreen = lazyNamedRoute`, `RouteLoadingFallback label={ROUTE_LABELS.home}` — *A static home import puts the largest remaining screen back in the entry chunk; the route must keep its lazy declaration and its own skeleton fallback.*
+  - Forbidden regression: `import { HomeSpeciesScreen } from './components/HomeSpeciesScreen';`
+- `src/domain/improvementRegistry.ts` must contain `'src/App.tsx': '0906bc56` — *The boot-entry lock only protects the shell while its checksum matches the file; a shell edit that forgets to regenerate this line fails the boot-lock test.*
+
+**Restoration Playbook if Overwritten:**
+1. Declare a view with `lazyNamedRoute` and render it inside `RouteErrorBoundary` + `Suspense`, never with a static import in `src/App.tsx`.
+2. Any sanctioned edit to `src/main.tsx`, `src/App.tsx` or `index.html` must regenerate its SHA-256 in `BOOT_ENTRY_LOCK_CHECKSUMS` in the same commit.
+3. Measure the entry chunk before and after (`ls -l dist/assets/index-*.js`); do not add per-view `codeSplitting.groups` entries, because grouping a screen module pulls its shared dependencies into a chunk cycle.
+
+## 2026-11-28 — Prove the Framework Layers Stand Alone Before Any /engine Extraction
+Why:        The /engine milestone had one unproven claim left: that `src/engine`, `src/features` and `src/utils` could travel to a standalone package unchanged. `verify:extraction` only typechecked the sources, so three UI tests filed under `src/utils/__tests__` still imported `PrintPreviewModal`, `SearchableParentPicker` and the crash logger and would have broken the moment the directory was copied.
+Changed:    `scripts/rehearse-engine-extraction.ts`, `src/components/__tests__/printPreviewFileActions.test.ts`, `src/components/__tests__/printPreviewHelpers.test.ts`, `src/components/__tests__/parentPickerAndMemory.test.ts`, `EXTRACTION_INVENTORY.md`, `src/domain/improvements/registry-part-05.ts`, `IMPROVEMENTS.md`, `docs/plans/handoff-modularity-reusability.yaml`
+Status:     active
+
+**Automated Invariants Checked:**
+- `scripts/rehearse-engine-extraction.ts` must contain `FORBIDDEN_LAYER_RE`, `collectForeignImports` — *The extraction rehearsal must name the reach-back check, or a framework test can quietly re-acquire a component dependency.*
+
+**Restoration Playbook if Overwritten:**
+1. Keep UI tests in `src/components/__tests__`; a test that renders or asserts on a component is a UI test no matter which pure helper it covers.
+2. Run `npm run verify:extraction` after adding any file to `src/engine`, `src/features` or `src/utils`; it is the only gate that sees test-only imports inside the framework layers.

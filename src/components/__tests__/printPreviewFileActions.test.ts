@@ -8,7 +8,7 @@ import {
   formatPrintPreviewFileError,
   isPrintPreviewAbortError,
   runPrintPreviewFileAction,
-} from '../../components/PrintPreviewModal';
+} from '../PrintPreviewModal';
 import {
   getActiveAsyncErrorToasts,
   resetAsyncErrorToastsForTests,
@@ -19,7 +19,7 @@ import {
   downloadBinaryFile,
   isInstalledIosPwa,
   resetWebFileConfiguration,
-} from '../webFileActions';
+} from '../../utils/webFileActions';
 
 describe('PrintPreviewModal .HTM download & share error surfacing', () => {
   beforeEach(() => {

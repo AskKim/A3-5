@@ -31,9 +31,9 @@ import {
   getTierStoragePolicy,
 } from '../domain/deviceCapability';
 import { formatByteSizePure } from '../domain/imageOptimizationSpec';
-import { BackupSyncStatus } from '../storage/localSyncChannels';
-import { OpfsPruneSyncWarning } from '../storage/opfsStorage';
-import { RollingBackupMeta } from '../storage/storageProtection';
+import { BackupSyncStatus } from '../app/ports/localSyncChannels';
+import type { OpfsPruneSyncWarning } from '../app/ports/opfsStorage';
+import type { RollingBackupMeta } from '../app/ports/storageProtection';
 
 interface UnifiedBackupVaultPanelProps {
   opfsSupported: boolean;

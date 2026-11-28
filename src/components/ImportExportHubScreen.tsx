@@ -103,12 +103,12 @@ import {
   BackgroundPausedError,
   clearPausedBackgroundJob,
   registerPausedBackgroundJob,
-} from '../storage/backgroundFreezeCoordinator';
-import { emitAsyncErrorToast } from '../storage/crashLogger';
+} from '../app/ports/backgroundFreezeCoordinator';
+import { getDiagnosticsPort } from '../app/ports/diagnostics';
 import {
   detectCurrentBrowserCompatibility,
   DeviceCapabilityController,
-} from '../storage/deviceCapabilityDetector';
+} from '../app/ports/deviceCapabilityDetector';
 import {
   BackupSyncStatus,
   EncryptedSyncPassphraseError,
@@ -118,23 +118,23 @@ import {
   shareOrDownloadFile,
   supportsDirectoryPicker,
   syncWithPickedDirectory,
-} from '../storage/localSyncChannels';
+} from '../app/ports/localSyncChannels';
 import {
   buildCompleteBackupZipOffThread,
   buildCompleteBackupZipToOpfsTmpOffThread,
   buildPhotosOnlyZipOffThread,
   buildPhotosOnlyZipToOpfsTmpOffThread,
   inspectBackupArchiveOffThread,
-} from '../storage/offThreadWorkerClient';
-import type { OpfsPruneSyncWarning } from '../storage/opfsStorage';
+} from '../app/ports/offThreadWorkerClient';
+import type { OpfsPruneSyncWarning } from '../app/ports/opfsStorage';
 import {
   decryptBytesWithPassphrase,
   decryptTextWithPassphrase,
   encryptBytesWithPassphrase,
   encryptTextWithPassphrase,
   supportsPassphraseCrypto,
-} from '../storage/passphraseCrypto';
-import { stripPhotoDataUrlsFromSnapshot } from '../storage/photoHydration';
+} from '../app/ports/passphraseCrypto';
+import { stripPhotoDataUrlsFromSnapshot } from '../app/ports/photoHydration';
 import type { CloudSyncProvider, CloudSyncSettings } from '../domain/cloudAppFolderSync';
 import type {
   CloudSyncClientState,
@@ -144,7 +144,7 @@ import {
   getAdjustedNowMs,
   RollingBackupMeta,
   StorageProtectionStatus,
-} from '../storage/storageProtection';
+} from '../app/ports/storageProtection';
 import { readBlobAsArrayBuffer, readBlobAsText } from '../utils/es2018Shims';
 import { useAsyncKeyedLock, useAsyncSubmitLock } from '../utils/useAsyncSubmitLock';
 import {
@@ -1056,7 +1056,7 @@ export function ImportExportHubScreen({
             severityReason: reasonMsg,
             resumeHandler: () => executeResumeDirectorySync(true),
           });
-          emitAsyncErrorToast({
+          getDiagnosticsPort().emitAsyncErrorToast({
             title: 'Folder Sync Paused — Permission Needed',
             detail: reasonMsg,
             severity: 'error',
@@ -1089,7 +1089,7 @@ export function ImportExportHubScreen({
           severityReason: err.severityIssue ?? undefined,
           resumeHandler: () => executeResumeDirectorySync(Boolean(err.severityIssue)),
         });
-        emitAsyncErrorToast({
+        getDiagnosticsPort().emitAsyncErrorToast({
           title: 'Folder Sync Paused',
           detail: err.checkpointSummary || err.message,
           severity: err.severityIssue ? 'error' : 'warning',
@@ -1107,7 +1107,7 @@ export function ImportExportHubScreen({
           severityReason: msg,
           resumeHandler: () => executeResumeDirectorySync(false),
         });
-        emitAsyncErrorToast({
+        getDiagnosticsPort().emitAsyncErrorToast({
           title: 'Folder Sync Resume Failed',
           detail: msg,
           severity: 'error',
@@ -1173,7 +1173,7 @@ export function ImportExportHubScreen({
               ? err.message
               : 'Folder sync paused cleanly when app moved to background and will auto-resume when you return.'
           );
-          emitAsyncErrorToast({
+          getDiagnosticsPort().emitAsyncErrorToast({
             title: 'Folder Sync Paused',
             detail: err.checkpointSummary || err.message,
             severity: hasSeverity ? 'error' : 'warning',

@@ -315,6 +315,11 @@ import {
   resolveEffectiveSnoozedUntilMs,
 } from './barnStore/backupReminder';
 import { useAlertDismissals } from './barnStore/useAlertDismissals';
+import { useReservationSale } from './barnStore/useReservationSale';
+import {
+  createLocateConflictsInHerd,
+  createStoreNoticeActions,
+} from './barnStore/storeNoticeActions';
 import { useCloudSyncActions } from './barnStore/useCloudSyncActions';
 import { useOpfsVaultActions } from './barnStore/useOpfsVaultActions';
 import { useSyncConflictDismissal } from './barnStore/useSyncConflictDismissal';
@@ -324,6 +329,10 @@ import { useOpfsArchiveOffload } from './barnStore/useOpfsArchiveOffload';
 import { useAnimalsCrud, type AnimalsCrudAdapter } from './barnStore/useAnimalsCrud';
 import { usePhotoMutations, type PhotoMutationAdapter } from './barnStore/usePhotoMutations';
 import { useBreeding, type BreedingAdapter } from './barnStore/useBreeding';
+import {
+  useSpeciesProfileActions,
+  type SpeciesProfileAdapter,
+} from './barnStore/useSpeciesProfileActions';
 import { planSyncConflictRetention } from '../domain/syncConflictExpiry';
 import { planSyncOperationRetention } from '../domain/syncRetention';
 import { useBackupReminderActions } from './barnStore/useBackupReminderActions';
@@ -359,6 +368,7 @@ export type WorkspaceRoute =
   | 'suggestions';
 
 export type { BreedingTaskCheckoffAction } from './barnStore/useBreeding';
+export type { SpeciesProfileAdapter } from './barnStore/useSpeciesProfileActions';
 
 export interface ActiveSpeciesData {
   speciesProfile: SpeciesProfile;
@@ -419,6 +429,10 @@ interface PerformanceMemory {
 }
 
 export function useBarnStore(options?: UseBarnStoreOptions) {
+  // =============================================================================================
+  // Store shell: refs, routing history and notice state
+  // =============================================================================================
+
   const activeBridge = useMemo<IPlatformBridge>(
     () => options?.bridge ?? getDefaultPedigreeBridge(),
     [options?.bridge]
@@ -630,6 +644,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     setStatusMessage(msg);
   }, []);
 
+  // =============================================================================================
+  // Persistence primitives: revision index, mutation queue, toasts and failure reporting
+  // =============================================================================================
+
   const reportPersistenceFailure = useCallback((actionLabel: string, err: unknown) => {
     if (err instanceof BackgroundPausedError || (err as { name?: string })?.name === 'BackgroundPausedError') {
       const paused = err as BackgroundPausedError;
@@ -764,6 +782,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   }, [notify]);
 
   // Sync active route into diagnostic logger
+  // =============================================================================================
+  // Startup: snapshot load, hydration and wiped-recovery detection
+  // =============================================================================================
+
   useEffect(() => {
     setCurrentDiagnosticRoute(route);
   }, [route]);
@@ -887,6 +909,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   }, [activeBridge, route]);
 
   // Monitor Google Calendar auth state only when direct Google Calendar mode is enabled
+  // =============================================================================================
+  // Calendar delivery mode
+  // =============================================================================================
+
   const calendarDeliveryMode = snapshot?.settings.calendarSync?.deliveryMode;
   useEffect(() => {
     if (calendarDeliveryMode !== 'google_calendar') {
@@ -1192,6 +1218,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   }, []);
 
   // Hydrate full syncOperations array only on routes that render sync/outbox UI; release on other routes
+  // =============================================================================================
+  // Route guard and workspace navigation
+  // =============================================================================================
+
   const isSyncOperationsRoute = route === 'importExport' || route === 'dashboard';
   useEffect(() => {
     if (isLoading) return;
@@ -1246,6 +1276,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
    * Switches the active livestock species and clears any cross-species animal selection
    * so records from another species can NEVER bleed into the new species workspace.
    */
+  // =============================================================================================
+  // Species selection and active species data
+  // =============================================================================================
+
   const selectSpeciesWorkspace = useCallback(
     (speciesName: string, targetRoute: WorkspaceRoute = 'dashboard') => {
       if (!isSameSpecies(activeSpeciesNameRef.current, speciesName)) {
@@ -1419,6 +1453,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     return { map, conflictedAnimalCount, activeConflictAnimalCount };
   }, [baseSpeciesData, isNonSpeciesRoute]);
 
+  // =============================================================================================
+  // Animal selection, pedigree neighbourhood and COI
+  // =============================================================================================
+
   const coiByAnimalId = useMemo(() => {
     const map = new Map<string, CoiAnalysis>();
     if (!baseSpeciesData || isNonSpeciesRoute || baseSpeciesData.animals.length === 0) return map;
@@ -1451,6 +1489,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       coiByAnimalId,
     };
   }, [baseSpeciesData, conflictsBySpeciesAnimalId, coiByAnimalId]);
+
+  // =============================================================================================
+  // Backup meta, export hydration and native vault mirroring
+  // =============================================================================================
 
   const effectiveLastBackupMeta: LastBackupMeta | null =
     snapshot?.settings.lastBackupMeta ?? localLastBackupMeta;
@@ -1731,6 +1773,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     []
   );
 
+  // =============================================================================================
+  // Snapshot reload
+  // =============================================================================================
+
   const reloadFromAdapter = useCallback(async () => {
     const fresh = await adapterRef.current!.loadSnapshot({ lightweightPhotos: true });
     pedigreeAncestorCacheRef.current.clear();
@@ -1970,6 +2016,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     refreshVaultAndArchives,
   ]);
 
+  // =============================================================================================
+  // Settings, landing pins and species toggles
+  // =============================================================================================
+
   const updateSettingsInternal = useCallback(
     async (patch: Partial<BarnSettings>, options?: { silent?: boolean }) => {
       const currentSnapshot = snapshotRef.current;
@@ -2050,214 +2100,21 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [enqueueStoreMutation, updateSettingsInternal, notify]
   );
 
-  const saveSpeciesProfile = useCallback(
-    async (profile: SpeciesProfile): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const currentSnapshot = snapshotRef.current;
-        const ts = getAdjustedNowIsoUtc();
-        const existing = currentSnapshot?.speciesProfiles.find((sp) => sp.id === profile.id);
-        try {
-          if (existing) {
-            const rev = nextEntityRev(existing.id, existing._rev);
-            const clean: SpeciesProfile = {
-              ...profile,
-              sortOrder: profile.sortOrder ?? existing.sortOrder ?? 0,
-              name: profile.name.trim(),
-              defaultAnimalPrefix: (profile.defaultAnimalPrefix || '').trim(),
-              memoText: sanitizeSpeciesMemo(profile.memoText ?? existing.memoText ?? ''),
-              memoUpdatedAt: profile.memoUpdatedAt ?? existing.memoUpdatedAt ?? '',
-              breedOverrides: normalizeBreedScheduleOverrides(profile.breedOverrides),
-              targetWeightCurve: normalizeTargetWeightCurve(
-                profile.targetWeightCurve ?? existing.targetWeightCurve
-              ),
-              _rev: rev,
-              createdAt: profile.createdAt || existing.createdAt || ts,
-              updatedAt: ts,
-            };
-
-            const renamed =
-              currentSnapshot && !isSameSpecies(existing.name, clean.name);
-            if (renamed && currentSnapshot) {
-              const oldName = existing.name;
-              const newName = clean.name;
-              const oldKey = oldName.trim().toLowerCase();
-              const newKey = newName.trim().toLowerCase();
-
-              const nextDismissedTaskGroups = {
-                ...(currentSnapshot.settings.dismissedTaskGroupKeys || {}),
-              };
-              if (oldKey in nextDismissedTaskGroups) {
-                nextDismissedTaskGroups[newKey] = nextDismissedTaskGroups[oldKey];
-                delete nextDismissedTaskGroups[oldKey];
-              }
-              const nextDismissedMemos = {
-                ...(currentSnapshot.settings.dismissedMemoAlertSignatures || {}),
-              };
-              if (oldKey in nextDismissedMemos) {
-                nextDismissedMemos[newKey] = nextDismissedMemos[oldKey];
-                delete nextDismissedMemos[oldKey];
-              }
-
-              const renamedSnapshot: BarnDatabaseSnapshot = {
-                ...currentSnapshot,
-                settings: {
-                  ...currentSnapshot.settings,
-                  defaultSpecies: isSameSpecies(currentSnapshot.settings.defaultSpecies, oldName)
-                    ? newName
-                    : currentSnapshot.settings.defaultSpecies,
-                  pinnedLandingSpecies: isSameSpecies(
-                    currentSnapshot.settings.pinnedLandingSpecies,
-                    oldName
-                  )
-                    ? newName
-                    : currentSnapshot.settings.pinnedLandingSpecies,
-                  dismissedTaskGroupKeys: nextDismissedTaskGroups,
-                  dismissedMemoAlertSignatures: nextDismissedMemos,
-                  updatedAt: ts,
-                },
-                speciesProfiles: currentSnapshot.speciesProfiles.map((sp) =>
-                  sp.id === clean.id ? clean : sp
-                ),
-                animals: currentSnapshot.animals.map((a) =>
-                  isSameSpecies(a.species, oldName) ? { ...a, species: newName, updatedAt: ts } : a
-                ),
-                animalPhotos: (currentSnapshot.animalPhotos ?? []).map((p) =>
-                  isSameSpecies(p.species, oldName) ? { ...p, species: newName, updatedAt: ts } : p
-                ),
-                cages: currentSnapshot.cages.map((c) =>
-                  isSameSpecies(c.species, oldName) ? { ...c, species: newName, updatedAt: ts } : c
-                ),
-                breedings: currentSnapshot.breedings.map((b) =>
-                  isSameSpecies(b.species, oldName) ? { ...b, species: newName, updatedAt: ts } : b
-                ),
-                tasks: currentSnapshot.tasks.map((t) =>
-                  isSameSpecies(t.species, oldName) ? { ...t, species: newName, updatedAt: ts } : t
-                ),
-                careLogs: currentSnapshot.careLogs.map((l) =>
-                  isSameSpecies(l.species, oldName) ? { ...l, species: newName, updatedAt: ts } : l
-                ),
-                shows: currentSnapshot.shows.map((s) =>
-                  isSameSpecies(s.species, oldName) ? { ...s, species: newName, updatedAt: ts } : s
-                ),
-                feedBatches: (currentSnapshot.feedBatches ?? []).map((fb) =>
-                  isSameSpecies(fb.species, oldName) ? { ...fb, species: newName, updatedAt: ts } : fb
-                ),
-                feedAllocations: (currentSnapshot.feedAllocations ?? []).map((fa) =>
-                  isSameSpecies(fa.species, oldName) ? { ...fa, species: newName, updatedAt: ts } : fa
-                ),
-                ledgerEntries: (currentSnapshot.ledgerEntries ?? []).map((le) =>
-                  isSameSpecies(le.species, oldName) ? { ...le, species: newName, updatedAt: ts } : le
-                ),
-                processingLogs: (currentSnapshot.processingLogs ?? []).map((pl) =>
-                  isSameSpecies(pl.species, oldName) ? { ...pl, species: newName, updatedAt: ts } : pl
-                ),
-                youthProjectBooks: (currentSnapshot.youthProjectBooks ?? []).map((yp) =>
-                  isSameSpecies(yp.species, oldName) ? { ...yp, species: newName, updatedAt: ts } : yp
-                ),
-                clientContacts: (currentSnapshot.clientContacts ?? []).map((c) =>
-                  isSameSpecies(c.species, oldName) ? { ...c, species: newName, updatedAt: ts } : c
-                ),
-                waitlistEntries: (currentSnapshot.waitlistEntries ?? []).map((w) =>
-                  isSameSpecies(w.species, oldName) ? { ...w, species: newName, updatedAt: ts } : w
-                ),
-                animalReservations: (currentSnapshot.animalReservations ?? []).map((r) =>
-                  isSameSpecies(r.species, oldName) ? { ...r, species: newName, updatedAt: ts } : r
-                ),
-                woolHarvests: (currentSnapshot.woolHarvests ?? []).map((w) =>
-                  isSameSpecies(w.species, oldName) ? { ...w, species: newName, updatedAt: ts } : w
-                ),
-                mileageLogs: (currentSnapshot.mileageLogs ?? []).map((m) =>
-                  isSameSpecies(m.species, oldName) ? { ...m, species: newName, updatedAt: ts } : m
-                ),
-                journalEntries: (currentSnapshot.journalEntries ?? []).map((j) =>
-                  isSameSpecies(j.species, oldName) ? { ...j, species: newName, updatedAt: ts } : j
-                ),
-                judgeClubs: (currentSnapshot.judgeClubs ?? []).map((c) =>
-                  isSameSpecies(c.species, oldName) ? { ...c, species: newName, updatedAt: ts } : c
-                ),
-                judgeAssignments: (currentSnapshot.judgeAssignments ?? []).map((a) =>
-                  isSameSpecies(a.species, oldName) ? { ...a, species: newName, updatedAt: ts } : a
-                ),
-                judgeExpenses: (currentSnapshot.judgeExpenses ?? []).map((e) =>
-                  isSameSpecies(e.species, oldName) ? { ...e, species: newName, updatedAt: ts } : e
-                ),
-              };
-              await adapterRef.current!.replaceSnapshot(renamedSnapshot);
-              if (isSameSpecies(activeSpeciesName, oldName)) {
-                setActiveSpeciesName(newName);
-              }
-            } else {
-              await adapterRef.current!.saveSpeciesProfile(clean);
-            }
-
-            await recordOutboxOps(
-              diffEntityFieldsToOperations({
-                entityType: 'species',
-                previous: existing,
-                next: clean,
-                deviceId,
-                nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
-                recordRev: rev,
-              })
-            );
-            await reloadFromAdapter();
-            notify(
-              renamed
-                ? `Renamed ${existing.name} to ${clean.name} across all barn records.`
-                : `${clean.name} schedule saved.`
-            );
-          } else {
-            const currentList = currentSnapshot?.speciesProfiles ?? [];
-            const newId = profile.id || `species-${generateUuid()}`;
-            const rev = nextEntityRev(newId, profile._rev);
-            const cleanNew: SpeciesProfile = {
-              ...profile,
-              id: newId,
-              sortOrder: currentList.length,
-              name: profile.name.trim(),
-              defaultAnimalPrefix: (profile.defaultAnimalPrefix || '').trim(),
-              memoText: sanitizeSpeciesMemo(profile.memoText ?? ''),
-              memoUpdatedAt: profile.memoUpdatedAt ?? '',
-              breedOverrides: normalizeBreedScheduleOverrides(profile.breedOverrides),
-              targetWeightCurve: normalizeTargetWeightCurve(profile.targetWeightCurve),
-              _rev: rev,
-              createdAt: profile.createdAt || ts,
-              updatedAt: ts,
-            };
-            await adapterRef.current!.saveSpeciesProfile(cleanNew);
-            await recordOutboxOps(
-              diffEntityFieldsToOperations({
-                entityType: 'species',
-                previous: undefined,
-                next: cleanNew,
-                deviceId,
-                nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
-                recordRev: rev,
-              })
-            );
-            await reloadFromAdapter();
-            notify(`${cleanNew.name} added to your barn.`);
-          }
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`save ${profile.name} species schedule`, err);
-          return false;
-        }
-      });
-    },
-    [
-      activeSpeciesName,
-      deviceId,
-      enqueueStoreMutation,
-      nextEntityRev,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
+  const { saveSpeciesProfile } = useSpeciesProfileActions({
+    enqueueStoreMutation,
+    snapshotRef,
+    getAdapter: () => adapterRef.current!,
+    deviceId,
+    nextEntityRev,
+    allocateNextLogicalCounter,
+    nowIsoUtc: getAdjustedNowIsoUtc,
+    recordOutboxOps,
+    reloadFromAdapter,
+    notify,
+    reportPersistenceFailure,
+    activeSpeciesName,
+    setActiveSpeciesName,
+  });
 
   const updateSpeciesTargetWeightCurve = useCallback(
     async (speciesId: string, curve: TargetWeightPoint[]): Promise<boolean> => {
@@ -2544,6 +2401,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
+  // =============================================================================================
+  // Species backups and species migration
+  // =============================================================================================
+
   const exportTimestampedSpeciesBackup = useCallback(
     async (speciesName: string, reason: SpeciesBackupReason = 'manual') => {
       if (!snapshot) return;
@@ -2572,6 +2433,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   );
 
   // Stable adapter facade so the CRUD callbacks keep their identity across renders.
+  // =============================================================================================
+  // Entity adapters: animals, photos, cages and shared CRUD
+  // =============================================================================================
+
   const animalsCrudAdapter = useMemo<AnimalsCrudAdapter>(
     () => ({
       saveAnimal: (animal) => adapterRef.current!.saveAnimal(animal),
@@ -2896,6 +2761,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
    * Logs a new breeding or updates an existing breeding, and automatically runs the
    * Master Task List engine to cascade species-appropriate barn tasks on creation.
    */
+  // =============================================================================================
+  // Breeding and tasks
+  // =============================================================================================
+
   const breedingAdapter = useMemo<BreedingAdapter>(
     () => ({
       saveAnimalsBatch: (animals) => adapterRef.current!.saveAnimalsBatch(animals),
@@ -3049,6 +2918,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     },
     [snapshot, notify, reportPersistenceFailure]
   );
+
+  // =============================================================================================
+  // Calendar export, Google sync and CRM reminders
+  // =============================================================================================
 
   const exportTasksToCalendar = useCallback(
     (tasksToExport: BarnTask[], filenameHint?: string) => {
@@ -3399,6 +3272,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [entityCrudPorts]
   );
 
+  // =============================================================================================
+  // Care logs
+  // =============================================================================================
+
   const addCareLog = useCallback(
     async (draft: Omit<CareLog, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
       return enqueueStoreMutation(async () => {
@@ -3590,6 +3467,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
   );
 
   /** Show results drive each entered animal's leg counter; save and delete share this cascade. */
+  // =============================================================================================
+  // Shows and feed inventory
+  // =============================================================================================
+
   const applyShowLegDeltas = useCallback(
     async (
       previousResults: ShowEvent['results'],
@@ -4019,6 +3900,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     }, 2500);
     return () => clearTimeout(timer);
   }, [isLoading, hasSnapshotReady, wipedRecoveryDetected, runFeedTagBiosecurityAutoPurge]);
+
+  // =============================================================================================
+  // Ledger, clients, reservations and money
+  // =============================================================================================
 
   const saveLedgerEntry = useCallback(
     async (
@@ -4738,162 +4623,24 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [entityCrudPorts]
   );
 
-  const completeReservationSale = useCallback(
-    async (params: {
-      reservationId: string;
-      completedDateIso?: string;
-      markAnimalSold?: boolean;
-      recordLedgerIncome?: boolean;
-    }): Promise<boolean> => {
-      return enqueueStoreMutation(async () => {
-        const latestSnapshot = snapshotRef.current ?? snapshot;
-        if (!latestSnapshot) return false;
-        const target = (latestSnapshot.animalReservations ?? []).find(
-          (r) => r.id === params.reservationId
-        );
-        if (!target) return false;
+  const { completeReservationSale } = useReservationSale({
+    enqueueStoreMutation,
+    snapshotRef,
+    fallbackSnapshot: snapshot,
+    getAdapter: () => adapterRef.current!,
+    deviceId,
+    nextEntityRev,
+    allocateNextLogicalCounter,
+    nowIsoUtc: getAdjustedNowIsoUtc,
+    recordOutboxOps,
+    reloadFromAdapter,
+    notify,
+    reportPersistenceFailure,
+  });
 
-        const ts = getAdjustedNowIsoUtc();
-        const completedDateIso = (params.completedDateIso || '').trim() || todayDateIso();
-        const finalPaidCents = Math.max(target.totalPriceCents, target.depositPaidCents);
-        let ledgerEntryId = target.ledgerEntryId;
-        const outboxOps: SyncOperation[] = [];
-
-        try {
-          if (params.recordLedgerIncome && finalPaidCents > 0 && !ledgerEntryId) {
-            const newLedgerId = generateUuid();
-            const ledgerRev = nextEntityRev(newLedgerId);
-            const ledgerEntry: LedgerEntry = {
-              id: newLedgerId,
-              species: target.species,
-              dateIso: completedDateIso,
-              entryType: 'income',
-              category: 'animal_sale',
-              amountCents: finalPaidCents,
-              title: `${target.agreementNumber || 'Sale'} — ${target.itemLabel}`,
-              vendorOrParty: target.clientName,
-              linkedAnimalId: target.animalId,
-              linkedBreedingId: target.breedingId,
-              notes: `Completed reservation ${target.agreementNumber || target.id}`,
-              _rev: ledgerRev,
-              createdAt: ts,
-              updatedAt: ts,
-            };
-            await adapterRef.current!.saveLedgerEntry(ledgerEntry);
-            outboxOps.push(
-              ...diffEntityFieldsToOperations({
-                entityType: 'ledgerEntry',
-                previous: undefined,
-                next: ledgerEntry,
-                deviceId,
-                nextCounter: allocateNextLogicalCounter,
-                timestamp: ts,
-                recordRev: ledgerRev,
-              })
-            );
-            ledgerEntryId = newLedgerId;
-          }
-
-          if (params.markAnimalSold !== false && target.animalId) {
-            const animalPrev = latestSnapshot.animals.find((a) => a.id === target.animalId);
-            if (animalPrev) {
-              const animalRev = nextEntityRev(animalPrev.id, animalPrev._rev);
-              const updatedAnimal: Animal = {
-                ...animalPrev,
-                status: 'Sold',
-                soldDateIso: animalPrev.soldDateIso || completedDateIso,
-                salePriceCents: finalPaidCents > 0 ? finalPaidCents : animalPrev.salePriceCents,
-                buyerName: target.clientName || animalPrev.buyerName,
-                _rev: animalRev,
-                updatedAt: ts,
-              };
-              await adapterRef.current!.saveAnimal(updatedAnimal);
-              outboxOps.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'animal',
-                  previous: animalPrev,
-                  next: updatedAnimal,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: animalRev,
-                })
-              );
-            }
-          }
-
-          if (target.waitlistEntryId) {
-            const waitPrev = (latestSnapshot.waitlistEntries ?? []).find(
-              (w) => w.id === target.waitlistEntryId
-            );
-            if (waitPrev && waitPrev.status !== 'Fulfilled') {
-              const waitRev = nextEntityRev(waitPrev.id, waitPrev._rev);
-              const updatedWait: WaitlistEntry = {
-                ...waitPrev,
-                status: 'Fulfilled',
-                _rev: waitRev,
-                updatedAt: ts,
-              };
-              await adapterRef.current!.saveWaitlistEntry(updatedWait);
-              outboxOps.push(
-                ...diffEntityFieldsToOperations({
-                  entityType: 'waitlistEntry',
-                  previous: waitPrev,
-                  next: updatedWait,
-                  deviceId,
-                  nextCounter: allocateNextLogicalCounter,
-                  timestamp: ts,
-                  recordRev: waitRev,
-                })
-              );
-            }
-          }
-
-          const resRev = nextEntityRev(target.id, target._rev);
-          const updatedRes: AnimalReservation = {
-            ...target,
-            status: 'Picked Up / Completed',
-            depositPaidCents: finalPaidCents,
-            depositPaidDateIso: target.depositPaidDateIso || completedDateIso,
-            completedDateIso,
-            ledgerEntryId,
-            _rev: resRev,
-            updatedAt: ts,
-          };
-          await adapterRef.current!.saveAnimalReservation(updatedRes);
-          outboxOps.push(
-            ...diffEntityFieldsToOperations({
-              entityType: 'animalReservation',
-              previous: target,
-              next: updatedRes,
-              deviceId,
-              nextCounter: allocateNextLogicalCounter,
-              timestamp: ts,
-              recordRev: resRev,
-            })
-          );
-
-          await recordOutboxOps(outboxOps);
-          await reloadFromAdapter();
-          notify(`Completed sale for ${target.agreementNumber} (${target.clientName}).`);
-          return true;
-        } catch (err) {
-          reportPersistenceFailure(`complete sale ${target.agreementNumber}`, err);
-          return false;
-        }
-      });
-    },
-    [
-      snapshot,
-      deviceId,
-      nextEntityRev,
-      enqueueStoreMutation,
-      recordOutboxOps,
-      reloadFromAdapter,
-      notify,
-      reportPersistenceFailure,
-    ]
-  );
+  // =============================================================================================
+  // CRM reminders and species seeding
+  // =============================================================================================
 
   const createCrmReminderTask = useCallback(
     async (speciesName: string, reminder: CrmFollowUpReminder): Promise<boolean> => {
@@ -5235,6 +4982,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     reportPersistenceFailure,
   ]);
 
+  // =============================================================================================
+  // Factory reset and backup import
+  // =============================================================================================
+
   const restoreFactoryDefaults = useCallback(async () => {
     return enqueueStoreMutation(async () => {
       const currentSnapshot = snapshotRef.current;
@@ -5461,6 +5212,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       reportPersistenceFailure,
     ]
   );
+
+  // =============================================================================================
+  // Sync: P2P reconcile, cloud folder sync and manual sync
+  // =============================================================================================
 
   const reconcileP2pOutboxOps = useCallback(
     async (
@@ -5725,6 +5480,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     readCommittedSnapshot: () =>
       adapterRef.current!.loadSnapshot({ lightweightPhotos: true }),
   });
+
+  // =============================================================================================
+  // Backups, restores and wipe recovery
+  // =============================================================================================
 
   const createAndVerifyPreUpgradeBackup = useCallback(async (): Promise<{
     verified: boolean;
@@ -6216,6 +5975,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     ]
   );
 
+  // =============================================================================================
+  // Photo footprint, health diagnostics and database reset
+  // =============================================================================================
+
   const analyzePhotoStorageFootprint = useCallback(
     async (presetId?: ImageOptimizationPresetId): Promise<PhotoStorageFootprintReport | null> => {
       const base = snapshotRef.current ?? snapshot;
@@ -6515,6 +6278,10 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     [enqueueStoreMutation, hydrateSnapshotForExport, refreshStorageStatus, notify]
   );
 
+  // =============================================================================================
+  // Pedigree generation controls
+  // =============================================================================================
+
   const handleSetPedigreeGenerations = useCallback(
     (gen: PedigreeGenerationDepth) => {
       setPedigreeGenerations(gen);
@@ -6526,6 +6293,25 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
       }
     },
     [snapshot, updateSettings]
+  );
+
+  // =============================================================================================
+  // Public surface: the 200-key contract consumed through the store context
+  // =============================================================================================
+
+  const storeNoticeActions = useMemo(
+    () => createStoreNoticeActions({ setStatusMessage, setErrorMessage, setImportConflictAlert }),
+    [setStatusMessage, setErrorMessage, setImportConflictAlert]
+  );
+  const locateConflictsInHerd = useMemo(
+    () =>
+      createLocateConflictsInHerd({
+        setActiveSpeciesName,
+        clearSelectedAnimal: () => setSelectedAnimalId(null),
+        requestHerdConflictView: () => setRequestedHerdConflictNonce((n) => n + 1),
+        navigateToHerd: () => setRoute('herd'),
+      }),
+    [setActiveSpeciesName, setRequestedHerdConflictNonce, setRoute]
   );
 
   return {
@@ -6549,20 +6335,13 @@ export function useBarnStore(options?: UseBarnStoreOptions) {
     pedigreeGenerations,
     setPedigreeGenerations: handleSetPedigreeGenerations,
     statusMessage,
-    clearStatusMessage: () => setStatusMessage(null),
+    clearStatusMessage: storeNoticeActions.clearStatusMessage,
     errorMessage,
-    clearErrorMessage: () => setErrorMessage(null),
+    clearErrorMessage: storeNoticeActions.clearErrorMessage,
     importConflictAlert,
-    dismissImportConflictAlert: () => setImportConflictAlert(null),
+    dismissImportConflictAlert: storeNoticeActions.dismissImportConflictAlert,
     requestedHerdConflictNonce,
-    locateConflictsInHerd: (speciesName?: string) => {
-      if (speciesName) {
-        setActiveSpeciesName(speciesName);
-      }
-      setSelectedAnimalId(null);
-      setRequestedHerdConflictNonce((n) => n + 1);
-      setRoute('herd');
-    },
+    locateConflictsInHerd,
     storageStatus,
     refreshStorageStatus,
     triggerPersistentStorageRequest,

@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-24 (delta appended 2026-11-28)  
 **Target Architecture:** Alpha 3 Three-Layer Modularity (`@engine/*`, `@features/*`, `@app/*`) — NEON Phases 1 & 2 Baseline  
-**Status:** 100% non-test file classification across `src/domain/`, `src/features/`, `src/app/`, `src/storage/`, and `src/utils/`; boot-entry lock verified; zero domain terms in shared/reusable modules; standalone `engine` (`/engine`) extraction deferred until Phase 7.
+**Status:** 100% non-test file classification across `src/domain/`, `src/features/`, `src/app/`, `src/storage/`, and `src/utils/`; boot-entry lock verified; zero domain terms in shared/reusable modules; zero component→storage runtime edges; `src/engine`, `src/features` and `src/utils` name no domain/app/storage/hooks/components code in sources or tests, so they are extraction-ready. Standalone `engine` (`/engine`) package creation itself is an owner scope decision (ROADMAP §2 places it out of scope for v0.1.0-alpha.3).
 
 ---
 
@@ -182,7 +182,7 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 
 ---
 
-## 3. `src/app/` File-by-File Inventory (9 Non-Test Files — All `pedigree-domain`)
+## 3. `src/app/` File-by-File Inventory (29 Non-Test Files — All `pedigree-domain`)
 
 - `src/app/index.ts` — `pedigree-domain` — Application layer barrel export.
 - `src/app/appConfig.interface.ts` — `pedigree-domain` — Multi-species registry and terminology contracts.
@@ -193,6 +193,26 @@ These files preserve 100% of Alpha 2 public exports and domain defaults while de
 - `src/app/PlatformBridgeContext.tsx` — `pedigree-domain` — React Context provider and `usePlatformBridge()` hook for `IPlatformBridge` dependency injection across UI components.
 - `src/app/pedigreePdfActions.ts` — `pedigree-domain` — Domain PDF certificate export actions binding `src/domain/pdfExporter.ts` to content-agnostic `src/utils/webPdfActions.ts`.
 - `src/app/pedigreeCalendarClient.ts` — `pedigree-domain` — Domain Google Calendar push wrapper binding `BarnTask`/`CalendarSyncSettings` to content-agnostic `src/utils/googleCalendarClient.ts`.
+- `src/app/ports/installPrompt.tsx` — `pedigree-domain` — Install/offline capability port: owns the `src/storage/storageProtection` import so `PWAInstallButton`/`OfflineIndicator` render from an injected `InstallPromptPort` (IMP-145).
+- `src/app/ports/ideasBacklog.tsx` — `pedigree-domain` — Offline captured-ideas capability port: owns the `src/storage/capturedIdeasStore` import so `SuggestionsBacklogScreen` loads, saves, removes and clears ideas through an injected `IdeasBacklogPort` (IMP-147).
+- `src/app/ports/diagnostics.ts` — `pedigree-domain` — Crash/diagnostics capability port: owns the `crashLogger`, `backgroundFreezeCoordinator` and `offThreadWorkerClient` imports so `CrashErrorBoundary`, `DevelopmentErrorBoundary` and `AsyncErrorToastHost` log, summarise and dismiss through `getDiagnosticsPort()` (IMP-151).
+- `src/app/ports/imageOptimizer.ts` — `pedigree-domain` — Image-optimization capability port: owns the `webImageOptimizer` import so the animal editor, photo gallery, importer panel, print preview and three screens call `getImageOptimizerPort()` instead of compressing through a storage module (IMP-154).
+- `src/app/ports/storageProtection.ts` — `pedigree-domain` — Persistent-storage, connectivity and PWA install capability port; owns the `src/storage/storageProtection` edge for the settings, calendar, health, cloud-folder, crash and diagnostics surfaces (IMP-156).
+- `src/app/ports/localSyncChannels.ts` — `pedigree-domain` — Cross-tab/local sync channel capability port for the scheduler, species dashboard, backup vault and hub screens (IMP-156).
+- `src/app/ports/offThreadWorkerClient.ts` — `pedigree-domain` — Off-main-thread worker capability port for the developer console, import hub and external importer (IMP-156).
+- `src/app/ports/opfsStorage.ts` — `pedigree-domain` — OPFS archive/vault storage capability port for the developer console, import hub and backup vault (IMP-156).
+- `src/app/ports/deviceCapabilityDetector.ts` — `pedigree-domain` — Device capability detection capability port for the developer console, import hub and diagnostics panel (IMP-156).
+- `src/app/ports/backgroundFreezeCoordinator.ts` — `pedigree-domain` — Background job freeze/resume capability port for the developer console and import hub (IMP-156).
+- `src/app/ports/pwaUpdateManager.ts` — `pedigree-domain` — PWA update lifecycle capability port for the developer console (IMP-156).
+- `src/app/ports/storageProbes.ts` — `pedigree-domain` — Storage probe/quota measurement capability port for the developer console (IMP-156).
+- `src/app/ports/photoHydration.ts` — `pedigree-domain` — Photo blob hydration and data-url normalisation capability port for the photo gallery and import hub (IMP-156).
+- `src/app/ports/weatherForecast.ts` — `pedigree-domain` — Weather forecast lookup capability port for the breeding calendar (IMP-156).
+- `src/app/ports/vetDocsFolder.ts` — `pedigree-domain` — Veterinary document folder capability port for the health reference panel (IMP-156).
+- `src/app/ports/feedTagOcr.ts` — `pedigree-domain` — Feed-tag OCR capability port for the feed ledger (IMP-156).
+- `src/app/ports/pedigreeOcrScanner.ts` — `pedigree-domain` — Pedigree OCR scanning capability port for the pedigree scanner panel (IMP-156).
+- `src/app/ports/passphraseCrypto.ts` — `pedigree-domain` — Backup passphrase encryption capability port for the import hub (IMP-156).
+- `src/app/ports/p2pLanChannel.ts` — `pedigree-domain` — Peer-to-peer LAN channel capability port for the barn scheduler Gantt (IMP-156).
+- `src/app/ports/webSqliteMaintenance.ts` — `pedigree-domain` — Web SQLite cache-purge capability port for the crash boundary (IMP-156).
 
 ---
 
@@ -328,12 +348,13 @@ here so the inventory keeps matching the tree without rewriting the sections abo
 
 ### 8.3 `src/hooks/barnStore/` (new folder, `pedigree-domain`)
 
-Twenty-one modules split out of `useBarnStore.ts`: two pure policy modules (`photoCacheBudget`,
+Twenty-four modules split out of `useBarnStore.ts`: two pure policy modules (`photoCacheBudget`,
 `backupReminder`), the restore orchestrator, rev-keyed species selectors, the typed facades and
 React-free ports, three context slices (`syncConflictSlice`, `vaultSlice`, `syncStateSlice`) and
-twelve mutation sub-hooks (`useAnimalsCrud`, `usePhotoMutations`, `useBreeding`, `useAlertDismissals`,
-`useCloudSyncActions`, `useOpfsVaultActions`, `useRollingBackupActions`, `useOpfsArchiveOffload`,
-`useSyncConflictResolution`, `useSyncConflictDismissal`, `usePhotoCache`, `useBackupReminderActions`).
+fifteen mutation sub-hooks (`useAnimalsCrud`, `usePhotoMutations`, `useBreeding`, `useSpeciesProfileActions`,
+`useReservationSale`, `useAlertDismissals`, `useCloudSyncActions`, `useOpfsVaultActions`, `useRollingBackupActions`,
+`useOpfsArchiveOffload`, `useSyncConflictResolution`, `useSyncConflictDismissal`, `usePhotoCache`,
+`useBackupReminderActions`), plus the `storeNoticeActions` factories behind the frozen return literal.
 See `src/hooks/barnStore/README.md` for the map and the contract rules.
 
 ### 8.4 `src/domain/` additions (`pedigree-domain`)
@@ -356,3 +377,15 @@ See `src/hooks/barnStore/README.md` for the map and the contract rules.
 `docs/README.md` (index), `docs/contracts/barn-store-contract.md`, `docs/decisions/0001-destructive-restore.md`,
 and the layer READMEs in `src/engine/`, `src/features/`, `src/storage/`, `src/hooks/barnStore/`,
 `src/domain/improvements/` and `scripts/`.
+
+### 8.7 Extraction-readiness closure (IMP-156, IMP-159)
+
+- `src/app/ports/` grew from 4 to 20 capability ports; every remaining component→storage runtime
+  import moved behind one of them and `scripts/ui-storage-coupling-budget.json` is now `[]`.
+- Three UI tests moved out of the framework layer to sit with the components they exercise:
+  `printPreviewFileActions.test.ts`, `printPreviewHelpers.test.ts` and `parentPickerAndMemory.test.ts`
+  now live in `src/components/__tests__/`.
+- `scripts/rehearse-engine-extraction.ts` (`verify:extraction`) now also fails when any file in
+  `src/engine`, `src/features` or `src/utils` — tests included — imports from `src/domain`,
+  `src/app`, `src/storage`, `src/hooks` or `src/components`: the reach-back `tsc` cannot see, because
+  it skips `__tests__`.

@@ -1,6 +1,6 @@
 # Agent Instructions: Community Pedigree Project
 
-**Last-Edited Timestamp:** 2026-11-27
+**Last-Edited Timestamp:** 2026-11-28
 
 <SYSTEM_RULES_DIRECTIVE>
 Before reading code, answering questions, or proposing edits, read and strictly follow all binding rules, token-spend limits, and coding invariants in `prompts/master_system_prompt.md` and `GEMINI.md`.
@@ -22,7 +22,7 @@ When initializing or importing this repository into AI Studio (boot-to-ready wit
   - Suppress multi-line migration checklists, bulleted stack summaries, and postmortems. On clean GitHub import / boot-to-ready, output **only**:
     `ALIGNED`
     `Ready: Community Pedigree (port 3000).`
-  - On active coding tasks (non-import turns), follow `GEMINI.md` by emitting `PENDING HANDOFF: ...`, `PENDING PLAN: ...`, or `NO PENDING WORK` right after `ALIGNED`.
+  - On active coding tasks (non-import turns), follow `GEMINI.md` by emitting its status line right after `ALIGNED`: `PENDING: handoff-<topic>, plan-<topic>` (names only, comma-separated), `EXISTING INCOMPLETE: handoff-<topic>, plan-<topic>` for files with no open steps, or `NO PENDING WORK`.
 
 ---
 
@@ -33,6 +33,7 @@ When initializing or importing this repository into AI Studio (boot-to-ready wit
 - **Boot-Entry Lock Guardrail:** Boot and entry initialization files (`src/main.tsx`, `src/App.tsx`, `index.html`) are protected by SHA-256 `BOOT_ENTRY_LOCK_CHECKSUMS` in `src/domain/improvementRegistry.ts`. Do NOT alter active boot/entry initialization unless explicitly requested and safe.
 - **Architecture & Recovery Reference:** Consult `ARCHITECTURE.md`, `android-wrapper/README.md`, `ROADMAP.md`, and `IMPROVEMENTS.md` only when relevant to code-editing tasks (skip on initial AI Studio boot).
 - **Preflight Launch, Reset & Re-arm Runbook:** `prompts/preflight/pf-launcher-uni-readme.md` § *Resetting The Launcher (Agent Runbook)*. Any request to reset, re-arm, reopen a phase or start a repo fresh goes through that section's decision table, never by hand. Launcher step lines are generated from `prompts/preflight/manifest/preflight.manifest.json` (regenerate with `node prompts/preflight/scripts/gen-preflight.mjs --write`); `preflight-reset.mjs --full` deletes `docs/handoff-state.json` after copying it to `/tmp/pf-handoff-state.<ts>.json`; use `--reopen-phase A|B` to arm one phase again without discarding `history[]`.
+- **Plan File Deletion:** A finished `handoff-*`/`plan-*` file in `docs/plans/` is deleted in the run that finishes it, and one found already finished at startup is deleted then — never carried forward as a standing notice. Keep a finished file only when the owner explicitly says to.
 - **Token Discipline & Terse Execution:** Prioritize direct tool execution over conversational prose. Do not output verbose preambles, apologies, or speculative commentary.
 
 ---
@@ -111,7 +112,7 @@ The application must execute reliably across diverse host environments:
 ### 5.3 Strict TypeScript Verification and Drift Invariants
 - **No Type Escapes:** Never silence TypeScript compiler errors with `as any`, `@ts-ignore`, or `@ts-expect-error`. Resolve root types cleanly.
 - **Automated Invariant Verification:** Every file modification must preserve existing invariants verified by `npm run verify:improvements` and layer checks (`npm run verify:layers`, `npm run verify:engine`, `npm run verify:extraction`).
-- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, the coverage floor, and `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`) plus `npm run build` before declaring tasks complete. Run `npm run verify:chunks` on the build output whenever imports changed; it is deliberately outside `verify` because it needs `dist/`.
+- **Pre-Completion Build Verification:** Run `npm run verify` (which executes `tsc --noEmit`, `npm test`, the coverage floor, and `verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:engine`, `verify:extraction`, `verify:android`, `verify:contract`, `verify:plans`) plus `npm run build` before declaring tasks complete. Run `npm run verify:chunks` on the build output whenever imports changed; it is deliberately outside `verify` because it needs `dist/`.
 
 ---
 
@@ -193,7 +194,7 @@ lockfile is stale or a dependency change is intentional.
 | 2 | Typecheck (app) | `npm run lint` (`tsc --noEmit`) |
 | 3 | Typecheck (engine/features/utils) | `npm run verify:engine` |
 | 4 | Tests | `npm test` (`vitest run`, full suite) |
-| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android`, `verify:dual-audience` |
+| 5 | Invariant gates | `npm run verify:improvements`, `verify:prompts`, `verify:modules`, `verify:layers`, `verify:extraction`, `verify:android`, `verify:dual-audience`, `verify:plans` |
 | 6 | Aggregate shortcut | `npm run verify` — equals steps 2–5; use it **instead of** them, never in addition |
 | 7 | Preflight | `npm run preflight:lint`; `node prompts/preflight/scripts/preflight-run-context.mjs --branch "$(git rev-parse --abbrev-ref HEAD)" --version "$(node -p "require('./package.json').version")" --dry-run` |
 | 8 | Release metadata | `package.json` version = `public/version.json` `appVersion` = `CURRENT_APP_VERSION` in `src/domain/upgradeGate.ts` = `versionName` in `android-wrapper/app/build.gradle.kts` |

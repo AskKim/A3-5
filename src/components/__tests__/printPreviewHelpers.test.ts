@@ -5,7 +5,7 @@ import {
   extractScopedPrintCssFromRawCss,
   sanitizePrintStageHtml,
   scopePrintSelectorList,
-} from '../../components/PrintPreviewModal';
+} from '../PrintPreviewModal';
 
 describe('PrintPreviewModal pure CSS scoping, orientation & native share helpers', () => {
   it('enables Share .HTM whenever running inside native Android/iOS wrapper even without navigator.share', () => {

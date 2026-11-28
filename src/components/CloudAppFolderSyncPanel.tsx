@@ -35,7 +35,8 @@ import type {
   CloudSyncClientState,
   RunCloudAppFolderSyncResult,
 } from '../storage/cloudAppFolderSync';
-import { StorageProtectionStatus, useConnectivityStatus } from '../storage/storageProtection';
+import type { StorageProtectionStatus } from '../app/ports/storageProtection';
+import { useConnectivityStatus } from '../app/ports/storageProtection';
 
 interface CloudAppFolderSyncPanelProps {
   cloudSyncState: CloudSyncClientState;

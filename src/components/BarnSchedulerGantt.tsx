@@ -53,14 +53,14 @@ import {
   parseP2pWireOrDeltaPayload,
 } from '../domain/p2pSyncProtocol';
 import { SyncConflictEntry, SyncOperation } from '../domain/syncOutbox';
-import { BackupSyncStatus } from '../storage/localSyncChannels';
+import type { BackupSyncStatus } from '../app/ports/localSyncChannels';
 import {
   createLanP2pSession,
   LanP2pSessionController,
   LanP2pSessionState,
   reconcileWithPickedSyncFolder,
   supportsLanWebRtcP2p,
-} from '../storage/p2pLanChannel';
+} from '../app/ports/p2pLanChannel';
 import { copyTextWithFallback } from '../utils/webFileActions';
 
 interface BarnSchedulerGanttProps {
